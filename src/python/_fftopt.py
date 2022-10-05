@@ -37,7 +37,7 @@ def next_fast_len(target, fftw=False):
     target : int
         Target value.
     fftw : bool, optional
-        _description_, by default False
+        Use fftw next fast length. Default is False.
 
     Returns
     -------
