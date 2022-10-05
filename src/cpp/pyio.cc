@@ -45,3 +45,23 @@ void numpy2vector(const py::buffer_info buff,
         }
     }
 }
+
+/*!
+    Return a C++ vector as a python numpy array.
+ */
+py::array_t<double> vector2numpy(vector<double> *vec,
+                                 size_t nx,
+                                 size_t ny,
+                                 size_t nt)
+{
+    // This snippet is to avoid copy when return vector as numpy array
+    py::capsule free_when_done(vec, [](void *f)
+                               {
+      auto foo = reinterpret_cast<std::vector<double> *>(f);
+      delete foo; });
+
+    return py::array_t<double>({nt, ny, nx}, // shape
+                               {nt, ny, nx}, // C-style contiguous strides for double
+                               vec->data(),  // data pointer
+                               free_when_done);
+}
