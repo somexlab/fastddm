@@ -12,7 +12,7 @@
 /*!
     Copy a python numpy array to a C++ vector.
 
-    The pixels are copied
+    The parameters nx and ny allow to set the zero padding.
  */
 void numpy2vector(const py::buffer_info buff,
                   vector<double> &dest,
