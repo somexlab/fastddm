@@ -1,7 +1,3 @@
-
-
-from distutils.command.build import build
-from genericpath import exists
 import os
 import re
 import sys
@@ -11,7 +7,6 @@ import subprocess
 import multiprocessing
 
 from distutils.version import LooseVersion
-from unittest.mock import patch
 from setuptools import setup, find_packages, Extension
 from setuptools.command.build_ext import build_ext
 from setuptools.command.install_lib import install_lib
@@ -35,7 +30,7 @@ class InstallCMakeLibs(install_lib):
         """
         Copy libraries from the bin directory and place them as appropriate
         """
-        
+
         self.announce("Moving library files", level=3)
 
         # We have already built the libraries in the previous build_ext step
@@ -49,10 +44,11 @@ class InstallCMakeLibs(install_lib):
         if self.outfiles is not None:
             # always compile, in case we have any extension stubs to deal with
             self.byte_compile(self.outfiles)
-    
+
     def get_outputs(self):
         """
-        Overrides the parent class' method. Returns a list of the files copied over by the `run` method
+        Overrides the parent class' method.
+        Returns a list of the files copied over by the `run` method
         """
         return self.outfiles
 
