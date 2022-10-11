@@ -1,5 +1,7 @@
 SET(_dfmtoolbox_SOURCES
-    cpp/pyio.cc
+    cpp/dfm.cc
+    cpp/pycomm.cc
+    python/bindings.cc
 )
 
 include_directories( ${PROJECT_SOURCE_DIR}/lib/pybind11/include )
