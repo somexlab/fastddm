@@ -11,13 +11,14 @@ from setuptools import setup, find_packages, Extension
 from setuptools.command.build_ext import build_ext
 from setuptools.command.install_lib import install_lib
 
+
 class CMakeExtension(Extension):
 
     def __init__(self, name, sourcedir=''):
         Extension.__init__(self, name, sources=[])
         self.sourcedir = os.path.abspath(sourcedir)
-        
-        
+
+
 class InstallCMakeLibs(install_lib):
     """
     Get the libraries from the parent distribution, use those as the outfiles
@@ -38,12 +39,12 @@ class InstallCMakeLibs(install_lib):
         # Folder where the `baggianalysis` package has been placed by cmake. It is used by self.install
         self.build_dir = self.distribution.lib_dir
         self.outfiles = self.install()
-        
+
         # I have copied this bit from the parent class
         if self.outfiles is not None:
             # always compile, in case we have any extension stubs to deal with
             self.byte_compile(self.outfiles)
-            
+
     def get_outputs(self):
         """
         Overrides the parent class' method. Returns a list of the files copied over by the `run` method 
@@ -67,11 +68,11 @@ class CMakeBuild(build_ext):
 
         for ext in self.extensions:
             self.build_extension(ext)
-            
+
     def build_extension(self, ext):
-        
+
         self.announce("Preparing the build environment", level=3)
-        
+
         cmake_args = []
 
         cfg = 'Debug' if self.debug else 'Release'
@@ -84,37 +85,37 @@ class CMakeBuild(build_ext):
             native_generator_args += ['/m']
         else:
             cmake_args += ['-DCMAKE_BUILD_TYPE=' + cfg]
-                
+
         #cmake_args += ['-DPython=On']
-        
+
         # Set CMAKE_BUILD_PARALLEL_LEVEL to control the parallel build level across all generators.
         if "CMAKE_BUILD_PARALLEL_LEVEL" not in os.environ:
-            
+
             try:
                 cpu_cores = int(os.getenv('SLURM_NTASKS'))
             except:
                 cpu_cores = int(multiprocessing.cpu_count() / 2)
-                
+
             if self.cmake_version < "3.14.0":
                 native_generator_args += ["-j{}".format(cpu_cores)]
             else:
                 build_args += ["-j {}".format(cpu_cores)]
-                
+
         build_args += native_generator_args
 
         if not os.path.exists(self.build_temp):
             os.makedirs(self.build_temp)
-            
+
         self.distribution.lib_dir = os.path.join(self.build_temp, "src/python")
-            
+
         self.announce("Configuring cmake project", level=3)
         subprocess.check_call(['cmake', ext.sourcedir] + cmake_args, cwd=self.build_temp)
-        
+
         self.announce("Building the library", level=3)
         subprocess.check_call(['cmake', '--build', '.'] + build_args, cwd=self.build_temp)
 
         self.announce("Compilation done", level=3)
-        
+
 
 setup(
     name = "dfmtoolbox",
