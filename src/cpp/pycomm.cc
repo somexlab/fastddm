@@ -1,11 +1,11 @@
 // Maintainer: enrico-lattuada
 
-/*! \file pyio.cc
+/*! \file pycomm.cc
     \brief Definition of python/C++ communication functions
 */
 
 // *** headers ***
-#include "pyio.h"
+#include "pycomm.h"
 
 // *** code ***
 
@@ -14,7 +14,7 @@
 
     The parameters nx and ny allow to set the zero padding.
  */
-void numpy2vector(const py::buffer_info buff,
+void numpy2vector(py::buffer_info buff,
                   vector<double> &dest,
                   size_t nx,
                   size_t ny)

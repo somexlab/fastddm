@@ -1,10 +1,10 @@
 // Maintainer: enrico-lattuada
 
 // inclusion guard
-#ifndef __PYIO_H__
-#define __PYIO_H__
+#ifndef __PYCOMM_H__
+#define __PYCOMM_H__
 
-/*! \file pyio.h
+/*! \file pycomm.h
     \brief Declaration of python/C++ communication functions
 */
 
