@@ -64,8 +64,8 @@ py::array_t<double> vector2numpy(vector<double> *vec,
     size_t stride_y = nx * sizeof(double);
     size_t stride_x = sizeof(double);
 
-    return py::array_t<double>({nt, ny, nx}, // shape
+    return py::array_t<double>({nt, ny, nx},                   // shape
                                {stride_t, stride_y, stride_x}, // C-style contiguous strides for double
-                               vec->data(),  // data pointer
+                               vec->data(),                    // data pointer
                                free_when_done);
 }
