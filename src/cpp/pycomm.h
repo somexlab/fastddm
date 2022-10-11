@@ -20,17 +20,6 @@ using namespace std;
 
 // *** code ***
 
-/*! \brief Copy python input to C++ vector
-    \param buff buffer to numpy array
-    \param dest destination vector
-    \param nx   size along x after zero-padding
-    \param ny   size along y after zero-padding
- */
-void numpy2vector(const py::buffer_info buff,
-                  vector<double> &dest,
-                  size_t nx,
-                  size_t ny);
-
 /*! \brief Return C++ vector as numpy array
     \param vec  ponter to vector
     \param nx   output size along x
