@@ -23,8 +23,6 @@ py::array_t<double> dfm_direct(py::array_t<T, py::array::c_style> img_seq,
                                size_t ny,
                                size_t nt)
 {
-    cout << "Inside `dfm_direct`" << endl;
-
     // Allocate workspace vector
     /*
     - Vector needs to be allocated on heap so that on return
@@ -35,7 +33,21 @@ py::array_t<double> dfm_direct(py::array_t<T, py::array::c_style> img_seq,
      */
     vector<double> *workspace = new vector<double>(2 * (nx / 2 + 1) * ny * nt, 0.0);
 
-    //display_vector(workspace, 2 * (nx / 2 + 1), ny, nt);
+    // Copy input to workspace vector
+    auto buff = img_seq.request();  // get pointer to values
+    size_t length = buff.shape[0];  // get length of original input
+    size_t height = buff.shape[1];  // get height of original input
+    size_t width = buff.shape[2];   // get width of original input
+
+    for (size_t t = 0; t < length; t++)
+    {
+        for (size_t y = 0; y < height; y++)
+        {
+            copy(img_seq.data() + t * (height * width) + y * width,
+                 img_seq.data() + t * (height * width) + (y + 1) * width,
+                 workspace->begin() + t * (2 * (nx / 2 + 1) * ny) + y * 2 * (nx / 2 + 1));
+        }
+    }
 
     // Return result to python
     return vector2numpy(workspace, 2 * (nx / 2 + 1), ny, nt);
@@ -47,4 +59,12 @@ py::array_t<double> dfm_direct(py::array_t<T, py::array::c_style> img_seq,
 void export_dfm(py::module &m)
 {
     m.def("dfm_direct", &dfm_direct<double>);
+    m.def("dfm_direct", &dfm_direct<float>);
+    m.def("dfm_direct", &dfm_direct<int64_t>);
+    m.def("dfm_direct", &dfm_direct<int32_t>);
+    m.def("dfm_direct", &dfm_direct<int16_t>);
+    m.def("dfm_direct", &dfm_direct<uint64_t>);
+    m.def("dfm_direct", &dfm_direct<uint32_t>);
+    m.def("dfm_direct", &dfm_direct<uint16_t>);
+    m.def("dfm_direct", &dfm_direct<uint8_t>);
 }
