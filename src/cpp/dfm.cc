@@ -8,6 +8,7 @@
 #include "dfm.h"
 #include "pycomm.h"
 
+#include "helper_fftw.h"
 #include "helper_debug.h"
 
 // *** code ***
@@ -33,11 +34,17 @@ py::array_t<double> dfm_direct(py::array_t<T, py::array::c_style> img_seq,
      */
     vector<double> *workspace = new vector<double>(2 * (nx / 2 + 1) * ny * nt, 0.0);
 
+    // Create the fft2 plan
+    fftw_plan fft2_plan = fft2_create_plan(*workspace,
+                                           nx,
+                                           ny,
+                                           nt);
+
     // Copy input to workspace vector
-    auto buff = img_seq.request();  // get pointer to values
-    size_t length = buff.shape[0];  // get length of original input
-    size_t height = buff.shape[1];  // get height of original input
-    size_t width = buff.shape[2];   // get width of original input
+    auto buff = img_seq.request(); // get pointer to values
+    size_t length = buff.shape[0]; // get length of original input
+    size_t height = buff.shape[1]; // get height of original input
+    size_t width = buff.shape[2];  // get width of original input
 
     for (size_t t = 0; t < length; t++)
     {
@@ -48,6 +55,13 @@ py::array_t<double> dfm_direct(py::array_t<T, py::array::c_style> img_seq,
                  workspace->begin() + t * (2 * (nx / 2 + 1) * ny) + y * 2 * (nx / 2 + 1));
         }
     }
+
+    // execute fft2 plan
+    fftw_execute(fft2_plan);
+
+    // Cleanup before finish
+    fftw_destroy_plan(fft2_plan);
+    fftw_cleanup();
 
     // Return result to python
     return vector2numpy(workspace, 2 * (nx / 2 + 1), ny, nt);
