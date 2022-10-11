@@ -2,6 +2,7 @@ SET(_dfmtoolbox_SOURCES
     cpp/dfm.cc
     cpp/pycomm.cc
     cpp/helper_fftw.cc
+    cpp/helper_dfm.cc
     python/bindings.cc
 )
 
