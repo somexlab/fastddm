@@ -36,7 +36,8 @@ class InstallCMakeLibs(install_lib):
         # We have already built the libraries in the previous build_ext step
         self.skip_build = True
 
-        # Folder where the `baggianalysis` package has been placed by cmake. It is used by self.install
+        # Folder where the `dfmtoolbox` package has been placed by cmake.
+        # It is used by self.install
         self.build_dir = self.distribution.lib_dir
         self.outfiles = self.install()
 
@@ -47,7 +48,8 @@ class InstallCMakeLibs(install_lib):
 
     def get_outputs(self):
         """
-        Overrides the parent class' method. Returns a list of the files copied over by the `run` method 
+        Overrides the parent class' method.
+        Returns a list of the files copied over by the `run` method 
         """
         return self.outfiles
 
@@ -58,7 +60,8 @@ class CMakeBuild(build_ext):
         try:
             out = subprocess.check_output(['cmake', '--version'])
         except OSError:
-            raise RuntimeError("CMake must be installed to build the following extensions: " + ", ".join(e.name for e in self.extensions))
+            raise RuntimeError("CMake must be installed to build the following extensions: " +
+                               ", ".join(e.name for e in self.extensions))
 
         self.cmake_version = LooseVersion(re.search(r'version\s*([\d.]+)', out.decode()).group(1))
 
@@ -97,9 +100,9 @@ class CMakeBuild(build_ext):
                 cpu_cores = int(multiprocessing.cpu_count() / 2)
 
             if self.cmake_version < "3.14.0":
-                native_generator_args += ["-j{}".format(cpu_cores)]
+                native_generator_args += [f"-j{cpu_cores}"]
             else:
-                build_args += ["-j {}".format(cpu_cores)]
+                build_args += [f"-j {cpu_cores}"]
 
         build_args += native_generator_args
 
