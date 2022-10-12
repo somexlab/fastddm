@@ -26,11 +26,26 @@ void copy_vec_with_stride(vector<double> &src,
                           size_t start,
                           size_t stride);
 
-/*! \brief Keep real part of vector
+/*! \brief Make full image structure function from raw output
     \param vec  vector
-    \param N    number of elements
+    \param nx   number of fft nodes in x direction
+    \param ny   number of fft nodes in y direction
+    \param nt   number of frames
  */
-void complex2real(vector<double> &vec,
-                  size_t N);
+void make_full_isf(vector<double> &vec,
+                   size_t nx,
+                   size_t ny,
+                   size_t nt);
+
+/*! \brief Shift fft2 elements in vector (swap quadrants)
+    \param vec  vector
+    \param nx   number of fft nodes in x direction
+    \param ny   number of fft nodes in y direction
+    \param nt   number of frames
+ */
+void fft2_shift(vector<double> &vec,
+                size_t nx,
+                size_t ny,
+                size_t nt);
 
 #endif

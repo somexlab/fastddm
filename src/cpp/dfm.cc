@@ -25,7 +25,7 @@ py::array_t<double> dfm_direct(py::array_t<T, py::array::c_style> img_seq,
                                size_t ny,
                                size_t nt)
 {
-    // Allocate workspace vector
+    // ***Allocate workspace vector
     /*
     - Vector needs to be allocated on heap so that on return
       `vector2numpy` can take ownership
@@ -33,15 +33,16 @@ py::array_t<double> dfm_direct(py::array_t<T, py::array::c_style> img_seq,
       so the size of one fft2 output is ny*(nx//2 + 1) complex
       doubles [the input needs to be twice as large]
      */
-    vector<double> *workspace = new vector<double>(2 * (nx / 2 + 1) * ny * nt, 0.0);
+    size_t _nx = nx / 2 + 1;
+    vector<double> *workspace = new vector<double>(2 * _nx * ny * nt, 0.0);
 
-    // Create the fft2 plan
+    // ***Create the fft2 plan
     fftw_plan fft2_plan = fft2_create_plan(*workspace,
                                            nx,
                                            ny,
                                            nt);
 
-    // Copy input to workspace vector
+    // ***Copy input to workspace vector
     auto buff = img_seq.request(); // get pointer to values
     size_t length = buff.shape[0]; // get length of original input
     size_t height = buff.shape[1]; // get height of original input
@@ -53,27 +54,27 @@ py::array_t<double> dfm_direct(py::array_t<T, py::array::c_style> img_seq,
         {
             copy(img_seq.data() + t * (height * width) + y * width,
                  img_seq.data() + t * (height * width) + (y + 1) * width,
-                 workspace->begin() + t * (2 * (nx / 2 + 1) * ny) + y * 2 * (nx / 2 + 1));
+                 workspace->begin() + t * (2 * _nx * ny) + y * 2 * _nx);
         }
     }
 
-    // Execute fft2 plan
+    // ***Execute fft2 plan
     fftw_execute(fft2_plan);
 
-    // Normalize fft2
-    // Use sqrt(num_pixels) to preserve parseval theorem
+    // ***Normalize fft2
+    // use sqrt(num_pixels) to preserve Parseval theorem
     double norm_fact = sqrt((double)(nx * ny));
-    for (size_t ii = 0; ii < 2 * (nx / 2 + 1) * ny * nt; ii++)
+    for (size_t ii = 0; ii < 2 * _nx * ny * nt; ii++)
     {
         (*workspace)[ii] /= norm_fact;
     }
 
-    // Compute the image structure function
+    // ***Compute the image structure function
     // initialize helper vector
     vector<double> tmp(lags.size(), 0.0);
 
     // loop over the q values
-    for (size_t q = 0; q < nx * ny; q++)
+    for (size_t q = 0; q < _nx * ny; q++)
     {
         // zero out the helper vector
         fill(tmp.begin(), tmp.end(), 0);
@@ -90,10 +91,10 @@ py::array_t<double> dfm_direct(py::array_t<T, py::array::c_style> img_seq,
                 // compute the power spectrum of the difference of pixel at time t and time t+dt, i.e.
                 // [(a+ib) - (c+id)] * conj[(a+ib) - (c+id)] = (a-c)^2+(b-d)^2
                 // notice fft is complex, so the stride between two consecutive pixels is two
-                double a = (*workspace)[2 * ((t + dt) * (nx * ny) + q)];
-                double b = (*workspace)[2 * ((t + dt) * (nx * ny) + q) + 1];
-                double c = (*workspace)[2 * ((t) * (nx * ny) + q)];
-                double d = (*workspace)[2 * ((t) * (nx * ny) + q) + 1];
+                double a = (*workspace)[2 * ((t + dt) * (_nx * ny) + q)];
+                double b = (*workspace)[2 * ((t + dt) * (_nx * ny) + q) + 1];
+                double c = (*workspace)[2 * ((t) * (_nx * ny) + q)];
+                double d = (*workspace)[2 * ((t) * (_nx * ny) + q) + 1];
 
                 tmp[_dt] += (a - c) * (a - c) + (b - d) * (b - d);
             }
@@ -106,12 +107,29 @@ py::array_t<double> dfm_direct(py::array_t<T, py::array::c_style> img_seq,
         copy_vec_with_stride(tmp,
                              *workspace,
                              2 * q,
-                             2 * (nx * ny));
+                             2 * (_nx * ny));
     }
 
-    // keep real part only (stride vector from 2 to 1)
-    complex2real(*workspace,
-                 nx * ny * lags.size());
+    // Make full image structure function (keep real part and copy symmetric part)
+    make_full_isf(*workspace,
+                  nx,
+                  ny,
+                  nt);
+
+    // FFTshift before output
+    fft2_shift(*workspace,
+               nx,
+               ny,
+               nt);
+
+    cout << "After shift" << endl << endl;
+    display_vector(workspace,nx,ny,nt);
+
+    // ***Shrink workspace if needed
+    // the full size of the image structure function is
+    // nx * ny * #(lags)
+    workspace->resize(nx * ny * lags.size());
+    workspace->shrink_to_fit();
 
     // Cleanup before finish
     fftw_destroy_plan(fft2_plan);
@@ -120,7 +138,7 @@ py::array_t<double> dfm_direct(py::array_t<T, py::array::c_style> img_seq,
     tmp.shrink_to_fit();
 
     // Return result to python
-    return vector2numpy(workspace, 2 * (nx / 2 + 1), ny, nt);
+    return vector2numpy(workspace, nx, ny, nt);
 }
 
 /*!
