@@ -114,16 +114,16 @@ py::array_t<double> dfm_direct(py::array_t<T, py::array::c_style> img_seq,
     make_full_isf(*workspace,
                   nx,
                   ny,
-                  nt);
+                  lags.size());
 
     // FFTshift before output
     fft2_shift(*workspace,
                nx,
                ny,
-               nt);
+               lags.size());
 
     cout << "After shift" << endl << endl;
-    display_vector(workspace,nx,ny,nt);
+    display_vector(workspace,nx,ny,lags.size());
 
     // ***Shrink workspace if needed
     // the full size of the image structure function is
@@ -138,7 +138,7 @@ py::array_t<double> dfm_direct(py::array_t<T, py::array::c_style> img_seq,
     tmp.shrink_to_fit();
 
     // Return result to python
-    return vector2numpy(workspace, nx, ny, nt);
+    return vector2numpy(workspace, nx, ny, lags.size());
 }
 
 /*!
