@@ -142,6 +142,54 @@ py::array_t<double> dfm_direct(py::array_t<T, py::array::c_style> img_seq,
 }
 
 /*!
+    Compute the image structure function in fft mode
+    using the Wiener-Khinchin theorem.
+ */
+template <typename T>
+py::array_t<double> dfm_fft(py::array_t<T, py::array::c_style> img_seq,
+                               vector<unsigned int> lags,
+                               size_t nx,
+                               size_t ny,
+                               size_t nt)
+{
+    // ***Allocate workspace vector
+    /*
+    - Vector needs to be allocated on heap so that on return
+      `vector2numpy` can take ownership
+    - We need to make sure that the fft2 r2c fits in the array,
+      so the size of one fft2 output is ny*(nx//2 + 1) complex
+      doubles [the input needs to be twice as large]
+     */
+    size_t _nx = nx / 2 + 1;
+    vector<double> *workspace = new vector<double>(2 * _nx * ny * nt, 0.0);
+
+    // ***Create the fft2 plan
+    fftw_plan fft2_plan = fft2_create_plan(*workspace,
+                                           nx,
+                                           ny,
+                                           nt);
+
+    // ***Copy input to workspace vector
+    auto buff = img_seq.request(); // get pointer to values
+    size_t length = buff.shape[0]; // get length of original input
+    size_t height = buff.shape[1]; // get height of original input
+    size_t width = buff.shape[2];  // get width of original input
+
+    for (size_t t = 0; t < length; t++)
+    {
+        for (size_t y = 0; y < height; y++)
+        {
+            copy(img_seq.data() + t * (height * width) + y * width,
+                 img_seq.data() + t * (height * width) + (y + 1) * width,
+                 workspace->begin() + t * (2 * _nx * ny) + y * 2 * _nx);
+        }
+    }
+
+    // Return result to python
+    return vector2numpy(workspace, nx, ny, lags.size());
+}
+
+/*!
     Export dfm functions to python.
  */
 void export_dfm(py::module &m)
