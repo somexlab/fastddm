@@ -25,28 +25,28 @@ using namespace std;
     \param lags     lags to be analyzed
     \param nx       number of fft nodes in x direction
     \param ny       number of fft nodes in y direction
-    \param nt       number of fft nodes in z direction
  */
 template <typename T>
 py::array_t<double> dfm_direct(py::array_t<T, py::array::c_style> img_seq,
                                vector<unsigned int> lags,
                                size_t nx,
-                               size_t ny,
-                               size_t nt);
+                               size_t ny);
 
 /*! \brief Compute ISF in fft mode using Wiener-Khinchin theorem
-    \param img_seq  numpy array containing the image sequence
-    \param lags     lags to be analyzed
-    \param nx       number of fft nodes in x direction
-    \param ny       number of fft nodes in y direction
-    \param nt       number of fft nodes in z direction
+    \param img_seq      numpy array containing the image sequence
+    \param lags         lags to be analyzed
+    \param nx           number of fft nodes in x direction
+    \param ny           number of fft nodes in y direction
+    \param nt           number of fft nodes in t direction
+    \param bundle_size  number of fft's in the bundle
  */
 template <typename T>
 py::array_t<double> dfm_fft(py::array_t<T, py::array::c_style> img_seq,
                             vector<unsigned int> lags,
                             size_t nx,
                             size_t ny,
-                            size_t nt);
+                            size_t nt,
+                            size_t bundle_size);
 
 /*! \brief Export dfm functions to python
     \param m    Module

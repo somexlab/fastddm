@@ -22,9 +22,14 @@ template <typename T>
 py::array_t<double> dfm_direct(py::array_t<T, py::array::c_style> img_seq,
                                vector<unsigned int> lags,
                                size_t nx,
-                               size_t ny,
-                               size_t nt)
+                               size_t ny)
 {
+    // ***Get input array dimensions
+    auto buff = img_seq.request(); // get pointer to values
+    size_t length = buff.shape[0]; // get length of original input
+    size_t height = buff.shape[1]; // get height of original input
+    size_t width = buff.shape[2];  // get width of original input
+
     // ***Allocate workspace vector
     /*
     - Vector needs to be allocated on heap so that on return
@@ -34,20 +39,15 @@ py::array_t<double> dfm_direct(py::array_t<T, py::array::c_style> img_seq,
       doubles [the input needs to be twice as large]
      */
     size_t _nx = nx / 2 + 1;
-    vector<double> *workspace = new vector<double>(2 * _nx * ny * nt, 0.0);
+    vector<double> *workspace = new vector<double>(2 * _nx * ny * length, 0.0);
 
     // ***Create the fft2 plan
     fftw_plan fft2_plan = fft2_create_plan(*workspace,
                                            nx,
                                            ny,
-                                           nt);
+                                           length);
 
     // ***Copy input to workspace vector
-    auto buff = img_seq.request(); // get pointer to values
-    size_t length = buff.shape[0]; // get length of original input
-    size_t height = buff.shape[1]; // get height of original input
-    size_t width = buff.shape[2];  // get width of original input
-
     for (size_t t = 0; t < length; t++)
     {
         for (size_t y = 0; y < height; y++)
@@ -64,7 +64,7 @@ py::array_t<double> dfm_direct(py::array_t<T, py::array::c_style> img_seq,
     // ***Normalize fft2
     // use sqrt(num_pixels) to preserve Parseval theorem
     double norm_fact = sqrt((double)(nx * ny));
-    for (size_t ii = 0; ii < 2 * _nx * ny * nt; ii++)
+    for (size_t ii = 0; ii < 2 * _nx * ny * length; ii++)
     {
         (*workspace)[ii] /= norm_fact;
     }
@@ -86,7 +86,7 @@ py::array_t<double> dfm_direct(py::array_t<T, py::array::c_style> img_seq,
             size_t dt = lags[_dt];
 
             // loop over time
-            for (size_t t = 0; t < nt - dt; t++)
+            for (size_t t = 0; t < length - dt; t++)
             {
                 // compute the power spectrum of the difference of pixel at time t and time t+dt, i.e.
                 // [(a+ib) - (c+id)] * conj[(a+ib) - (c+id)] = (a-c)^2+(b-d)^2
@@ -100,7 +100,7 @@ py::array_t<double> dfm_direct(py::array_t<T, py::array::c_style> img_seq,
             }
 
             // normalize
-            tmp[_dt] /= (double)(nt - dt);
+            tmp[_dt] /= (double)(length - dt);
         }
 
         // copy the values back in the vector
@@ -122,8 +122,9 @@ py::array_t<double> dfm_direct(py::array_t<T, py::array::c_style> img_seq,
                ny,
                lags.size());
 
-    cout << "After shift" << endl << endl;
-    display_vector(workspace,nx,ny,lags.size());
+    cout << "After shift" << endl
+         << endl;
+    display_vector(workspace, nx, ny, lags.size());
 
     // ***Shrink workspace if needed
     // the full size of the image structure function is
@@ -144,14 +145,28 @@ py::array_t<double> dfm_direct(py::array_t<T, py::array::c_style> img_seq,
 /*!
     Compute the image structure function in fft mode
     using the Wiener-Khinchin theorem.
+
+    Only (bundle_size) fft's in the t direction are computed
+    simultaneously as a tradeoff between memory consumption
+    and execution speed.
+
+    Notice that nt must be at least 2*length to avoid
+    circular correlation.
  */
 template <typename T>
 py::array_t<double> dfm_fft(py::array_t<T, py::array::c_style> img_seq,
-                               vector<unsigned int> lags,
-                               size_t nx,
-                               size_t ny,
-                               size_t nt)
+                            vector<unsigned int> lags,
+                            size_t nx,
+                            size_t ny,
+                            size_t nt,
+                            size_t bundle_size)
 {
+    // ***Get input array dimensions
+    auto buff = img_seq.request(); // get pointer to values
+    size_t length = buff.shape[0]; // get length of original input
+    size_t height = buff.shape[1]; // get height of original input
+    size_t width = buff.shape[2];  // get width of original input
+
     // ***Allocate workspace vector
     /*
     - Vector needs to be allocated on heap so that on return
@@ -161,32 +176,37 @@ py::array_t<double> dfm_fft(py::array_t<T, py::array::c_style> img_seq,
       doubles [the input needs to be twice as large]
      */
     size_t _nx = nx / 2 + 1;
-    vector<double> *workspace = new vector<double>(2 * _nx * ny * nt, 0.0);
+    vector<double> *workspace1 = new vector<double>(2 * _nx * ny * length, 0.0);
+    vector<double> *workspace2 = new vector<double>(bundle_size * nt, 0.0);
 
     // ***Create the fft2 plan
-    fftw_plan fft2_plan = fft2_create_plan(*workspace,
+    fftw_plan fft2_plan = fft2_create_plan(*workspace1,
                                            nx,
                                            ny,
-                                           nt);
+                                           length);
+
+    // ***Create the fft and ifft plans
+    fftw_plan fft_plan = fft_create_plan(*workspace2,
+                                         nt,
+                                         bundle_size);
+
+    fftw_plan ifft_plan = ifft_create_plan(*workspace2,
+                                           nt,
+                                           bundle_size);
 
     // ***Copy input to workspace vector
-    auto buff = img_seq.request(); // get pointer to values
-    size_t length = buff.shape[0]; // get length of original input
-    size_t height = buff.shape[1]; // get height of original input
-    size_t width = buff.shape[2];  // get width of original input
-
     for (size_t t = 0; t < length; t++)
     {
         for (size_t y = 0; y < height; y++)
         {
             copy(img_seq.data() + t * (height * width) + y * width,
                  img_seq.data() + t * (height * width) + (y + 1) * width,
-                 workspace->begin() + t * (2 * _nx * ny) + y * 2 * _nx);
+                 workspace1->begin() + t * (2 * _nx * ny) + y * 2 * _nx);
         }
     }
 
     // Return result to python
-    return vector2numpy(workspace, nx, ny, lags.size());
+    return vector2numpy(workspace1, nx, ny, lags.size());
 }
 
 /*!
