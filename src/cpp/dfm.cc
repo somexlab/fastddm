@@ -216,6 +216,20 @@ py::array_t<double> dfm_fft(py::array_t<T, py::array::c_style> img_seq,
         (*workspace1)[ii] /= norm_fact;
     }
 
+    // ***Shrink workspace if needed
+    // the full size of the image structure function is
+    // nx * ny * #(lags)
+    workspace1->resize(nx * ny * lags.size());
+    workspace1->shrink_to_fit();
+
+    // Cleanup before finish
+    fftw_destroy_plan(fft2_plan);
+    fftw_destroy_plan(fft_plan);
+    fftw_destroy_plan(ifft_plan);
+    fftw_cleanup();
+    workspace2->clear();
+    workspace2->shrink_to_fit();
+
     // Return result to python
     return vector2numpy(workspace1, nx, ny, lags.size());
 }
