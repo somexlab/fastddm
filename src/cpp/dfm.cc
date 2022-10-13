@@ -205,6 +205,17 @@ py::array_t<double> dfm_fft(py::array_t<T, py::array::c_style> img_seq,
         }
     }
 
+    // ***Execute fft2 plan
+    fftw_execute(fft2_plan);
+
+    // ***Normalize fft2
+    // use sqrt(num_pixels) to preserve Parseval theorem
+    double norm_fact = sqrt((double)(nx * ny));
+    for (size_t ii = 0; ii < 2 * _nx * ny * length; ii++)
+    {
+        (*workspace1)[ii] /= norm_fact;
+    }
+
     // Return result to python
     return vector2numpy(workspace1, nx, ny, lags.size());
 }
