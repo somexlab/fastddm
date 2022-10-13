@@ -223,4 +223,13 @@ void export_dfm(py::module &m)
     m.def("dfm_direct", &dfm_direct<uint32_t>);
     m.def("dfm_direct", &dfm_direct<uint16_t>);
     m.def("dfm_direct", &dfm_direct<uint8_t>);
+    m.def("dfm_fft", &dfm_fft<double>);
+    m.def("dfm_fft", &dfm_fft<float>);
+    m.def("dfm_fft", &dfm_fft<int64_t>);
+    m.def("dfm_fft", &dfm_fft<int32_t>);
+    m.def("dfm_fft", &dfm_fft<int16_t>);
+    m.def("dfm_fft", &dfm_fft<uint64_t>);
+    m.def("dfm_fft", &dfm_fft<uint32_t>);
+    m.def("dfm_fft", &dfm_fft<uint16_t>);
+    m.def("dfm_fft", &dfm_fft<uint8_t>);
 }
