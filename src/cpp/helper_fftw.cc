@@ -84,9 +84,9 @@ fftw_plan fft_create_plan(vector<double> &input,
 /*
     Create the fftw plan for the ifft of input.
  */
-fftw_plan fft_create_plan(vector<double> &input,
-                          size_t nt,
-                          size_t N)
+fftw_plan ifft_create_plan(vector<double> &input,
+                           size_t nt,
+                           size_t N)
 {
     // Define parameters
     int rank = 1;                      // The rank of the fft (1 = fft)
