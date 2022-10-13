@@ -122,10 +122,6 @@ py::array_t<double> dfm_direct(py::array_t<T, py::array::c_style> img_seq,
                ny,
                lags.size());
 
-    cout << "After shift" << endl
-         << endl;
-    display_vector(workspace, nx, ny, lags.size());
-
     // ***Shrink workspace if needed
     // the full size of the image structure function is
     // nx * ny * #(lags)
@@ -174,10 +170,11 @@ py::array_t<double> dfm_fft(py::array_t<T, py::array::c_style> img_seq,
     - We need to make sure that the fft2 r2c fits in the array,
       so the size of one fft2 output is ny*(nx//2 + 1) complex
       doubles [the input needs to be twice as large]
+    - workspace2 will contain complex values, so we need 2* the size
      */
     size_t _nx = nx / 2 + 1;
     vector<double> *workspace1 = new vector<double>(2 * _nx * ny * length, 0.0);
-    vector<double> *workspace2 = new vector<double>(bundle_size * nt, 0.0);
+    vector<double> *workspace2 = new vector<double>(2 * bundle_size * nt, 0.0);
 
     // ***Create the fft2 plan
     fftw_plan fft2_plan = fft2_create_plan(*workspace1,
@@ -215,6 +212,91 @@ py::array_t<double> dfm_fft(py::array_t<T, py::array::c_style> img_seq,
     {
         (*workspace1)[ii] /= norm_fact;
     }
+
+    // ***Compute the image structure function
+    // initialize helper vector used in average part
+    vector<double> tmp(bundle_size, 0.0);
+    for (size_t i = 0; i < (_nx * ny - 1) / bundle_size + 1; i++)
+    {
+        // Step1: correlation part
+        // copy values to workspace2 for fft
+        for (size_t q = 0; q < bundle_size; q++)
+        {
+            for (size_t t = 0; t < length; t++)
+            {
+                (*workspace2)[2 * (q * nt + t)] = (*workspace1)[2 * (t * _nx * ny + i * bundle_size + q)];         // real
+                (*workspace2)[2 * (q * nt + t) + 1] = (*workspace1)[2 * (t * _nx * ny + i * bundle_size + q) + 1]; // imag
+            }
+            // set other values to 0
+            for (size_t t = length; t < nt; t++)
+            {
+                (*workspace2)[2 * (q * nt + t)] = 0.0;
+                (*workspace2)[2 * (q * nt + t) + 1] = 0.0;
+            }
+        }
+
+        // compute the fft
+        fftw_execute(fft_plan);
+
+        // compute power spectrum of fft
+        for (size_t j = 0; j < bundle_size * nt; j++)
+        {
+            (*workspace2)[2 * j] = (*workspace2)[2 * j] * (*workspace2)[2 * j] + (*workspace2)[2 * j + 1] * (*workspace2)[2 * j + 1]; // real
+            // also divide by nt to normalize fft
+            (*workspace2)[2 * j] /= (double)nt;
+            (*workspace2)[2 * j + 1] = 0.0; // imag
+        }
+
+        // compute ifft
+        fftw_execute(ifft_plan);
+
+        // Step2: average part
+        size_t idx = lags.size() - 1;
+        for (size_t t = 0; t < length; t++)
+        {
+            for (size_t q = 0; q < bundle_size; q++)
+            {
+                double a = (*workspace1)[2 * (t * _nx * ny + i * bundle_size + q)];     // real
+                double b = (*workspace1)[2 * (t * _nx * ny + i * bundle_size + q) + 1]; // imag
+                tmp[q] += a * a + b * b;
+                a = (*workspace1)[2 * ((length - t - 1) * _nx * ny + i * bundle_size + q)];     // real
+                b = (*workspace1)[2 * ((length - t - 1) * _nx * ny + i * bundle_size + q) + 1]; // imag
+                tmp[q] += a * a + b * b;
+            }
+
+            // add contribution only if delay in list
+            if (length - t - 1 == lags[idx])
+            {
+                for (size_t q = 0; q < bundle_size; ++q)
+                {
+                    (*workspace1)[2 * (idx * _nx * ny + i * bundle_size + q)] = tmp[q] - 2 * (*workspace2)[2 * (q * nt + lags[idx])];
+                    // also normalize output
+                    (*workspace1)[2 * (idx * _nx * ny + i * bundle_size + q)] /= (double)(length - lags[idx]);
+                }
+                if (idx == 0)
+                {
+                    fill(tmp.begin(), tmp.end(), 0.0);
+                    break;
+                }
+                else
+                {
+                    idx--;
+                }
+            }
+        }
+    }
+
+    // Make full image structure function (keep real part and copy symmetric part)
+    make_full_isf(*workspace1,
+                  nx,
+                  ny,
+                  lags.size());
+
+    // FFTshift before output
+    fft2_shift(*workspace1,
+               nx,
+               ny,
+               lags.size());
 
     // ***Shrink workspace if needed
     // the full size of the image structure function is
