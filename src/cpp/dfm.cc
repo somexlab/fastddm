@@ -269,9 +269,9 @@ py::array_t<double> dfm_fft(py::array_t<T, py::array::c_style> img_seq,
             {
                 for (size_t q = 0; q < bundle_size; ++q)
                 {
-                    (*workspace1)[2 * (idx * _nx * ny + i * bundle_size + q)] = tmp[q] - 2 * (*workspace2)[2 * (q * nt + lags[idx])];
+                    (*workspace2)[2 * (q * nt + (size_t)(lags[idx]))] = tmp[q] - 2 * (*workspace2)[2 * (q * nt + (size_t)(lags[idx]))];
                     // also normalize output
-                    (*workspace1)[2 * (idx * _nx * ny + i * bundle_size + q)] /= (double)(length - lags[idx]);
+                    (*workspace2)[2 * (q * nt + (size_t)(lags[idx]))] /= (double)(length - lags[idx]);
                 }
                 if (idx == 0)
                 {
@@ -282,6 +282,15 @@ py::array_t<double> dfm_fft(py::array_t<T, py::array::c_style> img_seq,
                 {
                     idx--;
                 }
+            }
+        }
+
+        // Step3: copy results to workspace1
+        for (size_t idx = 0; idx < lags.size(); idx++)
+        {
+            for (size_t q = 0; q < bundle_size; q++)
+            {
+                (*workspace1)[2 * (idx * _nx * ny + i * bundle_size + q)] = (*workspace2)[2 * (q * nt + (size_t)(lags[idx]))];
             }
         }
     }
@@ -311,6 +320,8 @@ py::array_t<double> dfm_fft(py::array_t<T, py::array::c_style> img_seq,
     fftw_cleanup();
     workspace2->clear();
     workspace2->shrink_to_fit();
+    tmp.clear();
+    tmp.shrink_to_fit();
 
     // Return result to python
     return vector2numpy(workspace1, nx, ny, lags.size());
