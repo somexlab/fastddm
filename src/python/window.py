@@ -23,7 +23,7 @@ def blackman(shape):
     Returns
     -------
     numpy.ndarray
-        The Blackman window.
+        A Blackman window.
     """
 
     a = [0.42, 0.50, 0.08]
@@ -66,7 +66,7 @@ def blackman_exact(shape):
     Returns
     -------
     numpy.ndarray
-        The exact Blackman window.
+        An exact Blackman window.
     """
 
     a = [7938/18608, 9240/18608, 1430/18608]
@@ -110,7 +110,7 @@ def blackman_harris(shape):
     Returns
     -------
     numpy.ndarray
-        The exact Blackman window.
+        A Blackman-Harris window.
     """
 
     a = [0.3635819, 0.4891775, 0.1365995, 0.0106411]
