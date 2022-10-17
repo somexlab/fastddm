@@ -71,6 +71,73 @@ void fft2_shift(vector<double> &vec,
                 size_t nt)
 {
     // fftshift array over 2nd and 3rd axes
+    // shift over x
+    size_t c = nx / 2;
+    if (nx % 2 == 0)
+    {
+        for (size_t t = 0; t < nt; t++)
+        {
+            for (size_t y = 0; y < ny; y++)
+            {
+                for (size_t x = 0; x < c; x++)
+                {
+                    swap(vec[t * ny * nx + y * nx + x], vec[t * ny * nx + y * nx + x + c]);
+                }
+            }
+        }
+    }
+    else
+    {
+        double tmp = 0.0;
+        for (size_t t = 0; t < nt; t++)
+        {
+            for (size_t y = 0; y < ny; y++)
+            {
+                tmp = vec[t * ny * nx + y * nx];
+                for (size_t x = 0; x < c; x++)
+                {
+                    vec[t * ny * nx + y * nx + x] = vec[t * ny * nx + y * nx + x + c + 1];
+                    vec[t * ny * nx + y * nx + x + c + 1] = vec[t * ny * nx + y * nx + x + 1];
+                }
+                vec[t * ny * nx + y * nx + c] = tmp;
+            }
+        }
+    }
+
+    // shift over y
+    c = ny / 2;
+    if (ny % 2 == 0)
+    {
+        for (size_t t = 0; t < nt; t++)
+        {
+            for (size_t x = 0; x < nx; x++)
+            {
+                for (size_t y = 0; y < c; y++)
+                {
+                    swap(vec[t * ny * nx + y * nx + x], vec[t * ny * nx + (y + c) * nx + x]);
+                }
+            }
+        }
+    }
+    else
+    {
+        double tmp = 0.0;
+        for (size_t t = 0; t < nt; t++)
+        {
+            for (size_t x = 0; x < nx; x++)
+            {
+                tmp = vec[t * ny * nx + x];
+                for (size_t y = 0; y < c; y++)
+                {
+                    vec[t * ny * nx + y * nx + x] = vec[t * ny * nx + (y + c + 1) * nx + x];
+                    vec[t * ny * nx + (y + c + 1) * nx + x] = vec[t * ny * nx + (y + 1) * nx + x];
+                }
+                vec[t * ny * nx + c * nx + x] = tmp;
+            }
+        }
+    }
+    /*
+    // fftshift array over 2nd and 3rd axes
     for (size_t t = 0; t < nt; ++t)
     {
         // shift over x
@@ -119,4 +186,5 @@ void fft2_shift(vector<double> &vec,
             }
         }
     }
+     */
 }
