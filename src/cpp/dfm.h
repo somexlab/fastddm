@@ -35,6 +35,8 @@ py::array_t<double> dfm_direct(py::array_t<T, py::array::c_style> img_seq,
                                size_t ny,
                                string &logs);
 
+                               
+
 /*! \brief Compute ISF in fft mode using Wiener-Khinchin theorem
     \param img_seq      numpy array containing the image sequence
     \param lags         lags to be analyzed

@@ -28,6 +28,8 @@ py::array_t<double> dfm_direct(py::array_t<T, py::array::c_style> img_seq,
                                size_t ny,
                                string &logs)
 {
+    string _logs = "";
+
     // ***Get input array dimensions
     auto buff = img_seq.request(); // get pointer to values
     size_t length = buff.shape[0]; // get length of original input
@@ -49,7 +51,7 @@ py::array_t<double> dfm_direct(py::array_t<T, py::array::c_style> img_seq,
 
     auto t1 = high_resolution_clock::now(); // stop
     duration<double> dt = duration_cast<duration<double>>(t1 - t0);
-    logs += "Workspace allocation (s):" + endl + to_string(dt.count()) + endl + endl;
+    _logs += "Workspace allocation (s):\n" + to_string(dt.count()) + "\n\n";
 
     // ***Create the fft2 plan
     t0 = high_resolution_clock::now(); // start
@@ -61,7 +63,7 @@ py::array_t<double> dfm_direct(py::array_t<T, py::array::c_style> img_seq,
 
     t1 = high_resolution_clock::now(); // stop
     dt = duration_cast<duration<double>>(t1 - t0);
-    logs += "FFT2 plan creation (s):" + endl + to_string(dt.count()) + endl + endl;
+    _logs += "FFT2 plan creation (s):\n" + to_string(dt.count()) + "\n\n";
 
     // ***Copy input to workspace vector
     t0 = high_resolution_clock::now(); // start
@@ -78,7 +80,7 @@ py::array_t<double> dfm_direct(py::array_t<T, py::array::c_style> img_seq,
 
     t1 = high_resolution_clock::now(); // stop
     dt = duration_cast<duration<double>>(t1 - t0);
-    logs += "Input copy (s):" + endl + to_string(dt.count()) + endl + endl;
+    _logs += "Input copy (s):\n" + to_string(dt.count()) + "\n\n";
 
     // ***Execute fft2 plan
     t0 = high_resolution_clock::now(); // start
@@ -95,7 +97,7 @@ py::array_t<double> dfm_direct(py::array_t<T, py::array::c_style> img_seq,
 
     t1 = high_resolution_clock::now(); // stop
     dt = duration_cast<duration<double>>(t1 - t0);
-    logs += "FFT2 execution (s):" + endl + to_string(dt.count()) + endl + endl;
+    _logs += "FFT2 execution (s):\n" + to_string(dt.count()) + "\n\n";
 
     // ***Compute the image structure function
     t0 = high_resolution_clock::now(); // start
@@ -141,8 +143,9 @@ py::array_t<double> dfm_direct(py::array_t<T, py::array::c_style> img_seq,
 
     t1 = high_resolution_clock::now(); // stop
     dt = duration_cast<duration<double>>(t1 - t0);
-    logs += "ISF calculation (s):" + endl + to_string(dt.count()) + endl + endl;
+    _logs += "ISF calculation (s):\n" + to_string(dt.count()) + "\n\n";
 
+    /*
     // Make full image structure function (keep real part and copy symmetric part)
     t0 = high_resolution_clock::now(); // start
 
@@ -151,9 +154,9 @@ py::array_t<double> dfm_direct(py::array_t<T, py::array::c_style> img_seq,
                   ny,
                   lags.size());
 
-    t1 = high_resolution_clock::now();  // stop
+    t1 = high_resolution_clock::now(); // stop
     dt = duration_cast<duration<double>>(t1 - t0);
-    logs += "Conversion to full ISF (s):" + endl + to_string(dt.count()) + endl + endl;
+    logs += "Conversion to full ISF (s):\n" + to_string(dt.count()) + "\n\n";
 
     // FFTshift before output
     t0 = high_resolution_clock::now(); // start
@@ -163,9 +166,22 @@ py::array_t<double> dfm_direct(py::array_t<T, py::array::c_style> img_seq,
                ny,
                lags.size());
 
-    t1 = high_resolution_clock::now();  // stop
+    t1 = high_resolution_clock::now(); // stop
     dt = duration_cast<duration<double>>(t1 - t0);
-    logs += "FFTshift ISF (s):" + endl + to_string(dt.count()) + endl + endl;
+    logs += "FFTshift ISF (s):\n" + to_string(dt.count()) + "\n\n";
+     */
+
+    // Convert raw output to full and shifted ISF
+    t0 = high_resolution_clock::now(); // start
+
+    make_full_shifted_isf(*workspace,
+                          nx,
+                          ny,
+                          lags.size());
+
+    t1 = high_resolution_clock::now(); // stop
+    dt = duration_cast<duration<double>>(t1 - t0);
+    _logs += "Conversion to full ISF (s):\n" + to_string(dt.count()) + "\n\n";
 
     // ***Shrink workspace if needed
     t0 = high_resolution_clock::now(); // start
@@ -181,9 +197,11 @@ py::array_t<double> dfm_direct(py::array_t<T, py::array::c_style> img_seq,
     tmp.clear();
     tmp.shrink_to_fit();
 
-    t1 = high_resolution_clock::now();  // stop
+    t1 = high_resolution_clock::now(); // stop
     dt = duration_cast<duration<double>>(t1 - t0);
-    logs += "Garbage cleaning (s):" + endl + to_string(dt.count()) + endl + endl;
+    _logs += "Garbage cleaning (s):\n" + to_string(dt.count()) + "\n\n";
+
+    _logs.clear();
 
     // Return result to python
     return vector2numpy(workspace, nx, ny, lags.size());
@@ -209,6 +227,8 @@ py::array_t<double> dfm_fft(py::array_t<T, py::array::c_style> img_seq,
                             size_t bundle_size,
                             string &logs)
 {
+    string _logs = "";
+
     // ***Get input array dimensions
     auto buff = img_seq.request(); // get pointer to values
     size_t length = buff.shape[0]; // get length of original input
@@ -229,10 +249,10 @@ py::array_t<double> dfm_fft(py::array_t<T, py::array::c_style> img_seq,
     size_t _nx = nx / 2 + 1;
     vector<double> *workspace1 = new vector<double>(2 * _nx * ny * length, 0.0);
     vector<double> *workspace2 = new vector<double>(2 * bundle_size * nt, 0.0);
-    
+
     auto t1 = high_resolution_clock::now(); // stop
     duration<double> dt = duration_cast<duration<double>>(t1 - t0);
-    logs += "Workspace allocation (s):" + endl + to_string(dt.count()) + endl + endl;
+    _logs += "Workspace allocation (s):\n" + to_string(dt.count()) + "\n\n";
 
     // ***Create the fft2 plan
     t0 = high_resolution_clock::now(); // start
@@ -242,9 +262,9 @@ py::array_t<double> dfm_fft(py::array_t<T, py::array::c_style> img_seq,
                                            ny,
                                            length);
 
-    auto t1 = high_resolution_clock::now(); // stop
-    duration<double> dt = duration_cast<duration<double>>(t1 - t0);
-    logs += "FFT2 plan creation (s):" + endl + to_string(dt.count()) + endl + endl;
+    t1 = high_resolution_clock::now(); // stop
+    dt = duration_cast<duration<double>>(t1 - t0);
+    _logs += "FFT2 plan creation (s):\n" + to_string(dt.count()) + "\n\n";
 
     // ***Create the fft and ifft plans
     t0 = high_resolution_clock::now(); // start
@@ -253,9 +273,9 @@ py::array_t<double> dfm_fft(py::array_t<T, py::array::c_style> img_seq,
                                          nt,
                                          bundle_size);
 
-    auto t1 = high_resolution_clock::now(); // stop
-    duration<double> dt = duration_cast<duration<double>>(t1 - t0);
-    logs += "FFT plan creation (s):" + endl + to_string(dt.count()) + endl + endl;
+    t1 = high_resolution_clock::now(); // stop
+    dt = duration_cast<duration<double>>(t1 - t0);
+    _logs += "FFT plan creation (s):\n" + to_string(dt.count()) + "\n\n";
 
     t0 = high_resolution_clock::now(); // start
 
@@ -263,9 +283,9 @@ py::array_t<double> dfm_fft(py::array_t<T, py::array::c_style> img_seq,
                                            nt,
                                            bundle_size);
 
-    auto t1 = high_resolution_clock::now(); // stop
-    duration<double> dt = duration_cast<duration<double>>(t1 - t0);
-    logs += "IFFT plan creation (s):" + endl + to_string(dt.count()) + endl + endl;
+    t1 = high_resolution_clock::now(); // stop
+    dt = duration_cast<duration<double>>(t1 - t0);
+    _logs += "IFFT plan creation (s):\n" + to_string(dt.count()) + "\n\n";
 
     // ***Copy input to workspace vector
     t0 = high_resolution_clock::now(); // start
@@ -280,9 +300,9 @@ py::array_t<double> dfm_fft(py::array_t<T, py::array::c_style> img_seq,
         }
     }
 
-    auto t1 = high_resolution_clock::now(); // stop
-    duration<double> dt = duration_cast<duration<double>>(t1 - t0);
-    logs += "Input copy (s):" + endl + to_string(dt.count()) + endl + endl;
+    t1 = high_resolution_clock::now(); // stop
+    dt = duration_cast<duration<double>>(t1 - t0);
+    _logs += "Input copy (s):\n" + to_string(dt.count()) + "\n\n";
 
     // ***Execute fft2 plan
     t0 = high_resolution_clock::now(); // start
@@ -297,9 +317,9 @@ py::array_t<double> dfm_fft(py::array_t<T, py::array::c_style> img_seq,
         (*workspace1)[ii] /= norm_fact;
     }
 
-    auto t1 = high_resolution_clock::now(); // stop
-    duration<double> dt = duration_cast<duration<double>>(t1 - t0);
-    logs += "FFT2 execution (s):" + endl + to_string(dt.count()) + endl + endl;
+    t1 = high_resolution_clock::now(); // stop
+    dt = duration_cast<duration<double>>(t1 - t0);
+    _logs += "FFT2 execution (s):\n" + to_string(dt.count()) + "\n\n";
 
     // ***Compute the image structure function
     t0 = high_resolution_clock::now(); // start
@@ -385,10 +405,11 @@ py::array_t<double> dfm_fft(py::array_t<T, py::array::c_style> img_seq,
         }
     }
 
-    auto t1 = high_resolution_clock::now(); // stop
-    duration<double> dt = duration_cast<duration<double>>(t1 - t0);
-    logs += "ISF calculation (s):" + endl + to_string(dt.count()) + endl + endl;
+    t1 = high_resolution_clock::now(); // stop
+    dt = duration_cast<duration<double>>(t1 - t0);
+    _logs += "ISF calculation (s):\n" + to_string(dt.count()) + "\n\n";
 
+    /*
     // Make full image structure function (keep real part and copy symmetric part)
     t0 = high_resolution_clock::now(); // start
 
@@ -409,9 +430,23 @@ py::array_t<double> dfm_fft(py::array_t<T, py::array::c_style> img_seq,
                ny,
                lags.size());
 
-    t1 = high_resolution_clock::now();  // stop
+    t1 = high_resolution_clock::now(); // stop
     dt = duration_cast<duration<double>>(t1 - t0);
-    logs += "FFTshift ISF (s):" + endl + to_string(dt.count()) + endl + endl;
+    logs += "FFTshift ISF (s):\n" + to_string(dt.count()) + "\n\n";
+     */
+
+    // Convert raw output to full and shifted ISF
+    t0 = high_resolution_clock::now(); // start
+
+    make_full_shifted_isf(*workspace1,
+                          nx,
+                          ny,
+                          lags.size());
+
+    t1 = high_resolution_clock::now(); // stop
+    dt = duration_cast<duration<double>>(t1 - t0);
+    _logs += "Conversion to full ISF (s):\n" + to_string(dt.count()) + "\n\n";
+    cout << dt.count() << endl;
 
     // ***Shrink workspace if needed
     t0 = high_resolution_clock::now(); // start
@@ -431,9 +466,11 @@ py::array_t<double> dfm_fft(py::array_t<T, py::array::c_style> img_seq,
     tmp.clear();
     tmp.shrink_to_fit();
 
-    t1 = high_resolution_clock::now();  // stop
+    t1 = high_resolution_clock::now(); // stop
     dt = duration_cast<duration<double>>(t1 - t0);
-    logs += "Garbage cleaning (s):" + endl + to_string(dt.count()) + endl + endl;
+    _logs += "Garbage cleaning (s):\n" + to_string(dt.count()) + "\n\n";
+
+    _logs.clear();
 
     // Return result to python
     return vector2numpy(workspace1, nx, ny, lags.size());

@@ -48,4 +48,15 @@ void fft2_shift(vector<double> &vec,
                 size_t ny,
                 size_t nt);
 
+/*! \brief Make full image structure function from raw output and shift elements
+    \param vec  vector
+    \param nx   number of fft nodes in x direction
+    \param ny   number of fft nodes in y direction
+    \param nt   number of frames
+ */
+void make_full_shifted_isf(vector<double> &vec,
+                           size_t nx,
+                           size_t ny,
+                           size_t nt);
+
 #endif
