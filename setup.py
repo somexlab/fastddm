@@ -121,30 +121,8 @@ class CMakeBuild(build_ext):
 
 
 setup(
-    name = "dfmtoolbox",
-    use_scm_version = {
-        "fallback_version": "0.1.0",
-    },
     packages = find_packages(),
-    setup_requires = [
-        'setuptools>=45',
-        'setuptools_scm',
-        'wheel',
-    ],
-    install_requires = [
-        'setuptools>=45',
-        'wheel',
-        'numpy',
-        'scipy',
-        'pandas',
-        'lmfit',
-        'Pillow',
-        'matplotlib',
-    ],
-    author = 'Enrico Lattuada, Fabian Krautgasser, Fabio Giavazzi, Roberto Cerbino',
-    author_email = 'lattuada.enrico@gmail.com',
     url = 'https://github.com/somexlab/dfmtoolbox',
-    description = 'A Python/C++ library for the analysis of Digital Fourier Microscopy experiments',
     long_description = open("./README.md", 'r').read(),
     long_description_content_type = "text/markdown",
     license = 'GNU GPL 3.0',

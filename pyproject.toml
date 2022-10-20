@@ -1,0 +1,33 @@
+[build-system]
+requires = [
+    "setuptools >= 47",
+    "setuptools_scm",
+    "wheel",
+    "cmake",
+]
+
+[project]
+name = "dfmtoolbox"
+version = "0.1.0"
+description = "A Python/C++ library for the analysis of Digital Fourier Microscopy experiments"
+readme = "README.md"
+authors = [
+    { name ="Enrico Lattuada", email = "lattuada.enrico@gmail.com" },
+    { name = "Fabian Kreutgasser" },
+    { name = "Fabio Giavazzi" },
+    { name = "Roberto Cerbino" },
+]
+maintainers = [
+    { name ="Enrico Lattuada", email = "lattuada.enrico@gmail.com" },
+]
+requires-python = ">=3.6"
+dependencies = [
+    'numpy',
+    'scipy',
+    'pandas',
+    'Pillow',
+    'matplotlib',
+    'lmfit',
+]
+
+
