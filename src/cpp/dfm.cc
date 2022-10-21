@@ -444,7 +444,6 @@ py::array_t<double> dfm_fft(py::array_t<T, py::array::c_style> img_seq,
     t1 = high_resolution_clock::now(); // stop
     dt = duration_cast<duration<double>>(t1 - t0);
     _logger += "Conversion to full ISF (s):\n" + to_string(dt.count()) + "\n\n";
-    cout << dt.count() << endl;
 
     // ***Shrink workspace if needed
     t0 = high_resolution_clock::now(); // start

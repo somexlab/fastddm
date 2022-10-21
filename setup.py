@@ -7,6 +7,7 @@ import subprocess
 import multiprocessing
 
 from distutils.version import LooseVersion
+from urllib.parse import uses_fragment
 from setuptools import setup, find_packages, Extension
 from setuptools.command.build_ext import build_ext
 from setuptools.command.install_lib import install_lib
@@ -121,6 +122,9 @@ class CMakeBuild(build_ext):
 
 
 setup(
+    use_scm_version = {
+        "fallback_version": "0.1.0",
+    },
     packages = find_packages(),
     url = 'https://github.com/somexlab/dfmtoolbox',
     long_description = open("./README.md", 'r').read(),
