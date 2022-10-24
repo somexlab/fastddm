@@ -275,16 +275,6 @@ py::array_t<double> dfm_fft(py::array_t<T, py::array::c_style> img_seq,
     dt = duration_cast<duration<double>>(t1 - t0);
     _logger += "FFT plan creation (s):\n" + to_string(dt.count()) + "\n\n";
 
-    t0 = high_resolution_clock::now(); // start
-
-    fftw_plan ifft_plan = ifft_create_plan(*workspace2,
-                                           nt,
-                                           bundle_size);
-
-    t1 = high_resolution_clock::now(); // stop
-    dt = duration_cast<duration<double>>(t1 - t0);
-    _logger += "IFFT plan creation (s):\n" + to_string(dt.count()) + "\n\n";
-
     // ***Copy input to workspace vector
     t0 = high_resolution_clock::now(); // start
 
@@ -350,13 +340,11 @@ py::array_t<double> dfm_fft(py::array_t<T, py::array::c_style> img_seq,
         for (size_t j = 0; j < bundle_size * nt; j++)
         {
             (*workspace2)[2 * j] = (*workspace2)[2 * j] * (*workspace2)[2 * j] + (*workspace2)[2 * j + 1] * (*workspace2)[2 * j + 1]; // real
-            // also divide by nt to normalize fft
-            (*workspace2)[2 * j] /= (double)nt;
             (*workspace2)[2 * j + 1] = 0.0; // imag
         }
 
         // compute ifft
-        fftw_execute(ifft_plan);
+        fftw_execute(fft_plan);
 
         // Step2: average part
         size_t idx = lags.size() - 1;
@@ -377,8 +365,9 @@ py::array_t<double> dfm_fft(py::array_t<T, py::array::c_style> img_seq,
             {
                 for (size_t q = 0; q < bundle_size; ++q)
                 {
-                    (*workspace2)[2 * (q * nt + (size_t)(lags[idx]))] = tmp[q] - 2 * (*workspace2)[2 * (q * nt + (size_t)(lags[idx]))];
-                    // also normalize output
+                    // also divide corr part by nt to normalize fft
+                    (*workspace2)[2 * (q * nt + (size_t)(lags[idx]))] = tmp[q] - 2 * (*workspace2)[2 * (q * nt + (size_t)(lags[idx]))] / (double)nt;
+                    // finally, normalize output
                     (*workspace2)[2 * (q * nt + (size_t)(lags[idx]))] /= (double)(length - lags[idx]);
                 }
                 if (idx == 0)
@@ -444,7 +433,6 @@ py::array_t<double> dfm_fft(py::array_t<T, py::array::c_style> img_seq,
     t1 = high_resolution_clock::now(); // stop
     dt = duration_cast<duration<double>>(t1 - t0);
     _logger += "Conversion to full ISF (s):\n" + to_string(dt.count()) + "\n\n";
-    cout << dt.count() << endl;
 
     // ***Shrink workspace if needed
     t0 = high_resolution_clock::now(); // start
@@ -457,7 +445,6 @@ py::array_t<double> dfm_fft(py::array_t<T, py::array::c_style> img_seq,
     // Cleanup before finish
     fftw_destroy_plan(fft2_plan);
     fftw_destroy_plan(fft_plan);
-    fftw_destroy_plan(ifft_plan);
     fftw_cleanup();
     workspace2->clear();
     workspace2->shrink_to_fit();
