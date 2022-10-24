@@ -122,6 +122,7 @@ class CMakeBuild(build_ext):
 
 
 setup(
+    name = "dfmtoolbox",
     use_scm_version = {
         "fallback_version": "0.1.0",
     },
