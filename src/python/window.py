@@ -29,12 +29,19 @@ def blackman(shape):
         A Blackman window.
     """
 
+    a = [7938 / 18608, 9240 / 18608, 1430 / 18608]
+    x = np.array([i / float(shape[-1]) for i in range(shape[-1])])
+    y = np.array([i / float(shape[-2]) for i in range(shape[-2])])
     Wx = np.zeros(shape[-1])
     Wy = np.zeros(shape[-2])
 
     for n in range(3):
+        Wx += (-1) ** n * a[n] * np.cos(2.0 * np.pi * n * x)
+        Wy += (-1) ** n * a[n] * np.cos(2.0 * np.pi * n * y)
 
+    Wx, Wy = np.meshgrid(Wx, Wy)
 
+    return Wx * Wy
 
 
 def blackman_harris(shape: tuple[int, ...]) -> np.ndarray:
