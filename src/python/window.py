@@ -29,22 +29,15 @@ def blackman(shape):
         A Blackman window.
     """
 
-    a = [7938/18608, 9240/18608, 1430/18608]
-    x = np.array([i/float(shape[-1]) for i in range(shape[-1])])
-    y = np.array([i/float(shape[-2]) for i in range(shape[-2])])
     Wx = np.zeros(shape[-1])
     Wy = np.zeros(shape[-2])
 
     for n in range(3):
-        Wx += (-1)**n * a[n] * np.cos(2.0 * np.pi * n * x)
-        Wy += (-1)**n * a[n] * np.cos(2.0 * np.pi * n * y)
-
-    Wx, Wy = np.meshgrid(Wx,Wy)
-
-    return Wx*Wy
 
 
-def blackman_harris(shape):
+
+
+def blackman_harris(shape: tuple[int, ...]) -> np.ndarray:
     r"""Blackman-Harris window.
 
     In the 1D case, the equation for the periodic four-term Blackman-Harris
@@ -63,7 +56,7 @@ def blackman_harris(shape):
 
     Parameters
     ----------
-    shape : tuple
+    shape : tuple[int, ...]
         Image (or sequence) shape.
         Last two values are used.
 
@@ -72,18 +65,18 @@ def blackman_harris(shape):
     numpy.ndarray
         A Blackman-Harris window.
     """
+    *rest, ydim, xdim = shape
 
     a = [0.3635819, 0.4891775, 0.1365995, 0.0106411]
-    x = np.array([i/float(shape[-1]) for i in range(shape[-1])])
-    y = np.array([i/float(shape[-2]) for i in range(shape[-2])])
-    Wx = np.zeros(shape[-1])
-    Wy = np.zeros(shape[-2])
+    x = np.linspace(0, (xdim - 1) / xdim, num=xdim)
+    y = np.linspace(0, (ydim - 1) / ydim, num=ydim)
+    Wx = np.zeros(xdim)
+    Wy = np.zeros(ydim)
 
     for n in range(4):
-        Wx += (-1)**n * a[n] * np.cos(2.0 * np.pi * n * x)
-        Wy += (-1)**n * a[n] * np.cos(2.0 * np.pi * n * y)
+        Wx += (-1) ** n * a[n] * np.cos(2.0 * np.pi * n * x)
+        Wy += (-1) ** n * a[n] * np.cos(2.0 * np.pi * n * y)
 
-    Wx, Wy = np.meshgrid(Wx,Wy)
+    Wx, Wy = np.meshgrid(Wx, Wy)
 
-    return Wx*Wy
-
+    return Wx * Wy
