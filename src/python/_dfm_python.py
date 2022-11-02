@@ -163,6 +163,47 @@ def azimuthal_average(
     return azimuthal_average
 
 
+def reconstruct_full_spectrum(
+    halfplane: np.ndarray, fft_shift: bool = True
+) -> np.ndarray:
+    """Reconstruct the full plane spectrum from a half plane spectrum.
+
+    This is to save memory while computing. The result is the same as one would get by calling
+    scipy.fft.fft2 (or similar) on the original data. The input is assumed to be the output of
+    scipy.fft.rfft (or similar) and the full spectrum is expected to be square!
+
+    By default, the spectrum is also shifted (with fft_shift)
+
+    Parameters
+    ----------
+    halfplane : np.ndarray
+        The half-plane array provided e.g. by scipy.fft.rfft2.
+    fft_shift : bool, optional
+        If True, fft-shifts the full spectrum along the last 2 axis, by default True
+
+    Returns
+    -------
+    np.ndarray
+        The full-plane spectrum.
+    """
+    dtype = halfplane.dtype
+    h, w = halfplane.shape  # height, width
+    full = np.zeros((h, h), dtype=dtype)  # assume h is the big dimension
+    full[:, :w] = halfplane  # first half + one column
+
+    if h % 2 == 0:
+        other_half = np.roll(halfplane[::-1, ::-1][:, 1:-1].conj(), 1, axis=0)
+    else:
+        other_half = np.roll(halfplane[::-1, ::-1][:, :-1].conj(), 1, axis=0)
+
+    full[:, w:] = other_half
+
+    if fft_shift:
+        return scifft.fftshift(full, axes=(-2, -1))
+
+    return full
+
+
 def image_structure_function(
     square_modulus: np.ndarray, autocorrelation: np.ndarray, lag: int
 ) -> np.ndarray:
