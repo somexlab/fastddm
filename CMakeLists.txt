@@ -11,7 +11,6 @@ set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_MODULE_PATH})
 find_package(PythonLibs 3 REQUIRED)
 include_directories(${PYTHON_INCLUDE_DIRS})
 
-include(FindFFTW.cmake)
-
 add_subdirectory(lib/pybind11)
+add_subdirectory(lib/fftw-3.3.10)
 add_subdirectory(src)

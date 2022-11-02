@@ -7,7 +7,7 @@ SET(_dfmtoolbox_SOURCES
 )
 
 include_directories( ${PROJECT_SOURCE_DIR}/lib/pybind11/include )
-include_directories( ${FFTW_INCLUDES} )
+include_directories( ${PROJECT_SOURCE_DIR}/lib/fftw-3.3.10/api )
 
 pybind11_add_module(core SHARED ${_dfmtoolbox_SOURCES} NO_EXTRAS)
 target_link_libraries(core PRIVATE fftw3 m)
