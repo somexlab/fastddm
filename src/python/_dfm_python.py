@@ -116,3 +116,48 @@ def distance_array(
             dist[j, i] = dist_2d(i, j, r_centre, r_centre)
 
     return dist
+
+
+def azimuthal_average(
+    image: np.ndarray, dist: Optional[np.ndarray] = None
+) -> np.ndarray:
+    """Calculate the azimuthal average for a given square image.
+
+    Can supply array of distances from the center to avoid calculating it multiple times (however
+    it does have the `lru_cache` decorator).
+
+    Parameters
+    ----------
+    image : np.ndarray
+        A 2D square image numpy array.
+    dist : Optional[np.ndarray], optional
+        An array of distances from a centre point, by default None
+
+    Returns
+    -------
+    np.ndarray
+        The azimuthally averaged image, the length of half the dimension.
+
+    Raises
+    ------
+    RuntimeError
+        If the input images is not square.
+    """
+    y, x = image.shape
+
+    if x != y:
+        raise RuntimeError(f"Dimensions for X ({x}) and Y ({y}) not equal!")
+
+    # setup array of distances to center of array
+    r_centre = x // 2
+    if dist is None:
+        dist = distance_array(image.shape, r_centre)
+
+    # list of radii, basically index count from centre
+    radii = np.arange(1, r_centre + 1)
+    azimuthal_average = np.zeros_like(radii)
+
+    for i, r in enumerate(radii):
+        azimuthal_average[i] = image[(dist >= r - 0.5) & (dist <= r + 0.5)].mean()
+
+    return azimuthal_average
