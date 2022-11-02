@@ -161,3 +161,59 @@ def azimuthal_average(
         azimuthal_average[i] = image[(dist >= r - 0.5) & (dist <= r + 0.5)].mean()
 
     return azimuthal_average
+
+
+def image_structure_function(
+    square_modulus: np.ndarray, autocorrelation: np.ndarray, lag: int
+) -> np.ndarray:
+    """Calculate the image structure function.
+
+    Uses the square modulus of a (half-plane) spatial FFT timeseries and its autocorrelation
+    function.
+
+    Taken from Eq. (2) from 10.1140/epje/s10189-021-00146-2. Adjusted to use the autocorrelation
+    function computed via the wiener-khinchin theorem.
+
+    Returns the average over the whole timeseries (average over the 0th axis).
+
+    Parameters
+    ----------
+    square_modulus : np.ndarray
+        The square modulus of the spatial FFT of an image timeseries, e.g. np.abs(rfft2(imgs))**2.
+    autocorrelation : np.ndarray
+        The autocorrelation function of the spatial FFT of an image timeseries.
+    lag : int
+        The delay time in frame units, must be 0 <= lag <= len(square_modulus)
+
+    Returns
+    -------
+    np.ndarray
+        The full-plane structure function.
+
+    Raises
+    ------
+    RuntimeError
+        If the given lag time is longer than the timeseries.
+    """
+    length, *_ = square_modulus.shape
+
+    if lag >= length:
+        raise RuntimeError("Time lag cannot be longer than the timeseries itself!")
+
+    # handling slicing with zeroth index
+    if lag == 0:
+        shifted_abs_square = square_modulus
+        cropped_abs_square = square_modulus
+
+    else:
+        shifted_abs_square = square_modulus[lag:]
+        cropped_abs_square = square_modulus[:-lag]
+
+    autocorrelation = autocorrelation[lag].real
+
+    sum_of_parts = (
+        np.sum(shifted_abs_square + cropped_abs_square, axis=0) - 2 * autocorrelation
+    )
+    sum_of_parts /= length - lag  # normalization
+
+    return reconstruct_full_spectrum(sum_of_parts)  # full plane
