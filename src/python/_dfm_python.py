@@ -1,5 +1,6 @@
 """The collection of python functions to perform DDM."""
 
+from functools import lru_cache
 from pathlib import Path
 from typing import Optional, Sequence
 
@@ -61,3 +62,57 @@ def autocorrelation(spatial_fft: np.ndarray, *, workers: int = 2) -> np.ndarray:
 
     # returning the real part, cropped to original input length
     return ifft[: len(spatial_fft)].real
+
+
+@lru_cache()
+def distance_array(
+    shape: tuple[int, ...], r_centre: Optional[int] = None
+) -> np.ndarray:
+    """Calculate the array of distances for a given radius centre point `r_centre`.
+
+    The last two values of the input shape are used. If the shape is not square, the `r_centre`
+    argument is ignored, and a `r_centre` equal to the integer division of each dimension by 2 is
+    used.
+
+    If the input shape is square, and no centre is supplied, then `r_centre` is the integer
+    division of the square dimension by 2.
+
+    Parameters
+    ----------
+    shape : tuple[int, ...]
+        The shape of an array; only the last 2 dimensions are considered.
+    r_centre : Optional[int], optional
+        The centre point to calculate the distance from, only for square shapes, by default None
+
+    Returns
+    -------
+    np.ndarray
+        The array of distances to the centre point.
+    """
+    # helper function
+    @lru_cache()
+    def dist_2d(i, j, r_i, r_j):
+        """Calculate the distance of a point (i, j) with respect to another point (r_i, r_j)."""
+        return np.sqrt((j - r_j) ** 2 + (i - r_i) ** 2)
+
+    *rest, y, x = shape
+    dist = np.zeros((y, x))
+
+    # non-square dimensions
+    if x != y:
+        r_centre_y, r_centre_x = y // 2, x // 2
+
+        for j in range(y):
+            for i in range(x):
+                dist[j, i] = dist_2d(i, j, r_centre_x, r_centre_y)
+        return dist
+
+    # below for square dimensions
+    if r_centre is None:
+        r_centre = x // 2
+
+    for j in range(y):
+        for i in range(x):
+            dist[j, i] = dist_2d(i, j, r_centre, r_centre)
+
+    return dist
