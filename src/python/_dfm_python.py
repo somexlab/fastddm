@@ -155,7 +155,7 @@ def azimuthal_average(
 
     # list of radii, basically index count from centre
     radii = np.arange(1, r_centre + 1)
-    azimuthal_average = np.zeros_like(radii)
+    azimuthal_average = np.zeros_like(radii, dtype=np.float64)
 
     for i, r in enumerate(radii):
         azimuthal_average[i] = image[(dist >= r - 0.5) & (dist <= r + 0.5)].mean()
