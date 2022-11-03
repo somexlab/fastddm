@@ -2,7 +2,7 @@
 
 from functools import lru_cache
 from pathlib import Path
-from typing import Optional, Sequence
+from typing import Optional, Sequence, Tuple
 
 import numpy as np
 import scipy.fft as scifft
@@ -66,7 +66,7 @@ def autocorrelation(spatial_fft: np.ndarray, *, workers: int = 2) -> np.ndarray:
 
 @lru_cache()
 def distance_array(
-    shape: tuple[int, ...], r_centre: Optional[int] = None
+    shape: Tuple[int, ...], r_centre: Optional[int] = None
 ) -> np.ndarray:
     """Calculate the array of distances for a given radius centre point `r_centre`.
 
@@ -79,7 +79,7 @@ def distance_array(
 
     Parameters
     ----------
-    shape : tuple[int, ...]
+    shape : Tuple[int, ...]
         The shape of an array; only the last 2 dimensions are considered.
     r_centre : Optional[int], optional
         The centre point to calculate the distance from, only for square shapes, by default None
@@ -290,7 +290,7 @@ def run(
     lags: np.ndarray,
     keep_full_structure: bool = True,
     workers: int = 2,
-) -> tuple[np.ndarray, Optional[np.ndarray]]:
+) -> Tuple[np.ndarray, Optional[np.ndarray]]:
     """Run the DDM analysis on a sequence of images.
 
     Parameters
@@ -306,7 +306,7 @@ def run(
 
     Returns
     -------
-    tuple[np.ndarray, Optional[np.ndarray]]
+    Tuple[np.ndarray, Optional[np.ndarray]]
         The azimuthal average of the image structure function for all lag times, and optionally the
         full image structure function for all lag times itself.
     """
