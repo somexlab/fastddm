@@ -10,15 +10,24 @@ include_directories( ${PROJECT_SOURCE_DIR}/lib/pybind11/include )
 include_directories( ${PROJECT_SOURCE_DIR}/lib/fftw-3.3.10/api )
 
 pybind11_add_module(core SHARED ${_dfmtoolbox_SOURCES} NO_EXTRAS)
-target_link_libraries(core PRIVATE fftw3 m)
+if(NOT WIN32)
+    target_link_libraries(core PRIVATE fftw3 m)
+else()
+    target_link_libraries(core PRIVATE fftw3)
+endif()
 
 SET(DFMTOOLBOX_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/python/dfmtoolbox")
 
 set_target_properties(core
                         PROPERTIES
-                            SUFFIX ".so"
                             LIBRARY_OUTPUT_DIRECTORY ${DFMTOOLBOX_OUTPUT_DIR}
                     )
+if(NOT WIN32)
+    set_target_properties(core
+                            PROPERTIES
+                                SUFFIX ".so"
+                    )                   
+endif()
 
 configure_file(python/__init__.py
                ${DFMTOOLBOX_OUTPUT_DIR}/__init__.py)
