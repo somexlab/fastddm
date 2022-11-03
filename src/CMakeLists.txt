@@ -18,10 +18,7 @@ endif()
 
 SET(DFMTOOLBOX_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/python/dfmtoolbox")
 
-set_target_properties(core
-                        PROPERTIES
-                            
-                    )
+
 if(NOT WIN32)
     set_target_properties(core
                             PROPERTIES
