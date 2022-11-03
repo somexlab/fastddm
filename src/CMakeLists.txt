@@ -20,13 +20,19 @@ SET(DFMTOOLBOX_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/python/dfmtoolbox")
 
 set_target_properties(core
                         PROPERTIES
-                            LIBRARY_OUTPUT_DIRECTORY ${DFMTOOLBOX_OUTPUT_DIR}
+                            
                     )
 if(NOT WIN32)
     set_target_properties(core
                             PROPERTIES
                                 SUFFIX ".so"
+                                LIBRARY_OUTPUT_DIRECTORY ${DFMTOOLBOX_OUTPUT_DIR}
                     )                   
+else()
+    set_target_properties(core
+                            PROPERTIES
+                                RUNTIME_OUTPUT_DIRECTORY ${DFMTOOLBOX_OUTPUT_DIR}
+                    )
 endif()
 
 configure_file(python/__init__.py
