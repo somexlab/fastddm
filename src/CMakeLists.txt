@@ -30,6 +30,11 @@ else()
                             PROPERTIES
                                 RUNTIME_OUTPUT_DIRECTORY ${DFMTOOLBOX_OUTPUT_DIR}
                     )
+    add_custom_command(TARGET core POST_BUILD
+    				        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        			        "${DFMTOOLBOX_OUTPUT_DIR}/$<CONFIGURATION>"
+        			        ${DFMTOOLBOX_OUTPUT_DIR}
+			        )
 endif()
 
 configure_file(python/__init__.py
