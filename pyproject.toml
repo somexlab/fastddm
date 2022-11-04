@@ -1,6 +1,6 @@
 [build-system]
 requires = [
-    "setuptools >= 47",
+    "setuptools>=47",
     "setuptools_scm",
     "wheel",
     "cmake",
@@ -19,13 +19,18 @@ authors = [
 maintainers = [
     { name ="Enrico Lattuada", email = "lattuada.enrico@gmail.com" },
 ]
-requires-python = ">=3.6"
+requires-python = ">=3.8"
 dependencies = [
+    'setuptools>=47',
+    'setuptools_scm',
+    'wheel',
+    'cmake',
     'numpy',
-    'scipy',
     'pandas',
-    'Pillow',
+    'scipy',
     'matplotlib',
-    'lmfit',
+    'scikit-image',
+    'tifffile',
+    'Pillow',
 ]
 dynamic = [ "license", "version" ]

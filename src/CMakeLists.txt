@@ -46,8 +46,8 @@ configure_file(python/_fftopt.py
 configure_file(python/_dfm_cpp.py
                ${DFMTOOLBOX_OUTPUT_DIR}/_dfm_cpp.py)
 
-configure_file(python/dfm_python.py
-               ${DFMTOOLBOX_OUTPUT_DIR}/dfm_python.py)
+configure_file(python/_dfm_python.py
+               ${DFMTOOLBOX_OUTPUT_DIR}/_dfm_python.py)
 
 configure_file(python/dfm.py
                ${DFMTOOLBOX_OUTPUT_DIR}/dfm.py)
