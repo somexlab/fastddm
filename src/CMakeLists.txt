@@ -18,7 +18,6 @@ endif()
 
 SET(DFMTOOLBOX_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/python/dfmtoolbox")
 
-
 if(NOT WIN32)
     set_target_properties(core
                             PROPERTIES
@@ -28,14 +27,21 @@ if(NOT WIN32)
 else()
     set_target_properties(core
                             PROPERTIES
-                                RUNTIME_OUTPUT_DIRECTORY ${DFMTOOLBOX_OUTPUT_DIR}
+                                RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
                     )
     add_custom_command(TARGET core POST_BUILD
     				        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        			        "${DFMTOOLBOX_OUTPUT_DIR}/$<CONFIGURATION>"
+        			        "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIGURATION>"
         			        ${DFMTOOLBOX_OUTPUT_DIR}
 			        )
 endif()
+
+add_custom_command(TARGET core POST_BUILD
+    				        COMMAND ${CMAKE_COMMAND} -E copy
+        			        "${CMAKE_CURRENT_BINARY_DIR}/../lib/fftw-3.3.10/libfftw*"
+        			        ${DFMTOOLBOX_OUTPUT_DIR}
+			        )
+
 
 configure_file(python/__init__.py
                ${DFMTOOLBOX_OUTPUT_DIR}/__init__.py)
