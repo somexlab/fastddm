@@ -23,7 +23,12 @@ if(NOT WIN32)
                             PROPERTIES
                                 SUFFIX ".so"
                                 LIBRARY_OUTPUT_DIRECTORY ${DFMTOOLBOX_OUTPUT_DIR}
-                    )                   
+                    )
+    add_custom_command(TARGET core POST_BUILD
+    				        COMMAND ${CMAKE_COMMAND} -E copy
+        			        "${CMAKE_CURRENT_BINARY_DIR}/../lib/fftw-3.3.10/libfftw*"
+        			        ${DFMTOOLBOX_OUTPUT_DIR}
+			        )
 else()
     set_target_properties(core
                             PROPERTIES
@@ -32,6 +37,11 @@ else()
     add_custom_command(TARGET core POST_BUILD
     				        COMMAND ${CMAKE_COMMAND} -E copy_directory
         			        "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIGURATION>"
+        			        ${DFMTOOLBOX_OUTPUT_DIR}
+			        )
+    add_custom_command(TARGET core POST_BUILD
+    				        COMMAND ${CMAKE_COMMAND} -E copy
+        			        "${CMAKE_CURRENT_BINARY_DIR}/../lib/fftw-3.3.10/$<CONFIGURATION>/fftw3.dll"
         			        ${DFMTOOLBOX_OUTPUT_DIR}
 			        )
 endif()
