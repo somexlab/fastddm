@@ -46,13 +46,6 @@ else()
 			        )
 endif()
 
-add_custom_command(TARGET core POST_BUILD
-    				        COMMAND ${CMAKE_COMMAND} -E copy
-        			        "${CMAKE_CURRENT_BINARY_DIR}/../lib/fftw-3.3.10/libfftw*"
-        			        ${DFMTOOLBOX_OUTPUT_DIR}
-			        )
-
-
 configure_file(python/__init__.py
                ${DFMTOOLBOX_OUTPUT_DIR}/__init__.py)
 
