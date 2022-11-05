@@ -7,6 +7,7 @@ import subprocess
 import multiprocessing
 
 from distutils.version import LooseVersion
+from urllib.parse import uses_fragment
 from setuptools import setup, find_packages, Extension
 from setuptools.command.build_ext import build_ext
 from setuptools.command.install_lib import install_lib
@@ -126,25 +127,7 @@ setup(
         "fallback_version": "0.1.0",
     },
     packages = find_packages(),
-    setup_requires = [
-        'setuptools>=45',
-        'setuptools_scm',
-        'wheel',
-    ],
-    install_requires = [
-        'setuptools>=45',
-        'wheel',
-        'numpy',
-        'scipy',
-        'pandas',
-        'lmfit',
-        'Pillow',
-        'matplotlib',
-    ],
-    author = 'Enrico Lattuada, Fabian Krautgasser, Fabio Giavazzi, Roberto Cerbino',
-    author_email = 'lattuada.enrico@gmail.com',
-    #url = '',
-    description = '',
+    url = 'https://github.com/somexlab/dfmtoolbox',
     long_description = open("./README.md", 'r').read(),
     long_description_content_type = "text/markdown",
     license = 'GNU GPL 3.0',
