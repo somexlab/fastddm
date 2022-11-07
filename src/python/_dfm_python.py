@@ -280,15 +280,17 @@ def run(
     Returns
     -------
     Tuple[np.ndarray, Optional[np.ndarray]]
-        The azimuthal average of the image structure function for all lag times, and optionally the
-        full image structure function for all lag times itself.
+        The azimuthal average of the image structure function for all given lag times, and
+        optionally the full plane image structure function for all given lag times as well. The
+        latter is None if `keep_full_structure` is False.
     """
-    length, y, x = images.shape
+    _, y, x = images.shape  # pixel dimensions, only length of lags is important
+    length = len(lags)
     averages = np.zeros((length, y // 2))
 
     # setup of arrays
     if keep_full_structure:  # image structure function D(q, dt)
-        dqt = np.zeros_like(images)
+        dqt = np.zeros((length, y, x))  # image dimensions, length of lags
     else:
         dqt = None
 
@@ -303,7 +305,7 @@ def run(
     for i, lag in enumerate(lags):
         sf = image_structure_function(square_mod, autocorr, lag)
         if dqt is not None:
-            dqt[lag] = sf
+            dqt[i] = sf
 
         dist = distance_array(sf.shape)
         azimuth_avg_sf = azimuthal_average(sf, dist)
