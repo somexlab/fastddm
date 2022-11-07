@@ -8,7 +8,7 @@ import skimage.io as io
 import tifffile
 
 
-def tif_to_numpy(path: Path, seq: Optional[Sequence[int]] = None) -> np.ndarray:
+def tiff_to_numpy(path: Path, seq: Optional[Sequence[int]] = None) -> np.ndarray:
     """Read a TIFF file (or a sequence inside a multipage TIFF) and return it as a numpy array.
 
     Parameters
