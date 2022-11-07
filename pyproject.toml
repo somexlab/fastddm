@@ -12,7 +12,7 @@ description = "A Python/C++ library for the analysis of Digital Fourier Microsco
 readme = "README.md"
 authors = [
     { name ="Enrico Lattuada", email = "lattuada.enrico@gmail.com" },
-    { name = "Fabian Kreutgasser" },
+    { name = "Fabian Krautgasser" },
     { name = "Fabio Giavazzi" },
     { name = "Roberto Cerbino" },
 ]
