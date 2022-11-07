@@ -67,6 +67,9 @@ configure_file(python/imagestructurefunction.py
 configure_file(python/lags.py
                ${DFMTOOLBOX_OUTPUT_DIR}/lags.py)
 
+configure_file(python/utils.py
+               ${DFMTOOLBOX_OUTPUT_DIR}/utils.py)
+
 configure_file(python/window.py
                ${DFMTOOLBOX_OUTPUT_DIR}/window.py)
 
