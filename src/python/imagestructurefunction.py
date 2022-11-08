@@ -15,7 +15,7 @@ class ImageStructureFunction:
     lags : np.ndarray
         The corresponding lags of length N in frame-units.
     taus : np.ndarray
-        The physical lags, i.e. the lags divided by the fps.
+        The physical lags, i.e. the lags divided by the fps, of length N.
     dt : Union[float, int]
         The conversion from frames to physical time, i.e. inverse of the fps.
     kx : np.ndarray
