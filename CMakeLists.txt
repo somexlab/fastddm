@@ -11,7 +11,7 @@ if(APPLE)
     set(CMAKE_MACOSX_RPATH ON)
     set(CMAKE_INSTALL_RPATH "@loader_path")
     set(CMAKE_BUILD_WITH_INSTALL_RPATH ON)
-elseif(LINUX)
+else()
     set(CMAKE_BUILD_RPATH_USE_ORIGIN TRUE)
 endif()
 
