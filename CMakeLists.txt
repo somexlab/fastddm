@@ -12,6 +12,11 @@ set(DFMTOOLBOX_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/src/python/dfmtoolbox)
 
 # Build fftw3 as a shared lib
 add_subdirectory(lib/fftw-3.3.10)
+set_target_properties(fftw3 PROPERTIES
+                        PREFIX ""
+                        SUFFIX ".so"
+                        LIBRARY_OUTPUT_DIRECTORY ${DFMTOOLBOX_OUTPUT_DIR}
+                    )
 
 # Build with python3 bindings
 find_package(PythonLibs 3 REQUIRED)
