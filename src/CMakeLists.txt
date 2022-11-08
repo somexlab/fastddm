@@ -11,7 +11,11 @@ include_directories( ${PROJECT_SOURCE_DIR}/lib/pybind11/include )
 
 # Add _dfmtoolbox library
 add_library(_dfmtoolbox STATIC ${dfm_lib_SOURCES})
-target_link_libraries(_dfmtoolbox ${PYTHON_LIBRARIES} fftw3 m)
+if(WIN32)
+    target_link_libraries(_dfmtoolbox ${PYTHON_LIBRARIES} fftw3)
+else()
+    target_link_libraries(_dfmtoolbox ${PYTHON_LIBRARIES} fftw3 m)
+endif(WIN32)
 set_target_properties(_dfmtoolbox PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 # Add core python module
