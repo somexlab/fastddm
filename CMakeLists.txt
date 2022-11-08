@@ -7,7 +7,13 @@ project(dfmtoolbox LANGUAGES CXX)
 # The default behavior is to build with optimization
 set(CMAKE_BUILD_TYPE Release)
 
-set(CMAKE_BUILD_RPATH_USE_ORIGIN TRUE)
+if(APPLE)
+    set(CMAKE_MACOSX_RPATH ON)
+    set(CMAKE_INSTALL_RPATH "@loader_path")
+    set(CMAKE_BUILD_WITH_INSTALL_RPATH ON)
+elseif(LINUX)
+    set(CMAKE_BUILD_RPATH_USE_ORIGIN TRUE)
+endif()
 
 # The library should be in a folder with the same name to make it easier to use python distutils
 set(DFMTOOLBOX_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/src/python/dfmtoolbox)
