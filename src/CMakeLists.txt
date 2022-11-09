@@ -1,51 +1,38 @@
-SET(_dfmtoolbox_SOURCES
+SET(dfm_lib_SOURCES
     cpp/dfm.cc
     cpp/pycomm.cc
     cpp/helper_fftw.cc
     cpp/helper_dfm.cc
-    python/bindings.cc
 )
 
-include_directories( ${PROJECT_SOURCE_DIR}/lib/pybind11/include )
+# Include external libraries
 include_directories( ${PROJECT_SOURCE_DIR}/lib/fftw-3.3.10/api )
+include_directories( ${PROJECT_SOURCE_DIR}/lib/pybind11/include )
 
-pybind11_add_module(core SHARED ${_dfmtoolbox_SOURCES} NO_EXTRAS)
-if(NOT WIN32)
-    target_link_libraries(core PRIVATE fftw3 m)
+# Add _dfmtoolbox library
+add_library(_dfmtoolbox STATIC ${dfm_lib_SOURCES})
+if(WIN32)
+    target_link_libraries(_dfmtoolbox ${PYTHON_LIBRARIES} fftw3)
 else()
-    target_link_libraries(core PRIVATE fftw3)
-endif()
+    target_link_libraries(_dfmtoolbox ${PYTHON_LIBRARIES} fftw3 m)
+endif(WIN32)
+set_target_properties(_dfmtoolbox PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
-SET(DFMTOOLBOX_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/python/dfmtoolbox")
-
-if(NOT WIN32)
-    set_target_properties(core
-                            PROPERTIES
+# Add core python module
+pybind11_add_module(core SHARED python/bindings.cc)
+target_link_libraries(core PRIVATE _dfmtoolbox)
+if(WIN32)
+    set_target_properties(core PROPERTIES
+                                RUNTIME_OUTPUT_DIRECTORY_RELEASE ${DFMTOOLBOX_OUTPUT_DIR}
+                        )
+else()
+    set_target_properties(core PROPERTIES
                                 SUFFIX ".so"
                                 LIBRARY_OUTPUT_DIRECTORY ${DFMTOOLBOX_OUTPUT_DIR}
-                    )
-    add_custom_command(TARGET core POST_BUILD
-    				        COMMAND ${CMAKE_COMMAND} -E copy
-        			        "${CMAKE_CURRENT_BINARY_DIR}/../lib/fftw-3.3.10/libfftw*"
-        			        ${DFMTOOLBOX_OUTPUT_DIR}
-			        )
-else()
-    set_target_properties(core
-                            PROPERTIES
-                                RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-                    )
-    add_custom_command(TARGET core POST_BUILD
-    				        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        			        "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIGURATION>"
-        			        ${DFMTOOLBOX_OUTPUT_DIR}
-			        )
-    add_custom_command(TARGET core POST_BUILD
-    				        COMMAND ${CMAKE_COMMAND} -E copy
-        			        "${CMAKE_CURRENT_BINARY_DIR}/../lib/fftw-3.3.10/$<CONFIGURATION>/fftw3.dll"
-        			        ${DFMTOOLBOX_OUTPUT_DIR}
-			        )
+                        )
 endif()
 
+# Copy the files required to install the library with python's setuptools
 configure_file(python/__init__.py
                ${DFMTOOLBOX_OUTPUT_DIR}/__init__.py)
 
@@ -70,11 +57,11 @@ configure_file(python/io.py
 configure_file(python/lags.py
                ${DFMTOOLBOX_OUTPUT_DIR}/lags.py)
 
-configure_file(python/utils.py
-               ${DFMTOOLBOX_OUTPUT_DIR}/utils.py)
-
 configure_file(python/window.py
                ${DFMTOOLBOX_OUTPUT_DIR}/window.py)
+
+configure_file(python/utils.py
+               ${DFMTOOLBOX_OUTPUT_DIR}/utils.py)
 
 configure_file(python/make_install_setup.py
                ${DFMTOOLBOX_OUTPUT_DIR}/setup.py)
