@@ -263,7 +263,7 @@ def run(
     lags: np.ndarray,
     keep_full_structure: bool = True,
     workers: int = 2,
-) -> Tuple[np.ndarray, Optional[np.ndarray]]:
+) -> Tuple[np.ndarray, np.ndarray, Optional[np.ndarray]]:
     """Run the DDM analysis on a sequence of images.
 
     Parameters
@@ -279,10 +279,10 @@ def run(
 
     Returns
     -------
-    Tuple[np.ndarray, Optional[np.ndarray]]
-        The azimuthal average of the image structure function for all given lag times, and
-        optionally the full plane image structure function for all given lag times as well. The
-        latter is None if `keep_full_structure` is False.
+    Tuple[np.ndarray, np.ndarray, Optional[np.ndarray]]
+        The normalized rfft2 data, the azimuthal average of the image structure function for all
+        given lag times, and optionally the full plane image structure function for all given lag
+        times as well. The latter is None if `keep_full_structure` is False.
     """
     _, y, x = images.shape  # pixel dimensions, only length of lags is important
     length = len(lags)
@@ -295,9 +295,7 @@ def run(
         dqt = None
 
     # spatial ffts of the images, square modulus and autocorrelation
-    rfft2 = normalized_rfft2(
-        images, workers=workers
-    )  # scifft.rfft2(images, workers=workers)
+    rfft2 = normalized_rfft2(images, workers=workers)
     square_mod = np.abs(rfft2) ** 2
     autocorr = autocorrelation(rfft2, workers=workers)
 
@@ -311,4 +309,4 @@ def run(
         azimuth_avg_sf = azimuthal_average(sf, dist)
         averages[i] = azimuth_avg_sf
 
-    return np.array(averages), dqt
+    return rfft2, averages, dqt
