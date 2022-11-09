@@ -21,10 +21,16 @@ set_target_properties(_dfmtoolbox PROPERTIES POSITION_INDEPENDENT_CODE ON)
 # Add core python module
 pybind11_add_module(core SHARED python/bindings.cc)
 target_link_libraries(core PRIVATE _dfmtoolbox)
-set_target_properties(core PROPERTIES
-                            SUFFIX ".so"
-                            LIBRARY_OUTPUT_DIRECTORY ${DFMTOOLBOX_OUTPUT_DIR}
-                    )       
+if(WIN32)
+    set_target_properties(core PROPERTIES
+                                RUNTIME_OUTPUT_DIRECTORY_RELEASE ${DFMTOOLBOX_OUTPUT_DIR}
+                        )
+else()
+    set_target_properties(core PROPERTIES
+                                SUFFIX ".so"
+                                LIBRARY_OUTPUT_DIRECTORY ${DFMTOOLBOX_OUTPUT_DIR}
+                        )
+endif()
 
 # Copy the files required to install the library with python's setuptools
 configure_file(python/__init__.py
