@@ -6,7 +6,6 @@
 
 // *** headers ***
 #include "dfm.h"
-#include "pycomm.h"
 
 #include "helper_fftw.h"
 #include "helper_dfm.h"
