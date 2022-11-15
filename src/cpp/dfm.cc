@@ -161,7 +161,7 @@ py::array_t<double> dfm_fft(py::array_t<T, py::array::c_style> img_seq,
     - We need to make sure that the fft2 r2c fits in the array,
       so the size of one fft2 output is ny*(nx//2 + 1) complex
       doubles [the input needs to be twice as large]
-    - workspace2 will contain complex values, so we need 2* the size
+    - workspace will contain complex values, so we need 2* the size
      */
     size_t _nx = nx / 2 + 1;
     py::array_t<double> out = py::array_t<double>(2 * _nx * ny * length);
