@@ -21,6 +21,7 @@ maintainers = [
 ]
 requires-python = ">=3.8"
 dependencies = [
+    'psutil',
     'numpy',
     'pandas',
     'scipy',
