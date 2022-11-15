@@ -135,7 +135,7 @@ py::array_t<double> dfm_direct(py::array_t<T, py::array::c_style> img_seq,
     Compute the image structure function in fft mode
     using the Wiener-Khinchin theorem.
 
-    Only (bundle_size) fft's in the t direction are computed
+    Only (chunk_size) fft's in the t direction are computed
     simultaneously as a tradeoff between memory consumption
     and execution speed.
 
@@ -148,7 +148,7 @@ py::array_t<double> dfm_fft(py::array_t<T, py::array::c_style> img_seq,
                             size_t nx,
                             size_t ny,
                             size_t nt,
-                            size_t bundle_size)
+                            size_t chunk_size)
 {
     // ***Get input array and dimensions
     size_t length = img_seq.shape()[0]; // get length of original input
@@ -166,7 +166,7 @@ py::array_t<double> dfm_fft(py::array_t<T, py::array::c_style> img_seq,
     size_t _nx = nx / 2 + 1;
     py::array_t<double> out = py::array_t<double>(2 * _nx * ny * length);
     auto p_out = out.mutable_data();
-    vector<double> workspace(2 * bundle_size * nt);
+    vector<double> workspace(2 * chunk_size * nt);
 
     // ***Create the fft2 plan
     fftw_plan fft2_plan = fft2_create_plan(p_out,
@@ -177,7 +177,7 @@ py::array_t<double> dfm_fft(py::array_t<T, py::array::c_style> img_seq,
     // ***Create the fft plan
     fftw_plan fft_plan = fft_create_plan(workspace,
                                          nt,
-                                         bundle_size);
+                                         chunk_size);
 
     // ***Copy input to workspace vector
     for (size_t t = 0; t < length; t++)
@@ -203,17 +203,17 @@ py::array_t<double> dfm_fft(py::array_t<T, py::array::c_style> img_seq,
 
     // ***Compute the image structure function
     // initialize helper vector used in average part
-    vector<double> tmp(bundle_size);
-    for (size_t i = 0; i < (_nx * ny - 1) / bundle_size + 1; i++)
+    vector<double> tmp(chunk_size);
+    for (size_t i = 0; i < (_nx * ny - 1) / chunk_size + 1; i++)
     {
         // Step1: correlation part
         // copy values to workspace2 for fft
-        for (size_t q = 0; q < bundle_size; q++)
+        for (size_t q = 0; q < chunk_size; q++)
         {
             for (size_t t = 0; t < length; t++)
             {
-                workspace[2 * (q * nt + t)] = p_out[2 * (t * _nx * ny + i * bundle_size + q)];         // real
-                workspace[2 * (q * nt + t) + 1] = p_out[2 * (t * _nx * ny + i * bundle_size + q) + 1]; // imag
+                workspace[2 * (q * nt + t)] = p_out[2 * (t * _nx * ny + i * chunk_size + q)];         // real
+                workspace[2 * (q * nt + t) + 1] = p_out[2 * (t * _nx * ny + i * chunk_size + q) + 1]; // imag
             }
             // set other values to 0
             for (size_t t = length; t < nt; t++)
@@ -227,7 +227,7 @@ py::array_t<double> dfm_fft(py::array_t<T, py::array::c_style> img_seq,
         fftw_execute(fft_plan);
 
         // compute power spectrum of fft
-        for (size_t j = 0; j < bundle_size * nt; j++)
+        for (size_t j = 0; j < chunk_size * nt; j++)
         {
             workspace[2 * j] = workspace[2 * j] * workspace[2 * j] + workspace[2 * j + 1] * workspace[2 * j + 1]; // real
             workspace[2 * j + 1] = 0.0;                                                                           // imag
@@ -240,20 +240,20 @@ py::array_t<double> dfm_fft(py::array_t<T, py::array::c_style> img_seq,
         size_t idx = lags.size() - 1;
         for (size_t t = 0; t < length; t++)
         {
-            for (size_t q = 0; q < bundle_size; q++)
+            for (size_t q = 0; q < chunk_size; q++)
             {
-                double a = p_out[2 * (t * _nx * ny + i * bundle_size + q)];     // real
-                double b = p_out[2 * (t * _nx * ny + i * bundle_size + q) + 1]; // imag
+                double a = p_out[2 * (t * _nx * ny + i * chunk_size + q)];     // real
+                double b = p_out[2 * (t * _nx * ny + i * chunk_size + q) + 1]; // imag
                 tmp[q] += a * a + b * b;
-                a = p_out[2 * ((length - t - 1) * _nx * ny + i * bundle_size + q)];     // real
-                b = p_out[2 * ((length - t - 1) * _nx * ny + i * bundle_size + q) + 1]; // imag
+                a = p_out[2 * ((length - t - 1) * _nx * ny + i * chunk_size + q)];     // real
+                b = p_out[2 * ((length - t - 1) * _nx * ny + i * chunk_size + q) + 1]; // imag
                 tmp[q] += a * a + b * b;
             }
 
             // add contribution only if delay in list
             if (length - t - 1 == lags[idx])
             {
-                for (size_t q = 0; q < bundle_size; ++q)
+                for (size_t q = 0; q < chunk_size; ++q)
                 {
                     // also divide corr part by nt to normalize fft
                     workspace[2 * (q * nt + (size_t)(lags[idx]))] = tmp[q] - 2 * workspace[2 * (q * nt + (size_t)(lags[idx]))] / (double)nt;
@@ -275,9 +275,9 @@ py::array_t<double> dfm_fft(py::array_t<T, py::array::c_style> img_seq,
         // Step3: copy results to workspace1
         for (size_t idx = 0; idx < lags.size(); idx++)
         {
-            for (size_t q = 0; q < bundle_size; q++)
+            for (size_t q = 0; q < chunk_size; q++)
             {
-                p_out[2 * (idx * _nx * ny + i * bundle_size + q)] = workspace[2 * (q * nt + (size_t)(lags[idx]))];
+                p_out[2 * (idx * _nx * ny + i * chunk_size + q)] = workspace[2 * (q * nt + (size_t)(lags[idx]))];
             }
         }
     }

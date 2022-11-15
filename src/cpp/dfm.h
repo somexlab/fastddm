@@ -41,7 +41,7 @@ py::array_t<double> dfm_direct(py::array_t<T, py::array::c_style> img_seq,
     \param nx           number of fft nodes in x direction
     \param ny           number of fft nodes in y direction
     \param nt           number of fft nodes in t direction
-    \param bundle_size  number of fft's in the bundle
+    \param chunk_size   number of fft's in the chunk
  */
 template <typename T>
 py::array_t<double> dfm_fft(py::array_t<T, py::array::c_style> img_seq,
@@ -49,7 +49,7 @@ py::array_t<double> dfm_fft(py::array_t<T, py::array::c_style> img_seq,
                             size_t nx,
                             size_t ny,
                             size_t nt,
-                            size_t bundle_size);
+                            size_t chunk_size);
 
 /*! \brief Export dfm functions to python
     \param m    Module

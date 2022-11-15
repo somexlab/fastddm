@@ -1,9 +1,13 @@
+from typing import List
+import itertools
+import math
+import psutil
+import numpy as np
+
 from .core import dfm_direct, dfm_fft
 
-import psutil
 
-
-def dfm_direct_cpp(img_seq, lags, nx, ny):
+def dfm_direct_cpp(img_seq: np.ndarray, lags: List[int], nx: int, ny: int):
     """Digital Fourier Microscopy, direct mode
 
     Compute the image structure function using differences.
@@ -35,19 +39,19 @@ def dfm_direct_cpp(img_seq, lags, nx, ny):
     mem_req = 0
     # calculations are done in double precision
     # we need:
-    #  workspace -- 2 * (nx/2 + 1) * ny * len(img_seq) * 4bytes
-    mem_req += 4 * (2 * (nx//2 + 1) * ny * len(img_seq))
-    #  tmp -------- len(lags) * 4bytes
-    mem_req += 4 * len(lags)
+    #  workspace -- 2 * (nx/2 + 1) * ny * len(img_seq) * 8bytes
+    mem_req += 8 * (2 * (nx//2 + 1) * ny * len(img_seq))
+    #  tmp -------- len(lags) * 8bytes
+    mem_req += 8 * len(lags)
     # we require this space to be less than 80% of the available memory
     # to stay on the safe side
-    if int(0.8*mem) < mem_req:
+    if int(0.9*mem) < mem_req:
         raise MemoryError('Not enough memory')
 
     return dfm_direct(img_seq, lags, nx, ny)
 
 
-def dfm_fft_cpp(img_seq, lags, nx, ny, nt):
+def dfm_fft_cpp(img_seq: np.ndarray, lags: List[int], nx: int, ny: int, nt: int):
     """Digital Fourier Microscopy, fft mode
 
     Compute the image structure function using the Wiener-Khinchin theorem.
@@ -73,42 +77,93 @@ def dfm_fft_cpp(img_seq, lags, nx, ny, nt):
     Raises
     ------
     MemoryError
-        If memory is not sufficient to perform the calculations.
+        If memory available is not sufficient for calculations.
     """
 
     # get available memory
     mem = psutil.virtual_memory().available
 
-    # compute the optimal bundle size
-    rep = 1
+    # compute the optimal chunk size
+    divisors = find_divisors((nx//2 + 1)*ny)
+    idx = len(divisors)
     while True:
-        # if the number of repetitions is larger than the number
-        # of 2D Fourier nodes, memory is not enough
-        if rep > (nx//2 + 1)*ny:
-            raise MemoryError('Not enough memory')
-
-        # evaluate bundle size (is rep*bundle_size == (nx//2+1) * ny ? )
-        if ((nx//2 + 1)*ny) % rep == 0:
-            bundle_size = ((nx//2 + 1)*ny) // rep
-        else:
-            rep += 1
-            continue
+        idx -= 1
+        chunk_size = divisors[idx]
 
         mem_req = 0
         # calculations are done in double precision
         # we need:
-        #  workspace1 -- 2 * (nx/2 + 1) * ny * len(img_seq) * 4bytes
-        mem_req += 4 * (2 * (nx//2 + 1) * ny * len(img_seq))
-        #  workspace2 -- 2 * bundle_size * nt * 4bytes
-        mem_req += 4 * (2 * bundle_size * nt)
-        #  tmp --------- bundle_size * 4bytes
-        mem_req += 4 * bundle_size
+        #  workspace1 -- 2 * (nx/2 + 1) * ny * len(img_seq) * 8bytes
+        mem_req += 8 * (2 * (nx//2 + 1) * ny * len(img_seq))
+        #  workspace2 -- 2 * chunk_size * nt * 8bytes
+        mem_req += 8 * (2 * chunk_size * nt)
+        #  tmp --------- chunk_size * 8bytes
+        mem_req += 8 * chunk_size
         # we require this space to be less than 80% of the available memory
         # to stay on the safe side
 
-        if int(0.8*mem) < mem_req:
-            rep += 1
-        else:
+        if int(0.9*mem) > mem_req:
             break
+        if idx == 0:
+            raise MemoryError('Not enough memory')
 
-    return dfm_fft(img_seq, lags, nx, ny, nt, bundle_size)
+    return dfm_fft(img_seq, lags, nx, ny, nt, chunk_size)
+
+
+def primesfrom2to(n: int) -> List[int]:
+    """Returns a list of primes, 2 <= p < n
+
+    Parameters
+    ----------
+    n : int
+        Upper limit value.
+
+    Returns
+    -------
+    List[int]
+        Primes up to n (excluded).
+    """
+    # https://stackoverflow.com/questions/2068372/fastest-way-to-list-all-primes-below-n-in-python/3035188#3035188
+    sieve = np.ones(n//3 + (n%6 == 2), dtype=bool)
+    for i in range(1, int(n**0.5)//3 + 1):
+        if sieve[i]:
+            k = 3*i + 1|1
+            sieve[       k*k//3     ::2*k] = False
+            sieve[k*(k-2*(i&1)+4)//3::2*k] = False
+    return np.r_[2,3,((3*np.nonzero(sieve)[0][1:]+1)|1)]
+
+
+def find_divisors(n):
+    """Find the divisors of n
+
+    Parameters
+    ----------
+    n : int
+        Input value.
+
+    Returns
+    -------
+    divisors : List[int]
+        List of divisors of n.
+    """
+    primes = primesfrom2to(n+1).tolist()  # list of primes
+    primes = map(int, primes)
+    factors = {}
+    for prime in primes:
+        factor = 0
+        while True:
+            if n%prime == 0:
+                factor += 1
+                n /= prime
+                factors[prime] = factor
+            else: break
+
+    powers = [
+        [factor ** i for i in range(count + 1)]
+        for factor, count in factors.items()
+    ]
+
+    divisors = [math.prod(i) for i in itertools.product(*powers)]
+    divisors.sort()
+
+    return divisors
