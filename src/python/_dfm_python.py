@@ -190,20 +190,25 @@ def azimuthal_average(
 
 
 def reconstruct_full_spectrum(
-    halfplane: np.ndarray, fft_shift: bool = True
+    halfplane: np.ndarray,
+    shape: Optional[Tuple[int, ...]] = None,
+    fft_shift: bool = True,
 ) -> np.ndarray:
     """Reconstruct the full plane spectrum from a half plane spectrum.
 
     This is to save memory while computing. The result is the same as one would get by calling
     scipy.fft.fft2 (or similar) on the original data. The input is assumed to be the output of
-    scipy.fft.rfft (or similar) and the full spectrum is expected to be square!
+    scipy.fft.rfft (or similar). If the full spectrum is not square, the final `shape` must be
+    given, otherwise a square spectrum is assumed.
 
-    By default, the spectrum is also shifted (with fft_shift)
+    By default, the spectrum is also shifted (with fft_shift).
 
     Parameters
     ----------
     halfplane : np.ndarray
         The half-plane array provided e.g. by scipy.fft.rfft2.
+    shape : Tuple[int, ...]
+        The shape of the full spectrum.
     fft_shift : bool, optional
         If True, fft-shifts the full spectrum along the last 2 axis, by default True
 
@@ -212,22 +217,31 @@ def reconstruct_full_spectrum(
     np.ndarray
         The full-plane spectrum.
     """
+
+    # setup of dtype and dimensions
     dtype = halfplane.dtype
-    h, w = halfplane.shape  # height, width
-    full = np.zeros((h, h), dtype=dtype)  # assume h is the big dimension
-    full[:, :w] = halfplane  # first half + one column
+    dim_y, width = halfplane.shape  # dim_y is always directly correct
 
-    if h % 2 == 0:
-        other_half = np.roll(halfplane[::-1, ::-1][:, 1:-1].conj(), 1, axis=0)
-    else:
-        other_half = np.roll(halfplane[::-1, ::-1][:, :-1].conj(), 1, axis=0)
+    # assume square dimensions without shape, otherwise take last element to be full x dimension
+    dim_x = dim_y if shape is None else shape[-1]
 
-    full[:, w:] = other_half
+    # calculate rest and set the cropping size
+    rest = dim_x % 2
+    crop = 1 if rest == 0 else 0
+
+    # create full
+    spectrum = np.zeros((dim_y, dim_x), dtype=dtype)
+
+    # rfft2 half
+    spectrum[:, :width] = halfplane  # first half (int-half) + 1 column
+
+    # other half; flipped in x&y, cropped, conjugated and shifted down in y by 1 pixel
+    spectrum[:, width:] = np.roll(halfplane[::-1, ::-1][:, crop:-1].conj(), 1, axis=0)
 
     if fft_shift:
-        return scifft.fftshift(full, axes=(-2, -1))
+        spectrum = scifft.fftshift(spectrum, axes=(-2, -1))
 
-    return full
+    return spectrum
 
 
 def image_structure_function(
