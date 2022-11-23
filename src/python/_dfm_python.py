@@ -37,6 +37,59 @@ def autocorrelation(spatial_fft: np.ndarray, *, workers: int = 2) -> np.ndarray:
     return ifft[: len(spatial_fft)].real
 
 
+def spatial_frequency_grid(kx: np.ndarray, ky: np.ndarray) -> np.ndarray:
+    """The grid of (absolute) spatial frequency values on a grid.
+
+    If the input `kx` and `ky` are not FFT-shifted, the output of this function can be FFT-shifted
+    as well.
+
+    Parameters
+    ----------
+    kx : np.ndarray
+        Input from np.fft.fftfreq.
+    ky : np.ndarray
+        Input from np.fft.fftfreq.
+
+    Returns
+    -------
+    np.ndarray
+        The spatial frequency grid.
+    """
+
+    def modulus(x: float, y: float) -> float:
+        return np.sqrt(x**2 + y**2)
+
+    # get output size and initialize empty distance array
+    dim_x, dim_y = kx.size, ky.size
+    da = np.zeros((dim_y, dim_x))
+
+    # calculate half of dimensions and rest
+    half_x, rest_x = divmod(dim_x, 2)
+    half_y, rest_y = divmod(dim_y, 2)
+
+    # create empty array 1/4 (+rest) of the final output size
+    xside = half_x + rest_x
+    yside = half_y + rest_y
+    da_quarter = np.zeros((yside, xside))
+
+    # fill in the modulus values of the quarter array
+    for j in range(yside):
+        for i in range(xside):
+            da_quarter[j, i] = modulus(kx[i], ky[j])
+
+    # if rest is non-zero in any case, the quarter array needs to be cropped at the end
+    crop_y = -rest_y if rest_y != 0 else None
+    crop_x = -rest_x if rest_x != 0 else None
+
+    # fill in the final array by cropping and flipping the quarter array
+    da[:yside, :xside] = da_quarter  # top left corner
+    da[yside:, :xside] = da_quarter[:crop_y, :][::-1, :]  # bottom left corner
+    da[:yside, xside:] = da_quarter[:, :crop_x][:, ::-1]  # top right corner
+    da[yside:, xside:] = da_quarter[:crop_y, :crop_x][::-1, ::-1]  # bottom right corner
+
+    return da
+
+
 @lru_cache()
 def distance_array(
     shape: Tuple[int, ...], r_centre: Optional[int] = None
