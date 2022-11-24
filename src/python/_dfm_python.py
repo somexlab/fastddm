@@ -55,39 +55,10 @@ def spatial_frequency_grid(kx: np.ndarray, ky: np.ndarray) -> np.ndarray:
     np.ndarray
         The spatial frequency grid.
     """
+    X, Y = np.meshgrid(kx, ky)
+    k_modulus = np.sqrt(X**2 + Y**2)
 
-    def modulus(x: float, y: float) -> float:
-        return np.sqrt(x**2 + y**2)
-
-    # get output size and initialize empty distance array
-    dim_x, dim_y = kx.size, ky.size
-    da = np.zeros((dim_y, dim_x))
-
-    # calculate half of dimensions and rest
-    half_x, rest_x = divmod(dim_x, 2)
-    half_y, rest_y = divmod(dim_y, 2)
-
-    # create empty array 1/4 (+rest) of the final output size
-    xside = half_x + rest_x
-    yside = half_y + rest_y
-    da_quarter = np.zeros((yside, xside))
-
-    # fill in the modulus values of the quarter array
-    for j in range(yside):
-        for i in range(xside):
-            da_quarter[j, i] = modulus(kx[i], ky[j])
-
-    # if rest is non-zero in any case, the quarter array needs to be cropped at the end
-    crop_y = -rest_y if rest_y != 0 else None
-    crop_x = -rest_x if rest_x != 0 else None
-
-    # fill in the final array by cropping and flipping the quarter array
-    da[:yside, :xside] = da_quarter  # top left corner
-    da[yside:, :xside] = da_quarter[:crop_y, :][::-1, :]  # bottom left corner
-    da[:yside, xside:] = da_quarter[:, :crop_x][:, ::-1]  # top right corner
-    da[yside:, xside:] = da_quarter[:crop_y, :crop_x][::-1, ::-1]  # bottom right corner
-
-    return da
+    return k_modulus
 
 
 @lru_cache()
