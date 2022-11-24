@@ -160,6 +160,71 @@ def azimuthal_average(
     return azimuthal_average
 
 
+def azimuthal_avg(
+    image: np.ndarray,
+    dist: Optional[np.ndarray] = None,
+    radii: Optional[np.ndarray] = None,
+    binsize: Optional[float] = None,
+) -> np.ndarray:
+    """Calculate the azimuthal average for a given image.
+
+    If no additional parameters are presented, the spatial frequencies, radii and binsize are
+    automatically calculated based on fftfreq. If other spatial frequencies/radii/binsizes are to
+    be used, they can be supplied as parameters.
+
+    Parameters
+    ----------
+    image : np.ndarray
+        The image where the azimuthal average is to be performed.
+    dist : Optional[np.ndarray], optional
+        Distribution of spatial frequencies on a grid, by default None
+    radii : Optional[np.ndarray], optional
+        The radius values for which the azimuthal average is computed, by default None
+    binsize : Optional[float], optional
+        The width of the averaging ring, by default None
+
+    Returns
+    -------
+    np.ndarray
+        The average values for each given radius.
+    """
+    y, x = image.shape
+    bigside = max(y, x)
+
+    if binsize is None:
+        binsize = 1 / bigside
+    halfbin = binsize / 2
+
+    max_len = sum(divmod(bigside, 2))  # get radius of bigger side
+
+    # setup array of distances to center of array
+    if dist is None:
+        kx = scifft.fftfreq(x)
+        ky = scifft.fftfreq(y)
+        dist = scifft.fftshift(spatial_frequency_grid(kx, ky))
+
+    if radii is None:
+        if dist is None:
+            # here we can reuse the k's:
+            radii = kx if kx.size >= ky.size else ky
+            radii = radii[:max_len]
+
+        else:  # create new radii values based on the binsize
+            # starting with zero
+            radii = np.ones(max_len) * binsize
+            radii[0] = 0
+            radii = np.cumsum(radii)
+
+    azimuthal_average = np.zeros_like(radii, dtype=np.float64)
+
+    for i, r in enumerate(radii):
+        azimuthal_average[i] = image[
+            (dist >= r - halfbin) & (dist <= r + halfbin)
+        ].mean()
+
+    return azimuthal_average
+
+
 def reconstruct_full_spectrum(
     halfplane: np.ndarray,
     shape: Optional[Tuple[int, ...]] = None,
