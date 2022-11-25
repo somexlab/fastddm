@@ -61,60 +61,6 @@ def spatial_frequency_grid(kx: np.ndarray, ky: np.ndarray) -> np.ndarray:
     return k_modulus
 
 
-@lru_cache()
-def distance_array(
-    shape: Tuple[int, ...], r_centre: Optional[int] = None
-) -> np.ndarray:
-    """Calculate the array of distances for a given radius centre point `r_centre`.
-
-    The last two values of the input shape are used. If the shape is not square, the `r_centre`
-    argument is ignored, and a `r_centre` equal to the integer division of each dimension by 2 is
-    used.
-
-    If the input shape is square, and no centre is supplied, then `r_centre` is the integer
-    division of the square dimension by 2.
-
-    Parameters
-    ----------
-    shape : Tuple[int, ...]
-        The shape of an array; only the last 2 dimensions are considered.
-    r_centre : Optional[int], optional
-        The centre point to calculate the distance from, only for square shapes, by default None
-
-    Returns
-    -------
-    np.ndarray
-        The array of distances to the centre point.
-    """
-    # helper function
-    @lru_cache()
-    def dist_2d(i, j, r_i, r_j):
-        """Calculate the distance of a point (i, j) with respect to another point (r_i, r_j)."""
-        return np.sqrt((j - r_j) ** 2 + (i - r_i) ** 2)
-
-    *rest, y, x = shape
-    dist = np.zeros((y, x))
-
-    # non-square dimensions
-    if x != y:
-        r_centre_y, r_centre_x = y // 2, x // 2
-
-        for j in range(y):
-            for i in range(x):
-                dist[j, i] = dist_2d(i, j, r_centre_x, r_centre_y)
-        return dist
-
-    # below for square dimensions
-    if r_centre is None:
-        r_centre = x // 2
-
-    for j in range(y):
-        for i in range(x):
-            dist[j, i] = dist_2d(i, j, r_centre, r_centre)
-
-    return dist
-
-
 def azimuthal_average(
     image: np.ndarray,
     dist: Optional[np.ndarray] = None,
@@ -320,60 +266,6 @@ def normalized_rfft2(images: np.ndarray, *, workers: int = 2) -> np.ndarray:
     rfft2 = scifft.rfft2(images, workers=workers)
     norm = np.sqrt(x * y)
     return rfft2 / norm
-
-
-def run(
-    images: np.ndarray,
-    lags: np.ndarray,
-    keep_full_structure: bool = True,
-    workers: int = 2,
-) -> Tuple[np.ndarray, np.ndarray, Optional[np.ndarray]]:
-    """Run the DDM analysis on a sequence of images.
-
-    Parameters
-    ----------
-    images : np.ndarray
-        The sequence of images.
-    lags : np.ndarray
-        An array of lag-times.
-    keep_full_structure : bool, optional
-        Keep and return the full image structure function, by default True
-    workers : int, optional
-        The number of threads to be passed to scipy.fft, by default 2
-
-    Returns
-    -------
-    Tuple[np.ndarray, np.ndarray, Optional[np.ndarray]]
-        The normalized rfft2 data, the azimuthal average of the image structure function for all
-        given lag times, and optionally the full plane image structure function for all given lag
-        times as well. The latter is None if `keep_full_structure` is False.
-    """
-    _, y, x = images.shape  # pixel dimensions, only length of lags is important
-    length = len(lags)
-    averages = np.zeros((length, y // 2))
-
-    # setup of arrays
-    if keep_full_structure:  # image structure function D(q, dt)
-        dqt = np.zeros((length, y, x))  # image dimensions, length of lags
-    else:
-        dqt = None
-
-    # spatial ffts of the images, square modulus and autocorrelation
-    rfft2 = normalized_rfft2(images, workers=workers)
-    square_mod = np.abs(rfft2) ** 2
-    autocorr = autocorrelation(rfft2, workers=workers)
-
-    # iterate over all lags:
-    for i, lag in enumerate(lags):
-        sf = image_structure_function(square_mod, autocorr, lag)
-        if dqt is not None:
-            dqt[i] = sf
-
-        dist = distance_array(sf.shape)
-        azimuth_avg_sf = azimuthal_average(sf, dist)
-        averages[i] = azimuth_avg_sf
-
-    return rfft2, averages, dqt
 
 
 def run(
