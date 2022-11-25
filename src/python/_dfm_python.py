@@ -236,7 +236,10 @@ def reconstruct_full_spectrum(
 
 
 def image_structure_function(
-    square_modulus: np.ndarray, autocorrelation: np.ndarray, lag: int
+    square_modulus: np.ndarray,
+    autocorrelation: np.ndarray,
+    lag: int,
+    shape: Optional[Tuple[int, ...]] = None,
 ) -> np.ndarray:
     """Calculate the image structure function.
 
@@ -256,6 +259,9 @@ def image_structure_function(
         The autocorrelation function of the spatial FFT of an image timeseries.
     lag : int
         The delay time in frame units, must be 0 <= lag <= len(square_modulus)
+    shape : Optional[Tuple[int, ...]]
+        The output shape of the full image structure function; needs to be presented for non-square
+        input images.
 
     Returns
     -------
@@ -288,7 +294,7 @@ def image_structure_function(
     )
     sum_of_parts /= length - lag  # normalization
 
-    return reconstruct_full_spectrum(sum_of_parts)  # full plane
+    return reconstruct_full_spectrum(sum_of_parts, shape=shape)  # full plane
 
 
 # convenience #####################################################################################
@@ -366,5 +372,65 @@ def run(
         dist = distance_array(sf.shape)
         azimuth_avg_sf = azimuthal_average(sf, dist)
         averages[i] = azimuth_avg_sf
+
+    return rfft2, averages, dqt
+
+
+def run(
+    images: np.ndarray,
+    lags: np.ndarray,
+    keep_full_structure: bool = True,
+    workers: int = 2,
+) -> Tuple[np.ndarray, np.ndarray, Optional[np.ndarray]]:
+    """Run the DDM analysis on a sequence of images.
+
+    Parameters
+    ----------
+    images : np.ndarray
+        The sequence of images.
+    lags : np.ndarray
+        An array of lag-times.
+    keep_full_structure : bool, optional
+        Keep and return the full image structure function, by default True
+    workers : int, optional
+        The number of threads to be passed to scipy.fft, by default 2
+
+    Returns
+    -------
+    Tuple[np.ndarray, np.ndarray, Optional[np.ndarray]]
+        The normalized rfft2 data, the azimuthal average of the image structure function for all
+        given lag times, and optionally the full plane image structure function for all given lag
+        times as well. The latter is None if `keep_full_structure` is False.
+    """
+    *_, y, x = images.shape
+    length = lags.size
+    bigside = max(y, x)  # get bigger side
+    averages = np.zeros((length, bigside // 2))
+
+    # setup of arrays
+    if keep_full_structure:  # image structure function D(q, dt)
+        dqt = np.zeros((length, y, x))  # image dimensions, length of lags
+    else:
+        dqt = None
+
+    # spatial ffts of the images, square modulus and autocorrelation
+    rfft2 = normalized_rfft2(images, workers=workers)
+    square_mod = np.abs(rfft2) ** 2
+    autocorr = autocorrelation(rfft2, workers=workers)
+
+    # setup of spatial frequencies & grid
+    kx = scifft.fftfreq(x)
+    ky = scifft.fftfreq(y)
+    spatial_freq = scifft.fftshift(
+        spatial_frequency_grid(kx, ky)
+    )  # equiv of old distance array
+
+    # iterate over all lags:
+    for i, lag in enumerate(lags):
+        sf = image_structure_function(square_mod, autocorr, lag, shape=images.shape)
+        if dqt is not None:
+            dqt[i] = sf
+
+        averages[i] = azimuthal_average(sf, dist=spatial_freq)
 
     return rfft2, averages, dqt
