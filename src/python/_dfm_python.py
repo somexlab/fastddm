@@ -290,9 +290,10 @@ def run(
     Returns
     -------
     Tuple[np.ndarray, np.ndarray, Optional[np.ndarray]]
-        The normalized rfft2 data, the azimuthal average of the image structure function for all
-        given lag times, and optionally the full plane image structure function for all given lag
-        times as well. The latter is None if `keep_full_structure` is False.
+        The square modulus of the normalized rfft2 data, the azimuthal average of the image
+        structure function for all given lag times, and optionally the full plane image structure
+        function for all given lag times as well. The latter is None if `keep_full_structure` is
+        False.
     """
     *_, y, x = images.shape
     length = lags.size
@@ -325,4 +326,4 @@ def run(
 
         averages[i] = azimuthal_average(sf, dist=spatial_freq)
 
-    return rfft2, averages, dqt
+    return square_mod, averages, dqt
