@@ -1,6 +1,5 @@
 """The collection of python functions to perform DDM."""
 
-from functools import lru_cache
 from typing import Optional, Tuple
 
 import numpy as np
@@ -37,120 +36,115 @@ def autocorrelation(spatial_fft: np.ndarray, *, workers: int = 2) -> np.ndarray:
     return ifft[: len(spatial_fft)].real
 
 
-@lru_cache()
-def distance_array(
-    shape: Tuple[int, ...], r_centre: Optional[int] = None
-) -> np.ndarray:
-    """Calculate the array of distances for a given radius centre point `r_centre`.
+def spatial_frequency_grid(kx: np.ndarray, ky: np.ndarray) -> np.ndarray:
+    """The grid of (absolute) spatial frequency values on a grid.
 
-    The last two values of the input shape are used. If the shape is not square, the `r_centre`
-    argument is ignored, and a `r_centre` equal to the integer division of each dimension by 2 is
-    used.
-
-    If the input shape is square, and no centre is supplied, then `r_centre` is the integer
-    division of the square dimension by 2.
+    If the input `kx` and `ky` are not FFT-shifted, the output of this function can be FFT-shifted
+    as well.
 
     Parameters
     ----------
-    shape : Tuple[int, ...]
-        The shape of an array; only the last 2 dimensions are considered.
-    r_centre : Optional[int], optional
-        The centre point to calculate the distance from, only for square shapes, by default None
+    kx : np.ndarray
+        Input from np.fft.fftfreq.
+    ky : np.ndarray
+        Input from np.fft.fftfreq.
 
     Returns
     -------
     np.ndarray
-        The array of distances to the centre point.
+        The spatial frequency grid.
     """
-    # helper function
-    @lru_cache()
-    def dist_2d(i, j, r_i, r_j):
-        """Calculate the distance of a point (i, j) with respect to another point (r_i, r_j)."""
-        return np.sqrt((j - r_j) ** 2 + (i - r_i) ** 2)
+    X, Y = np.meshgrid(kx, ky)
+    k_modulus = np.sqrt(X**2 + Y**2)
 
-    *rest, y, x = shape
-    dist = np.zeros((y, x))
-
-    # non-square dimensions
-    if x != y:
-        r_centre_y, r_centre_x = y // 2, x // 2
-
-        for j in range(y):
-            for i in range(x):
-                dist[j, i] = dist_2d(i, j, r_centre_x, r_centre_y)
-        return dist
-
-    # below for square dimensions
-    if r_centre is None:
-        r_centre = x // 2
-
-    for j in range(y):
-        for i in range(x):
-            dist[j, i] = dist_2d(i, j, r_centre, r_centre)
-
-    return dist
+    return k_modulus
 
 
 def azimuthal_average(
-    image: np.ndarray, dist: Optional[np.ndarray] = None
+    image: np.ndarray,
+    dist: Optional[np.ndarray] = None,
+    radii: Optional[np.ndarray] = None,
+    binsize: Optional[float] = None,
 ) -> np.ndarray:
-    """Calculate the azimuthal average for a given square image.
+    """Calculate the azimuthal average for a given image.
 
-    Can supply array of distances from the center to avoid calculating it multiple times (however
-    it does have the `lru_cache` decorator).
+    If no additional parameters are presented, the spatial frequencies, radii and binsize are
+    automatically calculated based on fftfreq. If other spatial frequencies/radii/binsizes are to
+    be used, they can be supplied as parameters.
 
     Parameters
     ----------
     image : np.ndarray
-        A 2D square image numpy array.
+        The image where the azimuthal average is to be performed.
     dist : Optional[np.ndarray], optional
-        An array of distances from a centre point, by default None
+        Distribution of spatial frequencies on a grid, by default None
+    radii : Optional[np.ndarray], optional
+        The radius values for which the azimuthal average is computed, by default None
+    binsize : Optional[float], optional
+        The width of the averaging ring, by default None
 
     Returns
     -------
     np.ndarray
-        The azimuthally averaged image, the length of half the dimension.
-
-    Raises
-    ------
-    RuntimeError
-        If the input images is not square.
+        The average values for each given radius.
     """
     y, x = image.shape
+    bigside = max(y, x)
 
-    if x != y:
-        raise RuntimeError(f"Dimensions for X ({x}) and Y ({y}) not equal!")
+    if binsize is None:
+        binsize = 1 / bigside
+    halfbin = binsize / 2
+
+    max_len = sum(divmod(bigside, 2))  # get radius of bigger side
 
     # setup array of distances to center of array
-    r_centre = x // 2
     if dist is None:
-        dist = distance_array(image.shape, r_centre)
+        kx = scifft.fftfreq(x)
+        ky = scifft.fftfreq(y)
+        dist = scifft.fftshift(spatial_frequency_grid(kx, ky))
 
-    # list of radii, basically index count from centre
-    radii = np.arange(1, r_centre + 1)
+    if radii is None:
+        if dist is None:
+            # here we can reuse the k's:
+            radii = kx if kx.size >= ky.size else ky
+            radii = radii[:max_len]
+
+        else:  # create new radii values based on the binsize
+            # starting with zero
+            radii = np.ones(max_len) * binsize
+            radii[0] = 0
+            radii = np.cumsum(radii)
+
     azimuthal_average = np.zeros_like(radii, dtype=np.float64)
 
     for i, r in enumerate(radii):
-        azimuthal_average[i] = image[(dist >= r - 0.5) & (dist <= r + 0.5)].mean()
+        azimuthal_average[i] = image[
+            (dist >= r - halfbin) & (dist <= r + halfbin)
+        ].mean()
 
     return azimuthal_average
 
 
 def reconstruct_full_spectrum(
-    halfplane: np.ndarray, fft_shift: bool = True
+    halfplane: np.ndarray,
+    shape: Optional[Tuple[int, ...]] = None,
+    fft_shift: bool = True,
 ) -> np.ndarray:
     """Reconstruct the full plane spectrum from a half plane spectrum.
 
     This is to save memory while computing. The result is the same as one would get by calling
     scipy.fft.fft2 (or similar) on the original data. The input is assumed to be the output of
-    scipy.fft.rfft (or similar) and the full spectrum is expected to be square!
+    scipy.fft.rfft (or similar). If the full spectrum is not square, the final `shape` must be
+    given, otherwise a square spectrum is assumed.
 
-    By default, the spectrum is also shifted (with fft_shift)
+    By default, the spectrum is also shifted (with fft_shift).
 
     Parameters
     ----------
     halfplane : np.ndarray
         The half-plane array provided e.g. by scipy.fft.rfft2.
+    shape : Tuple[int, ...]
+        The shape of the full spectrum.
     fft_shift : bool, optional
         If True, fft-shifts the full spectrum along the last 2 axis, by default True
 
@@ -159,26 +153,38 @@ def reconstruct_full_spectrum(
     np.ndarray
         The full-plane spectrum.
     """
+
+    # setup of dtype and dimensions
     dtype = halfplane.dtype
-    h, w = halfplane.shape  # height, width
-    full = np.zeros((h, h), dtype=dtype)  # assume h is the big dimension
-    full[:, :w] = halfplane  # first half + one column
+    dim_y, width = halfplane.shape  # dim_y is always directly correct
 
-    if h % 2 == 0:
-        other_half = np.roll(halfplane[::-1, ::-1][:, 1:-1].conj(), 1, axis=0)
-    else:
-        other_half = np.roll(halfplane[::-1, ::-1][:, :-1].conj(), 1, axis=0)
+    # assume square dimensions without shape, otherwise take last element to be full x dimension
+    dim_x = dim_y if shape is None else shape[-1]
 
-    full[:, w:] = other_half
+    # calculate rest and set the cropping size
+    rest = dim_x % 2
+    crop = 1 if rest == 0 else 0
+
+    # create full
+    spectrum = np.zeros((dim_y, dim_x), dtype=dtype)
+
+    # rfft2 half
+    spectrum[:, :width] = halfplane  # first half (int-half) + 1 column
+
+    # other half; flipped in x&y, cropped, conjugated and shifted down in y by 1 pixel
+    spectrum[:, width:] = np.roll(halfplane[::-1, ::-1][:, crop:-1].conj(), 1, axis=0)
 
     if fft_shift:
-        return scifft.fftshift(full, axes=(-2, -1))
+        spectrum = scifft.fftshift(spectrum, axes=(-2, -1))
 
-    return full
+    return spectrum
 
 
 def image_structure_function(
-    square_modulus: np.ndarray, autocorrelation: np.ndarray, lag: int
+    square_modulus: np.ndarray,
+    autocorrelation: np.ndarray,
+    lag: int,
+    shape: Optional[Tuple[int, ...]] = None,
 ) -> np.ndarray:
     """Calculate the image structure function.
 
@@ -198,6 +204,9 @@ def image_structure_function(
         The autocorrelation function of the spatial FFT of an image timeseries.
     lag : int
         The delay time in frame units, must be 0 <= lag <= len(square_modulus)
+    shape : Optional[Tuple[int, ...]]
+        The output shape of the full image structure function; needs to be presented for non-square
+        input images.
 
     Returns
     -------
@@ -230,7 +239,7 @@ def image_structure_function(
     )
     sum_of_parts /= length - lag  # normalization
 
-    return reconstruct_full_spectrum(sum_of_parts)  # full plane
+    return reconstruct_full_spectrum(sum_of_parts, shape=shape)  # full plane
 
 
 # convenience #####################################################################################
@@ -280,13 +289,15 @@ def run(
     Returns
     -------
     Tuple[np.ndarray, np.ndarray, Optional[np.ndarray]]
-        The normalized rfft2 data, the azimuthal average of the image structure function for all
-        given lag times, and optionally the full plane image structure function for all given lag
-        times as well. The latter is None if `keep_full_structure` is False.
+        The square modulus of the normalized rfft2 data, the azimuthal average of the image
+        structure function for all given lag times, and optionally the full plane image structure
+        function for all given lag times as well. The latter is None if `keep_full_structure` is
+        False.
     """
-    _, y, x = images.shape  # pixel dimensions, only length of lags is important
-    length = len(lags)
-    averages = np.zeros((length, y // 2))
+    *_, y, x = images.shape
+    length = lags.size
+    bigside = max(y, x)  # get bigger side
+    averages = np.zeros((length, bigside // 2))
 
     # setup of arrays
     if keep_full_structure:  # image structure function D(q, dt)
@@ -299,14 +310,19 @@ def run(
     square_mod = np.abs(rfft2) ** 2
     autocorr = autocorrelation(rfft2, workers=workers)
 
+    # setup of spatial frequencies & grid
+    kx = scifft.fftfreq(x)
+    ky = scifft.fftfreq(y)
+    spatial_freq = scifft.fftshift(
+        spatial_frequency_grid(kx, ky)
+    )  # equiv of old distance array
+
     # iterate over all lags:
     for i, lag in enumerate(lags):
-        sf = image_structure_function(square_mod, autocorr, lag)
+        sf = image_structure_function(square_mod, autocorr, lag, shape=images.shape)
         if dqt is not None:
             dqt[i] = sf
 
-        dist = distance_array(sf.shape)
-        azimuth_avg_sf = azimuthal_average(sf, dist)
-        averages[i] = azimuth_avg_sf
+        averages[i] = azimuthal_average(sf, dist=spatial_freq)
 
-    return rfft2, averages, dqt
+    return square_mod, averages, dqt
