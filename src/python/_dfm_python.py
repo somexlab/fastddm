@@ -1,6 +1,6 @@
 """The collection of python functions to perform DDM."""
 
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Callable, Dict
 
 import numpy as np
 import scipy.fft as scifft
@@ -289,6 +289,77 @@ def image_structure_function(
     sum_of_parts /= length - lag  # normalization
 
     return reconstruct_full_spectrum(sum_of_parts, shape=shape)  # full plane
+
+
+def _py_image_structure_function(
+    images: np.ndarray,
+    lags: np.ndarray,
+    *,
+    mode: str = "fft",
+    workers: int = 2,
+    **kwargs,
+) -> np.ndarray:
+    """The handler function for the python image structure function backend.
+
+    Parameters
+    ----------
+    images : np.ndarray
+        Input image series.
+    lags : np.ndarray
+        Array of lag times.
+    mode : str, optional
+        Calculate the autocorrelation function with Wiener-Khinchin theorem ('fft') or classically ('direct'), by default "fft"
+    workers : int, optional
+        Number of workers to be used by scipy.fft, by default 2
+
+    Returns
+    -------
+    np.ndarray
+        The full image structure function for all given lag times.
+
+    Raises
+    ------
+    RuntimeError
+        If a mode other than the 2 possible ones is given.
+    """
+    # backend
+    backend: Dict[str, Callable] = {
+        "direct": _direct_image_structure_function,
+        "fft": image_structure_function,
+    }
+
+    # sanity check
+    modes = list(backend.keys())
+    if mode not in modes:
+        raise RuntimeError(
+            f"Unknown mode '{mode}' for image structure function. Only possible options are "
+            f"{modes}."
+        )
+
+    # setup
+    calc_dqt = backend[mode]  # select function
+    n, y, x = images.shape
+    length = len(lags)
+    dqt = np.zeros((length, y, x))
+    output_shape = (y, x)
+
+    # spatial fft & square modulus
+    rfft2 = normalized_rfft2(images, workers=workers)
+    square_mod = np.abs(rfft2) ** 2
+
+    if mode == "direct":
+        # just needs argument setup
+        args = [rfft2, square_mod]
+
+    else:
+        # autocorrelation for fft mode
+        autocorr = autocorrelation(rfft2, workers=workers)
+        args = [square_mod, autocorr]
+
+    for i, lag in enumerate(lags):
+        dqt[i] = calc_dqt(*args, lag, shape=output_shape)
+
+    return dqt
 
 
 # convenience #####################################################################################
