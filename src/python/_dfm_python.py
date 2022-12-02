@@ -344,7 +344,7 @@ def run(
         False.
     """
     *_, y, x = images.shape
-    length = lags.size
+    length = len(lags)
     bigside = max(y, x)  # get bigger side
     averages = np.zeros((length, bigside // 2))
 
