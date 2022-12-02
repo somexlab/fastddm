@@ -180,6 +180,55 @@ def reconstruct_full_spectrum(
     return spectrum
 
 
+def _direct_image_structure_function(
+    rfft2: np.ndarray,
+    rfft2_square_mod: np.ndarray,
+    lag: int,
+    shape: Optional[Tuple[int, int]],
+) -> np.ndarray:
+    """Calculate the image structure function the 'direct' way.
+
+    Uses the rfft2 and square modulus of the rfft2.
+
+    Parameters
+    ----------
+    rfft2 : np.ndarray
+        The rfft2 of the image series.
+    rfft2_square_mod : np.ndarray
+        Square modulus of the above input.
+    lag : int
+        The lag time in number of frames.
+    shape : Optional[Tuple[int, int]]
+        The output shape of the full image structure function; needs to be presented for non-square input images.
+
+    Returns
+    -------
+    np.ndarray
+        _description_
+
+    Raises
+    ------
+    RuntimeError
+        _description_
+    """
+    length, *_ = rfft2.shape
+
+    if lag >= length:
+        raise RuntimeError("Time delay cannot be longer than the timeseries itself!")
+
+    cropped_conj = rfft2[:-lag].conj()
+    shifted = rfft2[lag:]
+    shifted_abs_square = rfft2_square_mod[lag:]
+    cropped_abs_square = rfft2_square_mod[:-lag]
+
+    sum_of_parts = (
+        shifted_abs_square + cropped_abs_square - 2 * (cropped_conj * shifted).real
+    )
+    dqt = np.mean(sum_of_parts, axis=0)
+
+    return reconstruct_full_spectrum(dqt, shape=shape)
+
+
 def image_structure_function(
     square_modulus: np.ndarray,
     autocorrelation: np.ndarray,
