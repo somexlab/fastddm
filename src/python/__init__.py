@@ -1,1 +1,43 @@
+"""Main function to interface with backends."""
 
+import numpy as np
+from typing import Iterable, Dict, Callable
+from functools import partial
+
+from ._dfm_python import _py_image_structure_function
+from ._dfm_cpp import dfm_direct_cpp, dfm_fft_cpp
+from ._fftopt import next_fast_len
+
+
+def ddm(
+    img_seq: np.ndarray,
+    lags: Iterable[int],
+    *,
+    core: str = "cpp",
+    mode: str = "fft",
+    **kwargs
+) -> np.ndarray:
+    backend: Dict[str, Dict[str, Callable]] = {
+        "cpp": {"direct": dfm_direct_cpp, "fft": dfm_fft_cpp},
+        "py": {
+            "direct": partial(_py_image_structure_function, mode=mode),
+            "fft": partial(_py_image_structure_function, mode=mode),
+        },
+    }
+
+    dim_t, dim_y, dim_x = img_seq.shape
+
+    ddm_func = backend[core][mode]
+
+    if core == "cpp":
+        dim_x_padded = next_fast_len(dim_x)
+        dim_y_padded = next_fast_len(dim_y)
+        args = [img_seq, lags, dim_x_padded, dim_y_padded]
+
+        if mode == "fft":
+            args.append(dim_t)
+
+    else:
+        args = [img_seq, lags]
+
+    return ddm_func(*args, **kwargs)
