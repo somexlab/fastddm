@@ -25,14 +25,15 @@
 /*!
     Evaluate the device memory pitch for multiple subarrays of size N
 */
+template <typename T>
 void cudaGetDevicePitch(size_t N,
                         size_t &pitch)
 {
-    double *d_arr;
+    T *d_arr;
 
-    gpuErrchk(cudaMallocPitch(&d_arr, &pitch, N * sizeof(double), 2));
+    gpuErrchk(cudaMallocPitch(&d_arr, &pitch, N * sizeof(T), 2));
 
-    pitch /= sizeof(double);
+    pitch /= sizeof(T);
 
     gpuErrchk(cudaFree(d_arr));
 }

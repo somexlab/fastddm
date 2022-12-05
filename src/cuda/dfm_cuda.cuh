@@ -18,6 +18,7 @@ using namespace std;
 /*! \brief Evaluate the device memory pitch for multiple subarrays of size N
     \param N    subarray size
  */
+template <typename T>
 void cudaGetDevicePitch(size_t N,
                         size_t &pitch);
 
