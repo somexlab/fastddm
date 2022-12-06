@@ -35,7 +35,8 @@ def ddm(
         args = [img_seq, lags, dim_x_padded, dim_y_padded]
 
         if mode == "fft":
-            args.append(dim_t)
+            dim_t_padded = next_fast_len(2 * dim_t)
+            args.append(dim_t_padded)
 
     else:
         args = [img_seq, lags]
