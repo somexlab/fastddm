@@ -13,7 +13,7 @@ def ddm(
     img_seq: np.ndarray,
     lags: Iterable[int],
     *,
-    core: str = "cpp",
+    core: str = "py",
     mode: str = "fft",
     **kwargs
 ) -> np.ndarray:
