@@ -15,7 +15,7 @@ def ddm(
     *,
     core: str = "py",
     mode: str = "fft",
-    **kwargs
+    **kwargs,
 ) -> np.ndarray:
     backend: Dict[str, Dict[str, Callable]] = {
         "cpp": {"direct": dfm_direct_cpp, "fft": dfm_fft_cpp},
@@ -24,6 +24,19 @@ def ddm(
             "fft": partial(_py_image_structure_function, mode=mode),
         },
     }
+    cores = list(backend.keys())
+    modes = ["direct", "fft"]
+
+    # sanity checks
+    if core not in cores:
+        raise RuntimeError(
+            f"Unknown core '{core}' selected. Only possible options are {cores}."
+        )
+
+    if mode not in modes:
+        raise RuntimeError(
+            f"Unknown mode '{mode}' selected. Only possible options are {modes}."
+        )
 
     # read actual image dimensions
     dim_t, dim_y, dim_x = img_seq.shape
