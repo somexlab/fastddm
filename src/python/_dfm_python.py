@@ -294,6 +294,8 @@ def image_structure_function(
 def _py_image_structure_function(
     images: np.ndarray,
     lags: np.ndarray,
+    nx: Optional[int] = None,
+    ny: Optional[int] = None,
     *,
     mode: str = "fft",
     workers: int = 2,
@@ -307,6 +309,10 @@ def _py_image_structure_function(
         Input image series.
     lags : np.ndarray
         Array of lag times.
+    nx : int, optional
+        The number of Fourier nodes in x direction (for normalization), by default None.
+    ny : int, optional
+        The number of Fourier nodes in y direction (for normalization), by default None.
     mode : str, optional
         Calculate the autocorrelation function with Wiener-Khinchin theorem ('fft') or classically ('direct'), by default "fft"
     workers : int, optional
@@ -338,13 +344,14 @@ def _py_image_structure_function(
 
     # setup
     calc_dqt = backend[mode]  # select function
-    n, y, x = images.shape
+    if nx is None or ny is None:
+        _, ny, nx = images.shape
     length = len(lags)
-    dqt = np.zeros((length, y, x))
-    output_shape = (y, x)
+    dqt = np.zeros((length, ny, nx))
+    output_shape = (ny, nx)
 
     # spatial fft & square modulus
-    rfft2 = normalized_rfft2(images, workers=workers)
+    rfft2 = normalized_rfft2(images, nx, ny, workers=workers)
     square_mod = np.abs(rfft2) ** 2
 
     if mode == "direct":
@@ -363,27 +370,40 @@ def _py_image_structure_function(
 
 
 # convenience #####################################################################################
-def normalized_rfft2(images: np.ndarray, *, workers: int = 2) -> np.ndarray:
+def normalized_rfft2(
+    images: np.ndarray,
+    nx: Optional[int] = None,
+    ny: Optional[int] = None,
+    *,
+    workers: int = 2,
+) -> np.ndarray:
     """Calculate the normalized rfft2.
 
-    The normalization is the product of the last 2 dimensions of the shape of the `images` array.
+    The normalization is the square root of the product of the last 2 dimensions of the shape of
+    the `images` array. If `nx` *and* `ny` are given, the normalization is the square root of the
+    product of `nx` and `ny`, and the input to rfft2 is zero padded to match (ny, nx).
 
     Parameters
     ----------
     images : np.ndarray
         An image sequence.
+    nx : int, optional
+        The number of Fourier nodes in x direction, by default None.
+    ny : int, optional
+        The number of Fourier nodes in y direction, by default None.
     workers : int, optional
-        The number of threads to be passed to scipy.fft, by default 2
+        The number of threads to be passed to scipy.fft, by default 2.
 
     Returns
     -------
     np.ndarray
         The normalized half-plane spatial fft of the image sequence.
     """
-    *_, y, x = images.shape
+    if nx is None or ny is None:
+        *_, ny, nx = images.shape
 
-    rfft2 = scifft.rfft2(images, workers=workers)
-    norm = np.sqrt(x * y)
+    rfft2 = scifft.rfft2(images, s=(ny, nx), workers=workers)
+    norm = np.sqrt(nx * ny)
     return rfft2 / norm
 
 

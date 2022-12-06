@@ -25,13 +25,16 @@ def ddm(
         },
     }
 
+    # read actual image dimensions
     dim_t, dim_y, dim_x = img_seq.shape
+
+    # dimensions after zero padding for efficiency and for normalization
+    dim_x_padded = next_fast_len(dim_x)
+    dim_y_padded = next_fast_len(dim_y)
 
     ddm_func = backend[core][mode]
 
     if core == "cpp":
-        dim_x_padded = next_fast_len(dim_x)
-        dim_y_padded = next_fast_len(dim_y)
         args = [img_seq, lags, dim_x_padded, dim_y_padded]
 
         if mode == "fft":
@@ -39,6 +42,6 @@ def ddm(
             args.append(dim_t_padded)
 
     else:
-        args = [img_seq, lags]
+        args = [img_seq, lags, dim_x_padded, dim_y_padded]
 
     return ddm_func(*args, **kwargs)
