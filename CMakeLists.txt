@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.12)
 
 cmake_policy(SET CMP0054 NEW)
 
-project(dfmtoolbox LANGUAGES CXX)
+project(dfmtoolbox LANGUAGES CUDA CXX)
 
 # The default behavior is to build with optimization
 set(CMAKE_BUILD_TYPE Release)
@@ -43,7 +43,19 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-#message(FATAL_ERROR "This is output_dir: ${DFMTOOLBOX_OUTPUT_DIR}")
+# Build with CUDA
+find_package(CUDA REQUIRED)
+
+# Set CUDA C++ standard
+set(CMAKE_CUDA_STANDARD 11)
 
 # Add project library subdirectory
 add_subdirectory(src)
+
+# look if cuda package is present
+#option(ENABLE_GPU "True if we are compiling for a GPU target" OFF)
+#find_package(CUDA)
+#if(CUDA_FOUND)
+#    set(ENABLE_GPU ON)
+#    enable_language(CUDA)
+#endif(CUDA_FOUND)
