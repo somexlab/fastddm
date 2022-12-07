@@ -33,9 +33,6 @@ void cudaGetDevicePitch8B(size_t N,
 
     gpuErrchk(cudaMallocPitch(&d_arr, &pitch, N * sizeof(double), 2));
 
-    fprintf(stdout, "sizeof(T)=%d\n", sizeof(double));
-    fprintf(stdout, "pitch before: %d\n", pitch);
-
     pitch /= sizeof(double);
 
     gpuErrchk(cudaFree(d_arr));
@@ -50,9 +47,6 @@ void cudaGetDevicePitch4B(size_t N,
     float *d_arr;
 
     gpuErrchk(cudaMallocPitch(&d_arr, &pitch, N * sizeof(float), 2));
-
-    fprintf(stdout, "sizeof(T)=%d\n", sizeof(float));
-    fprintf(stdout, "pitch before: %d\n", pitch);
 
     pitch /= sizeof(float);
 
@@ -69,9 +63,6 @@ void cudaGetDevicePitch2B(size_t N,
 
     gpuErrchk(cudaMallocPitch(&d_arr, &pitch, N * sizeof(int16_t), 2));
 
-    fprintf(stdout, "sizeof(T)=%d\n", sizeof(int16_t));
-    fprintf(stdout, "pitch before: %d\n", pitch);
-
     pitch /= sizeof(int16_t);
 
     gpuErrchk(cudaFree(d_arr));
@@ -86,9 +77,6 @@ void cudaGetDevicePitch1B(size_t N,
     int8_t *d_arr;
 
     gpuErrchk(cudaMallocPitch(&d_arr, &pitch, N * sizeof(int8_t), 2));
-
-    fprintf(stdout, "sizeof(T)=%d\n", sizeof(int8_t));
-    fprintf(stdout, "pitch before: %d\n", pitch);
 
     pitch /= sizeof(int8_t);
 
