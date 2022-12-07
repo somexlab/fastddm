@@ -21,22 +21,22 @@ size_t get_device_pitch(size_t N,
                         int Nbytes)
 {
     size_t pitch;
-    switch(Nbytes)
+    switch (Nbytes)
     {
-        case 8:
-            cudaGetDevicePitch8B(N, pitch);
-            break;
-        case 4:
-            cudaGetDevicePitch4B(N, pitch);
-            break;
-        case 2:
-            cudaGetDevicePitch2B(N, pitch);
-            break;
-        case 1:
-            cudaGetDevicePitch1B(N, pitch);
-            break;
-        default:
-            cudaGetDevicePitch8B(N, pitch);
+    case 8:
+        cudaGetDevicePitch8B(N, pitch);
+        break;
+    case 4:
+        cudaGetDevicePitch4B(N, pitch);
+        break;
+    case 2:
+        cudaGetDevicePitch2B(N, pitch);
+        break;
+    case 1:
+        cudaGetDevicePitch1B(N, pitch);
+        break;
+    default:
+        cudaGetDevicePitch8B(N, pitch);
     }
 
     return pitch;
@@ -90,6 +90,7 @@ py::array_t<double> dfm_direct_cuda(py::array_t<T, py::array::c_style> img_seq,
                                     size_t nx,
                                     size_t ny,
                                     size_t num_fft2,
+                                    size_t buff_pitch,
                                     size_t num_chunks)
 {
     // ***Get input array and dimensions
@@ -109,6 +110,15 @@ py::array_t<double> dfm_direct_cuda(py::array_t<T, py::array::c_style> img_seq,
     auto p_out = out.mutable_data();
 
     // ***Transfer data to GPU and compute fft2
+    compute_fft2(p_img_seq,
+                 p_out,
+                 width,
+                 height,
+                 length,
+                 nx,
+                 ny,
+                 num_fft2,
+                 buff_pitch);
 
     // ***Compute correlations
 

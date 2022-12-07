@@ -110,3 +110,29 @@ void cudaGetFftMemSize(size_t nt,
                      pitch,
                      memsize);
 }
+
+/*!
+    Transfer images on GPU and compute fft2
+ */
+template <typename T>
+void compute_fft2(const T *h_in,
+                  double *h_out,
+                  size_t width,
+                  size_t height,
+                  size_t length,
+                  size_t nx,
+                  size_t ny,
+                  size_t num_fft2,
+                  size_t buff_pitch)
+{
+}
+
+template void compute_fft2<double>(const double *h_in, double *h_out, size_t width, size_t height, size_t length, size_t nx, size_t ny, size_t num_fft2, size_t buff_pitch);
+template void compute_fft2<float>(const float *h_in, double *h_out, size_t width, size_t height, size_t length, size_t nx, size_t ny, size_t num_fft2, size_t buff_pitch);
+template void compute_fft2<int64_t>(const int64_t *h_in, double *h_out, size_t width, size_t height, size_t length, size_t nx, size_t ny, size_t num_fft2, size_t buff_pitch);
+template void compute_fft2<int32_t>(const int32_t *h_in, double *h_out, size_t width, size_t height, size_t length, size_t nx, size_t ny, size_t num_fft2, size_t buff_pitch);
+template void compute_fft2<int16_t>(const int16_t *h_in, double *h_out, size_t width, size_t height, size_t length, size_t nx, size_t ny, size_t num_fft2, size_t buff_pitch);
+template void compute_fft2<u_int64_t>(const u_int64_t *h_in, double *h_out, size_t width, size_t height, size_t length, size_t nx, size_t ny, size_t num_fft2, size_t buff_pitch);
+template void compute_fft2<u_int32_t>(const u_int32_t *h_in, double *h_out, size_t width, size_t height, size_t length, size_t nx, size_t ny, size_t num_fft2, size_t buff_pitch);
+template void compute_fft2<u_int16_t>(const u_int16_t *h_in, double *h_out, size_t width, size_t height, size_t length, size_t nx, size_t ny, size_t num_fft2, size_t buff_pitch);
+template void compute_fft2<u_int8_t>(const u_int8_t *h_in, double *h_out, size_t width, size_t height, size_t length, size_t nx, size_t ny, size_t num_fft2, size_t buff_pitch);

@@ -53,6 +53,7 @@ def dfm_direct_gpu(img_seq: np.ndarray, lags: List[int], nx: int, ny: int) -> np
     # get number of pixels over x and y in one image
     num_pixel_x = img_seq.shape[-1]
     # if images are not double, get gpu x-pitch for buffer
+    pitch_x = 0
     if not isinstance(img_seq[0,0,0], float):
         pitch_x = get_device_pitch(num_pixel_x, img_seq[0,0,0].itemsize)
     num_pixel_y = img_seq.shape[-2]
@@ -80,4 +81,4 @@ def dfm_direct_gpu(img_seq: np.ndarray, lags: List[int], nx: int, ny: int) -> np
     num_chunks = 0
 
     # +++ ANALYZE +++
-    return dfm_direct_cuda(img_seq, lags, nx, ny, num_fft2, num_chunks)
+    return dfm_direct_cuda(img_seq, lags, nx, ny, num_fft2, pitch_x, num_chunks)

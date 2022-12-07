@@ -65,4 +65,26 @@ void cudaGetFftMemSize(size_t nt,
                        size_t pitch,
                        size_t *memsize);
 
+/*! \brief Transfer images on GPU and compute fft2
+    \param h_in         input array
+    \param h_out        output array
+    \param width        width of input array
+    \param height       height of input array
+    \param length       number of elements in z direction
+    \param nx           number of fft nodes in x direction
+    \param ny           number of fft nodes in y direction
+    \param num_fft2     number of fft2 chunks
+    \param buff_pitch   pitch of buffer device array
+ */
+template <typename T>
+void compute_fft2(const T *h_in,
+                  double *h_out,
+                  size_t width,
+                  size_t height,
+                  size_t length,
+                  size_t nx,
+                  size_t ny,
+                  size_t num_fft2,
+                  size_t buff_pitch);
+
 #endif

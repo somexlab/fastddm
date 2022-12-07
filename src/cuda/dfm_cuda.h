@@ -52,6 +52,7 @@ size_t get_device_fft_mem(size_t nt,
     \param nx           number of fft nodes in x direction
     \param ny           number of fft nodes in y direction
     \param num_fft2     number of fft2 chunks
+    \param buff_pitch   pitch of buffer device array
     \param num_chunks   number of q points chunks
  */
 template <typename T>
@@ -60,6 +61,7 @@ py::array_t<double> dfm_direct_cuda(py::array_t<T, py::array::c_style> img_seq,
                                     size_t nx,
                                     size_t ny,
                                     size_t num_fft2,
+                                    size_t buff_pitch,
                                     size_t num_chunks);
 
 /*! \brief Export dfm cuda functions to python
