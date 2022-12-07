@@ -81,6 +81,49 @@ size_t get_device_fft_mem(size_t nt,
 }
 
 /*!
+    Compute the image structure function in direct mode
+    using differences of fourier transformed images on the GPU.
+ */
+template <typename T>
+py::array_t<double> dfm_direct_cuda(py::array_t<T, py::array::c_style> img_seq,
+                                    vector<unsigned int> lags,
+                                    size_t nx,
+                                    size_t ny,
+                                    size_t num_fft2,
+                                    size_t num_chunks)
+{
+    // ***Get input array and dimensions
+    size_t length = img_seq.shape()[0]; // get length of original input
+    size_t height = img_seq.shape()[1]; // get height of original input
+    size_t width = img_seq.shape()[2];  // get width of original input
+    auto p_img_seq = img_seq.data();    // get input data
+
+    // ***Allocate workspace vector
+    /*
+    - We need to make sure that the fft2 r2c fits in the array,
+      so the size of one fft2 output is ny*(nx//2 + 1) complex
+      doubles [the input needs to be twice as large]
+     */
+    size_t _nx = nx / 2 + 1;
+    py::array_t<double> out = py::array_t<double>(2 * _nx * ny * length);
+    auto p_out = out.mutable_data();
+
+    // ***Transfer data to GPU and compute fft2
+
+    // ***Compute correlations
+
+    // ***Convert raw output to full and shifted ISF
+
+    // ***Resize output
+    // the full size of the image structure function is
+    // nx * ny * #(lags)
+    out.resize({lags.size(), ny, nx});
+
+    // ***Return result to python
+    return out;
+}
+
+/*!
     Export dfm_cuda functions to python.
  */
 void export_dfm_cuda(py::module &m)
@@ -88,4 +131,13 @@ void export_dfm_cuda(py::module &m)
     m.def("get_device_pitch", &get_device_pitch);
     m.def("get_device_fft2_mem", &get_device_fft2_mem);
     m.def("get_device_fft_mem", &get_device_fft_mem);
+    m.def("dfm_direct_cuda", &dfm_direct_cuda<double>);
+    m.def("dfm_direct_cuda", &dfm_direct_cuda<float>);
+    m.def("dfm_direct_cuda", &dfm_direct_cuda<int64_t>);
+    m.def("dfm_direct_cuda", &dfm_direct_cuda<int32_t>);
+    m.def("dfm_direct_cuda", &dfm_direct_cuda<int16_t>);
+    m.def("dfm_direct_cuda", &dfm_direct_cuda<uint64_t>);
+    m.def("dfm_direct_cuda", &dfm_direct_cuda<uint32_t>);
+    m.def("dfm_direct_cuda", &dfm_direct_cuda<uint16_t>);
+    m.def("dfm_direct_cuda", &dfm_direct_cuda<uint8_t>);
 }

@@ -46,6 +46,22 @@ size_t get_device_fft_mem(size_t nt,
                           size_t N,
                           size_t pitch);
 
+/*! \brief Compute ISF in direct mode on the GPU
+    \param img_seq      numpy array containing the image sequence
+    \param lags         lags to be analyzed
+    \param nx           number of fft nodes in x direction
+    \param ny           number of fft nodes in y direction
+    \param num_fft2     number of fft2 chunks
+    \param num_chunks   number of q points chunks
+ */
+template <typename T>
+py::array_t<double> dfm_direct_cuda(py::array_t<T, py::array::c_style> img_seq,
+                                    vector<unsigned int> lags,
+                                    size_t nx,
+                                    size_t ny,
+                                    size_t num_fft2,
+                                    size_t num_chunks);
+
 /*! \brief Export dfm cuda functions to python
     \param m    Module
  */

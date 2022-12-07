@@ -4,6 +4,7 @@ import numpy as np
 from ._memchk import get_free_mem
 from ._gpumemchk import get_free_gpu_mem
 from .core_cuda import get_device_pitch, get_device_fft2_mem, get_device_fft_mem
+from .core_cuda import dfm_direct_cuda
 
 def dfm_direct_gpu(img_seq: np.ndarray, lags: List[int], nx: int, ny: int) -> np.ndarray:
     """Digital Fourier Microscopy, direct mode on GPU
@@ -74,7 +75,9 @@ def dfm_direct_gpu(img_seq: np.ndarray, lags: List[int], nx: int, ny: int) -> np
             break
         if num_fft2 == len(img_seq):
             raise MemoryError('Not enough space on GPU for fft2.')
+    # compute number of q chunks
+    # give priority to number of host/device data transfer
+    num_chunks = 0
 
     # +++ ANALYZE +++
-
-    pass
+    return dfm_direct_cuda(img_seq, lags, nx, ny, num_fft2, num_chunks)
