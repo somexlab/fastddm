@@ -23,11 +23,10 @@ using namespace std;
 
 /*! \brief Get the device memory pitch for multiple arrays of length N
     \param N        subarray size
-    \param sample   sample variable (to easily pass variable type from python)
+    \param Nbytes   element size in bytes
  */
-template <typename T>
 size_t get_device_pitch(size_t N,
-                        T sample);
+                        int Nbytes);
 
 /*! \brief Get the device memory for fft2
     \param nx   number of fft nodes in x direction

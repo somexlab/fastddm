@@ -17,12 +17,27 @@
 /*!
     Evaluate the device memory pitch for multiple subarrays of size N
  */
-template <typename T>
 size_t get_device_pitch(size_t N,
-                        T sample)
+                        int Nbytes)
 {
     size_t pitch;
-    cudaGetDevicePitch<T>(N, pitch);
+    switch(Nbytes)
+    {
+        case 8:
+            cudaGetDevicePitch8B(N, pitch);
+            break;
+        case 4:
+            cudaGetDevicePitch4B(N, pitch);
+            break;
+        case 2:
+            cudaGetDevicePitch2B(N, pitch);
+            break;
+        case 1:
+            cudaGetDevicePitch1B(N, pitch);
+            break;
+        default:
+            cudaGetDevicePitch8B(N, pitch);
+    }
 
     return pitch;
 }
@@ -70,15 +85,7 @@ size_t get_device_fft_mem(size_t nt,
  */
 void export_dfm_cuda(py::module &m)
 {
-    m.def("get_device_pitch", &get_device_pitch<double>);
-    m.def("get_device_pitch", &get_device_pitch<float>);
-    m.def("get_device_pitch", &get_device_pitch<int64_t>);
-    m.def("get_device_pitch", &get_device_pitch<int32_t>);
-    m.def("get_device_pitch", &get_device_pitch<int16_t>);
-    m.def("get_device_pitch", &get_device_pitch<uint64_t>);
-    m.def("get_device_pitch", &get_device_pitch<uint32_t>);
-    m.def("get_device_pitch", &get_device_pitch<uint16_t>);
-    m.def("get_device_pitch", &get_device_pitch<uint8_t>);
+    m.def("get_device_pitch", &get_device_pitch);
     m.def("get_device_fft2_mem", &get_device_fft2_mem);
     m.def("get_device_fft_mem", &get_device_fft_mem);
 }

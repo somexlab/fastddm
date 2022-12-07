@@ -49,9 +49,11 @@ def dfm_direct_gpu(img_seq: np.ndarray, lags: List[int], nx: int, ny: int) -> np
     mem_gpu = get_free_gpu_mem()[0]   # !! FOR NOW, I FIX THE GPU ID TO 0 !!
     # get memory size of pixel value
     pixel_memsize = img_seq[0,0,0].itemsize
-    # get number of pixels over x and y in one image and gpu x-pitch for buffer
+    # get number of pixels over x and y in one image
     num_pixel_x = img_seq.shape[-1]
-    pitch_x = get_device_pitch(num_pixel_x, img_seq[0,0,0])
+    # if images are not double, get gpu x-pitch for buffer
+    if not isinstance(img_seq[0,0,0], float):
+        pitch_x = get_device_pitch(num_pixel_x, img_seq[0,0,0].itemsize)
     num_pixel_y = img_seq.shape[-2]
     # compute the number of iterations for fft2
     # give priority to number of host/device data transfer
@@ -62,7 +64,8 @@ def dfm_direct_gpu(img_seq: np.ndarray, lags: List[int], nx: int, ny: int) -> np
         # compute number of batched fft2
         fft2_batch_len = (len(img_seq) - 1) // num_fft2 + 1
         # buffer -- pitch_x * Ny * fft2_batch_len * pixel_memsize
-        mem_gpu_req += pitch_x * num_pixel_y * fft2_batch_len * pixel_memsize
+        if not isinstance(img_seq[0,0,0], float):
+            mem_gpu_req += pitch_x * num_pixel_y * fft2_batch_len * pixel_memsize
         # workspace -- (nx // 2 + 1) * ny * fft2_batch_len * 2 * 8bytes
         mem_gpu_req += ((nx // 2) + 1) * ny * fft2_batch_len * 8 * 2
         # cufft2 internal buffer -- determined by `get_device_fft2_mem`

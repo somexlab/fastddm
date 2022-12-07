@@ -9,6 +9,7 @@
 
 #include "helper_debug.cuh"
 #include "helper_cufft.cuh"
+#include "helper_dfm_cuda.cuh"
 
 #include <cuda_runtime.h>
 #include <cufft.h>
@@ -23,17 +24,73 @@
 // *** code ***
 
 /*!
-    Evaluate the device memory pitch for multiple subarrays of size N
+    Evaluate the device memory pitch for multiple subarrays of size N with 8bytes elements
 */
-template <typename T>
-void cudaGetDevicePitch(size_t N,
-                        size_t &pitch)
+void cudaGetDevicePitch8B(size_t N,
+                          size_t &pitch)
 {
-    T *d_arr;
+    double *d_arr;
 
-    gpuErrchk(cudaMallocPitch(&d_arr, &pitch, N * sizeof(T), 2));
+    gpuErrchk(cudaMallocPitch(&d_arr, &pitch, N * sizeof(double), 2));
 
-    pitch /= sizeof(T);
+    fprintf(stdout, "sizeof(T)=%d\n", sizeof(double));
+    fprintf(stdout, "pitch before: %d\n", pitch);
+
+    pitch /= sizeof(double);
+
+    gpuErrchk(cudaFree(d_arr));
+}
+
+/*!
+    Evaluate the device memory pitch for multiple subarrays of size N with 4bytes elements
+*/
+void cudaGetDevicePitch4B(size_t N,
+                          size_t &pitch)
+{
+    float *d_arr;
+
+    gpuErrchk(cudaMallocPitch(&d_arr, &pitch, N * sizeof(float), 2));
+
+    fprintf(stdout, "sizeof(T)=%d\n", sizeof(float));
+    fprintf(stdout, "pitch before: %d\n", pitch);
+
+    pitch /= sizeof(float);
+
+    gpuErrchk(cudaFree(d_arr));
+}
+
+/*!
+    Evaluate the device memory pitch for multiple subarrays of size N with 2bytes elements
+*/
+void cudaGetDevicePitch2B(size_t N,
+                          size_t &pitch)
+{
+    int16_t *d_arr;
+
+    gpuErrchk(cudaMallocPitch(&d_arr, &pitch, N * sizeof(int16_t), 2));
+
+    fprintf(stdout, "sizeof(T)=%d\n", sizeof(int16_t));
+    fprintf(stdout, "pitch before: %d\n", pitch);
+
+    pitch /= sizeof(int16_t);
+
+    gpuErrchk(cudaFree(d_arr));
+}
+
+/*!
+    Evaluate the device memory pitch for multiple subarrays of size N with 2bytes elements
+*/
+void cudaGetDevicePitch1B(size_t N,
+                          size_t &pitch)
+{
+    int8_t *d_arr;
+
+    gpuErrchk(cudaMallocPitch(&d_arr, &pitch, N * sizeof(int8_t), 2));
+
+    fprintf(stdout, "sizeof(T)=%d\n", sizeof(int8_t));
+    fprintf(stdout, "pitch before: %d\n", pitch);
+
+    pitch /= sizeof(int8_t);
 
     gpuErrchk(cudaFree(d_arr));
 }

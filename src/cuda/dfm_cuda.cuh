@@ -15,12 +15,33 @@ using namespace std;
 
 // *** code ***
 
-/*! \brief Evaluate the device memory pitch for multiple subarrays of size N
-    \param N    subarray size
+/*! \brief Evaluate the device memory pitch for multiple subarrays of size N with 8bytes elements
+    \param N        subarray size
+    \param pitch    pitch of the subarray
  */
-template <typename T>
-void cudaGetDevicePitch(size_t N,
-                        size_t &pitch);
+void cudaGetDevicePitch8B(size_t N,
+                          size_t &pitch);
+
+/*! \brief Evaluate the device memory pitch for multiple subarrays of size N with 4bytes elements
+\param N        subarray size
+\param pitch    pitch of the subarray
+*/
+void cudaGetDevicePitch4B(size_t N,
+                          size_t &pitch);
+
+/*! \brief Evaluate the device memory pitch for multiple subarrays of size N with 2bytes elements
+\param N        subarray size
+\param pitch    pitch of the subarray
+*/
+void cudaGetDevicePitch2B(size_t N,
+                          size_t &pitch);
+
+/*! \brief Evaluate the device memory pitch for multiple subarrays of size N with 1bytes elements
+\param N        subarray size
+\param pitch    pitch of the subarray
+*/
+void cudaGetDevicePitch1B(size_t N,
+                          size_t &pitch);
 
 /*! \brief Evaluate the device memory size in bytes for fft2
     \param nx       number of fft nodes in x direction
