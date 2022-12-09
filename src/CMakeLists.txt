@@ -7,6 +7,7 @@ SET(dfm_lib_SOURCES
 SET(dfm_lib_cu_SOURCES
     cuda/dfm_cuda.cu
     cuda/helper_cufft.cu
+    cuda/helper_dfm_cuda.cu
 )
 
 # Include external libraries
