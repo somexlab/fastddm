@@ -23,6 +23,9 @@ size_t get_device_pitch(size_t N,
     size_t pitch;
     switch (Nbytes)
     {
+    case 16:
+        cudaGetDevicePitch16B(N, pitch);
+        break;
     case 8:
         cudaGetDevicePitch8B(N, pitch);
         break;
@@ -91,7 +94,9 @@ py::array_t<double> dfm_direct_cuda(py::array_t<T, py::array::c_style> img_seq,
                                     size_t ny,
                                     size_t num_fft2,
                                     size_t buff_pitch,
-                                    size_t num_chunks)
+                                    size_t num_chunks,
+                                    size_t pitch_q,
+                                    size_t pitch_t)
 {
     // ***Get input array and dimensions
     size_t length = img_seq.shape()[0]; // get length of original input

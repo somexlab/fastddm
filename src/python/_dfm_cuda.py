@@ -118,4 +118,4 @@ def dfm_direct_gpu(img_seq: np.ndarray, lags: List[int], nx: int, ny: int) -> np
             raise MemoryError('Not enough space on GPU for correlation.')
 
     # +++ ANALYZE +++
-    return dfm_direct_cuda(img_seq, lags, nx, ny, num_fft2, pitch_x, num_chunks)
+    return dfm_direct_cuda(img_seq, lags, nx, ny, num_fft2, pitch_x, num_chunks, pitch_q, pitch_t)

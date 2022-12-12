@@ -15,6 +15,13 @@ using namespace std;
 
 // *** code ***
 
+/*! \brief Evaluate the device memory pitch for multiple subarrays of size N with 16bytes elements
+    \param N        subarray size
+    \param pitch    pitch of the subarray
+ */
+void cudaGetDevicePitch16B(size_t N,
+                           size_t &pitch);
+
 /*! \brief Evaluate the device memory pitch for multiple subarrays of size N with 8bytes elements
     \param N        subarray size
     \param pitch    pitch of the subarray
@@ -86,5 +93,24 @@ void compute_fft2(const T *h_in,
                   size_t ny,
                   size_t num_fft2,
                   size_t buff_pitch);
+
+/*! \brief Compute Image Structure Factor using differences on the GPU
+    \param h_in         input array of Fourier transformed images
+    \param lags         lags to be analyzed
+    \param length       number of elements in z direction
+    \param nx           number of fft nodes in x direction
+    \param ny           number of fft nodes in y direction
+    \param num_chunks   number of q points chunks
+    \param pitch_q      pitch of device array (q-pitch)
+    \param pitch_t      pitch of device array (t-pitch)
+ */
+void correlate_direct(double *h_in,
+                      vector<unsigned int> lags,
+                      size_t length,
+                      size_t nx,
+                      size_t ny,
+                      size_t num_chunks,
+                      size_t pitch_q,
+                      size_t pitch_t);
 
 #endif

@@ -26,6 +26,21 @@
 /*!
     Evaluate the device memory pitch for multiple subarrays of size N with 8bytes elements
 */
+void cudaGetDevicePitch16B(size_t N,
+                           size_t &pitch)
+{
+    double2 *d_arr;
+
+    gpuErrchk(cudaMallocPitch(&d_arr, &pitch, N * sizeof(double2), 2));
+
+    pitch /= sizeof(double2);
+
+    gpuErrchk(cudaFree(d_arr));
+}
+
+/*!
+    Evaluate the device memory pitch for multiple subarrays of size N with 8bytes elements
+*/
 void cudaGetDevicePitch8B(size_t N,
                           size_t &pitch)
 {
@@ -225,7 +240,7 @@ void compute_fft2(const T *h_in,
                                                                 norm_fact,
                                                                 d_workspace,
                                                                 end - start);
-                                                                
+
         // ***Copy values back to host
         gpuErrchk(cudaMemcpy(h_out + start, d_workspace, (end - start) * sizeof(double), cudaMemcpyDeviceToHost));
     }
@@ -245,3 +260,43 @@ template void compute_fft2<u_int64_t>(const u_int64_t *h_in, double *h_out, size
 template void compute_fft2<u_int32_t>(const u_int32_t *h_in, double *h_out, size_t width, size_t height, size_t length, size_t nx, size_t ny, size_t num_fft2, size_t buff_pitch);
 template void compute_fft2<u_int16_t>(const u_int16_t *h_in, double *h_out, size_t width, size_t height, size_t length, size_t nx, size_t ny, size_t num_fft2, size_t buff_pitch);
 template void compute_fft2<u_int8_t>(const u_int8_t *h_in, double *h_out, size_t width, size_t height, size_t length, size_t nx, size_t ny, size_t num_fft2, size_t buff_pitch);
+
+/*!
+    Compute Image Structure Factor using differences on the GPU
+ */
+void correlate_direct(double *h_in,
+                      vector<unsigned int> lags,
+                      size_t length,
+                      size_t nx,
+                      size_t ny,
+                      size_t num_chunks,
+                      size_t pitch_q,
+                      size_t pitch_t)
+{
+    size_t _nx = nx / 2 + 1;                             // fft2 r2c number of complex elements over x
+    size_t chunk_size = (_nx * ny - 1) / num_chunks + 1; // number of q points in a chunk
+
+    // ***Create vector of t1 and num
+    // The maximum size of t1 is (length-min_lag)*num_lags
+    vector<unsigned int> t1((length - lags[0]) * lags.size());
+    vector<unsigned int> num(length - lags[0]);
+    unsigned int N = 0;
+    for (unsigned int t = 0; t < length - lags[0]; t++)
+    {
+        num[t] = N;
+        for (unsigned int dt : lags)
+        {
+            if (t + dt < length)
+            {
+                t1[N] = t;
+                N++;
+            }
+            else
+            {
+                break;
+            }
+        }
+    }
+
+    // ***Free memory
+}
