@@ -63,3 +63,43 @@ __global__ void scale_array_kernel(double *a,
         b[i] = A * a[i];
     }
 }
+
+/*!
+    Transpose complex matrix with pitch
+ */
+__global__ void transpose_complex_matrix_kernel(double2 *matIn,
+                                                unsigned int ipitch,
+                                                double2 *matOut,
+                                                unsigned int opitch,
+                                                unsigned int width,
+                                                unsigned int height)
+{
+    __shared__ double2 tile[TILE_DIM][TILE_DIM + 1];
+
+    unsigned int i_x = blockIdx.x * TILE_DIM + threadIdx.x;
+    unsigned int i_y = blockIdx.y * TILE_DIM + threadIdx.y; // threadIdx.y goes from 0 to 7
+
+    // load matrix portion into tile
+    // every thread loads 4 elements into tile
+    unsigned int i;
+    for (i = 0; i < TILE_DIM; i += BLOCK_ROWS)
+    {
+        if (i_x < width && (i_y + i) < height)
+        {
+            tile[threadIdx.y + i][threadIdx.x] = matIn[(i_y + i) * ipitch + i_x];
+        }
+    }
+    __syncthreads();
+
+    // transpose block offset
+    i_x = blockIdx.y * TILE_DIM + threadIdx.x;
+    i_y = blockIdx.x * TILE_DIM + threadIdx.y;
+
+    for (i = 0; i < TILE_DIM; i += BLOCK_ROWS)
+    {
+        if (i_x < height && (i_y + i) < width)
+        {
+            matOut[(i_y + i) * opitch + i_x] = tile[threadIdx.x][threadIdx.y + i];
+        }
+    }
+}

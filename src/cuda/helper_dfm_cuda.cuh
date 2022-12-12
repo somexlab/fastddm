@@ -46,4 +46,19 @@ __global__ void scale_array_kernel(double *a,
                                    double *b,
                                    unsigned int N);
 
+/*! \brief Transpose complex matrix with pitch
+    \param matIn    Input matrix
+    \param ipitch   Pitch of input matrix
+    \param matOut   Output matrix
+    \param opitch   Pitch of output matrix
+    \param width    Width of input matrix
+    \param height   Height of input matrix
+*/
+__global__ void transpose_complex_matrix_kernel(double2 *matIn,
+                                                unsigned int ipitch,
+                                                double2 *matOut,
+                                                unsigned int opitch,
+                                                unsigned int width,
+                                                unsigned int height);
+
 #endif
