@@ -38,6 +38,7 @@ def dfm_direct_gpu(img_seq: np.ndarray, lags: List[int], nx: int, ny: int) -> np
     # get available memory on host
     mem = get_free_mem()
     mem_req = 0
+    # --- ESTIMATE HOST MEMORY REQUIRED FOR FFT2
     # calculations are done in double precision
     # we need:
     # output -- nx * ny * len(lags) * 8bytes
@@ -46,6 +47,13 @@ def dfm_direct_gpu(img_seq: np.ndarray, lags: List[int], nx: int, ny: int) -> np
     # fft2 -- 2 * (nx // 2 + 1) * ny * len(img_seq) * 8bytes
     # which is always larger than the output size (output is then resized)
     mem_req += 8 * 2 * (nx // 2 + 1) * ny * len(img_seq)
+    # --- ESTIMATE HOST MEMORY REQUIRED FOR STRUCTURE FUNCTION PART
+    # helper array of t1 (unsigned int, 32 bits)
+    # t1 -- (len(img_seq) - lags[0]) * len(lags) * 4bytes   (AT MOST!)
+    # helper array of num (unsigned int, 32 bits)
+    # num -- (len(img_seq) - lags[0]) * 4bytes
+    mem_req += 4 * (len(img_seq) * lags[0]) * (len(lags) + 1)
+
     # we require this space to be less than 90% of the available memory
     if int(0.9*mem) < mem_req:
         raise MemoryError('Not enough space. Cannot store result in memory.')
@@ -61,6 +69,7 @@ def dfm_direct_gpu(img_seq: np.ndarray, lags: List[int], nx: int, ny: int) -> np
     if not isinstance(img_seq[0,0,0], float):
         pitch_x = get_device_pitch(num_pixel_x, img_seq[0,0,0].itemsize)
     num_pixel_y = img_seq.shape[-2]
+    # --- ESTIMATE DEVICE MEMORY REQUIRED FOR FFT2
     # compute the number of iterations for fft2
     # give priority to number of host/device data transfer
     num_fft2 = 0
@@ -80,9 +89,33 @@ def dfm_direct_gpu(img_seq: np.ndarray, lags: List[int], nx: int, ny: int) -> np
             break
         if num_fft2 == len(img_seq):
             raise MemoryError('Not enough space on GPU for fft2.')
+    # --- ESTIMATE DEVICE MEMORY REQUIRED FOR STRUCTURE FUNCTION PART
     # compute number of q chunks
     # give priority to number of host/device data transfer
     num_chunks = 0
+    pitch_t = get_device_pitch(2 * len(img_seq), 2 * 8)     # 8 is for double
+    while True:
+        # helper array of t1 (unsigned int, 32 bits)
+        # t1 -- (len(img_seq) - lags[0]) * len(lags) * 4bytes   (AT MOST!)
+        # helper array of num (unsigned int, 32 bits)
+        # num -- (len(img_seq) - lags[0]) * 4bytes
+        mem_gpu_req = 4 * (len(img_seq) * lags[0]) * (len(lags) + 1)
+        # compute number of batched q vectors
+        num_chunks += 1
+        chunk_size = ((nx//2 + 1) * ny - 1) // num_chunks + 1
+        pitch_q = get_device_pitch(2 * chunk_size, 2 * 8)   # 8 is for double
+        # workspace1 -- ((chunk_size+pitch_q-1)//pitch_q)*pitch_q *
+        #             * ((len(img_seq)+pitch_t-1)//pitch_t)*pitch_t *
+        #             * 2 * 8bytes
+        ws1_size = ((chunk_size + pitch_q - 1) // pitch_q) * pitch_q
+        ws1_size *= ((len(img_seq) + pitch_t - 1) // pitch_t) * pitch_t
+        ws1_size *= 2 * 8
+        # workspace2 is same as workspace1
+        mem_gpu_req += 2 * ws1_size
+        if mem_gpu > mem_gpu_req:
+            break
+        if num_chunks == ((nx//2 + 1) * ny):
+            raise MemoryError('Not enough space on GPU for correlation.')
 
     # +++ ANALYZE +++
     return dfm_direct_cuda(img_seq, lags, nx, ny, num_fft2, pitch_x, num_chunks)
