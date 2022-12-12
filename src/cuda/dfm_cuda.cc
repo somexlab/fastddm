@@ -126,6 +126,14 @@ py::array_t<double> dfm_direct_cuda(py::array_t<T, py::array::c_style> img_seq,
                  buff_pitch);
 
     // ***Compute correlations
+    correlate_direct(p_out,
+                     lags,
+                     length,
+                     nx,
+                     ny,
+                     num_chunks,
+                     pitch_q,
+                     pitch_t);
 
     // ***Convert raw output to full and shifted ISF
 
