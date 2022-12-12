@@ -41,7 +41,11 @@ def dfm_direct_gpu(img_seq: np.ndarray, lags: List[int], nx: int, ny: int) -> np
     # calculations are done in double precision
     # we need:
     # output -- nx * ny * len(lags) * 8bytes
-    mem_req += 8 * nx * ny * len(lags)
+    # mem_req += 8 * nx * ny * len(lags)
+    # but to store the intermediate fft2, we need:
+    # fft2 -- 2 * (nx // 2 + 1) * ny * len(img_seq) * 8bytes
+    # which is always larger than the output size (output is then resized)
+    mem_req += 8 * 2 * (nx // 2 + 1) * ny * len(img_seq)
     # we require this space to be less than 90% of the available memory
     if int(0.9*mem) < mem_req:
         raise MemoryError('Not enough space. Cannot store result in memory.')
