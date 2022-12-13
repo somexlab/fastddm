@@ -64,6 +64,9 @@ def ddm(
             f"Unknown mode '{mode}' selected. Only possible options are {modes}."
         )
 
+    # throw out duplicates and sort lags in ascending order
+    lags = np.array(sorted(set(lags)))
+
     # read actual image dimensions
     dim_t, dim_y, dim_x = img_seq.shape
 
