@@ -84,4 +84,40 @@ __global__ void correlatewithdifferences_kernel(double2 *d_in,
                                                 unsigned int Ntdt,
                                                 unsigned int pitch);
 
+/*! \brief Make full power spectrum (copy symmetric part)
+    \param d_in     input array
+    \param ipitch   pitch of input array
+    \param d_out    output array
+    \param opitch   pitch of output array
+    \param nxh      number of r2c fft elements over x
+    \param nx       number of fft nodes over x
+    \param ny       number of fft nodes over y
+    \param N        number of 2d matrices
+*/
+__global__ void make_full_powspec_kernel(double2 *d_in,
+                                         unsigned int ipitch,
+                                         double *d_out,
+                                         unsigned int opitch,
+                                         unsigned int nxh,
+                                         unsigned int nx,
+                                         unsigned int ny,
+                                         unsigned int N);
+
+/*! \brief Shift power spectrum
+    \param d_in     input array
+    \param ipitch   pitch of input array
+    \param d_out    output array
+    \param opitch   pitch of output array
+    \param nx       number of fft nodes over x
+    \param ny       number of fft nodes over y
+    \param N        number of 2d matrices
+*/
+__global__ void shift_powspec_kernel(double *d_in,
+                                     unsigned int ipitch,
+                                     double *d_out,
+                                     unsigned int opitch,
+                                     unsigned int nx,
+                                     unsigned int ny,
+                                     unsigned int N);
+
 #endif

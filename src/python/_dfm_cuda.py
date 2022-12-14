@@ -112,6 +112,24 @@ def dfm_direct_gpu(img_seq: np.ndarray, lags: List[int], nx: int, ny: int) -> np
             break
         if num_chunks == ((nx//2 + 1) * ny):
             raise MemoryError('Not enough space on GPU for correlation.')
+    # --- ESTIMATE DEVICE MEMORY REQUIRED FOR FULL AND SHIFTED POWER SPECTRUM
+    # compute the number of iterations
+    # give priority to number of host/device data transfer
+    num_fullshift = 0
+    while True:
+        mem_gpu_req = 0
+        num_fullshift += 1
+        # compute number of batched full and shift operations
+        fullshift_batch_len = (len(lags) - 1) // num_fullshift + 1
+        pitch_fs = get_device_pitch(2 * ((nx // 2) + 1), 2 * 8)
+        # workspace1 -- pitch_fs * ny * fullshift_batch_len * 2 * 8bytes
+        ws1_size = pitch_fs * ny * fullshift_batch_len * 2 * 8
+        # workspace2 is same as workspace1
+        mem_gpu_req += 2 * ws1_size
+        if mem_gpu > mem_gpu_req:
+            break
+        if num_fullshift == len(lags):
+            raise MemoryError('Not enough space on GPU for full and shifted power spectrum.')
 
     # +++ ANALYZE +++
-    return dfm_direct_cuda(img_seq, lags, nx, ny, num_fft2, pitch_x, num_chunks, pitch_q, pitch_t)
+    return dfm_direct_cuda(img_seq, lags, nx, ny, num_fft2, pitch_x, num_chunks, pitch_q, pitch_t, num_fullshift, pitch_fs)

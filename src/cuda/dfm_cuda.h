@@ -47,15 +47,17 @@ size_t get_device_fft_mem(size_t nt,
                           size_t pitch);
 
 /*! \brief Compute ISF in direct mode on the GPU
-    \param img_seq      numpy array containing the image sequence
-    \param lags         lags to be analyzed
-    \param nx           number of fft nodes in x direction
-    \param ny           number of fft nodes in y direction
-    \param num_fft2     number of fft2 chunks
-    \param buff_pitch   pitch of buffer device array
-    \param num_chunks   number of q points chunks
-    \param pitch_q      pitch of device array (q-pitch)
-    \param pitch_t      pitch of device array (t-pitch)
+    \param img_seq          numpy array containing the image sequence
+    \param lags             lags to be analyzed
+    \param nx               number of fft nodes in x direction
+    \param ny               number of fft nodes in y direction
+    \param num_fft2         number of fft2 batches
+    \param buff_pitch       pitch of buffer device array
+    \param num_chunks       number of q points batches
+    \param pitch_q          pitch of device array (q-pitch)
+    \param pitch_t          pitch of device array (t-pitch)
+    \param num_fullshift    number of full and shift batches
+    \param pitch_fs         pitch of device array for full and shift operation
  */
 template <typename T>
 py::array_t<double> dfm_direct_cuda(py::array_t<T, py::array::c_style> img_seq,
@@ -66,7 +68,9 @@ py::array_t<double> dfm_direct_cuda(py::array_t<T, py::array::c_style> img_seq,
                                     size_t buff_pitch,
                                     size_t num_chunks,
                                     size_t pitch_q,
-                                    size_t pitch_t);
+                                    size_t pitch_t,
+                                    size_t num_fullshift,
+                                    size_t pitch_fs);
 
 /*! \brief Export dfm cuda functions to python
     \param m    Module

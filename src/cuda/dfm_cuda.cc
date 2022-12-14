@@ -96,7 +96,9 @@ py::array_t<double> dfm_direct_cuda(py::array_t<T, py::array::c_style> img_seq,
                                     size_t buff_pitch,
                                     size_t num_chunks,
                                     size_t pitch_q,
-                                    size_t pitch_t)
+                                    size_t pitch_t,
+                                    size_t num_fullshift,
+                                    size_t pitch_fs)
 {
     // ***Get input array and dimensions
     size_t length = img_seq.shape()[0]; // get length of original input
@@ -136,12 +138,17 @@ py::array_t<double> dfm_direct_cuda(py::array_t<T, py::array::c_style> img_seq,
                      pitch_t);
 
     // ***Convert raw output to full and shifted ISF
+    make_full_shift(p_out,
+                    lags,
+                    nx,
+                    ny,
+                    num_fullshift,
+                    pitch_fs);
 
     // ***Resize output
     // the full size of the image structure function is
     // nx * ny * #(lags)
-    //out.resize({lags.size(), ny, nx});
-    out.resize({lags.size(), ny, 2 * _nx});
+    out.resize({lags.size(), ny, nx});
 
     // ***Return result to python
     return out;

@@ -94,7 +94,7 @@ void compute_fft2(const T *h_in,
                   size_t num_fft2,
                   size_t buff_pitch);
 
-/*! \brief Compute Image Structure Factor using differences on the GPU
+/*! \brief Compute Image Structure Function using differences on the GPU
     \param h_in         input array of Fourier transformed images
     \param lags         lags to be analyzed
     \param length       number of elements in z direction
@@ -112,5 +112,20 @@ void correlate_direct(double *h_in,
                       size_t num_chunks,
                       size_t pitch_q,
                       size_t pitch_t);
+
+/*! \brief Convert to full and fftshifted Image Structure Function on the GPU
+    \param h_in             input array after structure function calculation
+    \param lags             lags to be analyzed
+    \param nx               number of fft nodes in x direction
+    \param ny               number of fft nodes in y direction
+    \param num_fullshift    number of full and shift chunks
+    \param pitch_fs         pitch of device array for full and shift operations
+ */
+void make_full_shift(double *h_in,
+                     vector<unsigned int> lags,
+                     size_t nx,
+                     size_t ny,
+                     size_t num_fullshift,
+                     size_t pitch_fs);
 
 #endif

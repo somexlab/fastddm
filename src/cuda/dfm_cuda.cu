@@ -416,3 +416,120 @@ void correlate_direct(double *h_in,
     gpuErrchk(cudaFree(d_t1));
     gpuErrchk(cudaFree(d_num));
 }
+
+/*! \brief Convert to full and fftshifted Image Structure Function on the GPU
+    \param h_in             input array after structure function calculation
+    \param lags             lags to be analyzed
+    \param nx               number of fft nodes in x direction
+    \param ny               number of fft nodes in y direction
+    \param num_fullshift    number of full and shift chunks
+    \param pitch_fs         pitch of device array for full and shift operations
+ */
+void make_full_shift(double *h_in,
+                     vector<unsigned int> lags,
+                     size_t nx,
+                     size_t ny,
+                     size_t num_fullshift,
+                     size_t pitch_fs)
+{
+    size_t _nx = nx / 2 + 1;                                   // fft2 r2c number of complex elements over x
+    size_t chunk_size = (lags.size() - 1) / num_fullshift + 1; // number of lags in a chunk
+
+    // ***Allocate space on device
+    // workspaces
+    double *d_workspace1, *d_workspace2;
+    gpuErrchk(cudaMalloc(&d_workspace1, pitch_fs * ny * chunk_size * 2 * sizeof(double)));
+    gpuErrchk(cudaMalloc(&d_workspace2, pitch_fs * ny * chunk_size * 2 * sizeof(double)));
+
+    double *dbg;
+    dbg = (double *)malloc(pitch_fs * ny * chunk_size * 2 * sizeof(double));
+
+    // ***Compute optimal kernels execution parameters
+    dim3 blockSize_full(TILE_DIM, BLOCK_ROWS, 1);
+    dim3 gridSize_full((_nx + TILE_DIM - 1) / TILE_DIM, (ny + TILE_DIM - 1) / TILE_DIM, 1);
+    dim3 gridSize_shift((nx + TILE_DIM - 1) / TILE_DIM, (ny + TILE_DIM - 1) / TILE_DIM, 1);
+
+    // ***Loop over chunks
+    for (size_t chunk = 0; chunk < num_fullshift; chunk++)
+    {
+        // Get input offset
+        size_t ioffset = chunk * chunk_size * 2 * _nx * ny;
+        // Get current chunk size
+        size_t curr_chunk_size = (chunk + 1) * chunk_size > lags.size() ? lags.size() - chunk * chunk_size : chunk_size;
+
+        // ***Copy values from host to device
+        gpuErrchk(cudaMemcpy2D(d_workspace1,
+                               pitch_fs * 2 * sizeof(double),
+                               h_in + ioffset,
+                               2 * _nx * sizeof(double),
+                               2 * _nx * sizeof(double),
+                               curr_chunk_size * ny,
+                               cudaMemcpyHostToDevice));
+
+        // ***Make full power spectrum (workspace1 --> workspace2)
+        make_full_powspec_kernel<<<gridSize_full, blockSize_full>>>((double2 *)d_workspace1,
+                                                                    pitch_fs,
+                                                                    d_workspace2,
+                                                                    2 * pitch_fs,
+                                                                    _nx,
+                                                                    nx,
+                                                                    ny,
+                                                                    curr_chunk_size);
+        gpuErrchk(cudaPeekAtLastError());
+        gpuErrchk(cudaDeviceSynchronize());
+/*
+        fprintf(stdout, "INPUT\n");
+        cudaMemcpy(dbg, d_workspace1, pitch_fs * ny * chunk_size * 2 * sizeof(double), cudaMemcpyDeviceToHost);
+        for (int t = 0; t < lags.size(); t++)
+        {
+            for (int y = 0; y < ny; y++)
+            {
+                for (int x = 0; x < 2 * _nx; x++)
+                {
+                    fprintf(stdout, "%f ", dbg[t * 2 * pitch_fs * ny + y * 2 * pitch_fs + x]);
+                }
+                fprintf(stdout, "\n");
+            }
+            fprintf(stdout, "\n");
+        }
+
+        fprintf(stdout, "OUTPUT\n");
+        cudaMemcpy(dbg, d_workspace2, pitch_fs * ny * chunk_size * 2 * sizeof(double), cudaMemcpyDeviceToHost);
+        for (int t = 0; t < lags.size(); t++)
+        {
+            for (int y = 0; y < ny; y++)
+            {
+                for (int x = 0; x < nx; x++)
+                {
+                    fprintf(stdout, "%f ", dbg[t * 2 * pitch_fs * ny + y * 2 * pitch_fs + x]);
+                }
+                fprintf(stdout, "\n");
+            }
+            fprintf(stdout, "\n");
+        }
+*/
+        // ***Shift power spectrum (workspace2 --> workspace1)
+        shift_powspec_kernel<<<gridSize_shift, blockSize_full>>>(d_workspace2,
+                                                                 2 * pitch_fs,
+                                                                 d_workspace1,
+                                                                 2 * pitch_fs,
+                                                                 nx,
+                                                                 ny,
+                                                                 curr_chunk_size);
+
+        // ***Copy values from device to host (make contiguous on memory)
+        // Get output offset
+        size_t ooffset = chunk * chunk_size * nx * ny;
+        gpuErrchk(cudaMemcpy2D(h_in + ooffset,
+                               nx * sizeof(double),
+                               d_workspace1,
+                               pitch_fs * 2 * sizeof(double),
+                               nx * sizeof(double),
+                               curr_chunk_size * ny,
+                               cudaMemcpyDeviceToHost));
+    }
+
+    // ***Free memory
+    gpuErrchk(cudaFree(d_workspace1));
+    gpuErrchk(cudaFree(d_workspace2));
+}

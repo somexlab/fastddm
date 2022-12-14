@@ -151,3 +151,105 @@ __global__ void correlatewithdifferences_kernel(double2 *d_in,
         atomicAdd(&(d_out[q * pitch + lag].x), smd);
     }
 }
+
+/*!
+    Make full power spectrum (copy symmetric part)
+*/
+__global__ void make_full_powspec_kernel(double2 *d_in,
+                                         unsigned int ipitch,
+                                         double *d_out,
+                                         unsigned int opitch,
+                                         unsigned int nxh,
+                                         unsigned int nx,
+                                         unsigned int ny,
+                                         unsigned int N)
+{
+    __shared__ double2 tile[TILE_DIM][TILE_DIM + 1];
+
+    unsigned int i_x = blockIdx.x * TILE_DIM + threadIdx.x;
+    unsigned int i_y = blockIdx.y * TILE_DIM + threadIdx.y; // threadIdx.y goes from 0 to 7
+
+    // load matrix portion into tile
+    // every thread loads 4 elements into tile
+    unsigned int i;
+    for (i = 0; i < TILE_DIM; i += BLOCK_ROWS)
+    {
+        if (i_x < nxh && (i_y + i) < ny * N)
+        {
+            tile[threadIdx.y + i][threadIdx.x] = d_in[(i_y + i) * ipitch + i_x];
+        }
+    }
+    __syncthreads();
+
+    unsigned int curr_y;
+    for (i = 0; i < TILE_DIM; i += BLOCK_ROWS)
+    {
+        if (i_x < nxh && (i_y + i) < ny * N)
+        {
+            // copy real part (left side)
+            d_out[(i_y + i) * opitch + i_x] = tile[threadIdx.y + i][threadIdx.x].x;
+
+            // make symmetric part (right side)
+            if (i_x > 0)
+            {
+                curr_y = (i_y + i) % ny;
+                if (curr_y > 0)
+                {
+                    d_out[(i_y + i + ny - 2 * curr_y) * opitch + nx - i_x] = tile[threadIdx.y + i][threadIdx.x].x;
+                }
+                else
+                {
+                    d_out[(i_y + i) * opitch + nx - i_x] = tile[threadIdx.y + i][threadIdx.x].x;
+                }
+            }
+        }
+    }
+}
+
+/*! \brief Shift power spectrum
+    \param d_in     input array
+    \param ipitch   pitch of input array
+    \param d_out    output array
+    \param opitch   pitch of output array
+    \param nx       number of fft nodes over x
+    \param ny       number of fft nodes over y
+    \param N        number of 2d matrices
+*/
+__global__ void shift_powspec_kernel(double *d_in,
+                                     unsigned int ipitch,
+                                     double *d_out,
+                                     unsigned int opitch,
+                                     unsigned int nx,
+                                     unsigned int ny,
+                                     unsigned int N)
+{
+    __shared__ double tile[TILE_DIM][TILE_DIM + 1];
+
+    unsigned int i_x = blockIdx.x * TILE_DIM + threadIdx.x;
+    unsigned int i_y = blockIdx.y * TILE_DIM + threadIdx.y; // threadIdx.y goes from 0 to 7
+
+    // load matrix portion into tile
+    // every thread loads 4 elements into tile
+    unsigned int i;
+    for (i = 0; i < TILE_DIM; i += BLOCK_ROWS)
+    {
+        if (i_x < nx && (i_y + i) < ny * N)
+        {
+            tile[threadIdx.y + i][threadIdx.x] = d_in[(i_y + i) * ipitch + i_x];
+        }
+    }
+    __syncthreads();
+
+    unsigned int curr_y;
+    unsigned int shift_x, shift_y;
+    for (i = 0; i < TILE_DIM; i += BLOCK_ROWS)
+    {
+        if (i_x < nx && (i_y + i) < ny * N)
+        {
+            curr_y = (i_y + i) % ny;
+            shift_x = (i_x + nx / 2) % nx;
+            shift_y = (curr_y + ny / 2) % ny;
+            d_out[(i_y + i + shift_y - curr_y) * opitch + shift_x] = tile[threadIdx.y + i][threadIdx.x];
+        }
+    }
+}
