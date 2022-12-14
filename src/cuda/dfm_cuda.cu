@@ -22,8 +22,8 @@
 #define CUFFTCOMPLEX cufftDoubleComplex
 
 // *** code ***
-const unsigned int TILE_DIM = 32;                    // leave this unchanged!! (tile dimension for matrix transpose)
-const unsigned int BLOCK_ROWS = 8;                   // leave this unchanged!! (block rows for matrix transpose)
+const unsigned int TILE_DIM = 32;  // leave this unchanged!! (tile dimension for matrix transpose)
+const unsigned int BLOCK_ROWS = 8; // leave this unchanged!! (block rows for matrix transpose)
 
 /*!
     Evaluate the device memory pitch for multiple subarrays of size N with 8bytes elements
@@ -303,7 +303,7 @@ void correlate_direct(double *h_in,
     // ***Allocate space on device
     // workspaces
     double *d_workspace1, *d_workspace2;
-    unsigned int workspace_size = ((chunk_size + pitch_q - 1) / pitch_q) * pitch_q * ((length + pitch_t - 1) / pitch_t) * pitch_t * 2 * sizeof(double);
+    size_t workspace_size = max(pitch_q * length, chunk_size * pitch_t) * 2 * sizeof(double);
     gpuErrchk(cudaMalloc(&d_workspace1, workspace_size));
     gpuErrchk(cudaMalloc(&d_workspace2, workspace_size));
     // helper arrays
@@ -314,8 +314,6 @@ void correlate_direct(double *h_in,
     gpuErrchk(cudaMemcpy(d_lags, lags.data(), lags.size() * sizeof(unsigned int), cudaMemcpyHostToDevice));
     gpuErrchk(cudaMemcpy(d_t1, t1.data(), N * sizeof(unsigned int), cudaMemcpyHostToDevice));
     gpuErrchk(cudaMemcpy(d_num, num.data(), num.size() * sizeof(unsigned int), cudaMemcpyHostToDevice));
-    lags.clear();
-    lags.shrink_to_fit();
     t1.clear();
     t1.shrink_to_fit();
     num.clear();
@@ -325,6 +323,18 @@ void correlate_direct(double *h_in,
     dim3 blockSize_tran(TILE_DIM, BLOCK_ROWS, 1);
     dim3 gridSize_tran1((chunk_size + TILE_DIM - 1) / TILE_DIM, (length + TILE_DIM - 1) / TILE_DIM, 1);
     dim3 gridSize_tran2((lags.size() + TILE_DIM - 1) / TILE_DIM, (chunk_size + TILE_DIM - 1) / TILE_DIM, 1);
+
+    // correlation
+    int blockSize_corr; // The launch configurator returned block size
+    int minGridSize;    // The minimum grid size needed to achieve the
+                        // maximum occupancy for a full device launch
+    int gridSize_corr;  // The actual grid size needed, based on input size
+    int numSMs;
+    gpuErrchk(cudaDeviceGetAttribute(&numSMs, cudaDevAttrMultiProcessorCount, 0));
+
+    gpuErrchk(cudaOccupancyMaxPotentialBlockSize(&minGridSize, &blockSize_corr, correlatewithdifferences_kernel, 0, 0));
+    // Round up according to array size
+    gridSize_corr = min((chunk_size * N + blockSize_corr - 1) / blockSize_corr, 32 * (size_t)numSMs);
 
     // ***Loop over chunks
     for (size_t chunk = 0; chunk < num_chunks; chunk++)
@@ -345,7 +355,7 @@ void correlate_direct(double *h_in,
         // elements are complex doubles
         // to speed up transfer, use pitch_q
         gpuErrchk(cudaMemcpy2D(d_workspace2,
-                               2 * pitch_q,
+                               2 * pitch_q * sizeof(double),
                                h_in + 2 * q_start,
                                2 * _nx * ny * sizeof(double),
                                2 * curr_chunk_size * sizeof(double),
@@ -359,27 +369,41 @@ void correlate_direct(double *h_in,
                                                                             pitch_t,
                                                                             curr_chunk_size,
                                                                             length);
+        gpuErrchk(cudaPeekAtLastError());
 
         // ***Zero-out workspace2
         gpuErrchk(cudaMemset(d_workspace2, 0.0, workspace_size));
 
         // ***Correlate using differences (d_workspace1 --> d_workspace2)
+        correlatewithdifferences_kernel<<<gridSize_corr, blockSize_corr>>>((double2 *)d_workspace1,
+                                                                           (double2 *)d_workspace2,
+                                                                           d_lags,
+                                                                           d_t1,
+                                                                           d_num,
+                                                                           length,
+                                                                           lags.size(),
+                                                                           curr_chunk_size,
+                                                                           N,
+                                                                           pitch_t);
+        gpuErrchk(cudaPeekAtLastError());
+        gpuErrchk(cudaDeviceSynchronize());
 
         // ***Transpose array (d_workspace2 --> d_workspace1)
         transpose_complex_matrix_kernel<<<gridSize_tran2, blockSize_tran>>>((double2 *)d_workspace2,
                                                                             pitch_t,
                                                                             (double2 *)d_workspace1,
                                                                             pitch_q,
-                                                                            curr_chunk_size,
-                                                                            lags.size());
+                                                                            lags.size(),
+                                                                            curr_chunk_size);
+        gpuErrchk(cudaPeekAtLastError());
 
         // ***Copy values from device to host
         // elements are treated as complex doubles
         // to speed up transfer, use pitch_q
         gpuErrchk(cudaMemcpy2D(h_in + 2 * q_start,
                                2 * _nx * ny * sizeof(double),
-                               d_workspace2,
-                               2 * pitch_q,
+                               d_workspace1,
+                               2 * pitch_q * sizeof(double),
                                2 * curr_chunk_size * sizeof(double),
                                lags.size(),
                                cudaMemcpyDeviceToHost));

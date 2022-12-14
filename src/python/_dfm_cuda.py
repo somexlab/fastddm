@@ -104,12 +104,8 @@ def dfm_direct_gpu(img_seq: np.ndarray, lags: List[int], nx: int, ny: int) -> np
         num_chunks += 1
         chunk_size = ((nx//2 + 1) * ny - 1) // num_chunks + 1
         pitch_q = get_device_pitch(2 * chunk_size, 2 * 8)   # 8 is for double
-        # workspace1 -- ((chunk_size+pitch_q-1)//pitch_q)*pitch_q *
-        #             * ((len(img_seq)+pitch_t-1)//pitch_t)*pitch_t *
-        #             * 2 * 8bytes
-        ws1_size = ((chunk_size + pitch_q - 1) // pitch_q) * pitch_q
-        ws1_size *= ((len(img_seq) + pitch_t - 1) // pitch_t) * pitch_t
-        ws1_size *= 2 * 8
+        # workspace1 -- max(pitch_q * len(img_seq), chunk_size * pitch_t) * 2 * 8bytes
+        ws1_size = max(pitch_q * len(img_seq), chunk_size * pitch_t) * 2 * 8
         # workspace2 is same as workspace1
         mem_gpu_req += 2 * ws1_size
         if mem_gpu > mem_gpu_req:

@@ -140,7 +140,8 @@ py::array_t<double> dfm_direct_cuda(py::array_t<T, py::array::c_style> img_seq,
     // ***Resize output
     // the full size of the image structure function is
     // nx * ny * #(lags)
-    out.resize({lags.size(), ny, nx});
+    //out.resize({lags.size(), ny, nx});
+    out.resize({lags.size(), ny, 2 * _nx});
 
     // ***Return result to python
     return out;

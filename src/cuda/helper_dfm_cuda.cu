@@ -103,3 +103,51 @@ __global__ void transpose_complex_matrix_kernel(double2 *matIn,
         }
     }
 }
+
+/*!
+    Compute correlation using differences
+ */
+__global__ void correlatewithdifferences_kernel(double2 *d_in,
+                                                double2 *d_out,
+                                                unsigned int *d_lags,
+                                                unsigned int *d_t1,
+                                                unsigned int *d_num,
+                                                unsigned int length,
+                                                unsigned int Nlags,
+                                                unsigned int Nq,
+                                                unsigned int Ntdt,
+                                                unsigned int pitch)
+{
+    // Get current thread index
+    for (unsigned int i = blockIdx.x * blockDim.x + threadIdx.x; i < Nq * Ntdt; i += blockDim.x * gridDim.x)
+    {
+        // Get t1 index
+        unsigned int idx_t1 = i / Nq;
+        // Get q
+        unsigned int q = i - idx_t1 * Nq;
+
+        // Get t1
+        unsigned int t1 = __ldg(d_t1 + idx_t1);
+        // Get dt
+        unsigned int num = __ldg(d_num + t1);
+        unsigned int lag = idx_t1 - num;
+        unsigned int dt = __ldg(d_lags + lag);
+
+        // Compute t2
+        unsigned int t2 = t1 + dt;
+
+        // Get pixel values at t1 and t2
+        double2 a = d_in[q * pitch + t1];
+        double2 b = d_in[q * pitch + t2];
+
+        // Compute square modulus of difference
+        double smd = (b.x - a.x) * (b.x - a.x) + (b.y - a.y) * (b.y - a.y);
+
+        // Also normalize by number of occurrences
+        // WARNING!!! IF WE ADD EXCLUDED FRAMES, WE NEED TO REMOVE THIS!!
+        smd /= double(length - dt);
+
+        // Add to output vector
+        atomicAdd(&(d_out[q * pitch + lag].x), smd);
+    }
+}

@@ -61,4 +61,27 @@ __global__ void transpose_complex_matrix_kernel(double2 *matIn,
                                                 unsigned int width,
                                                 unsigned int height);
 
+/*! \brief Compute correlation using differences
+    \param d_in     input array
+    \param d_out    output array
+    \param d_lags   array of lags
+    \param d_t1     array of starting times t1
+    \param d_num    array of number of previous occurrences
+    \param length   length
+    \param Nlags    number of lags
+    \param Nq       number of q values (chunk size)
+    \param Ntdt     length of d_t1
+    \param pitch    pitch of arrays
+*/
+__global__ void correlatewithdifferences_kernel(double2 *d_in,
+                                                double2 *d_out,
+                                                unsigned int *d_lags,
+                                                unsigned int *d_t1,
+                                                unsigned int *d_num,
+                                                unsigned int length,
+                                                unsigned int Nlags,
+                                                unsigned int Nq,
+                                                unsigned int Ntdt,
+                                                unsigned int pitch);
+
 #endif
