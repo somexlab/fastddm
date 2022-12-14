@@ -72,6 +72,36 @@ py::array_t<double> dfm_direct_cuda(py::array_t<T, py::array::c_style> img_seq,
                                     size_t num_fullshift,
                                     size_t pitch_fs);
 
+/*! \brief Compute ISF in fft mode using Wiener-Khinchin theorem on the GPU
+    \param img_seq          numpy array containing the image sequence
+    \param lags             lags to be analyzed
+    \param nx               number of fft nodes in x direction
+    \param ny               number of fft nodes in y direction
+    \param nt               number of fft nodes in t direction
+    \param num_fft2         number of fft2 batches
+    \param buff_pitch       pitch of buffer device array
+    \param num_chunks       number of q points batches
+    \param pitch_q          pitch of device array (q-pitch)
+    \param pitch_t          pitch of device array (t-pitch)
+    \param pitch_nt         pitch of workspace1 device array (nt-pitch)
+    \param num_fullshift    number of full and shift batches
+    \param pitch_fs         pitch of device array for full and shift operation
+ */
+template <typename T>
+py::array_t<double> dfm_fft_cuda(py::array_t<T, py::array::c_style> img_seq,
+                                 vector<unsigned int> lags,
+                                 size_t nx,
+                                 size_t ny,
+                                 size_t nt,
+                                 size_t num_fft2,
+                                 size_t buff_pitch,
+                                 size_t num_chunks,
+                                 size_t pitch_q,
+                                 size_t pitch_t,
+                                 size_t pitch_nt,
+                                 size_t num_fullshift,
+                                 size_t pitch_fs);
+
 /*! \brief Export dfm cuda functions to python
     \param m    Module
  */
