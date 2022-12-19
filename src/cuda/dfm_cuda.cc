@@ -6,9 +6,7 @@
 
 // *** headers ***
 #include "dfm_cuda.h"
-
 #include "dfm_cuda.cuh"
-#include "../cpp/helper_dfm.h"
 
 #include <cuda_runtime.h>
 
@@ -138,6 +136,7 @@ py::array_t<double> dfm_direct_cuda(py::array_t<T, py::array::c_style> img_seq,
                      pitch_t);
 
     // ***Convert raw output to full and shifted ISF
+    // Convert raw output to full and shifted ISF
     make_full_shift(p_out,
                     lags,
                     nx,
@@ -204,6 +203,16 @@ py::array_t<double> dfm_fft_cuda(py::array_t<T, py::array::c_style> img_seq,
                  buff_pitch);
 
     // ***Compute correlations
+    correlate_fft(p_out,
+                  lags,
+                  length,
+                  nx,
+                  ny,
+                  nt,
+                  num_chunks,
+                  pitch_q,
+                  pitch_t,
+                  pitch_nt);
 
     // ***Convert raw output to full and shifted ISF
     make_full_shift(p_out,

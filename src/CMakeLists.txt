@@ -8,6 +8,7 @@ SET(dfm_lib_cu_SOURCES
     cuda/dfm_cuda.cu
     cuda/helper_cufft.cu
     cuda/helper_dfm_cuda.cu
+    cuda/helper_prefix_sum.cu
 )
 
 # Include external libraries
@@ -58,7 +59,7 @@ else()
 endif()
 
 # Add core_cuda python module
-pybind11_add_module(core_cuda SHARED cuda/dfm_cuda.cc cpp/helper_dfm.cc python/bindings_cuda.cc)
+pybind11_add_module(core_cuda SHARED cuda/dfm_cuda.cc python/bindings_cuda.cc)
 target_link_libraries(core_cuda PRIVATE _dfmtoolbox_cuda cufft)
 set_target_properties(core_cuda PROPERTIES
                             SUFFIX ".so"

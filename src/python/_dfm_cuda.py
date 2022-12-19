@@ -93,17 +93,19 @@ def dfm_direct_gpu(img_seq: np.ndarray, lags: List[int], nx: int, ny: int) -> np
     # compute number of q chunks
     # give priority to number of host/device data transfer
     num_chunks = 0
-    pitch_t = get_device_pitch(2 * len(img_seq), 2 * 8)     # 8 is for double
+    pitch_t = get_device_pitch(len(img_seq), 2 * 8)     # 8 is for double
     while True:
+        # helper array for lags (unsigned int, 32 bits)
+        # lags -- len(lags) * 4bytes
         # helper array of t1 (unsigned int, 32 bits)
         # t1 -- (len(img_seq) - lags[0]) * len(lags) * 4bytes   (AT MOST!)
         # helper array of num (unsigned int, 32 bits)
         # num -- (len(img_seq) - lags[0]) * 4bytes
-        mem_gpu_req = 4 * (len(img_seq) * lags[0]) * (len(lags) + 1)
+        mem_gpu_req = 4 * ((len(img_seq) - lags[0]) * (len(lags) + 1) + len(lags))
         # compute number of batched q vectors
         num_chunks += 1
         chunk_size = ((nx//2 + 1) * ny - 1) // num_chunks + 1
-        pitch_q = get_device_pitch(2 * chunk_size, 2 * 8)   # 8 is for double
+        pitch_q = get_device_pitch(chunk_size, 2 * 8)   # 8 is for double
         # workspace1 -- max(pitch_q * len(img_seq), chunk_size * pitch_t) * 2 * 8bytes
         ws1_size = max(pitch_q * len(img_seq), chunk_size * pitch_t) * 2 * 8
         # workspace2 is same as workspace1
@@ -121,7 +123,7 @@ def dfm_direct_gpu(img_seq: np.ndarray, lags: List[int], nx: int, ny: int) -> np
         num_fullshift += 1
         # compute number of batched full and shift operations
         fullshift_batch_len = (len(lags) - 1) // num_fullshift + 1
-        pitch_fs = get_device_pitch(2 * ((nx // 2) + 1), 2 * 8)
+        pitch_fs = get_device_pitch(((nx // 2) + 1), 2 * 8)
         # workspace1 -- pitch_fs * ny * fullshift_batch_len * 2 * 8bytes
         ws1_size = pitch_fs * ny * fullshift_batch_len * 2 * 8
         # workspace2 is same as workspace1
@@ -221,9 +223,31 @@ def dfm_fft_gpu(img_seq: np.ndarray, lags: List[int], nx: int, ny: int, nt: int)
     # give priority to number of host/device data transfer
     # ... TBD
     num_chunks = 0
-    pitch_q = 0
-    pitch_t = 0
-    pitch_nt = 0
+    pitch_t = get_device_pitch(len(img_seq), 2 * 8)     # 8 is for double
+    pitch_nt = get_device_pitch(nt, 2 * 8)     # 8 is for double
+    while True:
+        # helper array for lags (unsigned int, 32 bits)
+        # lags -- len(lags) * 4bytes
+        mem_gpu_req = 4 * len(lags)
+        num_chunks += 1
+        # compute number of batched fft
+        chunk_size = ((nx//2 + 1) * ny - 1) // num_chunks + 1
+        pitch_q = get_device_pitch(chunk_size, 2 * 8)   # 8 is for double
+        # workspace1 for fft
+        # workspace1 -- chunk_size * pitch_nt * 2 * 8bytes
+        mem_gpu_req += chunk_size * pitch_nt * 2 * 8
+        # workspace2 for cumulative sum
+        # workspace2 -- max(chunk_size * pitch_t, pitch_q * len(img_seq)) * 2 * 8bytes
+        mem_gpu_req += max(chunk_size * pitch_t, pitch_q * len(img_seq)) * 2 * 8
+        # fft
+        mem_gpu_req += get_device_fft_mem(nt, chunk_size, pitch_nt)
+        # cumulative sum
+        # prefix sum -- (len(img_seq) // 1024 + 2) * chunk_size * 2 * 8bytes
+        mem_gpu_req += (len(img_seq) // 1024 + 2) * chunk_size * 2 * 8
+        if mem_gpu > mem_gpu_req:
+            break
+        if num_fft2 == len(img_seq):
+            raise MemoryError('Not enough space on GPU for correlation with fft.')
     # --- ESTIMATE DEVICE MEMORY REQUIRED FOR FULL AND SHIFTED POWER SPECTRUM
     # compute the number of iterations
     # give priority to number of host/device data transfer
@@ -233,7 +257,7 @@ def dfm_fft_gpu(img_seq: np.ndarray, lags: List[int], nx: int, ny: int, nt: int)
         num_fullshift += 1
         # compute number of batched full and shift operations
         fullshift_batch_len = (len(lags) - 1) // num_fullshift + 1
-        pitch_fs = get_device_pitch(2 * ((nx // 2) + 1), 2 * 8)
+        pitch_fs = get_device_pitch(((nx // 2) + 1), 2 * 8)
         # workspace1 -- pitch_fs * ny * fullshift_batch_len * 2 * 8bytes
         ws1_size = pitch_fs * ny * fullshift_batch_len * 2 * 8
         # workspace2 is same as workspace1

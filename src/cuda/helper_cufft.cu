@@ -103,15 +103,15 @@ cufftHandle fft_create_plan(size_t nt,
                             size_t pitch)
 {
     // Define parameters
-    int rank = 1;               // The rank of the fft (1 = fft)
-    int n[1] = {(int)nt};       // Dimensions
-    int *inembed = NULL;        // NULL is equivalent to passing n
-    int istride = 1;            // Distance between two elements in the input
-    int idist = (int)pitch;     // Distance between k-th and (k+1)-th input elements
-    int *onembed = NULL;        // NULL is equivalent to passing n
-    int ostride = 1;            // Distance between two elements in the output
-    int odist = (int)pitch;     // Distance between k-th and (k+1)-th output elements
-    cufftType type = CUFFT_Z2Z; // Fft type (complex to complex, double precision, here)
+    int rank = 1;                 // The rank of the fft (1 = fft)
+    int n[1] = {(int)nt};         // Dimensions
+    int inembed[] = {(int)pitch}; // NULL is equivalent to passing n
+    int istride = 1;              // Distance between two elements in the input
+    int idist = (int)pitch;       // Distance between k-th and (k+1)-th input elements
+    int onembed[] = {(int)pitch}; // NULL is equivalent to passing n
+    int ostride = 1;              // Distance between two elements in the output
+    int odist = (int)pitch;       // Distance between k-th and (k+1)-th output elements
+    cufftType type = CUFFT_Z2Z;   // Fft type (complex to complex, double precision, here)
 
     // Create the fft plan
     cufftHandle plan;
