@@ -723,8 +723,6 @@ void correlate_fft(double *h_in,
                   2 * pitch_t,
                   curr_chunk_size);
         
-        // gpuErrchk(cudaMemset(d_workspace1, 0.0, 2 * pitch_nt * sizeof(double) * curr_chunk_size));
-        // gpuErrchk(cudaMemset(d_workspace2, 0.0, 2 * workspace2_size * sizeof(double)));
         //  ***Linearly combine the two parts (workspace1 + workspace2 --> workspace2)
         linear_combination_final_kernel<<<gridSize_final, blockSize_final>>>((double2 *)d_workspace2,
                                                                              pitch_t,
