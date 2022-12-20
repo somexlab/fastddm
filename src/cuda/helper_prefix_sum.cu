@@ -97,8 +97,8 @@ void scanManyLargeArrays(double *output,
         // to the remainder scan
         add_many_kernel<<<gridSize_copy, remainder>>>(output+length_even,
                                                       dist,
-                                                      Nx,
-                                                      Nx * N,
+                                                      1,
+                                                      N,
                                                       remainder,
                                                       a1,
                                                       a2);
