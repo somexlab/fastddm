@@ -52,7 +52,7 @@ def dfm_direct_gpu(img_seq: np.ndarray, lags: List[int], nx: int, ny: int) -> np
     # t1 -- (len(img_seq) - lags[0]) * len(lags) * 4bytes   (AT MOST!)
     # helper array of num (unsigned int, 32 bits)
     # num -- (len(img_seq) - lags[0]) * 4bytes
-    mem_req += 4 * (len(img_seq) * lags[0]) * (len(lags) + 1)
+    mem_req += 4 * (len(img_seq) - lags[0]) * (len(lags) + 1)
 
     # we require this space to be less than 90% of the available memory
     if int(0.9*mem) < mem_req:
