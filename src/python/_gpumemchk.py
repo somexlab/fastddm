@@ -16,6 +16,6 @@ def get_free_gpu_mem() -> List[int]:
     memory_free_info = sp.check_output(command.split()).decode('ascii').split('\n')[:-1][1:]
 
     # convert memory from MB to bytes and create list
-    memory_free_values = [1000000 * int(x.split()[0]) for i, x in enumerate(memory_free_info)]
+    memory_free_values = [1048576 * int(x.split()[0]) for i, x in enumerate(memory_free_info)]
 
     return memory_free_values
