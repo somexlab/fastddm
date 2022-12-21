@@ -102,6 +102,31 @@ py::array_t<double> dfm_fft_cuda(py::array_t<T, py::array::c_style> img_seq,
                                  size_t num_fullshift,
                                  size_t pitch_fs);
 
+/*! \brief Estimate and check host memory needed for direct mode
+    \param mem_avail    Host memory available
+    \param nx           Number of fft nodes, x direction
+    \param ny           Number of fft nodes, y direction
+    \param length       Number of frames
+    \param lags         Vector of lags to analyze
+ */
+bool chk_host_mem_direct(unsigned long long mem_avail,
+                         unsigned long long nx,
+                         unsigned long long ny,
+                         unsigned long long length,
+                         vector<unsigned int> lags);
+
+/*! \brief Estimate and check host memory needed for fft mode
+    \param mem_avail    Host memory available
+    \param nx           Number of fft nodes, x direction
+    \param ny           Number of fft nodes, y direction
+    \param length       Number of frames
+    \param lags         Vector of lags to analyze
+ */
+bool chk_host_mem_fft(unsigned long long mem_avail,
+                      unsigned long long nx,
+                      unsigned long long ny,
+                      unsigned long long length);
+
 /*! \brief Export dfm cuda functions to python
     \param m    Module
  */

@@ -3,6 +3,7 @@ import numpy as np
 
 from ._memchk import get_free_mem
 from ._gpumemchk import get_free_gpu_mem
+from .core_cuda import chk_host_mem_direct, chk_host_mem_fft
 from .core_cuda import get_device_pitch, get_device_fft2_mem, get_device_fft_mem
 from .core_cuda import dfm_direct_cuda, dfm_fft_cuda
 
@@ -37,25 +38,8 @@ def dfm_direct_gpu(img_seq: np.ndarray, lags: List[int], nx: int, ny: int) -> np
 
     # get available memory on host
     mem = get_free_mem()
-    mem_req = 0
-    # --- ESTIMATE HOST MEMORY REQUIRED FOR FFT2
-    # calculations are done in double precision
-    # we need:
-    # output -- nx * ny * len(lags) * 8bytes
-    # mem_req += 8 * nx * ny * len(lags)
-    # but to store the intermediate fft2, we need:
-    # fft2 -- 2 * (nx // 2 + 1) * ny * len(img_seq) * 8bytes
-    # which is always larger than the output size (output is then resized)
-    mem_req += 8 * 2 * (nx // 2 + 1) * ny * len(img_seq)
-    # --- ESTIMATE HOST MEMORY REQUIRED FOR STRUCTURE FUNCTION PART
-    # helper array of t1 (unsigned int, 32 bits)
-    # t1 -- (len(img_seq) - lags[0]) * len(lags) * 4bytes   (AT MOST!)
-    # helper array of num (unsigned int, 32 bits)
-    # num -- (len(img_seq) - lags[0]) * 4bytes
-    mem_req += 4 * (len(img_seq) - lags[0]) * (len(lags) + 1)
-
     # we require this space to be less than 90% of the available memory
-    if int(0.9*mem) < mem_req:
+    if chk_host_mem_direct(int(0.9*mem), nx, ny, len(img_seq), lags):
         raise MemoryError('Not enough space. Cannot store result in memory.')
 
     # get available GPU memory
@@ -170,21 +154,8 @@ def dfm_fft_gpu(img_seq: np.ndarray, lags: List[int], nx: int, ny: int, nt: int)
 
     # get available memory on host
     mem = get_free_mem()
-    mem_req = 0
-    # --- ESTIMATE HOST MEMORY REQUIRED FOR FFT2
-    # calculations are done in double precision
-    # we need:
-    # output -- nx * ny * len(lags) * 8bytes
-    # mem_req += 8 * nx * ny * len(lags)
-    # but to store the intermediate fft2, we need:
-    # fft2 -- 2 * (nx // 2 + 1) * ny * len(img_seq) * 8bytes
-    # which is always larger than the output size (output is then resized)
-    mem_req += 8 * 2 * (nx // 2 + 1) * ny * len(img_seq)
-    # --- ESTIMATE HOST MEMORY REQUIRED FOR STRUCTURE FUNCTION PART
-    # no buffer is required for the structure function part
-
     # we require this space to be less than 90% of the available memory
-    if int(0.9*mem) < mem_req:
+    if chk_host_mem_fft(int(0.9*mem), nx, ny, len(img_seq)):
         raise MemoryError('Not enough space. Cannot store result in memory.')
 
     # get available GPU memory

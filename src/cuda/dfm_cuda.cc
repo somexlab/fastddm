@@ -232,6 +232,80 @@ py::array_t<double> dfm_fft_cuda(py::array_t<T, py::array::c_style> img_seq,
 }
 
 /*!
+    Estimate host memory needed for direct mode.
+    Returns false if memory is sufficient, true otherwise.
+ */
+bool chk_host_mem_direct(unsigned long long mem_avail,
+                         unsigned long long nx,
+                         unsigned long long ny,
+                         unsigned long long length,
+                         vector<unsigned int> lags)
+{
+    /*
+    Calculations are done in double precision.
+    - The store the output, we need
+        nx * ny * #lags * 8 bytes
+
+    - To store the fft2, we need
+        (nx / 2 + 1) * ny * length * 16 bytes
+      This is always larger (or equal) than the output size.
+      We then use this space as a workspace for both the fft2
+      intermediate output and the final result (output is then cropped).
+
+    - To store the helper arrays, we need
+        (length - lags[0]) * #lags * 4 bytes    [t1; overestimate...]
+        (length - lags[0]) * 4 bytes            [num]
+     */
+    unsigned long long mem_required = 0;
+
+    mem_required += (nx / 2ULL + 1ULL) * ny * length * 16ULL;
+    mem_required += (length - (unsigned long long)lags[0]) * ((unsigned long long)lags.size() + 1ULL) * 4ULL;
+
+    if (mem_required <= mem_avail)
+    {
+        return false;
+    }
+    else
+    {
+        return true;
+    }
+}
+
+/*!
+    Estimate host memory needed for fft mode.
+    Returns false if memory is sufficient, true otherwise.
+ */
+bool chk_host_mem_fft(unsigned long long mem_avail,
+                      unsigned long long nx,
+                      unsigned long long ny,
+                      unsigned long long length)
+{
+    /*
+    Calculations are done in double precision.
+    - The store the output, we need
+        nx * ny * #lags * 8 bytes
+
+    - To store the fft2, we need
+        (nx / 2 + 1) * ny * length * 16 bytes
+      This is always larger (or equal) than the output size.
+      We then use this space as a workspace for both the fft2
+      intermediate output and the final result (output is then cropped).
+     */
+    unsigned long long mem_required = 0;
+
+    mem_required += (nx / 2ULL + 1ULL) * ny * length * 16ULL;
+
+    if (mem_required <= mem_avail)
+    {
+        return false;
+    }
+    else
+    {
+        return true;
+    }
+}
+
+/*!
     Export dfm_cuda functions to python.
  */
 void export_dfm_cuda(py::module &m)
@@ -239,6 +313,8 @@ void export_dfm_cuda(py::module &m)
     m.def("get_device_pitch", &get_device_pitch);
     m.def("get_device_fft2_mem", &get_device_fft2_mem);
     m.def("get_device_fft_mem", &get_device_fft_mem);
+    m.def("chk_host_mem_direct", &chk_host_mem_direct);
+    m.def("chk_host_mem_fft", &chk_host_mem_fft);
     m.def("dfm_direct_cuda", &dfm_direct_cuda<double>);
     m.def("dfm_direct_cuda", &dfm_direct_cuda<float>);
     m.def("dfm_direct_cuda", &dfm_direct_cuda<int64_t>);
