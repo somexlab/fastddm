@@ -27,109 +27,6 @@ const unsigned int TILE_DIM = 32;  // leave this unchanged!! (tile dimension for
 const unsigned int BLOCK_ROWS = 8; // leave this unchanged!! (block rows for matrix transpose)
 
 /*!
-    Evaluate the device memory pitch for multiple subarrays of size N with 8bytes elements
-*/
-void cudaGetDevicePitch16B(size_t N,
-                           size_t &pitch)
-{
-    double2 *d_arr;
-
-    gpuErrchk(cudaMallocPitch(&d_arr, &pitch, N * sizeof(double2), 2));
-
-    pitch /= sizeof(double2);
-
-    gpuErrchk(cudaFree(d_arr));
-}
-
-/*!
-    Evaluate the device memory pitch for multiple subarrays of size N with 8bytes elements
-*/
-void cudaGetDevicePitch8B(size_t N,
-                          size_t &pitch)
-{
-    double *d_arr;
-
-    gpuErrchk(cudaMallocPitch(&d_arr, &pitch, N * sizeof(double), 2));
-
-    pitch /= sizeof(double);
-
-    gpuErrchk(cudaFree(d_arr));
-}
-
-/*!
-    Evaluate the device memory pitch for multiple subarrays of size N with 4bytes elements
-*/
-void cudaGetDevicePitch4B(size_t N,
-                          size_t &pitch)
-{
-    float *d_arr;
-
-    gpuErrchk(cudaMallocPitch(&d_arr, &pitch, N * sizeof(float), 2));
-
-    pitch /= sizeof(float);
-
-    gpuErrchk(cudaFree(d_arr));
-}
-
-/*!
-    Evaluate the device memory pitch for multiple subarrays of size N with 2bytes elements
-*/
-void cudaGetDevicePitch2B(size_t N,
-                          size_t &pitch)
-{
-    int16_t *d_arr;
-
-    gpuErrchk(cudaMallocPitch(&d_arr, &pitch, N * sizeof(int16_t), 2));
-
-    pitch /= sizeof(int16_t);
-
-    gpuErrchk(cudaFree(d_arr));
-}
-
-/*!
-    Evaluate the device memory pitch for multiple subarrays of size N with 2bytes elements
-*/
-void cudaGetDevicePitch1B(size_t N,
-                          size_t &pitch)
-{
-    int8_t *d_arr;
-
-    gpuErrchk(cudaMallocPitch(&d_arr, &pitch, N * sizeof(int8_t), 2));
-
-    pitch /= sizeof(int8_t);
-
-    gpuErrchk(cudaFree(d_arr));
-}
-
-/*!
-    Evaluate the device memory size in bytes for fft2
-*/
-void cudaGetFft2MemSize(size_t nx,
-                        size_t ny,
-                        size_t batch,
-                        size_t *memsize)
-{
-    fft2_get_mem_size(nx,
-                      ny,
-                      batch,
-                      memsize);
-}
-
-/*!
-    Evaluate the device memory size in bytes for fft
-*/
-void cudaGetFftMemSize(size_t nt,
-                       size_t batch,
-                       size_t pitch,
-                       size_t *memsize)
-{
-    fft_get_mem_size(nt,
-                     batch,
-                     pitch,
-                     memsize);
-}
-
-/*!
     Transfer images on GPU and compute fft2
  */
 template <typename T>
@@ -722,7 +619,7 @@ void correlate_fft(double *h_in,
                   2 * length,
                   2 * pitch_t,
                   curr_chunk_size);
-        
+
         //  ***Linearly combine the two parts (workspace1 + workspace2 --> workspace2)
         linear_combination_final_kernel<<<gridSize_final, blockSize_final>>>((double2 *)d_workspace2,
                                                                              pitch_t,

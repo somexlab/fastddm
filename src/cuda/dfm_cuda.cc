@@ -8,78 +8,11 @@
 #include "dfm_cuda.h"
 #include "dfm_cuda.cuh"
 
+#include "helper_memchk_gpu.h"
+
 #include <cuda_runtime.h>
 
 // *** code ***
-
-/*!
-    Evaluate the device memory pitch for multiple subarrays of size N
- */
-size_t get_device_pitch(size_t N,
-                        int Nbytes)
-{
-    size_t pitch;
-    switch (Nbytes)
-    {
-    case 16:
-        cudaGetDevicePitch16B(N, pitch);
-        break;
-    case 8:
-        cudaGetDevicePitch8B(N, pitch);
-        break;
-    case 4:
-        cudaGetDevicePitch4B(N, pitch);
-        break;
-    case 2:
-        cudaGetDevicePitch2B(N, pitch);
-        break;
-    case 1:
-        cudaGetDevicePitch1B(N, pitch);
-        break;
-    default:
-        cudaGetDevicePitch8B(N, pitch);
-    }
-
-    return pitch;
-}
-
-/*! \brief Get the device memory for fft2
-    \param nx       number of fft nodes in x direction
-    \param ny       number of fft nodes in y direction
-    \param batch    number of batch elements
- */
-size_t get_device_fft2_mem(size_t nx,
-                           size_t ny,
-                           size_t batch)
-{
-    // The following line should be changed to move to workstations with multiple GPUs
-    size_t memsize[1]; // We are only considering workstations with 1 GPU
-    cudaGetFft2MemSize(nx,
-                       ny,
-                       batch,
-                       memsize);
-
-    return memsize[0];
-}
-
-/*! \brief Get the device memory for fft
-    \param nt       number of fft nodes in t direction
-    \param batch    number of batch elements
-    \param pitch    pitch of input array
- */
-size_t get_device_fft_mem(size_t nt,
-                          size_t batch,
-                          size_t pitch)
-{
-    // The following line should be changed to move to workstations with multiple GPUs
-    size_t memsize[1]; // We are only considering workstations with 1 GPU
-    cudaGetFftMemSize(nt,
-                      batch,
-                      pitch,
-                      memsize);
-
-    return memsize[0];
-}
 
 /*!
     Compute the image structure function in direct mode
@@ -89,20 +22,35 @@ template <typename T>
 py::array_t<double> dfm_direct_cuda(py::array_t<T, py::array::c_style> img_seq,
                                     vector<unsigned int> lags,
                                     size_t nx,
-                                    size_t ny,
-                                    size_t num_fft2,
-                                    size_t buff_pitch,
-                                    size_t num_chunks,
-                                    size_t pitch_q,
-                                    size_t pitch_t,
-                                    size_t num_fullshift,
-                                    size_t pitch_fs)
+                                    size_t ny)
 {
     // ***Get input array and dimensions
     size_t length = img_seq.shape()[0]; // get length of original input
     size_t height = img_seq.shape()[1]; // get height of original input
     size_t width = img_seq.shape()[2];  // get width of original input
     auto p_img_seq = img_seq.data();    // get input data
+
+    // Check host memory
+    chk_host_mem_direct(nx, ny, length, lags);
+
+    // Check device memory and optimize
+    size_t num_fft2, num_chunks, num_fullshift;
+    size_t pitch_buff, pitch_q, pitch_t, pitch_fs;
+    chk_device_mem_direct(width,
+                          height,
+                          sizeof(T),
+                          nx,
+                          ny,
+                          length,
+                          lags,
+                          std::is_same<T, double>::value,
+                          num_fft2,
+                          num_chunks,
+                          num_fullshift,
+                          pitch_buff,
+                          pitch_q,
+                          pitch_t,
+                          pitch_fs);
 
     // ***Allocate workspace vector
     /*
@@ -123,7 +71,7 @@ py::array_t<double> dfm_direct_cuda(py::array_t<T, py::array::c_style> img_seq,
                  nx,
                  ny,
                  num_fft2,
-                 buff_pitch);
+                 pitch_buff);
 
     // ***Compute correlations
     correlate_direct(p_out,
@@ -165,21 +113,43 @@ py::array_t<double> dfm_fft_cuda(py::array_t<T, py::array::c_style> img_seq,
                                  vector<unsigned int> lags,
                                  size_t nx,
                                  size_t ny,
-                                 size_t nt,
-                                 size_t num_fft2,
-                                 size_t buff_pitch,
-                                 size_t num_chunks,
-                                 size_t pitch_q,
-                                 size_t pitch_t,
-                                 size_t pitch_nt,
-                                 size_t num_fullshift,
-                                 size_t pitch_fs)
+                                 size_t nt)
 {
     // ***Get input array and dimensions
     size_t length = img_seq.shape()[0]; // get length of original input
     size_t height = img_seq.shape()[1]; // get height of original input
     size_t width = img_seq.shape()[2];  // get width of original input
     auto p_img_seq = img_seq.data();    // get input data
+
+    // Check host memory
+    chk_host_mem_fft(nx, ny, length);
+
+    // Check device memory and optimize
+    size_t num_fft2, num_chunks, num_fullshift;
+    size_t pitch_buff, pitch_q, pitch_t, pitch_nt, pitch_fs;
+    chk_device_mem_fft(width,
+                       height,
+                       sizeof(T),
+                       nx,
+                       ny,
+                       nt,
+                       length,
+                       lags,
+                       std::is_same<T, double>::value,
+                       num_fft2,
+                       num_chunks,
+                       num_fullshift,
+                       pitch_buff,
+                       pitch_q,
+                       pitch_t,
+                       pitch_nt,
+                       pitch_fs);
+
+    cout << "pitch_buff " << pitch_buff << endl;
+    cout << "pitch_q " << pitch_q << endl;
+    cout << "pitch_t " << pitch_t << endl;
+    cout << "pitch_nt " << pitch_nt << endl;
+    cout << "pitch_fs " << pitch_fs << endl;
 
     // ***Allocate workspace vector
     /*
@@ -200,7 +170,7 @@ py::array_t<double> dfm_fft_cuda(py::array_t<T, py::array::c_style> img_seq,
                  nx,
                  ny,
                  num_fft2,
-                 buff_pitch);
+                 pitch_buff);
 
     // ***Compute correlations
     correlate_fft(p_out,
@@ -232,80 +202,6 @@ py::array_t<double> dfm_fft_cuda(py::array_t<T, py::array::c_style> img_seq,
 }
 
 /*!
-    Estimate host memory needed for direct mode.
-    Returns false if memory is sufficient, true otherwise.
- */
-bool chk_host_mem_direct(unsigned long long mem_avail,
-                         unsigned long long nx,
-                         unsigned long long ny,
-                         unsigned long long length,
-                         vector<unsigned int> lags)
-{
-    /*
-    Calculations are done in double precision.
-    - The store the output, we need
-        nx * ny * #lags * 8 bytes
-
-    - To store the fft2, we need
-        (nx / 2 + 1) * ny * length * 16 bytes
-      This is always larger (or equal) than the output size.
-      We then use this space as a workspace for both the fft2
-      intermediate output and the final result (output is then cropped).
-
-    - To store the helper arrays, we need
-        (length - lags[0]) * #lags * 4 bytes    [t1; overestimate...]
-        (length - lags[0]) * 4 bytes            [num]
-     */
-    unsigned long long mem_required = 0;
-
-    mem_required += (nx / 2ULL + 1ULL) * ny * length * 16ULL;
-    mem_required += (length - (unsigned long long)lags[0]) * ((unsigned long long)lags.size() + 1ULL) * 4ULL;
-
-    if (mem_required <= mem_avail)
-    {
-        return false;
-    }
-    else
-    {
-        return true;
-    }
-}
-
-/*!
-    Estimate host memory needed for fft mode.
-    Returns false if memory is sufficient, true otherwise.
- */
-bool chk_host_mem_fft(unsigned long long mem_avail,
-                      unsigned long long nx,
-                      unsigned long long ny,
-                      unsigned long long length)
-{
-    /*
-    Calculations are done in double precision.
-    - The store the output, we need
-        nx * ny * #lags * 8 bytes
-
-    - To store the fft2, we need
-        (nx / 2 + 1) * ny * length * 16 bytes
-      This is always larger (or equal) than the output size.
-      We then use this space as a workspace for both the fft2
-      intermediate output and the final result (output is then cropped).
-     */
-    unsigned long long mem_required = 0;
-
-    mem_required += (nx / 2ULL + 1ULL) * ny * length * 16ULL;
-
-    if (mem_required <= mem_avail)
-    {
-        return false;
-    }
-    else
-    {
-        return true;
-    }
-}
-
-/*!
     Export dfm_cuda functions to python.
  */
 void export_dfm_cuda(py::module &m)
@@ -313,8 +209,6 @@ void export_dfm_cuda(py::module &m)
     m.def("get_device_pitch", &get_device_pitch);
     m.def("get_device_fft2_mem", &get_device_fft2_mem);
     m.def("get_device_fft_mem", &get_device_fft_mem);
-    m.def("chk_host_mem_direct", &chk_host_mem_direct);
-    m.def("chk_host_mem_fft", &chk_host_mem_fft);
     m.def("dfm_direct_cuda", &dfm_direct_cuda<double>);
     m.def("dfm_direct_cuda", &dfm_direct_cuda<float>);
     m.def("dfm_direct_cuda", &dfm_direct_cuda<int64_t>);

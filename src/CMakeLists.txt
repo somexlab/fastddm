@@ -9,6 +9,7 @@ SET(dfm_lib_cu_SOURCES
     cuda/helper_cufft.cu
     cuda/helper_dfm_cuda.cu
     cuda/helper_prefix_sum.cu
+    cuda/helper_memchk_gpu.cu
 )
 
 # Include external libraries
@@ -59,8 +60,8 @@ else()
 endif()
 
 # Add core_cuda python module
-pybind11_add_module(core_cuda SHARED cuda/dfm_cuda.cc python/bindings_cuda.cc)
-target_link_libraries(core_cuda PRIVATE _dfmtoolbox_cuda cufft)
+pybind11_add_module(core_cuda SHARED cuda/dfm_cuda.cc cuda/helper_memchk_gpu.cc python/bindings_cuda.cc)
+target_link_libraries(core_cuda PRIVATE _dfmtoolbox_cuda cufft nvidia-ml)
 set_target_properties(core_cuda PROPERTIES
                             SUFFIX ".so"
                             LIBRARY_OUTPUT_DIRECTORY ${DFMTOOLBOX_OUTPUT_DIR}
