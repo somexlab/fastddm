@@ -145,12 +145,6 @@ py::array_t<double> dfm_fft_cuda(py::array_t<T, py::array::c_style> img_seq,
                        pitch_nt,
                        pitch_fs);
 
-    cout << "pitch_buff " << pitch_buff << endl;
-    cout << "pitch_q " << pitch_q << endl;
-    cout << "pitch_t " << pitch_t << endl;
-    cout << "pitch_nt " << pitch_nt << endl;
-    cout << "pitch_fs " << pitch_fs << endl;
-
     // ***Allocate workspace vector
     /*
     - We need to make sure that the fft2 r2c fits in the array,
