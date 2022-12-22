@@ -19,7 +19,7 @@ def dfm_direct_gpu(img_seq: np.ndarray, lags: List[int], nx: int, ny: int) -> np
     lags : array_like
         List of selected lags.
     nx : int
-        Number of fft nodes in x direction.
+        Number of fft nodes in x direction (for very large transorms, this must be even).
     ny : int
         Number of fft nodes in y direction.
 
@@ -50,11 +50,11 @@ def dfm_fft_gpu(img_seq: np.ndarray, lags: List[int], nx: int, ny: int, nt: int)
     lags : array_like
         List of selected lags.
     nx : int
-        Number of fft nodes in x direction.
+        Number of fft nodes in x direction (for very large transorms, this must be even).
     ny : int
         Number of fft nodes in y direction.
     nt : int
-        Number of fft nodes in t direction.
+        Number of fft nodes in t direction (for very large transorms, this must be even).
 
     Returns
     -------
