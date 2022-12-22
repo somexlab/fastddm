@@ -1,10 +1,10 @@
 from typing import List
 import numpy as np
 
-from ._memchk import get_free_mem
-from ._gpumemchk import get_free_gpu_mem
+# from ._memchk import get_free_mem
+# from ._gpumemchk import get_free_gpu_mem
 # from .core_cuda import chk_host_mem_direct, chk_host_mem_fft
-from .core_cuda import get_device_pitch, get_device_fft2_mem, get_device_fft_mem
+# from .core_cuda import get_device_pitch, get_device_fft2_mem, get_device_fft_mem
 from .core_cuda import dfm_direct_cuda, dfm_fft_cuda
 
 def dfm_direct_gpu(img_seq: np.ndarray, lags: List[int], nx: int, ny: int) -> np.ndarray:

@@ -200,9 +200,9 @@ py::array_t<double> dfm_fft_cuda(py::array_t<T, py::array::c_style> img_seq,
  */
 void export_dfm_cuda(py::module &m)
 {
-    m.def("get_device_pitch", &get_device_pitch);
-    m.def("get_device_fft2_mem", &get_device_fft2_mem);
-    m.def("get_device_fft_mem", &get_device_fft_mem);
+    // m.def("get_device_pitch", &get_device_pitch);
+    // m.def("get_device_fft2_mem", &get_device_fft2_mem);
+    // m.def("get_device_fft_mem", &get_device_fft_mem);
     m.def("dfm_direct_cuda", &dfm_direct_cuda<double>);
     m.def("dfm_direct_cuda", &dfm_direct_cuda<float>);
     m.def("dfm_direct_cuda", &dfm_direct_cuda<int64_t>);
