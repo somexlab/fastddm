@@ -21,7 +21,7 @@ def next_power_of_2(target: int) -> int:
     return 1<<(target-1).bit_length()
 
 
-def next_fast_len(target: int, mode: Optional[str]='python') -> int:
+def next_fast_len(target: int, mode: Optional[str]='python', force_even: Optional[bool]=False) -> int:
     """
     Returns the next fast size of input data to fft, for zero-padding.
 
@@ -38,6 +38,7 @@ def next_fast_len(target: int, mode: Optional[str]='python') -> int:
     CUDA's cufft is best at handling sizes of the form
     :math:`2^a 3^b 5^c 7^d`.
     [See (cufft documentation)[https://docs.nvidia.com/cuda/cufft/index.html#introduction]]
+    For very large transforms, though, the fastest varying dimension should be even.
 
     Parameters
     ----------
@@ -45,6 +46,8 @@ def next_fast_len(target: int, mode: Optional[str]='python') -> int:
         Target value.
     mode : str, optional
         Select the backend ('python', 'cpp', 'cuda'). Default is 'python'.
+    force_even : bool, optional
+        Force even output. Only used if mode is 'cuda'. Default is False.
 
     Returns
     -------
@@ -135,6 +138,8 @@ def next_fast_len(target: int, mode: Optional[str]='python') -> int:
             else:
                 continue
             break
+        if force_even and fast_len % 2 != 0:
+            return next_fast_len(target=fast_len + 1,mode=mode,force_even=force_even)
         return fast_len
 
     raise ValueError('Mode not supported in `next_fast_len`.')
