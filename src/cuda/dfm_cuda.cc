@@ -196,10 +196,30 @@ py::array_t<double> dfm_fft_cuda(py::array_t<T, py::array::c_style> img_seq,
 }
 
 /*!
+    Set CUDA device to be used.
+    Throws a runtime_error if the device id is out of bounds.
+*/
+void set_device(int gpu_id)
+{
+    int dev_num;
+    cudaGetDeviceCount(&dev_num);
+    if (gpu_id < dev_num)
+    {
+        int valid_devices[] = {gpu_id};
+        cudaSetValidDevices(valid_devices, 1);
+    }
+    else
+    {
+        throw std::runtime_error("Device id out of bounds. Choose id < " + to_string(dev_num));
+    }
+}
+
+/*!
     Export dfm_cuda functions to python.
  */
 void export_dfm_cuda(py::module &m)
 {
+    m.def("set_device", &set_device);
     // m.def("get_device_pitch", &get_device_pitch);
     // m.def("get_device_fft2_mem", &get_device_fft2_mem);
     // m.def("get_device_fft_mem", &get_device_fft_mem);
