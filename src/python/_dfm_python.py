@@ -1,6 +1,6 @@
 """The collection of python functions to perform DDM."""
 
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Callable, Dict
 
 import numpy as np
 import scipy.fft as scifft
@@ -180,6 +180,55 @@ def reconstruct_full_spectrum(
     return spectrum
 
 
+def _direct_image_structure_function(
+    rfft2: np.ndarray,
+    rfft2_square_mod: np.ndarray,
+    lag: int,
+    shape: Optional[Tuple[int, int]],
+) -> np.ndarray:
+    """Calculate the image structure function the 'direct' way.
+
+    Uses the rfft2 and square modulus of the rfft2.
+
+    Parameters
+    ----------
+    rfft2 : np.ndarray
+        The rfft2 of the image series.
+    rfft2_square_mod : np.ndarray
+        Square modulus of the above input.
+    lag : int
+        The lag time in number of frames.
+    shape : Optional[Tuple[int, int]]
+        The output shape of the full image structure function; needs to be presented for non-square input images.
+
+    Returns
+    -------
+    np.ndarray
+        _description_
+
+    Raises
+    ------
+    RuntimeError
+        _description_
+    """
+    length, *_ = rfft2.shape
+
+    if lag >= length:
+        raise RuntimeError("Time delay cannot be longer than the timeseries itself!")
+
+    cropped_conj = rfft2[:-lag].conj()
+    shifted = rfft2[lag:]
+    shifted_abs_square = rfft2_square_mod[lag:]
+    cropped_abs_square = rfft2_square_mod[:-lag]
+
+    sum_of_parts = (
+        shifted_abs_square + cropped_abs_square - 2 * (cropped_conj * shifted).real
+    )
+    dqt = np.mean(sum_of_parts, axis=0)
+
+    return reconstruct_full_spectrum(dqt, shape=shape)
+
+
 def image_structure_function(
     square_modulus: np.ndarray,
     autocorrelation: np.ndarray,
@@ -242,28 +291,119 @@ def image_structure_function(
     return reconstruct_full_spectrum(sum_of_parts, shape=shape)  # full plane
 
 
+def _py_image_structure_function(
+    images: np.ndarray,
+    lags: np.ndarray,
+    nx: Optional[int] = None,
+    ny: Optional[int] = None,
+    *,
+    mode: str = "fft",
+    workers: int = 2,
+    **kwargs,
+) -> np.ndarray:
+    """The handler function for the python image structure function backend.
+
+    Parameters
+    ----------
+    images : np.ndarray
+        Input image series.
+    lags : np.ndarray
+        Array of lag times.
+    nx : int, optional
+        The number of Fourier nodes in x direction (for normalization), by default None.
+    ny : int, optional
+        The number of Fourier nodes in y direction (for normalization), by default None.
+    mode : str, optional
+        Calculate the autocorrelation function with Wiener-Khinchin theorem ('fft') or classically ('direct'), by default "fft"
+    workers : int, optional
+        Number of workers to be used by scipy.fft, by default 2
+
+    Returns
+    -------
+    np.ndarray
+        The full image structure function for all given lag times.
+
+    Raises
+    ------
+    RuntimeError
+        If a mode other than the 2 possible ones is given.
+    """
+    # backend
+    backend: Dict[str, Callable] = {
+        "direct": _direct_image_structure_function,
+        "fft": image_structure_function,
+    }
+
+    # sanity check
+    modes = list(backend.keys())
+    if mode not in modes:
+        raise RuntimeError(
+            f"Unknown mode '{mode}' for image structure function. Only possible options are "
+            f"{modes}."
+        )
+
+    # setup
+    calc_dqt = backend[mode]  # select function
+    if nx is None or ny is None:
+        _, ny, nx = images.shape
+    length = len(lags)
+    dqt = np.zeros((length, ny, nx))
+    output_shape = (ny, nx)
+
+    # spatial fft & square modulus
+    rfft2 = normalized_rfft2(images, nx, ny, workers=workers)
+    square_mod = np.abs(rfft2) ** 2
+
+    if mode == "direct":
+        # just needs argument setup
+        args = [rfft2, square_mod]
+
+    else:
+        # autocorrelation for fft mode
+        autocorr = autocorrelation(rfft2, workers=workers)
+        args = [square_mod, autocorr]
+
+    for i, lag in enumerate(lags):
+        dqt[i] = calc_dqt(*args, lag, shape=output_shape)
+
+    return dqt
+
+
 # convenience #####################################################################################
-def normalized_rfft2(images: np.ndarray, *, workers: int = 2) -> np.ndarray:
+def normalized_rfft2(
+    images: np.ndarray,
+    nx: Optional[int] = None,
+    ny: Optional[int] = None,
+    *,
+    workers: int = 2,
+) -> np.ndarray:
     """Calculate the normalized rfft2.
 
-    The normalization is the product of the last 2 dimensions of the shape of the `images` array.
+    The normalization is the square root of the product of the last 2 dimensions of the shape of
+    the `images` array. If `nx` *and* `ny` are given, the normalization is the square root of the
+    product of `nx` and `ny`, and the input to rfft2 is zero padded to match (ny, nx).
 
     Parameters
     ----------
     images : np.ndarray
         An image sequence.
+    nx : int, optional
+        The number of Fourier nodes in x direction, by default None.
+    ny : int, optional
+        The number of Fourier nodes in y direction, by default None.
     workers : int, optional
-        The number of threads to be passed to scipy.fft, by default 2
+        The number of threads to be passed to scipy.fft, by default 2.
 
     Returns
     -------
     np.ndarray
         The normalized half-plane spatial fft of the image sequence.
     """
-    *_, y, x = images.shape
+    if nx is None or ny is None:
+        *_, ny, nx = images.shape
 
-    rfft2 = scifft.rfft2(images, workers=workers)
-    norm = np.sqrt(x * y)
+    rfft2 = scifft.rfft2(images, s=(ny, nx), workers=workers)
+    norm = np.sqrt(nx * ny)
     return rfft2 / norm
 
 
@@ -295,7 +435,7 @@ def run(
         False.
     """
     *_, y, x = images.shape
-    length = lags.size
+    length = len(lags)
     bigside = max(y, x)  # get bigger side
     averages = np.zeros((length, bigside // 2))
 
