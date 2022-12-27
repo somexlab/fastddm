@@ -62,14 +62,10 @@ void chk_host_mem_direct(unsigned long long nx,
       This is always larger (or equal) than the output size.
       We then use this space as a workspace for both the fft2
       intermediate output and the final result (output is then cropped).
-
-    - To store the lags array, we need
-        #lags * 4 bytes
      */
     unsigned long long mem_required = 0;
 
     mem_required += (nx / 2ULL + 1ULL) * ny * length * 16ULL;
-    mem_required += (unsigned long long)lags.size() * 4ULL;
 
     if (mem_required >= free_mem)
     {
@@ -314,10 +310,6 @@ void chk_device_mem_direct(unsigned long long width,
     // To compute the image structure function in direct mode, we need
     //  - helper lags array (unsigned int, 4 bytes)
     //      lags.size() * 4 bytes
-    //  - helper t1 array (unsigned int, 4 bytes)
-    //      (length - lags[0]) * lags.size() * 4 bytes      (overestimate)
-    //  - helper num array (unsigned int, 4 bytes)
-    //      (length - lags[0]) * 4 bytes
     //  - workspace1 and workspace2 (complex double, 16 bytes)
     //      max(pitch_q * length, chunk_size * pitch_t) * 16 bytes
 
@@ -336,12 +328,6 @@ void chk_device_mem_direct(unsigned long long width,
 
         // lags
         mem_req += (unsigned long long)lags.size() * 4ULL;
-
-        // t1
-        mem_req += (length - (unsigned long long)lags[0]) * (unsigned long long)lags.size() * 4ULL;
-
-        // num
-        mem_req += (length - (unsigned long long)lags[0]) * 4ULL;
 
         // workspace1 and workspace2
         mem_req += 2ULL * max(_pitch_q * length, chunk_size * _pitch_t) * 16ULL;
@@ -365,12 +351,6 @@ void chk_device_mem_direct(unsigned long long width,
 
         // lags
         mem_req += (unsigned long long)lags.size() * 4ULL;
-
-        // t1
-        mem_req += (length - (unsigned long long)lags[0]) * (unsigned long long)lags.size() * 4ULL;
-
-        // num
-        mem_req += (length - (unsigned long long)lags[0]) * 4ULL;
 
         // workspace1 and workspace2
         mem_req += 2ULL * max(_pitch_q * length, _pitch_t) * 16ULL;
