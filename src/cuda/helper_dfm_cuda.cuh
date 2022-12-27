@@ -88,6 +88,23 @@ __global__ void correlatewithdifferences_kernel(double2 *d_in,
                                                 unsigned long int Ntdt,
                                                 unsigned long int pitch);
 
+/*! \brief Compute correlation using differences
+    \param d_in     input array
+    \param d_out    output array
+    \param d_lags   array of lags
+    \param length   length
+    \param Nlags    number of lags
+    \param Nq       number of q values (chunk size)
+    \param pitch    pitch of arrays
+*/
+__global__ void correlate_with_differences_kernel(double2 *d_in,
+                                                  double2 *d_out,
+                                                  unsigned int *d_lags,
+                                                  unsigned long int length,
+                                                  unsigned long int Nlags,
+                                                  unsigned long int Nq,
+                                                  unsigned long int pitch);
+
 /*! \brief Make full power spectrum (copy symmetric part)
     \param d_in     input array
     \param ipitch   pitch of input array

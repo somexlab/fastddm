@@ -10,6 +10,9 @@
 
 #include <cuda_runtime.h>
 
+#include <cooperative_groups.h>
+namespace cg = cooperative_groups;
+
 // *** code ***
 const unsigned long int TILE_DIM = 32;  // leave this unchanged!
 const unsigned long int BLOCK_ROWS = 8; // leave this unchanged!
@@ -157,6 +160,100 @@ __global__ void correlatewithdifferences_kernel(double2 *d_in,
 
         // Add to output vector
         atomicAdd(&(d_out[q * pitch + lag].x), smd);
+    }
+}
+
+/*!
+    Compute correlation using differences.
+    This is inspired by reduce6 from cuda samples.
+ */
+__global__ void correlate_with_differences_kernel(double2 *d_in,
+                                                  double2 *d_out,
+                                                  unsigned int *d_lags,
+                                                  unsigned long int length,
+                                                  unsigned long int Nlags,
+                                                  unsigned long int Nq,
+                                                  unsigned long int pitch)
+{
+    // Handle to thread block group
+    cg::thread_block cta = cg::this_thread_block();
+    extern __shared__ double sdata[];
+    unsigned long int blockSize = 2 * blockDim.x;
+    unsigned long int tid = threadIdx.x;
+
+    for (unsigned long int q = blockIdx.y; q < Nq; q += gridDim.y)
+    {
+        for (unsigned long int dt_idx = blockIdx.x; dt_idx < Nlags; dt += gridDim.x)
+        {
+            unsigned long int dt = d_lags[dt_idx];
+
+            // Perform first level of reduction
+            // Reading from global memory, writing to shared memory
+            double tmp_sum = 0.0;
+            unsigned long int t = tid;
+            while (t < length - dt)
+            {
+                double2 a = d_in[q * pitch + t];
+                double2 b = d_in[q * pitch + t + dt];
+                tmp_sum += (b.x - a.x) * (b.x - a.x) + (b.y - a.y) * (b.y - a.y);
+
+                // ensure we don't read out of bounds
+                if (t + blockDim.x < length - dt)
+                {
+                    double2 a = d_in[q * pitch + t + blockDim.x];
+                    double2 b = d_in[q * pitch + t + blockDim.x + dt];
+                    tmp_sum += (b.x - a.x) * (b.x - a.x) + (b.y - a.y) * (b.y - a.y);
+                }
+
+                t += blockSize;
+            }
+
+            // Each thread puts its local sum into shared memory
+            sdata[tid] = tmp_sum;
+            cg::sync(cta);
+
+            // do reduction in shared mem
+            if ((blockDim.x >= 512) && (tid < 256))
+            {
+                sdata[tid] = tmp_sum = tmp_sum + sdata[tid + 256];
+            }
+
+            cg::sync(cta);
+
+            if ((blockDim.x >= 256) && (tid < 128))
+            {
+                sdata[tid] = tmp_sum = tmp_sum + sdata[tid + 128];
+            }
+
+            cg::sync(cta);
+
+            if ((blockDim.x >= 128) && (tid < 64))
+            {
+                sdata[tid] = tmp_sum = tmp_sum + sdata[tid + 64];
+            }
+
+            cg::sync(cta);
+
+            cg::thread_block_tile<32> tile32 = cg::tiled_partition<32>(cta);
+
+            if (cta.thread_rank() < 32)
+            {
+                // Fetch final intermediate sum from 2nd warp
+                if (blockDim.x >= 64)
+                    tmp_sum += sdata[tid + 32];
+                // Reduce final warp using shuffle
+                for (int offset = tile32.size() / 2; offset > 0; offset /= 2)
+                {
+                    tmp_sum += tile32.shfl_down(tmp_sum, offset);
+                }
+            }
+
+            // Write result for this block to global mem
+            // Also normalize by number of occurrences
+            // WARNING!!! IF WE ADD EXCLUDED FRAMES, WE NEED TO CHANGE THIS!!
+            if (cta.thread_rank() == 0)
+                d_out[q * pitch + dt].x = tmp_sum / double(length - dt);
+        }
     }
 }
 
