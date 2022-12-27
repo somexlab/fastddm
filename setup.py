@@ -13,9 +13,10 @@ from setuptools.command.build_ext import build_ext
 from setuptools.command.install_lib import install_lib
 
 
-def get_cmake_variable(name: str, default_value: bool | None = None) -> bool:
+def get_cmake_variable(name, default_value = None):
     """
     Get environment boolean variables (typically CMake flags)
+    default_value input can be either None or bool
     """
     true_ = ('on', 'true', '1', 't')  # Add more entries if you want...
     false_ = ('off', 'false', '0', 'f')  # Add more entries if you want...
