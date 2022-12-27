@@ -183,7 +183,7 @@ __global__ void correlate_with_differences_kernel(double2 *d_in,
 
     for (unsigned long int q = blockIdx.y; q < Nq; q += gridDim.y)
     {
-        for (unsigned long int dt_idx = blockIdx.x; dt_idx < Nlags; dt += gridDim.x)
+        for (unsigned long int dt_idx = blockIdx.x; dt_idx < Nlags; dt_idx += gridDim.x)
         {
             unsigned long int dt = d_lags[dt_idx];
 
