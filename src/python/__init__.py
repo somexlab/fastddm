@@ -134,9 +134,9 @@ def azimuthal_average(
     mask : np.ndarray, optional
         If a boolean `mask` is given, it is used to exclude grid points from
         the azimuthal average (where False is set). The array must have the
-        same x,y shape of `img_str_func`.
+        same y,x shape of `img_str_func`.
     weights : np.ndarray, optional
-        An array of weights, of the same x,y shape as `img_str_func`. Each
+        An array of weights, of the same y,x shape as `img_str_func`. Each
         value in `img_str_func` only contributes its associated weight towards
         the bin count (instead of 1).
 
