@@ -65,6 +65,8 @@ def azimuthal_average(
     dist: Optional[np.ndarray] = None,
     radii: Optional[np.ndarray] = None,
     binsize: Optional[float] = None,
+    mask: Optional[np.ndarray] = None,
+    weights: Optional[np.ndarray] = None,
 ) -> np.ndarray:
     """Calculate the azimuthal average for a given image.
 
@@ -82,6 +84,12 @@ def azimuthal_average(
         The radius values for which the azimuthal average is computed, by default None
     binsize : Optional[float], optional
         The width of the averaging ring, by default None
+    mask : Optional[np.ndarray], optional
+        The boolean mask used to exclude grid values from the azimuthal
+        average. Use True to include, False to exclude.
+        Default is None.
+    weights : Optional[np.ndarray], optional
+        The grid weights to be used in the azimuthal average. Default is None.
 
     Returns
     -------
@@ -115,12 +123,17 @@ def azimuthal_average(
             radii[0] = 0
             radii = np.cumsum(radii)
 
+    if mask is None:
+        mask = np.full((y,x),True)
+
+    if weights is None:
+        weights = np.ones((y,x))
+
     azimuthal_average = np.zeros_like(radii, dtype=np.float64)
 
     for i, r in enumerate(radii):
-        azimuthal_average[i] = image[
-            (dist >= r - halfbin) & (dist <= r + halfbin)
-        ].mean()
+        curr_pixels = (dist >= r - halfbin) & (dist <= r + halfbin) & mask
+        azimuthal_average[i] = (image[curr_pixels]*weights[curr_pixels]).mean()/weights[curr_pixels].mean()
 
     return azimuthal_average
 
