@@ -243,7 +243,7 @@ void correlate_direct(double *h_in,
     // Round up according to array size
     gridSize_corr = min((chunk_size * N + blockSize_corr - 1) / blockSize_corr, 32 * (size_t)numSMs);
      */
-    int blockSize_corr = min(nextPowerOfTwo(length / 2), 512);
+    int blockSize_corr = min(nextPowerOfTwo(length / 2), 512UL);
     int gridSize_corr_x = min((lags.size() + (size_t)blockSize_corr - 1) / (size_t)blockSize_corr, (size_t)maxGridSizeX);
     int gridSize_corr_y = min(chunk_size, (size_t)maxGridSizeY);
     dim3 gridSize_corr(gridSize_corr_x, gridSize_corr_y, 1);
