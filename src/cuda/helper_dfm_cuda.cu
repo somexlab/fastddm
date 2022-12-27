@@ -252,7 +252,9 @@ __global__ void correlate_with_differences_kernel(double2 *d_in,
             // Also normalize by number of occurrences
             // WARNING!!! IF WE ADD EXCLUDED FRAMES, WE NEED TO CHANGE THIS!!
             if (cta.thread_rank() == 0)
+            {
                 d_out[q * pitch + dt].x = tmp_sum / double(length - dt);
+            }
         }
     }
 }
