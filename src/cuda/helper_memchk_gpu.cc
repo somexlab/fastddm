@@ -63,14 +63,13 @@ void chk_host_mem_direct(unsigned long long nx,
       We then use this space as a workspace for both the fft2
       intermediate output and the final result (output is then cropped).
 
-    - To store the helper arrays, we need
-        (length - lags[0]) * #lags * 4 bytes    [t1; overestimate...]
-        (length - lags[0]) * 4 bytes            [num]
+    - To store the lags array, we need
+        #lags * 4 bytes
      */
     unsigned long long mem_required = 0;
 
     mem_required += (nx / 2ULL + 1ULL) * ny * length * 16ULL;
-    mem_required += (length - (unsigned long long)lags[0]) * ((unsigned long long)lags.size() + 1ULL) * 4ULL;
+    mem_required += (unsigned long long)lags.size() * 4ULL;
 
     if (mem_required >= free_mem)
     {

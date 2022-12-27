@@ -116,54 +116,6 @@ __global__ void transpose_complex_matrix_kernel(double2 *matIn,
 }
 
 /*!
-    Compute correlation using differences
- */
-__global__ void correlatewithdifferences_kernel(double2 *d_in,
-                                                double2 *d_out,
-                                                unsigned int *d_lags,
-                                                unsigned int *d_t1,
-                                                unsigned int *d_num,
-                                                unsigned long int length,
-                                                unsigned long int Nlags,
-                                                unsigned long int Nq,
-                                                unsigned long int Ntdt,
-                                                unsigned long int pitch)
-{
-    // Get current thread index
-    for (unsigned long int i = blockIdx.x * blockDim.x + threadIdx.x; i < Nq * Ntdt; i += blockDim.x * gridDim.x)
-    {
-        // Get t1 index
-        unsigned long int idx_t1 = i / Nq;
-        // Get q
-        unsigned long int q = i - idx_t1 * Nq;
-
-        // Get t1
-        unsigned long int t1 = (unsigned long int)(__ldg(d_t1 + idx_t1));
-        // Get dt
-        unsigned long int num = (unsigned long int)(__ldg(d_num + t1));
-        unsigned long int lag = idx_t1 - num;
-        unsigned long int dt = (unsigned long int)(__ldg(d_lags + lag));
-
-        // Compute t2
-        unsigned long int t2 = t1 + dt;
-
-        // Get pixel values at t1 and t2
-        double2 a = d_in[q * pitch + t1];
-        double2 b = d_in[q * pitch + t2];
-
-        // Compute square modulus of difference
-        double smd = (b.x - a.x) * (b.x - a.x) + (b.y - a.y) * (b.y - a.y);
-
-        // Also normalize by number of occurrences
-        // WARNING!!! IF WE ADD EXCLUDED FRAMES, WE NEED TO REMOVE THIS!!
-        smd /= double(length - dt);
-
-        // Add to output vector
-        atomicAdd(&(d_out[q * pitch + lag].x), smd);
-    }
-}
-
-/*!
     Compute correlation using differences.
     This is inspired by reduce6 from cuda samples.
  */

@@ -176,28 +176,6 @@ void correlate_direct(double *h_in,
     size_t _nx = nx / 2 + 1;                             // fft2 r2c number of complex elements over x
     size_t chunk_size = (_nx * ny - 1) / num_chunks + 1; // number of q points in a chunk
 
-    // ***Create vector of t1 and num
-    // The maximum size of t1 is (length-min_lag)*num_lags
-    vector<unsigned int> t1((length - lags[0]) * lags.size());
-    vector<unsigned int> num(length - lags[0]);
-    unsigned int N = 0;
-    for (unsigned int t = 0; t < length - lags[0]; t++)
-    {
-        num[t] = N;
-        for (unsigned int dt : lags)
-        {
-            if (t + dt < length)
-            {
-                t1[N] = t;
-                N++;
-            }
-            else
-            {
-                break;
-            }
-        }
-    }
-
     // ***Allocate space on device
     // workspaces
     double *d_workspace1, *d_workspace2;
@@ -205,17 +183,9 @@ void correlate_direct(double *h_in,
     gpuErrchk(cudaMalloc(&d_workspace1, workspace_size));
     gpuErrchk(cudaMalloc(&d_workspace2, workspace_size));
     // helper arrays
-    unsigned int *d_t1, *d_lags, *d_num;
+    unsigned int *d_lags;
     gpuErrchk(cudaMalloc(&d_lags, lags.size() * sizeof(unsigned int)));
-    gpuErrchk(cudaMalloc(&d_t1, N * sizeof(unsigned int)));
-    gpuErrchk(cudaMalloc(&d_num, num.size() * sizeof(unsigned int)));
     gpuErrchk(cudaMemcpy(d_lags, lags.data(), lags.size() * sizeof(unsigned int), cudaMemcpyHostToDevice));
-    gpuErrchk(cudaMemcpy(d_t1, t1.data(), N * sizeof(unsigned int), cudaMemcpyHostToDevice));
-    gpuErrchk(cudaMemcpy(d_num, num.data(), num.size() * sizeof(unsigned int), cudaMemcpyHostToDevice));
-    t1.clear();
-    t1.shrink_to_fit();
-    num.clear();
-    num.shrink_to_fit();
 
     // ***Compute optimal kernels execution parameters
     // transpose_complex_matrix_kernel
@@ -231,18 +201,6 @@ void correlate_direct(double *h_in,
     dim3 gridSize_tran2(gridSize_tran2_x, gridSize_tran2_y, 1);
 
     // correlation part
-    /*
-    int blockSize_corr; // The launch configurator returned block size
-    int minGridSize;    // The minimum grid size needed to achieve the
-                        // maximum occupancy for a full device launch
-    int gridSize_corr;  // The actual grid size needed, based on input size
-    int numSMs;
-    gpuErrchk(cudaDeviceGetAttribute(&numSMs, cudaDevAttrMultiProcessorCount, 0)); // gpu id fixed to 0 for now
-
-    gpuErrchk(cudaOccupancyMaxPotentialBlockSize(&minGridSize, &blockSize_corr, correlatewithdifferences_kernel, 0, 0));
-    // Round up according to array size
-    gridSize_corr = min((chunk_size * N + blockSize_corr - 1) / blockSize_corr, 32 * (size_t)numSMs);
-     */
     int blockSize_corr = min(nextPowerOfTwo(length), 512UL);
     int gridSize_corr_x = min((lags.size() + (size_t)blockSize_corr - 1) / (size_t)blockSize_corr, (size_t)maxGridSizeX);
     int gridSize_corr_y = min(chunk_size, (size_t)maxGridSizeY);
@@ -291,18 +249,6 @@ void correlate_direct(double *h_in,
         gpuErrchk(cudaMemset(d_workspace2, 0.0, workspace_size));
 
         // ***Correlate using differences (d_workspace1 --> d_workspace2)
-        /*
-        correlatewithdifferences_kernel<<<gridSize_corr, blockSize_corr>>>((double2 *)d_workspace1,
-                                                                           (double2 *)d_workspace2,
-                                                                           d_lags,
-                                                                           d_t1,
-                                                                           d_num,
-                                                                           length,
-                                                                           lags.size(),
-                                                                           curr_chunk_size,
-                                                                           N,
-                                                                           pitch_t);
-                                                                           */
         correlate_with_differences_kernel<<<gridSize_corr, blockSize_corr, smemSize>>>((double2 *)d_workspace1,
                                                                                        (double2 *)d_workspace2,
                                                                                        d_lags,
@@ -340,8 +286,6 @@ void correlate_direct(double *h_in,
     gpuErrchk(cudaFree(d_workspace1));
     gpuErrchk(cudaFree(d_workspace2));
     gpuErrchk(cudaFree(d_lags));
-    gpuErrchk(cudaFree(d_t1));
-    gpuErrchk(cudaFree(d_num));
 }
 
 /*! \brief Convert to full and fftshifted Image Structure Function on the GPU
