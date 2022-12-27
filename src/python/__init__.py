@@ -1,13 +1,16 @@
 """Main function to interface with backends."""
 
 import numpy as np
-from typing import Iterable, Dict, Callable
+from typing import Iterable, Dict, Callable, Union, Optional, Tuple
 from functools import partial
 
 from ._dfm_python import _py_image_structure_function
 from ._dfm_cpp import dfm_direct_cpp, dfm_fft_cpp
 from ._fftopt import next_fast_len
 
+# range is a keyword argument to many functions, so save the builtin so they can
+# use it.
+_range = range
 
 def ddm(
     img_seq: np.ndarray,
@@ -90,3 +93,114 @@ def ddm(
         args = [img_seq, lags, dim_x_padded, dim_y_padded]
 
     return ddm_func(*args, **kwargs)
+
+
+def azimuthal_average(
+    img_str_func : np.ndarray,
+    kx : Optional[np.ndarray] = None,
+    ky : Optional[np.ndarray] = None,
+    bins : Optional[Union[int,Iterable[float]]] = 10,
+    range : Optional[Tuple[float, float]] = None,
+    mask : Optional[np.ndarray] = None,
+    weights : Optional[np.ndarray] = None
+    ) -> Tuple[np.ndarray, np.ndarray]:
+    """Compute the azimuthal average of the image structure function.
+    Returns the azimuthal average and the bin centers.
+
+    Parameters
+    ----------
+    img_str_func : np.ndarray
+        The image structure function.
+    kx : np.ndarray, optional
+        The array of spatial frequencies along axis x. If kx is None,
+        the frequencies evaluated with
+        `2.0 * np.pi * np.fft.fftshift(np.fft.fftfreq(Nx))`
+        are used (`Nx = img_str_func.shape[2]`). Default is None.
+    ky : np.ndarray, optional
+        The array of spatial frequencies along axis y. If ky is None,
+        the frequencies evaluated with
+        `2.0 * np.pi * np.fft.fftshift(np.fft.fftfreq(Ny))`
+        are used (`Ny = img_str_func.shape[1]`). Default is None.
+    bins : Union[int, Iterable[float]], optional
+        If `bins` is an int, it defines the number of equal-width bins in the
+        given range (10, by default). If `bins` is a sequence, it defines a
+        monotonically increasing array of bin edges, including the rightmost
+        edge, allowing for non-uniform bin widths.
+    range : (float, float), optional
+        The lower and upper range of the bins. If not provided, range is simply
+        `(k.min(), k.max())`, where `k` is the vector modulus computed from
+        `kx` and `ky`. Values outside the range are ignored. The first element
+        of the range must be less than or equal to the second.
+    mask : np.ndarray, optional
+        If a boolean `mask` is given, it is used to exclude grid points from
+        the azimuthal average (where False is set). The array must have the
+        same x,y shape of `img_str_func`.
+    weights : np.ndarray, optional
+        An array of weights, of the same x,y shape as `img_str_func`. Each
+        value in `img_str_func` only contributes its associated weight towards
+        the bin count (instead of 1).
+
+    Returns
+    -------
+    az_avg : np.ndarray
+        The azimuthal average.
+    k : np.ndarray
+        The spatial frequency associated to the bin.
+    bin_edges : np.ndarray
+        The bin edges.
+    """
+
+    x = img_str_func.shape[-1]
+    y = img_str_func.shape[-2]
+    t = len(img_str_func)
+
+    if kx is None:
+        kx = 2.0 * np.pi * np.fft.fftshift(np.fft.fftfreq(x))
+    
+    if ky is None:
+        ky = 2.0 * np.pi * np.fft.fftshift(np.fft.fftfreq(y))
+
+    X, Y = np.meshgrid(kx,ky)
+    k_modulus = np.sqrt(X**2 + Y**2)
+
+    if range is None:
+        k_min = np.min(k_modulus)
+        k_max = np.max(k_modulus)
+    else:
+        k_min, k_max = range
+    
+    if mask is None:
+        mask = np.full((y, x), True)
+    
+    if weights is None:
+        weights = np.ones((y, x), dtype=np.float64)
+    
+    if isinstance(bins, int):
+        bin_edges = np.array([k_min + i*(k_max-k_min)/float(bins-1) for i in _range(bins)])
+        k = np.zeros(bins, dtype=np.float64)
+    else:   # bins is an iterable
+        bin_edges = [k_min]
+        for i in _range(len(bins)):
+            bin_edges += [bin_edges[-1] + bins[i]]
+        k = np.zeros(len(bins), dtype=np.float64)
+        bins = len(bins) + 1
+
+    az_avg = np.zeros((t,bins), dtype=np.float64)
+    
+    for i in _range(bins):
+        if i > 0:
+            curr_bin_vals = (k_modulus > bin_edges[i-1]) & (k_modulus <= bin_edges[i]) & mask
+        else:
+            curr_bin_vals = (k_modulus == bin_edges[0]) & mask
+        
+        if np.all(np.logical_not(curr_bin_vals)):
+            az_avg[:,i] = np.full(t, np.nan)
+            if i > 0:
+                k[i] = (bin_edges[i-1] + bin_edges[i]) / 2.
+            else:
+                k[0] = bin_edges[0]
+        else:
+            k[i] = (k_modulus[curr_bin_vals]*weights[curr_bin_vals]).mean() / weights[curr_bin_vals].mean()
+            az_avg[:,i] = (img_str_func[:, curr_bin_vals]*weights[curr_bin_vals]).mean(axis=-1) / weights[curr_bin_vals].mean()
+
+    return az_avg, k, bin_edges
