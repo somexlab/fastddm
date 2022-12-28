@@ -44,12 +44,6 @@ configure_file(python/_dfm_cpp.py
 configure_file(python/_dfm_python.py
                ${DFMTOOLBOX_OUTPUT_DIR}/_dfm_python.py)
 
-configure_file(python/dfm.py
-               ${DFMTOOLBOX_OUTPUT_DIR}/dfm.py)
-
-configure_file(python/imagestructurefunction.py
-               ${DFMTOOLBOX_OUTPUT_DIR}/imagestructurefunction.py)
-
 configure_file(python/io.py
                ${DFMTOOLBOX_OUTPUT_DIR}/io.py)
 
@@ -58,6 +52,12 @@ configure_file(python/lags.py
 
 configure_file(python/window.py
                ${DFMTOOLBOX_OUTPUT_DIR}/window.py)
+
+configure_file(python/mask.py
+               ${DFMTOOLBOX_OUTPUT_DIR}/mask.py)
+               
+configure_file(python/weight.py
+               ${DFMTOOLBOX_OUTPUT_DIR}/weight.py)
 
 configure_file(python/utils.py
                ${DFMTOOLBOX_OUTPUT_DIR}/utils.py)
