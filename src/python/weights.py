@@ -3,7 +3,7 @@
 import numpy as np
 from typing import Optional, Tuple
 
-def sector_gauss_weight(
+def sector_average_weight(
     shape : Tuple[int,int],
     kx : Optional[np.ndarray] = None,
     ky : Optional[np.ndarray] = None,
@@ -12,7 +12,7 @@ def sector_gauss_weight(
     rep : Optional[int] = 2,
     kind : Optional[str] = 'uniform'
 ) -> np.ndarray:
-    """Evaluate gaussian weights for sector azimuthal average.
+    """Evaluate weights for sector azimuthal average.
 
     Parameters
     ----------
