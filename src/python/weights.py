@@ -86,3 +86,78 @@ def sector_average_weight(
             weights[(ang <= theta_max) & (ang >= theta_min)] += 1.0
 
     return weights
+
+
+def sphere_form_factor(
+    shape : Tuple[int,int],
+    kx : Optional[np.ndarray] = None,
+    ky : Optional[np.ndarray] = None,
+    R : Optional[float] = 1.0,
+    contrast : Optional[float] = 1.0,
+    kind : Optional[str] = 'amplitude'
+) -> np.ndarray:
+    """Evaluate sphere form factor.
+
+    Parameters
+    ----------
+    shape : (int, int)
+        Shape of the new array, e.g., (128, 256).
+    kx : np.ndarray, optional
+        The array of spatial frequencies along axis x. If kx is None,
+        the frequencies evaluated with
+        `2.0 * np.pi * np.fft.fftshift(np.fft.fftfreq(Nx))`
+        are used (`Nx = shape[1]`). Default is None.
+    ky : np.ndarray, optional
+        The array of spatial frequencies along axis y. If ky is None,
+        the frequencies evaluated with
+        `2.0 * np.pi * np.fft.fftshift(np.fft.fftfreq(Ny))`
+        are used (`Ny = shape[0]`). Default is None.
+    R : float, optional
+        The radius of the sphere. The physical units must be compatible
+        with the ones of kx/ky. Default is 1.
+    contrast : float, optional
+        Scattering contrast. Default is 1.
+    kind : str, optional
+        Type of form factor. Supported types are 'amplitude' and 'intensity'.
+        Default is 'amplitude'.
+
+    Returns
+    -------
+    form_fact : np.ndarray
+        The sphere form factor.
+    """
+
+    def sphere_factor(k, R):
+        sf = np.zeros_like(k)
+        with np.errstate(divide='ignore',invalid='ignore'):
+            sf = (np.sin(k * R) - k * R * np.cos(k * R)) / (k * R)**3.0
+        sf[k == 0] = 1.0
+        return sf
+
+    kinds = ['amplitude', 'intensity']
+    if kind not in kinds:
+        raise RuntimeError(
+            f"Unknown kind '{kind}' selected. " +
+            f"Only possible options are {kinds}."
+        )
+
+    if kx is None:
+        kx = 2.0 * np.pi * np.fft.fftshift(np.fft.fftfreq(shape[1]))
+
+    if ky is None:
+        ky = 2.0 * np.pi * np.fft.fftshift(np.fft.fftfreq(shape[0]))
+
+    X, Y = np.meshgrid(kx,ky)
+    k_modulus = np.sqrt(X**2.0 + Y**2.0)
+
+    form_fact = np.zeros_like(k_modulus, dtype=np.float64)
+
+    V = 4.0 * np.pi * (R ** 3.0) / 3.0
+    
+    A = contrast * V
+    form_fact = A * sphere_factor(k_modulus, R)
+    form_fact[k_modulus == 0] *= 3.0
+    if kind == 'intensity':
+        form_fact = 4.0 * np.pi * form_fact ** 2.0
+
+    return form_fact
