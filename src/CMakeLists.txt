@@ -56,8 +56,8 @@ configure_file(python/window.py
 configure_file(python/mask.py
                ${DFMTOOLBOX_OUTPUT_DIR}/mask.py)
                
-configure_file(python/weight.py
-               ${DFMTOOLBOX_OUTPUT_DIR}/weight.py)
+configure_file(python/weights.py
+               ${DFMTOOLBOX_OUTPUT_DIR}/weights.py)
 
 configure_file(python/utils.py
                ${DFMTOOLBOX_OUTPUT_DIR}/utils.py)
