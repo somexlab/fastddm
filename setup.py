@@ -13,6 +13,24 @@ from setuptools.command.build_ext import build_ext
 from setuptools.command.install_lib import install_lib
 
 
+def get_cmake_bool_flag(name, default_value = None):
+    """
+    Get cmake boolean flag from environment variables.
+    `default_value` input can be either None or a bool
+    """
+    true_ = ('on', 'true', '1', 't')  # Add more entries if you want...
+    false_ = ('off', 'false', '0', 'f')  # Add more entries if you want...
+    value: str | None = os.getenv(name, None)
+    if value is None:
+        if default_value is None:
+            raise ValueError(f'Variable `{name}` not set!')
+        else:
+            value = str(default_value)
+    if value.lower() not in true_ + false_:
+        raise ValueError(f'Invalid value `{value}` for variable `{name}`')
+    return value.lower() in true_
+
+
 class CMakeExtension(Extension):
 
     def __init__(self, name, sourcedir=''):
@@ -90,7 +108,16 @@ class CMakeBuild(build_ext):
         else:
             cmake_args += ['-DCMAKE_BUILD_TYPE=' + cfg]
 
-        #cmake_args += ['-DPython=On']
+        # Set optional CMake flags
+        # C++
+        if get_cmake_bool_flag('ENABLE_CPP', False):
+            cmake_args += ['-DENABLE_CPP=ON']
+        # CUDA
+        if get_cmake_bool_flag('ENABLE_CUDA', False):
+            if platform.system() in ['Windows', 'Linux']:
+                cmake_args += ['-DENABLE_CUDA=ON']
+            else:
+                raise RuntimeError('Cannot build with CUDA on MacOS.')
 
         # Set CMAKE_BUILD_PARALLEL_LEVEL to control the parallel build level across all generators.
         if "CMAKE_BUILD_PARALLEL_LEVEL" not in os.environ:
