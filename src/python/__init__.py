@@ -186,7 +186,7 @@ def azimuthal_average(
     else:   # bins is an iterable
         bin_edges = [k_min]
         for i in _range(len(bins)):
-            bin_edges += [bin_edges[-1] + bins[i]]
+            bin_edges.append(bin_edges[-1] + bins[i])
         k = np.zeros(len(bins), dtype=np.float64)
         bins = len(bins) + 1
 
