@@ -4,8 +4,11 @@ import numpy as np
 from typing import Iterable, Dict, Callable
 from functools import partial
 
+IS_CPP_ENABLED = bool("${IS_CPP_ENABLED}")
+
 from ._dfm_python import _py_image_structure_function
-from ._dfm_cpp import dfm_direct_cpp, dfm_fft_cpp
+if IS_CPP_ENABLED:
+    from ._dfm_cpp import dfm_direct_cpp, dfm_fft_cpp
 from ._fftopt import next_fast_len
 
 
