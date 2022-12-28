@@ -20,7 +20,7 @@ def get_cmake_bool_flag(name, default_value = None):
     """
     true_ = ('on', 'true', '1', 't')  # Add more entries if you want...
     false_ = ('off', 'false', '0', 'f')  # Add more entries if you want...
-    value: str | None = os.getenv(name, None)
+    value = os.getenv(name, None)
     if value is None:
         if default_value is None:
             raise ValueError(f'Variable `{name}` not set!')
