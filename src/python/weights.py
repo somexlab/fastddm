@@ -131,7 +131,7 @@ def sphere_form_factor(
         sf = np.zeros_like(k)
         with np.errstate(divide='ignore',invalid='ignore'):
             sf = (np.sin(k * R) - k * R * np.cos(k * R)) / (k * R)**3.0
-        sf[k == 0] = 1.0
+        sf[k == 0] = 1.0 / 3.0
         return sf
 
     kinds = ['amplitude', 'intensity']
