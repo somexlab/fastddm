@@ -10,7 +10,6 @@ from ._fftopt import next_fast_len
 
 # range is a keyword argument to many functions, so save the builtin so they can
 # use it.
-_range = range
 
 def ddm(
     img_seq: np.ndarray,
@@ -181,12 +180,12 @@ def azimuthal_average(
     
     # compute bin edges and initialize k
     if isinstance(bins, int):
-        bin_edges = np.array([k_min + i*(k_max-k_min)/float(bins-1) for i in _range(bins)])
+        bin_edges = np.linspace(k_min, k_max, bins)
         k = np.zeros(bins, dtype=np.float64)
     else:   # bins is an iterable
         bin_edges = [k_min]
-        for i in _range(len(bins)):
-            bin_edges.append(bin_edges[-1] + bins[i])
+        for bin_width in bins:
+            bin_edges.append(bin_edges[-1] + bin_width)
         k = np.zeros(len(bins), dtype=np.float64)
         bins = len(bins) + 1
 
@@ -194,20 +193,24 @@ def azimuthal_average(
     az_avg = np.zeros((dim_t, bins), dtype=np.float64)
     
     # loop over bins
-    for i in _range(bins):
+    for i, be in enumerate(bin_edges):
         if i > 0:
-            curr_bin_vals = (k_modulus > bin_edges[i-1]) & (k_modulus <= bin_edges[i]) & mask
+            e_inf = bin_edges[i-1]
+            e_sup = be
+            curr_bin_vals = (k_modulus > e_inf) & (k_modulus <= e_sup) & mask
         else:
-            curr_bin_vals = (k_modulus == bin_edges[0]) & mask
+            curr_bin_vals = (k_modulus == be) & mask
         
         if np.all(np.logical_not(curr_bin_vals)):
             az_avg[:,i] = np.full(dim_t, np.nan)
             if i > 0:
-                k[i] = (bin_edges[i-1] + bin_edges[i]) / 2.
+                e_inf = bin_edges[i-1]
+                e_sup = be
+                k[i] = (e_inf + e_sup) / 2.
             else:
-                k[0] = bin_edges[0]
+                k[0] = be
         else:
-            k[i] = (k_modulus[curr_bin_vals]*weights[curr_bin_vals]).mean() / weights[curr_bin_vals].mean()
-            az_avg[:,i] = (img_str_func[:, curr_bin_vals]*weights[curr_bin_vals]).mean(axis=-1) / weights[curr_bin_vals].mean()
+            k[i] = (k_modulus[curr_bin_vals] * weights[curr_bin_vals]).mean() / weights[curr_bin_vals].mean()
+            az_avg[:, i] = (img_str_func[:, curr_bin_vals] * weights[curr_bin_vals]).mean(axis=-1) / weights[curr_bin_vals].mean()
 
     return az_avg, k, bin_edges
