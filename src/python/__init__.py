@@ -150,31 +150,36 @@ def azimuthal_average(
         The bin edges.
     """
 
-    x = img_str_func.shape[-1]
-    y = img_str_func.shape[-2]
-    t = len(img_str_func)
+    # read actual image structure function shape
+    dim_t, dim_y, dim_x = img_str_func.shape
 
+    # check kx and ky
     if kx is None:
-        kx = 2.0 * np.pi * np.fft.fftshift(np.fft.fftfreq(x))
+        kx = 2.0 * np.pi * np.fft.fftshift(np.fft.fftfreq(dim_x))
     
     if ky is None:
-        ky = 2.0 * np.pi * np.fft.fftshift(np.fft.fftfreq(y))
+        ky = 2.0 * np.pi * np.fft.fftshift(np.fft.fftfreq(dim_y))
 
+    # compute the k modulus
     X, Y = np.meshgrid(kx,ky)
     k_modulus = np.sqrt(X**2 + Y**2)
 
+    # check range
     if range is None:
         k_min = np.min(k_modulus)
         k_max = np.max(k_modulus)
     else:
         k_min, k_max = range
     
+    # check mask
     if mask is None:
-        mask = np.full((y, x), True)
+        mask = np.full((dim_y, dim_x), True)
     
+    # check weights
     if weights is None:
-        weights = np.ones((y, x), dtype=np.float64)
+        weights = np.ones((dim_y, dim_x), dtype=np.float64)
     
+    # compute bin edges and initialize k
     if isinstance(bins, int):
         bin_edges = np.array([k_min + i*(k_max-k_min)/float(bins-1) for i in _range(bins)])
         k = np.zeros(bins, dtype=np.float64)
@@ -185,8 +190,10 @@ def azimuthal_average(
         k = np.zeros(len(bins), dtype=np.float64)
         bins = len(bins) + 1
 
-    az_avg = np.zeros((t,bins), dtype=np.float64)
+    # initialize azimuthal average
+    az_avg = np.zeros((dim_t, bins), dtype=np.float64)
     
+    # loop over bins
     for i in _range(bins):
         if i > 0:
             curr_bin_vals = (k_modulus > bin_edges[i-1]) & (k_modulus <= bin_edges[i]) & mask
@@ -194,7 +201,7 @@ def azimuthal_average(
             curr_bin_vals = (k_modulus == bin_edges[0]) & mask
         
         if np.all(np.logical_not(curr_bin_vals)):
-            az_avg[:,i] = np.full(t, np.nan)
+            az_avg[:,i] = np.full(dim_t, np.nan)
             if i > 0:
                 k[i] = (bin_edges[i-1] + bin_edges[i]) / 2.
             else:
