@@ -157,7 +157,6 @@ def sphere_form_factor(
 
     A = contrast * V
     form_fact = A * sphere_factor(k_modulus, R)
-    form_fact[k_modulus == 0] *= 3
     if kind == 'intensity':
         form_fact = 4 * np.pi * form_fact ** 2
 
