@@ -4,7 +4,7 @@ import numpy as np
 from typing import Iterable, Dict, Callable
 from functools import partial
 
-IS_CPP_ENABLED = bool("${IS_CPP_ENABLED}")
+IS_CPP_ENABLED = ${IS_CPP_ENABLED}      # configured by CMake
 
 from ._dfm_python import _py_image_structure_function
 if IS_CPP_ENABLED:

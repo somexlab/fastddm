@@ -19,7 +19,6 @@ endif()
 # The library should be in a folder with the same name to make it easier to use python distutils
 set(DFMTOOLBOX_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/src/python/dfmtoolbox)
 
-#set(IS_CPP_ENABLED "")
 if(ENABLE_CPP)
     # Build fftw3 as a shared lib
     add_subdirectory(lib/fftw-3.3.10)
@@ -36,7 +35,7 @@ if(ENABLE_CPP)
                         )
     endif(WIN32)
 
-    set(IS_CPP_ENABLED "True")
+    set(IS_CPP_ENABLED True)
     # Build with python3 bindings
     find_package(PythonLibs 3 REQUIRED)
     add_subdirectory(lib/pybind11)
@@ -46,6 +45,8 @@ if(ENABLE_CPP)
     set(CMAKE_CXX_STANDARD 11)
     set(CMAKE_CXX_STANDARD_REQUIRED ON)
     set(CMAKE_CXX_EXTENSIONS OFF)
+else(ENABLE_CPP)
+    set(IS_CPP_ENABLED False)
 endif(ENABLE_CPP)
 
 # Add project library subdirectory
