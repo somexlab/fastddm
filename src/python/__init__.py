@@ -154,14 +154,14 @@ def azimuthal_average(
 
     # check kx and ky
     if kx is None:
-        kx = 2.0 * np.pi * np.fft.fftshift(np.fft.fftfreq(dim_x))
-    
+        kx = 2 * np.pi * np.fft.fftshift(np.fft.fftfreq(dim_x))
+
     if ky is None:
-        ky = 2.0 * np.pi * np.fft.fftshift(np.fft.fftfreq(dim_y))
+        ky = 2 * np.pi * np.fft.fftshift(np.fft.fftfreq(dim_y))
 
     # compute the k modulus
-    X, Y = np.meshgrid(kx,ky)
-    k_modulus = np.sqrt(X**2 + Y**2)
+    X, Y = np.meshgrid(kx, ky)
+    k_modulus = np.sqrt(X ** 2 + Y ** 2)
 
     # check range
     if range is None:
@@ -169,15 +169,15 @@ def azimuthal_average(
         k_max = np.max(k_modulus)
     else:
         k_min, k_max = range
-    
+
     # check mask
     if mask is None:
         mask = np.full((dim_y, dim_x), True)
-    
+
     # check weights
     if weights is None:
         weights = np.ones((dim_y, dim_x), dtype=np.float64)
-    
+
     # compute bin edges and initialize k
     if isinstance(bins, int):
         bin_edges = np.linspace(k_min, k_max, bins)
@@ -191,26 +191,29 @@ def azimuthal_average(
 
     # initialize azimuthal average
     az_avg = np.zeros((dim_t, bins), dtype=np.float64)
-    
+
     # loop over bins
-    for i, be in enumerate(bin_edges):
+    for i, curr_bin_edge in enumerate(bin_edges):
         if i > 0:
             e_inf = bin_edges[i-1]
-            e_sup = be
-            curr_bin_vals = (k_modulus > e_inf) & (k_modulus <= e_sup) & mask
+            e_sup = curr_bin_edge
+            curr_px = (k_modulus > e_inf) & (k_modulus <= e_sup) & mask
         else:
-            curr_bin_vals = (k_modulus == be) & mask
-        
-        if np.all(np.logical_not(curr_bin_vals)):
+            curr_px = (k_modulus == curr_bin_edge) & mask
+
+        if np.all(np.logical_not(curr_px)):
             az_avg[:,i] = np.full(dim_t, np.nan)
             if i > 0:
                 e_inf = bin_edges[i-1]
-                e_sup = be
+                e_sup = curr_bin_edge
                 k[i] = (e_inf + e_sup) / 2.
             else:
-                k[0] = be
+                k[0] = curr_bin_edge
         else:
-            k[i] = (k_modulus[curr_bin_vals] * weights[curr_bin_vals]).mean() / weights[curr_bin_vals].mean()
-            az_avg[:, i] = (img_str_func[:, curr_bin_vals] * weights[curr_bin_vals]).mean(axis=-1) / weights[curr_bin_vals].mean()
+            num = (k_modulus[curr_px] * weights[curr_px]).mean()
+            den = weights[curr_px].mean()
+            k[i] = num / den
+            w_avg = (img_str_func[:, curr_px] * weights[curr_px]).mean(axis=-1)
+            az_avg[:, i] = w_avg / den
 
     return az_avg, k, bin_edges
