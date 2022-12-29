@@ -1,7 +1,7 @@
 """Collection of helper functions for weights of azimuthal average"""
 
-import numpy as np
 from typing import Optional, Tuple
+import numpy as np
 
 def sector_average_weight(
     shape : Tuple[int,int],
@@ -50,7 +50,8 @@ def sector_average_weight(
     """
 
     def gauss(x,mu,sigma):
-        return np.exp(-0.5 * ((x - mu) / sigma)**2)/(sigma * np.sqrt(2 * np.pi))
+        A = 1 / (sigma * np.sqrt(2 * np.pi))
+        return A * np.exp(-0.5 * ((x - mu) / sigma) ** 2)
 
     kinds = ['uniform', 'gauss']
     if kind not in kinds:
@@ -60,15 +61,15 @@ def sector_average_weight(
         )
 
     if kx is None:
-        kx = 2.0 * np.pi * np.fft.fftshift(np.fft.fftfreq(shape[1]))
+        kx = 2 * np.pi * np.fft.fftshift(np.fft.fftfreq(shape[1]))
 
     if ky is None:
-        ky = 2.0 * np.pi * np.fft.fftshift(np.fft.fftfreq(shape[0]))
+        ky = 2 * np.pi * np.fft.fftshift(np.fft.fftfreq(shape[0]))
 
-    theta_0 = (theta_0 % 360.0) * 2.0 * np.pi / 360.0
-    delta_theta *= 2.0 * np.pi / 360.0
+    theta_0 = (theta_0 % 360.0) * 2 * np.pi / 360
+    delta_theta *= 2 * np.pi / 360
 
-    X, Y = np.meshgrid(kx,ky)
+    X, Y = np.meshgrid(kx, ky)
 
     weights = np.zeros(shape, dtype=np.float64)
     ang = np.angle(X + 1j * Y)
@@ -83,7 +84,7 @@ def sector_average_weight(
         else:
             theta_min = theta_0 + i * 2 * np.pi / float(rep) - delta_theta / 2
             theta_max = theta_0 + i * 2 * np.pi / float(rep) + delta_theta / 2
-            weights[(ang <= theta_max) & (ang >= theta_min)] += 1.0
+            weights[(ang <= theta_max) & (ang >= theta_min)] += 1
 
     return weights
 
@@ -129,9 +130,9 @@ def sphere_form_factor(
 
     def sphere_factor(k, R):
         sf = np.zeros_like(k)
-        with np.errstate(divide='ignore',invalid='ignore'):
-            sf = (np.sin(k * R) - k * R * np.cos(k * R)) / (k * R)**3.0
-        sf[k == 0] = 1.0 / 3.0
+        with np.errstate(divide='ignore', invalid='ignore'):
+            sf = (np.sin(k * R) - k * R * np.cos(k * R)) / (k * R) ** 3
+        sf[k == 0] = 1 / 3
         return sf
 
     kinds = ['amplitude', 'intensity']
@@ -142,22 +143,22 @@ def sphere_form_factor(
         )
 
     if kx is None:
-        kx = 2.0 * np.pi * np.fft.fftshift(np.fft.fftfreq(shape[1]))
+        kx = 2 * np.pi * np.fft.fftshift(np.fft.fftfreq(shape[1]))
 
     if ky is None:
-        ky = 2.0 * np.pi * np.fft.fftshift(np.fft.fftfreq(shape[0]))
+        ky = 2 * np.pi * np.fft.fftshift(np.fft.fftfreq(shape[0]))
 
-    X, Y = np.meshgrid(kx,ky)
-    k_modulus = np.sqrt(X**2.0 + Y**2.0)
+    X, Y = np.meshgrid(kx, ky)
+    k_modulus = np.sqrt(X ** 2 + Y ** 2)
 
     form_fact = np.zeros_like(k_modulus, dtype=np.float64)
 
-    V = 4.0 * np.pi * (R ** 3.0) / 3.0
-    
+    V = 4 * np.pi * (R ** 3) / 3
+
     A = contrast * V
     form_fact = A * sphere_factor(k_modulus, R)
-    form_fact[k_modulus == 0] *= 3.0
+    form_fact[k_modulus == 0] *= 3
     if kind == 'intensity':
-        form_fact = 4.0 * np.pi * form_fact ** 2.0
+        form_fact = 4 * np.pi * form_fact ** 2
 
     return form_fact

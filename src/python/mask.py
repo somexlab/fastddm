@@ -1,7 +1,7 @@
 """Collection of helper functions for masks of azimuthal average"""
 
-import numpy as np
 from typing import Optional, Tuple
+import numpy as np
 
 def central_cross_mask(
     shape : Tuple[int,int],
@@ -32,12 +32,12 @@ def central_cross_mask(
     """
 
     if kx is None:
-        kx = 2.0 * np.pi * np.fft.fftshift(np.fft.fftfreq(shape[1]))
+        kx = 2 * np.pi * np.fft.fftshift(np.fft.fftfreq(shape[1]))
 
     if ky is None:
-        ky = 2.0 * np.pi * np.fft.fftshift(np.fft.fftfreq(shape[0]))
+        ky = 2 * np.pi * np.fft.fftshift(np.fft.fftfreq(shape[0]))
 
-    X, Y = np.meshgrid(kx,ky)
+    X, Y = np.meshgrid(kx, ky)
 
     mask = np.full(shape, True)
 
