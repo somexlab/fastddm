@@ -127,7 +127,7 @@ py::array_t<double> dfm_direct(py::array_t<T, py::array::c_style> img_seq,
 
     // the full size of the image structure function is
     // nx * ny * #(lags)
-    out.resize({lags.size(), ny, nx});
+    out.resize({(unsigned long long)(lags.size()), ny, nx});
 
     // Return result to python
     return out;
@@ -307,7 +307,7 @@ py::array_t<double> dfm_fft(py::array_t<T, py::array::c_style> img_seq,
 
     // the full size of the image structure function is
     // nx * ny * #(lags)
-    out.resize({lags.size(), ny, nx});
+    out.resize({(unsigned long long)(lags.size()), ny, nx});
 
     // Return result to python
     return out;
@@ -318,22 +318,23 @@ py::array_t<double> dfm_fft(py::array_t<T, py::array::c_style> img_seq,
  */
 void export_dfm(py::module &m)
 {
-    m.def("dfm_direct", &dfm_direct<double>);
-    m.def("dfm_direct", &dfm_direct<float>);
-    m.def("dfm_direct", &dfm_direct<int64_t>);
-    m.def("dfm_direct", &dfm_direct<int32_t>);
-    m.def("dfm_direct", &dfm_direct<int16_t>);
-    m.def("dfm_direct", &dfm_direct<uint64_t>);
-    m.def("dfm_direct", &dfm_direct<uint32_t>);
-    m.def("dfm_direct", &dfm_direct<uint16_t>);
+    // Leave function export in this order!
     m.def("dfm_direct", &dfm_direct<uint8_t>);
-    m.def("dfm_fft", &dfm_fft<double>);
-    m.def("dfm_fft", &dfm_fft<float>);
-    m.def("dfm_fft", &dfm_fft<int64_t>);
-    m.def("dfm_fft", &dfm_fft<int32_t>);
-    m.def("dfm_fft", &dfm_fft<int16_t>);
-    m.def("dfm_fft", &dfm_fft<uint64_t>);
-    m.def("dfm_fft", &dfm_fft<uint32_t>);
-    m.def("dfm_fft", &dfm_fft<uint16_t>);
+    m.def("dfm_direct", &dfm_direct<int16_t>);
+    m.def("dfm_direct", &dfm_direct<uint16_t>);
+    m.def("dfm_direct", &dfm_direct<int32_t>);
+    m.def("dfm_direct", &dfm_direct<uint32_t>);
+    m.def("dfm_direct", &dfm_direct<int64_t>);
+    m.def("dfm_direct", &dfm_direct<uint64_t>);
+    m.def("dfm_direct", &dfm_direct<float>);
+    m.def("dfm_direct", &dfm_direct<double>);
     m.def("dfm_fft", &dfm_fft<uint8_t>);
+    m.def("dfm_fft", &dfm_fft<int16_t>);
+    m.def("dfm_fft", &dfm_fft<uint16_t>);
+    m.def("dfm_fft", &dfm_fft<int32_t>);
+    m.def("dfm_fft", &dfm_fft<uint32_t>);
+    m.def("dfm_fft", &dfm_fft<int64_t>);
+    m.def("dfm_fft", &dfm_fft<uint64_t>);
+    m.def("dfm_fft", &dfm_fft<float>);
+    m.def("dfm_fft", &dfm_fft<double>);
 }
