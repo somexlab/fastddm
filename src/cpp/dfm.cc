@@ -70,6 +70,10 @@ py::array_t<double> dfm_direct(py::array_t<T, py::array::c_style> img_seq,
         p_out[ii] /= norm_fact;
     }
 
+    // ***Cleanup fft2 plan
+    fftw_destroy_plan(fft2_plan);
+    fftw_cleanup();
+
     // ***Compute the image structure function
     // initialize helper vector
     vector<double> tmp(lags.size(), 0.0);
@@ -118,8 +122,6 @@ py::array_t<double> dfm_direct(py::array_t<T, py::array::c_style> img_seq,
                           lags.size());
 
     // Cleanup before finish
-    fftw_destroy_plan(fft2_plan);
-    fftw_cleanup();
     tmp.clear();
     tmp.shrink_to_fit();
 
@@ -162,22 +164,18 @@ py::array_t<double> dfm_fft(py::array_t<T, py::array::c_style> img_seq,
       so the size of one fft2 output is ny*(nx//2 + 1) complex
       doubles [the input needs to be twice as large]
     - workspace will contain complex values, so we need 2* the size
+      (allocated after fft2 part)
      */
     size_t _nx = nx / 2 + 1;
     py::array_t<double> out = py::array_t<double>(2 * _nx * ny * length);
     auto p_out = out.mutable_data();
-    vector<double> workspace(2 * chunk_size * nt);
+    
 
     // ***Create the fft2 plan
     fftw_plan fft2_plan = fft2_create_plan(p_out,
                                            nx,
                                            ny,
                                            length);
-
-    // ***Create the fft plan
-    fftw_plan fft_plan = fft_create_plan(workspace,
-                                         nt,
-                                         chunk_size);
 
     // ***Copy input to workspace vector
     for (size_t t = 0; t < length; t++)
@@ -200,6 +198,18 @@ py::array_t<double> dfm_fft(py::array_t<T, py::array::c_style> img_seq,
     {
         p_out[ii] /= norm_fact;
     }
+
+    // ***Cleanup fft2 plan
+    fftw_destroy_plan(fft2_plan);
+    fftw_cleanup();
+
+    // ***Allocate workspace
+    vector<double> workspace(2 * chunk_size * nt);
+
+    // ***Create the fft plan
+    fftw_plan fft_plan = fft_create_plan(workspace,
+                                         nt,
+                                         chunk_size);
 
     // ***Compute the image structure function
     // initialize helper vector used in average part
@@ -289,7 +299,6 @@ py::array_t<double> dfm_fft(py::array_t<T, py::array::c_style> img_seq,
                           lags.size());
 
     // Cleanup before finish
-    fftw_destroy_plan(fft2_plan);
     fftw_destroy_plan(fft_plan);
     fftw_cleanup();
     workspace.clear();
