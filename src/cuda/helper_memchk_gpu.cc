@@ -129,7 +129,7 @@ void get_device_free_mem(unsigned long long &free_mem)
 /*!
     Evaluate the device memory pitch for multiple subarrays of size N
  */
-unsigned long long get_device_pitch(size_t N,
+unsigned long long get_device_pitch(unsigned long long N,
                                     int Nbytes)
 {
     size_t pitch;
@@ -164,9 +164,9 @@ unsigned long long get_device_pitch(size_t N,
     \param ny       number of fft nodes in y direction
     \param batch    number of batch elements
  */
-unsigned long long get_device_fft2_mem(size_t nx,
-                                       size_t ny,
-                                       size_t batch)
+unsigned long long get_device_fft2_mem(unsigned long long nx,
+                                       unsigned long long ny,
+                                       unsigned long long batch)
 {
     // The following line should be changed to move to workstations with multiple GPUs
     size_t memsize[1]; // We are only considering workstations with 1 GPU
@@ -183,9 +183,9 @@ unsigned long long get_device_fft2_mem(size_t nx,
     \param batch    number of batch elements
     \param pitch    pitch of input array
  */
-unsigned long long get_device_fft_mem(size_t nt,
-                                      size_t batch,
-                                      size_t pitch)
+unsigned long long get_device_fft_mem(unsigned long long nt,
+                                      unsigned long long batch,
+                                      unsigned long long pitch)
 {
     // The following line should be changed to move to workstations with multiple GPUs
     size_t memsize[1]; // We are only considering workstations with 1 GPU
@@ -221,13 +221,13 @@ void chk_device_mem_direct(unsigned long long width,
                            unsigned long long length,
                            vector<unsigned int> lags,
                            bool is_input_double,
-                           size_t &num_fft2,
-                           size_t &num_chunks,
-                           size_t &num_fullshift,
-                           size_t &pitch_buff,
-                           size_t &pitch_q,
-                           size_t &pitch_t,
-                           size_t &pitch_fs)
+                           unsigned long long &num_fft2,
+                           unsigned long long &num_chunks,
+                           unsigned long long &num_fullshift,
+                           unsigned long long &pitch_buff,
+                           unsigned long long &pitch_q,
+                           unsigned long long &pitch_t,
+                           unsigned long long &pitch_fs)
 {
     // get device memory
     unsigned long long free_mem;
@@ -438,14 +438,14 @@ void chk_device_mem_fft(unsigned long long width,
                         unsigned long long length,
                         vector<unsigned int> lags,
                         bool is_input_double,
-                        size_t &num_fft2,
-                        size_t &num_chunks,
-                        size_t &num_fullshift,
-                        size_t &pitch_buff,
-                        size_t &pitch_q,
-                        size_t &pitch_t,
-                        size_t &pitch_nt,
-                        size_t &pitch_fs)
+                        unsigned long long &num_fft2,
+                        unsigned long long &num_chunks,
+                        unsigned long long &num_fullshift,
+                        unsigned long long &pitch_buff,
+                        unsigned long long &pitch_q,
+                        unsigned long long &pitch_t,
+                        unsigned long long &pitch_nt,
+                        unsigned long long &pitch_fs)
 {
     // get device memory
     unsigned long long free_mem;
