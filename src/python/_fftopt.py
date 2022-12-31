@@ -21,7 +21,7 @@ def next_power_of_2(target: int) -> int:
     return 1<<(target-1).bit_length()
 
 
-def next_fast_len(target: int, mode: Optional[str]='python', force_even: Optional[bool]=False) -> int:
+def next_fast_len(target: int, core: Optional[str]='py', force_even: Optional[bool]=False) -> int:
     """
     Returns the next fast size of input data to fft, for zero-padding.
 
@@ -44,8 +44,8 @@ def next_fast_len(target: int, mode: Optional[str]='python', force_even: Optiona
     ----------
     target : int
         Target value.
-    mode : str, optional
-        Select the backend ('python', 'cpp', 'cuda'). Default is 'python'.
+    core : str, optional
+        Select the backend ('py', 'cpp', 'cuda'). Default is 'py'.
     force_even : bool, optional
         Force even output. Only used if mode is 'cuda'. Default is False.
 
@@ -65,9 +65,9 @@ def next_fast_len(target: int, mode: Optional[str]='python', force_even: Optiona
 
     if target == max_val:
         return max_val
-    if mode.upper() == 'PYTHON':
+    if core.upper() == 'PY':
         return fft.next_fast_len(target)
-    if mode.upper() == 'CPP':
+    if core.upper() == 'CPP':
         fast_len = max_val
         # find range of exponents
         N2 = target.bit_length()
@@ -108,7 +108,7 @@ def next_fast_len(target: int, mode: Optional[str]='python', force_even: Optiona
                 continue
             break
         return fast_len
-    if mode.upper() == 'CUDA':
+    if core.upper() == 'CUDA':
         fast_len = max_val
         # find range of exponents
         N2 = target.bit_length()
@@ -116,7 +116,9 @@ def next_fast_len(target: int, mode: Optional[str]='python', force_even: Optiona
         N5 = int(math.log(max_val)/math.log(5))+1
         N7 = int(math.log(max_val)/math.log(7))+1
 
-        for i in range(N2):
+        start2 = 1 if force_even else 0
+
+        for i in range(start2,N2):
             pow2 = 2**i
             for j in range(N3):
                 pow3 = 3**j
@@ -138,8 +140,6 @@ def next_fast_len(target: int, mode: Optional[str]='python', force_even: Optiona
             else:
                 continue
             break
-        if force_even and fast_len % 2 != 0:
-            return next_fast_len(target=fast_len + 1,mode=mode,force_even=force_even)
         return fast_len
 
     raise ValueError('Mode not supported in `next_fast_len`.')
