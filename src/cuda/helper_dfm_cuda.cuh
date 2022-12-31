@@ -27,13 +27,13 @@
 template <typename T>
 __global__ void copy_convert_kernel(T *d_in,
                                     double *d_out,
-                                    unsigned long long width,
-                                    unsigned long long Npixels,
-                                    unsigned long long ipitch,
-                                    unsigned long long idist,
-                                    unsigned long long opitch,
-                                    unsigned long long odist,
-                                    unsigned long long N);
+                                    unsigned long int width,
+                                    unsigned long int Npixels,
+                                    unsigned long int ipitch,
+                                    unsigned long int idist,
+                                    unsigned long int opitch,
+                                    unsigned long int odist,
+                                    unsigned long int N);
 
 /*! \brief Scale array by constant -- b = A * a
 \param a    input array
@@ -44,7 +44,7 @@ __global__ void copy_convert_kernel(T *d_in,
 __global__ void scale_array_kernel(double *a,
                                    double A,
                                    double *b,
-                                   unsigned long long N);
+                                   unsigned long int N);
 
 /*! \brief Transpose complex matrix with pitch
     \param matIn    Input matrix
@@ -57,13 +57,13 @@ __global__ void scale_array_kernel(double *a,
     \param NblocksY Number of blocks of tiles over y
 */
 __global__ void transpose_complex_matrix_kernel(double2 *matIn,
-                                                unsigned long long ipitch,
+                                                unsigned long int ipitch,
                                                 double2 *matOut,
-                                                unsigned long long opitch,
-                                                unsigned long long width,
-                                                unsigned long long height,
-                                                unsigned long long NblocksX,
-                                                unsigned long long NblocksY);
+                                                unsigned long int opitch,
+                                                unsigned long int width,
+                                                unsigned long int height,
+                                                unsigned long int NblocksX,
+                                                unsigned long int NblocksY);
 
 /*! \brief Compute correlation using differences
     \param d_in     input array
@@ -77,10 +77,10 @@ __global__ void transpose_complex_matrix_kernel(double2 *matIn,
 __global__ void correlate_with_differences_kernel(double2 *d_in,
                                                   double2 *d_out,
                                                   unsigned int *d_lags,
-                                                  unsigned long long length,
-                                                  unsigned long long Nlags,
-                                                  unsigned long long Nq,
-                                                  unsigned long long pitch);
+                                                  unsigned long int length,
+                                                  unsigned long int Nlags,
+                                                  unsigned long int Nq,
+                                                  unsigned long int pitch);
 
 /*! \brief Make full power spectrum (copy symmetric part)
     \param d_in     input array
@@ -95,15 +95,15 @@ __global__ void correlate_with_differences_kernel(double2 *d_in,
     \param NblocksY Number of blocks of tiles over y
 */
 __global__ void make_full_powspec_kernel(double2 *d_in,
-                                         unsigned long long ipitch,
+                                         unsigned long int ipitch,
                                          double *d_out,
-                                         unsigned long long opitch,
-                                         unsigned long long nxh,
-                                         unsigned long long nx,
-                                         unsigned long long ny,
-                                         unsigned long long N,
-                                         unsigned long long NblocksX,
-                                         unsigned long long NblocksY);
+                                         unsigned long int opitch,
+                                         unsigned long int nxh,
+                                         unsigned long int nx,
+                                         unsigned long int ny,
+                                         unsigned long int N,
+                                         unsigned long int NblocksX,
+                                         unsigned long int NblocksY);
 
 /*! \brief Shift power spectrum
     \param d_in     input array
@@ -117,14 +117,14 @@ __global__ void make_full_powspec_kernel(double2 *d_in,
     \param NblocksY Number of blocks of tiles over y
 */
 __global__ void shift_powspec_kernel(double *d_in,
-                                     unsigned long long ipitch,
+                                     unsigned long int ipitch,
                                      double *d_out,
-                                     unsigned long long opitch,
-                                     unsigned long long nx,
-                                     unsigned long long ny,
-                                     unsigned long long N,
-                                     unsigned long long NblocksX,
-                                     unsigned long long NblocksY);
+                                     unsigned long int opitch,
+                                     unsigned long int nx,
+                                     unsigned long int ny,
+                                     unsigned long int N,
+                                     unsigned long int NblocksX,
+                                     unsigned long int NblocksY);
 
 /*! \brief Compute the square modulus of complex array
     \param d_in     Input complex array
@@ -133,9 +133,9 @@ __global__ void shift_powspec_kernel(double *d_in,
     \param N        Number of elements in the array
  */
 __global__ void square_modulus_kernel(double2 *d_in,
-                                      unsigned long long length,
-                                      unsigned long long dist,
-                                      unsigned long long N);
+                                      unsigned long int length,
+                                      unsigned long int dist,
+                                      unsigned long int N);
 
 /*! \brief Copy real part of element into imaginary part of opposite element
     \param d_arr    Input complex array
@@ -144,9 +144,9 @@ __global__ void square_modulus_kernel(double2 *d_in,
     \param N        Total number of elements
  */
 __global__ void real2imagopposite_kernel(double2 *d_arr,
-                                         unsigned long long length,
-                                         unsigned long long pitch,
-                                         unsigned long long N);
+                                         unsigned long int length,
+                                         unsigned long int pitch,
+                                         unsigned long int N);
 
 /*! \brief Do final linear combination c[i] = (a[0] - b[i].x - 2 * a[i]) / (length - i)
     \param c        Output array
@@ -159,13 +159,13 @@ __global__ void real2imagopposite_kernel(double2 *d_arr,
     \param N        Number of subarrays
 */
 __global__ void linear_combination_final_kernel(double2 *c,
-                                                unsigned long long pitch_c,
+                                                unsigned long int pitch_c,
                                                 double2 *a,
-                                                unsigned long long pitch_a,
+                                                unsigned long int pitch_a,
                                                 double2 *b,
-                                                unsigned long long pitch_b,
-                                                unsigned long long length,
-                                                unsigned long long N);
+                                                unsigned long int pitch_b,
+                                                unsigned long int length,
+                                                unsigned long int N);
 
 /*! \brief Keep only selected lags
     \param d_in     Input complex array
@@ -179,9 +179,9 @@ __global__ void linear_combination_final_kernel(double2 *c,
 __global__ void copy_selected_lags_kernel(double2 *d_in,
                                           double2 *d_out,
                                           unsigned int *d_lags,
-                                          unsigned long long Nlags,
-                                          unsigned long long ipitch,
-                                          unsigned long long opitch,
-                                          unsigned long long N);
+                                          unsigned long int Nlags,
+                                          unsigned long int ipitch,
+                                          unsigned long int opitch,
+                                          unsigned long int N);
 
 #endif

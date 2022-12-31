@@ -21,21 +21,21 @@
 template <typename T>
 py::array_t<double> dfm_direct_cuda(py::array_t<T, py::array::c_style> img_seq,
                                     vector<unsigned int> lags,
-                                    unsigned long long nx,
-                                    unsigned long long ny)
+                                    size_t nx,
+                                    size_t ny)
 {
     // ***Get input array and dimensions
-    unsigned long long length = img_seq.shape()[0]; // get length of original input
-    unsigned long long height = img_seq.shape()[1]; // get height of original input
-    unsigned long long width = img_seq.shape()[2];  // get width of original input
+    size_t length = img_seq.shape()[0]; // get length of original input
+    size_t height = img_seq.shape()[1]; // get height of original input
+    size_t width = img_seq.shape()[2];  // get width of original input
     auto p_img_seq = img_seq.data();    // get input data
 
     // Check host memory
     chk_host_mem_direct(nx, ny, length, lags);
 
     // Check device memory and optimize
-    unsigned long long num_fft2, num_chunks, num_fullshift;
-    unsigned long long pitch_buff, pitch_q, pitch_t, pitch_fs;
+    size_t num_fft2, num_chunks, num_fullshift;
+    size_t pitch_buff, pitch_q, pitch_t, pitch_fs;
     chk_device_mem_direct(width,
                           height,
                           sizeof(T),
@@ -58,7 +58,7 @@ py::array_t<double> dfm_direct_cuda(py::array_t<T, py::array::c_style> img_seq,
       so the size of one fft2 output is ny*(nx//2 + 1) complex
       doubles [the input needs to be twice as large]
      */
-    unsigned long long _nx = nx / 2 + 1;
+    size_t _nx = nx / 2 + 1;
     py::array_t<double> out = py::array_t<double>(2 * _nx * ny * length);
     auto p_out = out.mutable_data();
 
@@ -95,7 +95,7 @@ py::array_t<double> dfm_direct_cuda(py::array_t<T, py::array::c_style> img_seq,
     // ***Resize output
     // the full size of the image structure function is
     // nx * ny * #(lags)
-    out.resize({(unsigned long long)(lags.size()), ny, nx});
+    out.resize({lags.size(), ny, nx});
 
     // ***Return result to python
     return out;
@@ -111,22 +111,22 @@ py::array_t<double> dfm_direct_cuda(py::array_t<T, py::array::c_style> img_seq,
 template <typename T>
 py::array_t<double> dfm_fft_cuda(py::array_t<T, py::array::c_style> img_seq,
                                  vector<unsigned int> lags,
-                                 unsigned long long nx,
-                                 unsigned long long ny,
-                                 unsigned long long nt)
+                                 size_t nx,
+                                 size_t ny,
+                                 size_t nt)
 {
     // ***Get input array and dimensions
-    unsigned long long length = img_seq.shape()[0]; // get length of original input
-    unsigned long long height = img_seq.shape()[1]; // get height of original input
-    unsigned long long width = img_seq.shape()[2];  // get width of original input
+    size_t length = img_seq.shape()[0]; // get length of original input
+    size_t height = img_seq.shape()[1]; // get height of original input
+    size_t width = img_seq.shape()[2];  // get width of original input
     auto p_img_seq = img_seq.data();    // get input data
 
     // Check host memory
     chk_host_mem_fft(nx, ny, length);
 
     // Check device memory and optimize
-    unsigned long long num_fft2, num_chunks, num_fullshift;
-    unsigned long long pitch_buff, pitch_q, pitch_t, pitch_nt, pitch_fs;
+    size_t num_fft2, num_chunks, num_fullshift;
+    size_t pitch_buff, pitch_q, pitch_t, pitch_nt, pitch_fs;
     chk_device_mem_fft(width,
                        height,
                        sizeof(T),
@@ -151,7 +151,7 @@ py::array_t<double> dfm_fft_cuda(py::array_t<T, py::array::c_style> img_seq,
       so the size of one fft2 output is ny*(nx//2 + 1) complex
       doubles [the input needs to be twice as large]
      */
-    unsigned long long _nx = nx / 2 + 1;
+    size_t _nx = nx / 2 + 1;
     py::array_t<double> out = py::array_t<double>(2 * _nx * ny * length);
     auto p_out = out.mutable_data();
 
@@ -189,7 +189,7 @@ py::array_t<double> dfm_fft_cuda(py::array_t<T, py::array::c_style> img_seq,
     // ***Resize output
     // the full size of the image structure function is
     // nx * ny * #(lags)
-    out.resize({(unsigned long long)(lags.size()), ny, nx});
+    out.resize({lags.size(), ny, nx});
 
     // ***Return result to python
     return out;

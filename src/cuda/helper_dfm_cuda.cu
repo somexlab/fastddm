@@ -14,8 +14,8 @@
 namespace cg = cooperative_groups;
 
 // *** code ***
-const unsigned long long TILE_DIM = 32;  // leave this unchanged!
-const unsigned long long BLOCK_ROWS = 8; // leave this unchanged!
+const unsigned long int TILE_DIM = 32;  // leave this unchanged!
+const unsigned long int BLOCK_ROWS = 8; // leave this unchanged!
 
 /*!
     Convert array from float to double on device and prepare for fft2 (u_int8_t specialization)
@@ -23,19 +23,19 @@ const unsigned long long BLOCK_ROWS = 8; // leave this unchanged!
 template <typename T>
 __global__ void copy_convert_kernel(T *d_in,
                                     double *d_out,
-                                    unsigned long long width,
-                                    unsigned long long Npixels,
-                                    unsigned long long ipitch,
-                                    unsigned long long idist,
-                                    unsigned long long opitch,
-                                    unsigned long long odist,
-                                    unsigned long long N)
+                                    unsigned long int width,
+                                    unsigned long int Npixels,
+                                    unsigned long int ipitch,
+                                    unsigned long int idist,
+                                    unsigned long int opitch,
+                                    unsigned long int odist,
+                                    unsigned long int N)
 {
-    for (unsigned long long tid = 1ULL * blockIdx.x * blockDim.x + threadIdx.x; tid < N; tid += blockDim.x * gridDim.x)
+    for (unsigned long int tid = blockIdx.x * blockDim.x + threadIdx.x; tid < N; tid += blockDim.x * gridDim.x)
     {
-        unsigned long long t = tid / Npixels;
-        unsigned long long y = (tid - t * Npixels) / width;
-        unsigned long long x = tid - t * Npixels - y * width;
+        unsigned long int t = tid / Npixels;
+        unsigned long int y = (tid - t * Npixels) / width;
+        unsigned long int x = tid - t * Npixels - y * width;
 
         T val = d_in[t * idist + y * ipitch + x];
 
@@ -43,15 +43,15 @@ __global__ void copy_convert_kernel(T *d_in,
     }
 }
 
-template __global__ void copy_convert_kernel<u_int8_t>(u_int8_t *d_in, double *d_out, unsigned long long width, unsigned long long Npixels, unsigned long long ipitch, unsigned long long idist, unsigned long long opitch, unsigned long long odist, unsigned long long N);
-template __global__ void copy_convert_kernel<int16_t>(int16_t *d_in, double *d_out, unsigned long long width, unsigned long long Npixels, unsigned long long ipitch, unsigned long long idist, unsigned long long opitch, unsigned long long odist, unsigned long long N);
-template __global__ void copy_convert_kernel<u_int16_t>(u_int16_t *d_in, double *d_out, unsigned long long width, unsigned long long Npixels, unsigned long long ipitch, unsigned long long idist, unsigned long long opitch, unsigned long long odist, unsigned long long N);
-template __global__ void copy_convert_kernel<int32_t>(int32_t *d_in, double *d_out, unsigned long long width, unsigned long long Npixels, unsigned long long ipitch, unsigned long long idist, unsigned long long opitch, unsigned long long odist, unsigned long long N);
-template __global__ void copy_convert_kernel<u_int32_t>(u_int32_t *d_in, double *d_out, unsigned long long width, unsigned long long Npixels, unsigned long long ipitch, unsigned long long idist, unsigned long long opitch, unsigned long long odist, unsigned long long N);
-template __global__ void copy_convert_kernel<int64_t>(int64_t *d_in, double *d_out, unsigned long long width, unsigned long long Npixels, unsigned long long ipitch, unsigned long long idist, unsigned long long opitch, unsigned long long odist, unsigned long long N);
-template __global__ void copy_convert_kernel<u_int64_t>(u_int64_t *d_in, double *d_out, unsigned long long width, unsigned long long Npixels, unsigned long long ipitch, unsigned long long idist, unsigned long long opitch, unsigned long long odist, unsigned long long N);
-template __global__ void copy_convert_kernel<float>(float *d_in, double *d_out, unsigned long long width, unsigned long long Npixels, unsigned long long ipitch, unsigned long long idist, unsigned long long opitch, unsigned long long odist, unsigned long long N);
-template __global__ void copy_convert_kernel<double>(double *d_in, double *d_out, unsigned long long width, unsigned long long Npixels, unsigned long long ipitch, unsigned long long idist, unsigned long long opitch, unsigned long long odist, unsigned long long N);
+template __global__ void copy_convert_kernel<double>(double *d_in, double *d_out, unsigned long int width, unsigned long int Npixels, unsigned long int ipitch, unsigned long int idist, unsigned long int opitch, unsigned long int odist, unsigned long int N);
+template __global__ void copy_convert_kernel<float>(float *d_in, double *d_out, unsigned long int width, unsigned long int Npixels, unsigned long int ipitch, unsigned long int idist, unsigned long int opitch, unsigned long int odist, unsigned long int N);
+template __global__ void copy_convert_kernel<int64_t>(int64_t *d_in, double *d_out, unsigned long int width, unsigned long int Npixels, unsigned long int ipitch, unsigned long int idist, unsigned long int opitch, unsigned long int odist, unsigned long int N);
+template __global__ void copy_convert_kernel<int32_t>(int32_t *d_in, double *d_out, unsigned long int width, unsigned long int Npixels, unsigned long int ipitch, unsigned long int idist, unsigned long int opitch, unsigned long int odist, unsigned long int N);
+template __global__ void copy_convert_kernel<int16_t>(int16_t *d_in, double *d_out, unsigned long int width, unsigned long int Npixels, unsigned long int ipitch, unsigned long int idist, unsigned long int opitch, unsigned long int odist, unsigned long int N);
+template __global__ void copy_convert_kernel<u_int64_t>(u_int64_t *d_in, double *d_out, unsigned long int width, unsigned long int Npixels, unsigned long int ipitch, unsigned long int idist, unsigned long int opitch, unsigned long int odist, unsigned long int N);
+template __global__ void copy_convert_kernel<u_int32_t>(u_int32_t *d_in, double *d_out, unsigned long int width, unsigned long int Npixels, unsigned long int ipitch, unsigned long int idist, unsigned long int opitch, unsigned long int odist, unsigned long int N);
+template __global__ void copy_convert_kernel<u_int16_t>(u_int16_t *d_in, double *d_out, unsigned long int width, unsigned long int Npixels, unsigned long int ipitch, unsigned long int idist, unsigned long int opitch, unsigned long int odist, unsigned long int N);
+template __global__ void copy_convert_kernel<u_int8_t>(u_int8_t *d_in, double *d_out, unsigned long int width, unsigned long int Npixels, unsigned long int ipitch, unsigned long int idist, unsigned long int opitch, unsigned long int odist, unsigned long int N);
 
 /*!
     Compute b = A * a
@@ -59,9 +59,9 @@ template __global__ void copy_convert_kernel<double>(double *d_in, double *d_out
 __global__ void scale_array_kernel(double *a,
                                    double A,
                                    double *b,
-                                   unsigned long long N)
+                                   unsigned long int N)
 {
-    for (unsigned long long i = 1ULL * blockIdx.x * blockDim.x + threadIdx.x; i < N; i += blockDim.x * gridDim.x)
+    for (unsigned long int i = (unsigned long int)blockIdx.x * (unsigned long int)blockDim.x + (unsigned long int)threadIdx.x; i < N; i += (unsigned long int)blockDim.x * (unsigned long int)gridDim.x)
     {
         b[i] = A * a[i];
     }
@@ -71,26 +71,26 @@ __global__ void scale_array_kernel(double *a,
     Transpose complex matrix with pitch
  */
 __global__ void transpose_complex_matrix_kernel(double2 *matIn,
-                                                unsigned long long ipitch,
+                                                unsigned long int ipitch,
                                                 double2 *matOut,
-                                                unsigned long long opitch,
-                                                unsigned long long width,
-                                                unsigned long long height,
-                                                unsigned long long NblocksX,
-                                                unsigned long long NblocksY)
+                                                unsigned long int opitch,
+                                                unsigned long int width,
+                                                unsigned long int height,
+                                                unsigned long int NblocksX,
+                                                unsigned long int NblocksY)
 {
     __shared__ double2 tile[TILE_DIM][TILE_DIM + 1];
 
-    for (unsigned long long blockIDX = blockIdx.x; blockIDX < NblocksX; blockIDX += gridDim.x)
+    for (unsigned long int blockIDX = blockIdx.x; blockIDX < NblocksX; blockIDX += gridDim.x)
     {
-        for (unsigned long long blockIDY = blockIdx.y; blockIDY < NblocksY; blockIDY += gridDim.y)
+        for (unsigned long int blockIDY = blockIdx.y; blockIDY < NblocksY; blockIDY += gridDim.y)
         {
-            unsigned long long i_x = blockIDX * TILE_DIM + threadIdx.x;
-            unsigned long long i_y = blockIDY * TILE_DIM + threadIdx.y; // threadIdx.y goes from 0 to 7
+            unsigned long int i_x = blockIDX * TILE_DIM + threadIdx.x;
+            unsigned long int i_y = blockIDY * TILE_DIM + threadIdx.y; // threadIdx.y goes from 0 to 7
 
             // load matrix portion into tile
             // every thread loads 4 elements into tile
-            unsigned long long i;
+            unsigned long int i;
             for (i = 0; i < TILE_DIM; i += BLOCK_ROWS)
             {
                 if (i_x < width && (i_y + i) < height)
@@ -122,27 +122,27 @@ __global__ void transpose_complex_matrix_kernel(double2 *matIn,
 __global__ void correlate_with_differences_kernel(double2 *d_in,
                                                   double2 *d_out,
                                                   unsigned int *d_lags,
-                                                  unsigned long long length,
-                                                  unsigned long long Nlags,
-                                                  unsigned long long Nq,
-                                                  unsigned long long pitch)
+                                                  unsigned long int length,
+                                                  unsigned long int Nlags,
+                                                  unsigned long int Nq,
+                                                  unsigned long int pitch)
 {
     // Handle to thread block group
     cg::thread_block cta = cg::this_thread_block();
     extern __shared__ double sdata[];
-    unsigned long long blockSize = 2 * blockDim.x;
-    unsigned long long tid = threadIdx.x;
+    unsigned long int blockSize = 2 * blockDim.x;
+    unsigned long int tid = threadIdx.x;
 
-    for (unsigned long long q = blockIdx.y; q < Nq; q += gridDim.y)
+    for (unsigned long int q = blockIdx.y; q < Nq; q += gridDim.y)
     {
-        for (unsigned long long dt_idx = blockIdx.x; dt_idx < Nlags; dt_idx += gridDim.x)
+        for (unsigned long int dt_idx = blockIdx.x; dt_idx < Nlags; dt_idx += gridDim.x)
         {
-            unsigned long long dt = d_lags[dt_idx];
+            unsigned long int dt = d_lags[dt_idx];
 
             // Perform first level of reduction
             // Reading from global memory, writing to shared memory
             double tmp_sum = 0.0;
-            unsigned long long t = tid;
+            unsigned long int t = tid;
             while (t < length - dt)
             {
                 double2 a = d_in[q * pitch + t];
@@ -215,28 +215,28 @@ __global__ void correlate_with_differences_kernel(double2 *d_in,
     Make full power spectrum (copy symmetric part)
 */
 __global__ void make_full_powspec_kernel(double2 *d_in,
-                                         unsigned long long ipitch,
+                                         unsigned long int ipitch,
                                          double *d_out,
-                                         unsigned long long opitch,
-                                         unsigned long long nxh,
-                                         unsigned long long nx,
-                                         unsigned long long ny,
-                                         unsigned long long N,
-                                         unsigned long long NblocksX,
-                                         unsigned long long NblocksY)
+                                         unsigned long int opitch,
+                                         unsigned long int nxh,
+                                         unsigned long int nx,
+                                         unsigned long int ny,
+                                         unsigned long int N,
+                                         unsigned long int NblocksX,
+                                         unsigned long int NblocksY)
 {
     __shared__ double2 tile[TILE_DIM][TILE_DIM + 1];
 
-    for (unsigned long long blockIDX = blockIdx.x; blockIDX < NblocksX; blockIDX += gridDim.x)
+    for (unsigned long int blockIDX = blockIdx.x; blockIDX < NblocksX; blockIDX += gridDim.x)
     {
-        for (unsigned long long blockIDY = blockIdx.y; blockIDY < NblocksY; blockIDY += gridDim.y)
+        for (unsigned long int blockIDY = blockIdx.y; blockIDY < NblocksY; blockIDY += gridDim.y)
         {
-            unsigned long long i_x = blockIDX * TILE_DIM + threadIdx.x;
-            unsigned long long i_y = blockIDY * TILE_DIM + threadIdx.y; // threadIdx.y goes from 0 to 7
+            unsigned long int i_x = blockIDX * TILE_DIM + threadIdx.x;
+            unsigned long int i_y = blockIDY * TILE_DIM + threadIdx.y; // threadIdx.y goes from 0 to 7
 
             // load matrix portion into tile
             // every thread loads 4 elements into tile
-            unsigned long long i;
+            unsigned long int i;
             for (i = 0; i < TILE_DIM; i += BLOCK_ROWS)
             {
                 if (i_x < nxh && (i_y + i) < ny * N)
@@ -246,7 +246,7 @@ __global__ void make_full_powspec_kernel(double2 *d_in,
             }
             __syncthreads();
 
-            unsigned long long curr_y;
+            unsigned long int curr_y;
             for (i = 0; i < TILE_DIM; i += BLOCK_ROWS)
             {
                 if (i_x < nxh && (i_y + i) < ny * N)
@@ -277,27 +277,27 @@ __global__ void make_full_powspec_kernel(double2 *d_in,
     Shift power spectrum
 */
 __global__ void shift_powspec_kernel(double *d_in,
-                                     unsigned long long ipitch,
+                                     unsigned long int ipitch,
                                      double *d_out,
-                                     unsigned long long opitch,
-                                     unsigned long long nx,
-                                     unsigned long long ny,
-                                     unsigned long long N,
-                                     unsigned long long NblocksX,
-                                     unsigned long long NblocksY)
+                                     unsigned long int opitch,
+                                     unsigned long int nx,
+                                     unsigned long int ny,
+                                     unsigned long int N,
+                                     unsigned long int NblocksX,
+                                     unsigned long int NblocksY)
 {
     __shared__ double tile[TILE_DIM][TILE_DIM + 1];
 
-    for (unsigned long long blockIDX = blockIdx.x; blockIDX < NblocksX; blockIDX += gridDim.x)
+    for (unsigned long int blockIDX = blockIdx.x; blockIDX < NblocksX; blockIDX += gridDim.x)
     {
-        for (unsigned long long blockIDY = blockIdx.y; blockIDY < NblocksY; blockIDY += gridDim.y)
+        for (unsigned long int blockIDY = blockIdx.y; blockIDY < NblocksY; blockIDY += gridDim.y)
         {
-            unsigned long long i_x = blockIDX * TILE_DIM + threadIdx.x;
-            unsigned long long i_y = blockIDY * TILE_DIM + threadIdx.y; // threadIdx.y goes from 0 to 7
+            unsigned long int i_x = blockIDX * TILE_DIM + threadIdx.x;
+            unsigned long int i_y = blockIDY * TILE_DIM + threadIdx.y; // threadIdx.y goes from 0 to 7
 
             // load matrix portion into tile
             // every thread loads 4 elements into tile
-            unsigned long long i;
+            unsigned long int i;
             for (i = 0; i < TILE_DIM; i += BLOCK_ROWS)
             {
                 if (i_x < nx && (i_y + i) < ny * N)
@@ -307,8 +307,8 @@ __global__ void shift_powspec_kernel(double *d_in,
             }
             __syncthreads();
 
-            unsigned long long curr_y;
-            unsigned long long shift_x, shift_y;
+            unsigned long int curr_y;
+            unsigned long int shift_x, shift_y;
             for (i = 0; i < TILE_DIM; i += BLOCK_ROWS)
             {
                 if (i_x < nx && (i_y + i) < ny * N)
@@ -327,11 +327,11 @@ __global__ void shift_powspec_kernel(double *d_in,
     Compute square modulus of complex array
 */
 __global__ void square_modulus_kernel(double2 *d_in,
-                                      unsigned long long length,
-                                      unsigned long long pitch,
-                                      unsigned long long N)
+                                      unsigned long int length,
+                                      unsigned long int pitch,
+                                      unsigned long int N)
 {
-    for (unsigned long long i = blockIdx.x * blockDim.x + threadIdx.x; i < N; i += blockDim.x * gridDim.x)
+    for (unsigned long int i = blockIdx.x * blockDim.x + threadIdx.x; i < N; i += blockDim.x * gridDim.x)
     {
         if (i - (i / pitch) * pitch < length)
         {
@@ -345,16 +345,16 @@ __global__ void square_modulus_kernel(double2 *d_in,
     Copy real part of element into imaginary part of opposite element
  */
 __global__ void real2imagopposite_kernel(double2 *d_arr,
-                                         unsigned long long length,
-                                         unsigned long long pitch,
-                                         unsigned long long N)
+                                         unsigned long int length,
+                                         unsigned long int pitch,
+                                         unsigned long int N)
 {
-    for (unsigned long long i = blockIdx.x * blockDim.x + threadIdx.x; i < N; i += blockDim.x * gridDim.x)
+    for (unsigned long int i = blockIdx.x * blockDim.x + threadIdx.x; i < N; i += blockDim.x * gridDim.x)
     {
-        unsigned long long el = i / pitch;
+        unsigned long int el = i / pitch;
         if (i - el * pitch < length)
         {
-            unsigned long long idx = el * pitch + (length - 1) - (i - el * pitch);
+            unsigned long int idx = el * pitch + (length - 1) - (i - el * pitch);
             d_arr[i].y = d_arr[idx].x;
         }
     }
@@ -364,27 +364,27 @@ __global__ void real2imagopposite_kernel(double2 *d_arr,
     Do final linear combination c[i] = (a[0] - b[i].x - 2 * a[i]) / (length - i)
  */
 __global__ void linear_combination_final_kernel(double2 *c,
-                                                unsigned long long pitch_c,
+                                                unsigned long int pitch_c,
                                                 double2 *a,
-                                                unsigned long long pitch_a,
+                                                unsigned long int pitch_a,
                                                 double2 *b,
-                                                unsigned long long pitch_b,
-                                                unsigned long long length,
-                                                unsigned long long N)
+                                                unsigned long int pitch_b,
+                                                unsigned long int length,
+                                                unsigned long int N)
 {
     __shared__ double a0;
 
-    for (unsigned long long blockID = blockIdx.x; blockID < N; blockID += gridDim.x)
+    for (unsigned long int blockID = blockIdx.x; blockID < N; blockID += gridDim.x)
     {
-        unsigned long long blockOffset_a = blockID * pitch_a;
-        unsigned long long blockOffset_b = blockID * pitch_b;
-        unsigned long long blockOffset_c = blockID * pitch_c;
+        unsigned long int blockOffset_a = blockID * pitch_a;
+        unsigned long int blockOffset_b = blockID * pitch_b;
+        unsigned long int blockOffset_c = blockID * pitch_c;
 
         // read first value of fft corr
         a0 = 2.0 * a[blockOffset_a].x;
         __syncthreads();
 
-        for (unsigned long long threadID = threadIdx.x; threadID < length; threadID += blockDim.x)
+        for (unsigned long int threadID = threadIdx.x; threadID < length; threadID += blockDim.x)
         {
             double da = b[blockOffset_b + threadID].x;
             double dc = a[blockOffset_a + threadID].x;
@@ -399,19 +399,19 @@ __global__ void linear_combination_final_kernel(double2 *c,
 __global__ void copy_selected_lags_kernel(double2 *d_in,
                                           double2 *d_out,
                                           unsigned int *d_lags,
-                                          unsigned long long Nlags,
-                                          unsigned long long ipitch,
-                                          unsigned long long opitch,
-                                          unsigned long long N)
+                                          unsigned long int Nlags,
+                                          unsigned long int ipitch,
+                                          unsigned long int opitch,
+                                          unsigned long int N)
 {
-    for (unsigned long long blockID = blockIdx.x; blockID < N; blockID += gridDim.x)
+    for (unsigned long int blockID = blockIdx.x; blockID < N; blockID += gridDim.x)
     {
-        unsigned long long blockOffsetIn = blockID * ipitch;
-        unsigned long long blockOffsetOut = blockID * opitch;
+        unsigned long int blockOffsetIn = blockID * ipitch;
+        unsigned long int blockOffsetOut = blockID * opitch;
 
-        for (unsigned long long threadID = threadIdx.x; threadID < Nlags; threadID += blockDim.x)
+        for (unsigned long int threadID = threadIdx.x; threadID < Nlags; threadID += blockDim.x)
         {
-            d_out[blockOffsetOut + threadID] = d_in[blockOffsetIn + d_lags[threadID]];
+            d_out[blockOffsetOut + threadID] = d_in[blockOffsetIn + (unsigned long int)(d_lags[threadID])];
         }
     }
 }

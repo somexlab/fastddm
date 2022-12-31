@@ -21,9 +21,9 @@
  */
 void scanManyLargeArrays(double *output,
                          double *input,
-                         unsigned long long length,
-                         unsigned long long dist,
-                         unsigned long long N);
+                         unsigned long int length,
+                         unsigned long int dist,
+                         unsigned long int N);
 
 /*! \brief Scan multiple large even arrays on the GPU
     \param output   Output array
@@ -35,10 +35,10 @@ void scanManyLargeArrays(double *output,
  */
 void scanManyLargeEvenArrays(double *output,
                              double *input,
-                             unsigned long long length,
-                             unsigned long long dist,
-                             unsigned long long Nx,
-                             unsigned long long N);
+                             unsigned long int length,
+                             unsigned long int dist,
+                             unsigned long int Nx,
+                             unsigned long int N);
 
 /*! \brief Scan multiple small arrays on the GPU
     \param output   Output array
@@ -49,9 +49,9 @@ void scanManyLargeEvenArrays(double *output,
  */
 void scanManySmallArrays(double *output,
                          double *input,
-                         unsigned long long length,
-                         unsigned long long dist,
-                         unsigned long long N);
+                         unsigned long int length,
+                         unsigned long int dist,
+                         unsigned long int N);
 
 /*! \brief Compute cumulative sum on multiple subarrays on the GPU
     \param output   Output array
@@ -62,9 +62,9 @@ void scanManySmallArrays(double *output,
  */
 void scan_wrap(double *output,
                double *input,
-               unsigned long long length,
-               unsigned long long dist,
-               unsigned long long N);
+               unsigned long int length,
+               unsigned long int dist,
+               unsigned long int N);
 
 /*! \brief Compute cumulative sum on multiple even portions of the subarrays on the GPU
     \param output   Output array
@@ -77,10 +77,10 @@ void scan_wrap(double *output,
  */
 __global__ void prescan_many_even_kernel(double *output,
                                          double *input,
-                                         unsigned long long dist,
-                                         unsigned long long Nx,
-                                         unsigned long long NxNy,
-                                         unsigned long long n,
+                                         unsigned long int dist,
+                                         unsigned long int Nx,
+                                         unsigned long int NxNy,
+                                         unsigned long int n,
                                          double *sums);
 
 /*! \brief Compute cumulative sum on multiple arbitrary (small) portions of the subarrays on the GPU
@@ -93,10 +93,10 @@ __global__ void prescan_many_even_kernel(double *output,
  */
 __global__ void prescan_many_arbitrary_kernel(double *output,
                                               double *input,
-                                              unsigned long long dist,
-                                              unsigned long long N,
-                                              unsigned long long n,
-                                              unsigned long long powerOfTwo);
+                                              unsigned long int dist,
+                                              unsigned long int N,
+                                              unsigned long int n,
+                                              unsigned long int powerOfTwo);
 
 /*! \brief Add block dependent constant value to every element in the block
     \param output       Output array
@@ -107,10 +107,10 @@ __global__ void prescan_many_arbitrary_kernel(double *output,
     \param a            Constant
  */
 __global__ void add_many_kernel(double *output,
-                                unsigned long long dist,
-                                unsigned long long Nx,
-                                unsigned long long NxNy,
-                                unsigned long long n,
+                                unsigned long int dist,
+                                unsigned long int Nx,
+                                unsigned long int NxNy,
+                                unsigned long int n,
                                 double *a);
 
 /*! \brief Add two block dependent constant values to every element in the block
@@ -123,10 +123,10 @@ __global__ void add_many_kernel(double *output,
     \param a2           Constant 2
  */
 __global__ void add_many_kernel(double *output,
-                                unsigned long long dist,
-                                unsigned long long Nx,
-                                unsigned long long NxNy,
-                                unsigned long long n,
+                                unsigned long int dist,
+                                unsigned long int Nx,
+                                unsigned long int NxNy,
+                                unsigned long int n,
                                 double *a1,
                                 double *a2);
 
@@ -138,12 +138,12 @@ __global__ void add_many_kernel(double *output,
  */
 __global__ void copy_every_kernel(double *output,
                                   double *input,
-                                  unsigned long long dist,
-                                  unsigned long long N);
+                                  unsigned long int dist,
+                                  unsigned long int N);
 
 /*! \brief Compute next power of two larger or equal to n
     \param n    Target
  */
-unsigned long long nextPowerOfTwo(unsigned long long n);
+unsigned long int nextPowerOfTwo(unsigned long int n);
 
 #endif
