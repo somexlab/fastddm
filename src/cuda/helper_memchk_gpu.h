@@ -50,7 +50,7 @@ void get_device_free_mem(unsigned long long &free_mem);
     \param N        subarray size
     \param Nbytes   element size in bytes
  */
-unsigned long long get_device_pitch(unsigned long long N,
+unsigned long long get_device_pitch(size_t N,
                                     int Nbytes);
 
 /*! \brief Get the device memory for fft2
@@ -58,18 +58,18 @@ unsigned long long get_device_pitch(unsigned long long N,
     \param ny   number of fft nodes in y direction
     \param nt   number of elements (in t direction)
  */
-unsigned long long get_device_fft2_mem(unsigned long long nx,
-                                       unsigned long long ny,
-                                       unsigned long long nt);
+unsigned long long get_device_fft2_mem(size_t nx,
+                                       size_t ny,
+                                       size_t nt);
 
 /*! \brief Get the device memory for fft
     \param nt       number of fft nodes in t direction
     \param N        number of elements
     \param pitch    pitch of input array
  */
-unsigned long long get_device_fft_mem(unsigned long long nt,
-                                      unsigned long long N,
-                                      unsigned long long pitch);
+unsigned long long get_device_fft_mem(size_t nt,
+                                      size_t N,
+                                      size_t pitch);
 
 /*! \brief Estimate device memory needed for direct mode and optimize
     \param width            Width of the image
@@ -96,13 +96,13 @@ void chk_device_mem_direct(unsigned long long width,
                            unsigned long long length,
                            vector<unsigned int> lags,
                            bool is_input_double,
-                           unsigned long long &num_fft2,
-                           unsigned long long &num_chunks,
-                           unsigned long long &num_fullshift,
-                           unsigned long long &pitch_buff,
-                           unsigned long long &pitch_q,
-                           unsigned long long &pitch_t,
-                           unsigned long long &pitch_fs);
+                           size_t &num_fft2,
+                           size_t &num_chunks,
+                           size_t &num_fullshift,
+                           size_t &pitch_buff,
+                           size_t &pitch_q,
+                           size_t &pitch_t,
+                           size_t &pitch_fs);
 
 /*! \brief Estimate device memory needed for fft mode and optimize
     \param width            Width of the image
@@ -132,13 +132,13 @@ void chk_device_mem_fft(unsigned long long width,
                         unsigned long long length,
                         vector<unsigned int> lags,
                         bool is_input_double,
-                        unsigned long long &num_fft2,
-                        unsigned long long &num_chunks,
-                        unsigned long long &num_fullshift,
-                        unsigned long long &pitch_buff,
-                        unsigned long long &pitch_q,
-                        unsigned long long &pitch_t,
-                        unsigned long long &pitch_nt,
-                        unsigned long long &pitch_fs);
+                        size_t &num_fft2,
+                        size_t &num_chunks,
+                        size_t &num_fullshift,
+                        size_t &pitch_buff,
+                        size_t &pitch_q,
+                        size_t &pitch_t,
+                        size_t &pitch_nt,
+                        size_t &pitch_fs);
 
 #endif
