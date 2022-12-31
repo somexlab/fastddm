@@ -29,13 +29,13 @@ using namespace std;
 template <typename T>
 void compute_fft2(const T *h_in,
                   double *h_out,
-                  size_t width,
-                  size_t height,
-                  size_t length,
-                  size_t nx,
-                  size_t ny,
-                  size_t num_fft2,
-                  size_t buff_pitch);
+                  unsigned long long width,
+                  unsigned long long height,
+                  unsigned long long length,
+                  unsigned long long nx,
+                  unsigned long long ny,
+                  unsigned long long num_fft2,
+                  unsigned long long buff_pitch);
 
 /*! \brief Compute Image Structure Function using differences on the GPU
     \param h_in         input array of Fourier transformed images
@@ -49,12 +49,12 @@ void compute_fft2(const T *h_in,
  */
 void correlate_direct(double *h_in,
                       vector<unsigned int> lags,
-                      size_t length,
-                      size_t nx,
-                      size_t ny,
-                      size_t num_chunks,
-                      size_t pitch_q,
-                      size_t pitch_t);
+                      unsigned long long length,
+                      unsigned long long nx,
+                      unsigned long long ny,
+                      unsigned long long num_chunks,
+                      unsigned long long pitch_q,
+                      unsigned long long pitch_t);
 
 /*! \brief Convert to full and fftshifted Image Structure Function on the GPU
     \param h_in             input array after structure function calculation
@@ -66,10 +66,10 @@ void correlate_direct(double *h_in,
  */
 void make_full_shift(double *h_in,
                      vector<unsigned int> lags,
-                     size_t nx,
-                     size_t ny,
-                     size_t num_fullshift,
-                     size_t pitch_fs);
+                     unsigned long long nx,
+                     unsigned long long ny,
+                     unsigned long long num_fullshift,
+                     unsigned long long pitch_fs);
 
 /*! \brief Compute Image Structure Factor using the WK theorem on the GPU
     \param h_in         input array of Fourier transformed images
@@ -85,13 +85,13 @@ void make_full_shift(double *h_in,
  */
 void correlate_fft(double *h_in,
                    vector<unsigned int> lags,
-                   size_t length,
-                   size_t nx,
-                   size_t ny,
-                   size_t nt,
-                   size_t num_chunks,
-                   size_t pitch_q,
-                   size_t pitch_t,
-                   size_t pitch_nt);
+                   unsigned long long length,
+                   unsigned long long nx,
+                   unsigned long long ny,
+                   unsigned long long nt,
+                   unsigned long long num_chunks,
+                   unsigned long long pitch_q,
+                   unsigned long long pitch_t,
+                   unsigned long long pitch_nt);
 
 #endif

@@ -23,8 +23,8 @@
 #define CUFFTCOMPLEX cufftDoubleComplex
 
 // *** code ***
-const unsigned int TILE_DIM = 32;  // leave this unchanged!! (tile dimension for matrix transpose)
-const unsigned int BLOCK_ROWS = 8; // leave this unchanged!! (block rows for matrix transpose)
+const unsigned long long TILE_DIM = 32;  // leave this unchanged!! (tile dimension for matrix transpose)
+const unsigned long long BLOCK_ROWS = 8; // leave this unchanged!! (block rows for matrix transpose)
 
 /*!
     Transfer images on GPU and compute fft2
@@ -32,18 +32,18 @@ const unsigned int BLOCK_ROWS = 8; // leave this unchanged!! (block rows for mat
 template <typename T>
 void compute_fft2(const T *h_in,
                   double *h_out,
-                  size_t width,
-                  size_t height,
-                  size_t length,
-                  size_t nx,
-                  size_t ny,
-                  size_t num_fft2,
-                  size_t buff_pitch)
+                  unsigned long long width,
+                  unsigned long long height,
+                  unsigned long long length,
+                  unsigned long long nx,
+                  unsigned long long ny,
+                  unsigned long long num_fft2,
+                  unsigned long long buff_pitch)
 {
     // compute half width of fft2
-    size_t _nx = nx / 2 + 1;
+    unsigned long long _nx = nx / 2 + 1;
     // compute batch number of fft2
-    size_t batch = (length - 1) / num_fft2 + 1;
+    unsigned long long batch = (length - 1) / num_fft2 + 1;
     // compute fft2 normalizaton factor
     double norm_fact = 1.0 / sqrt((double)(nx * ny));
 
@@ -79,7 +79,7 @@ void compute_fft2(const T *h_in,
     gridSize_scale = (2 * _nx * ny * batch + blockSize_scale - 1) / blockSize_scale;
 
     // ***Batched fft2
-    for (size_t ii = 0; ii < num_fft2; ii++)
+    for (unsigned long long ii = 0; ii < num_fft2; ii++)
     {
         // rezero workspace array
         gpuErrchk(cudaMemset(d_workspace, 0.0, 2 * _nx * ny * batch * sizeof(double)));
@@ -89,7 +89,7 @@ void compute_fft2(const T *h_in,
         {
             // copy values directly to workspace with zero padding
             // number of images to copy
-            size_t num_imgs_copy = (ii + 1) * batch > length ? length - ii * batch : batch;
+            unsigned long long num_imgs_copy = (ii + 1) * batch > length ? length - ii * batch : batch;
             // use cudaMemcpy3D
             cudaMemcpy3DParms params = {0};
             params.srcArray = NULL;
@@ -109,9 +109,9 @@ void compute_fft2(const T *h_in,
             gpuErrchk(cudaMemset(d_buff, (T)0, buff_pitch * height * batch * sizeof(T)));
 
             // offset index
-            size_t offset = ii * width * height * batch;
+            unsigned long long offset = ii * width * height * batch;
             // number of rows to copy
-            size_t num_rows_copy = (ii + 1) * batch > length ? height * (length - ii * batch) : height * batch;
+            unsigned long long num_rows_copy = (ii + 1) * batch > length ? height * (length - ii * batch) : height * batch;
             // copy values to buffer
             gpuErrchk(cudaMemcpy2D(d_buff, buff_pitch * sizeof(T), h_in + offset, width * sizeof(T), width * sizeof(T), num_rows_copy, cudaMemcpyHostToDevice));
 
@@ -132,9 +132,9 @@ void compute_fft2(const T *h_in,
 
         // ***Normalize fft2
         // Starting index
-        size_t start = 2 * ii * _nx * ny * batch;
+        unsigned long long start = 2 * ii * _nx * ny * batch;
         // Final index (if exceeds array size, truncate)
-        size_t end = (ii + 1) * batch > length ? 2 * length * _nx * ny : 2 * (ii + 1) * _nx * ny * batch;
+        unsigned long long end = (ii + 1) * batch > length ? 2 * length * _nx * ny : 2 * (ii + 1) * _nx * ny * batch;
         // scale array
         scale_array_kernel<<<gridSize_scale, blockSize_scale>>>(d_workspace,
                                                                 norm_fact,
@@ -151,35 +151,35 @@ void compute_fft2(const T *h_in,
     cufftSafeCall(cufftDestroy(fft2_plan));
 }
 
-template void compute_fft2<double>(const double *h_in, double *h_out, size_t width, size_t height, size_t length, size_t nx, size_t ny, size_t num_fft2, size_t buff_pitch);
-template void compute_fft2<float>(const float *h_in, double *h_out, size_t width, size_t height, size_t length, size_t nx, size_t ny, size_t num_fft2, size_t buff_pitch);
-template void compute_fft2<int64_t>(const int64_t *h_in, double *h_out, size_t width, size_t height, size_t length, size_t nx, size_t ny, size_t num_fft2, size_t buff_pitch);
-template void compute_fft2<int32_t>(const int32_t *h_in, double *h_out, size_t width, size_t height, size_t length, size_t nx, size_t ny, size_t num_fft2, size_t buff_pitch);
-template void compute_fft2<int16_t>(const int16_t *h_in, double *h_out, size_t width, size_t height, size_t length, size_t nx, size_t ny, size_t num_fft2, size_t buff_pitch);
-template void compute_fft2<u_int64_t>(const u_int64_t *h_in, double *h_out, size_t width, size_t height, size_t length, size_t nx, size_t ny, size_t num_fft2, size_t buff_pitch);
-template void compute_fft2<u_int32_t>(const u_int32_t *h_in, double *h_out, size_t width, size_t height, size_t length, size_t nx, size_t ny, size_t num_fft2, size_t buff_pitch);
-template void compute_fft2<u_int16_t>(const u_int16_t *h_in, double *h_out, size_t width, size_t height, size_t length, size_t nx, size_t ny, size_t num_fft2, size_t buff_pitch);
-template void compute_fft2<u_int8_t>(const u_int8_t *h_in, double *h_out, size_t width, size_t height, size_t length, size_t nx, size_t ny, size_t num_fft2, size_t buff_pitch);
+template void compute_fft2<double>(const double *h_in, double *h_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch);
+template void compute_fft2<float>(const float *h_in, double *h_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch);
+template void compute_fft2<int64_t>(const int64_t *h_in, double *h_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch);
+template void compute_fft2<int32_t>(const int32_t *h_in, double *h_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch);
+template void compute_fft2<int16_t>(const int16_t *h_in, double *h_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch);
+template void compute_fft2<u_int64_t>(const u_int64_t *h_in, double *h_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch);
+template void compute_fft2<u_int32_t>(const u_int32_t *h_in, double *h_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch);
+template void compute_fft2<u_int16_t>(const u_int16_t *h_in, double *h_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch);
+template void compute_fft2<u_int8_t>(const u_int8_t *h_in, double *h_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch);
 
 /*!
     Compute Image Structure Factor using differences on the GPU
  */
 void correlate_direct(double *h_in,
                       vector<unsigned int> lags,
-                      size_t length,
-                      size_t nx,
-                      size_t ny,
-                      size_t num_chunks,
-                      size_t pitch_q,
-                      size_t pitch_t)
+                      unsigned long long length,
+                      unsigned long long nx,
+                      unsigned long long ny,
+                      unsigned long long num_chunks,
+                      unsigned long long pitch_q,
+                      unsigned long long pitch_t)
 {
-    size_t _nx = nx / 2 + 1;                             // fft2 r2c number of complex elements over x
-    size_t chunk_size = (_nx * ny - 1) / num_chunks + 1; // number of q points in a chunk
+    unsigned long long _nx = nx / 2 + 1;                             // fft2 r2c number of complex elements over x
+    unsigned long long chunk_size = (_nx * ny - 1) / num_chunks + 1; // number of q points in a chunk
 
     // ***Allocate space on device
     // workspaces
     double *d_workspace1, *d_workspace2;
-    size_t workspace_size = max(pitch_q * length, chunk_size * pitch_t) * 2 * sizeof(double);
+    unsigned long long workspace_size = max(pitch_q * length, chunk_size * pitch_t) * 2 * sizeof(double);
     gpuErrchk(cudaMalloc(&d_workspace1, workspace_size));
     gpuErrchk(cudaMalloc(&d_workspace2, workspace_size));
     // helper arrays
@@ -193,34 +193,34 @@ void correlate_direct(double *h_in,
     int maxGridSizeX, maxGridSizeY;
     gpuErrchk(cudaDeviceGetAttribute(&maxGridSizeX, cudaDevAttrMaxGridDimX, 0)); // gpu id fixed to 0 for now
     gpuErrchk(cudaDeviceGetAttribute(&maxGridSizeY, cudaDevAttrMaxGridDimY, 0)); // gpu id fixed to 0 for now
-    int gridSize_tran1_x = min((chunk_size + TILE_DIM - 1) / TILE_DIM, (size_t)maxGridSizeX);
-    int gridSize_tran1_y = min((length + TILE_DIM - 1) / TILE_DIM, (size_t)maxGridSizeY);
+    int gridSize_tran1_x = min((chunk_size + TILE_DIM - 1) / TILE_DIM, (unsigned long long)maxGridSizeX);
+    int gridSize_tran1_y = min((length + TILE_DIM - 1) / TILE_DIM, (unsigned long long)maxGridSizeY);
     dim3 gridSize_tran1(gridSize_tran1_x, gridSize_tran1_y, 1);
-    int gridSize_tran2_x = min((lags.size() + TILE_DIM - 1) / TILE_DIM, (size_t)maxGridSizeX);
-    int gridSize_tran2_y = min((chunk_size + TILE_DIM - 1) / TILE_DIM, (size_t)maxGridSizeY);
+    int gridSize_tran2_x = min(((unsigned long long)(lags.size()) + TILE_DIM - 1) / TILE_DIM, (unsigned long long)maxGridSizeX);
+    int gridSize_tran2_y = min((chunk_size + TILE_DIM - 1) / TILE_DIM, (unsigned long long)maxGridSizeY);
     dim3 gridSize_tran2(gridSize_tran2_x, gridSize_tran2_y, 1);
 
     // correlation part
-    int blockSize_corr = min(nextPowerOfTwo(length), 512UL);
-    int gridSize_corr_x = min((lags.size() + (size_t)blockSize_corr - 1) / (size_t)blockSize_corr, (size_t)maxGridSizeX);
-    int gridSize_corr_y = min(chunk_size, (size_t)maxGridSizeY);
+    int blockSize_corr = min(nextPowerOfTwo(length), 512ULL);
+    int gridSize_corr_x = min(((unsigned long long)(lags.size()) + blockSize_corr - 1) / blockSize_corr, (unsigned long long)maxGridSizeX);
+    int gridSize_corr_y = min(chunk_size, (unsigned long long)maxGridSizeY);
     dim3 gridSize_corr(gridSize_corr_x, gridSize_corr_y, 1);
-    int smemSize = (blockSize_corr <= 32) ? 2 * blockSize_corr * sizeof(double) : blockSize_corr * sizeof(double);
+    int smemSize = (blockSize_corr <= 32) ? 2ULL * blockSize_corr * sizeof(double) : 1ULL * blockSize_corr * sizeof(double);
 
     // ***Loop over chunks
-    for (size_t chunk = 0; chunk < num_chunks; chunk++)
+    for (unsigned long long chunk = 0; chunk < num_chunks; chunk++)
     {
         // ***Get start and end q values
-        size_t q_start = chunk * chunk_size;
-        size_t q_end = (chunk + 1) * chunk_size < _nx * ny ? (chunk + 1) * chunk_size : _nx * ny;
-        size_t curr_chunk_size = q_end - q_start;
+        unsigned long long q_start = chunk * chunk_size;
+        unsigned long long q_end = (chunk + 1) * chunk_size < _nx * ny ? (chunk + 1) * chunk_size : _nx * ny;
+        unsigned long long curr_chunk_size = q_end - q_start;
 
         if (curr_chunk_size != chunk_size)
         {
             // if chunk size changes, modify kernel execution parameters for transpose
-            gridSize_tran1.x = min((curr_chunk_size + TILE_DIM - 1) / TILE_DIM, (size_t)maxGridSizeX);
-            gridSize_tran2.y = min((curr_chunk_size + TILE_DIM - 1) / TILE_DIM, (size_t)maxGridSizeY);
-            gridSize_corr.y = min(curr_chunk_size, (size_t)maxGridSizeY);
+            gridSize_tran1.x = min((curr_chunk_size + TILE_DIM - 1) / TILE_DIM, (unsigned long long)maxGridSizeX);
+            gridSize_tran2.y = min((curr_chunk_size + TILE_DIM - 1) / TILE_DIM, (unsigned long long)maxGridSizeY);
+            gridSize_corr.y = min(curr_chunk_size, (unsigned long long)maxGridSizeY);
         }
 
         // ***Copy values from host to device
@@ -298,13 +298,13 @@ void correlate_direct(double *h_in,
  */
 void make_full_shift(double *h_in,
                      vector<unsigned int> lags,
-                     size_t nx,
-                     size_t ny,
-                     size_t num_fullshift,
-                     size_t pitch_fs)
+                     unsigned long long nx,
+                     unsigned long long ny,
+                     unsigned long long num_fullshift,
+                     unsigned long long pitch_fs)
 {
-    size_t _nx = nx / 2 + 1;                                   // fft2 r2c number of complex elements over x
-    size_t chunk_size = (lags.size() - 1) / num_fullshift + 1; // number of lags in a chunk
+    unsigned long long _nx = nx / 2 + 1;                                   // fft2 r2c number of complex elements over x
+    unsigned long long chunk_size = (lags.size() - 1) / num_fullshift + 1; // number of lags in a chunk
 
     // ***Allocate space on device
     // workspaces
@@ -317,25 +317,25 @@ void make_full_shift(double *h_in,
     int maxGridSizeX, maxGridSizeY;
     gpuErrchk(cudaDeviceGetAttribute(&maxGridSizeX, cudaDevAttrMaxGridDimX, 0)); // gpu id fixed to 0 for now
     gpuErrchk(cudaDeviceGetAttribute(&maxGridSizeY, cudaDevAttrMaxGridDimY, 0)); // gpu id fixed to 0 for now
-    int gridSize_full_x = min((_nx + TILE_DIM - 1) / TILE_DIM, (size_t)maxGridSizeX);
-    int gridSize_full_y = min((ny * chunk_size + TILE_DIM - 1) / TILE_DIM, (size_t)maxGridSizeY);
+    int gridSize_full_x = min((_nx + TILE_DIM - 1) / TILE_DIM, (unsigned long long)maxGridSizeX);
+    int gridSize_full_y = min((ny * chunk_size + TILE_DIM - 1) / TILE_DIM, (unsigned long long)maxGridSizeY);
     dim3 gridSize_full(gridSize_full_x, gridSize_full_y, 1);
-    int gridSize_shift_x = min((nx + TILE_DIM - 1) / TILE_DIM, (size_t)maxGridSizeX);
-    int gridSize_shift_y = min((ny * chunk_size + TILE_DIM - 1) / TILE_DIM, (size_t)maxGridSizeY);
+    int gridSize_shift_x = min((nx + TILE_DIM - 1) / TILE_DIM, (unsigned long long)maxGridSizeX);
+    int gridSize_shift_y = min((ny * chunk_size + TILE_DIM - 1) / TILE_DIM, (unsigned long long)maxGridSizeY);
     dim3 gridSize_shift(gridSize_shift_x, gridSize_shift_y, 1);
 
     // ***Loop over chunks
-    for (size_t chunk = 0; chunk < num_fullshift; chunk++)
+    for (unsigned long long chunk = 0; chunk < num_fullshift; chunk++)
     {
         // Get input offset
-        size_t ioffset = chunk * chunk_size * 2 * _nx * ny;
+        unsigned long long ioffset = chunk * chunk_size * 2 * _nx * ny;
         // Get current chunk size
-        size_t curr_chunk_size = (chunk + 1) * chunk_size > lags.size() ? lags.size() - chunk * chunk_size : chunk_size;
+        unsigned long long curr_chunk_size = (chunk + 1) * chunk_size > (unsigned long long)(lags.size()) ? lags.size() - chunk * chunk_size : chunk_size;
 
         if (curr_chunk_size != chunk_size)
         {
-            gridSize_full_y = min((ny * curr_chunk_size + TILE_DIM - 1) / TILE_DIM, (size_t)maxGridSizeY);
-            gridSize_shift_y = min((ny * curr_chunk_size + TILE_DIM - 1) / TILE_DIM, (size_t)maxGridSizeY);
+            gridSize_full_y = min((ny * curr_chunk_size + TILE_DIM - 1) / TILE_DIM, (unsigned long long)maxGridSizeY);
+            gridSize_shift_y = min((ny * curr_chunk_size + TILE_DIM - 1) / TILE_DIM, (unsigned long long)maxGridSizeY);
             gridSize_full.y = gridSize_full_y;
             gridSize_shift.y = gridSize_shift_y;
         }
@@ -377,7 +377,7 @@ void make_full_shift(double *h_in,
 
         // ***Copy values from device to host (make contiguous on memory)
         // Get output offset
-        size_t ooffset = chunk * chunk_size * nx * ny;
+        unsigned long long ooffset = chunk * chunk_size * nx * ny;
         gpuErrchk(cudaMemcpy2D(h_in + ooffset,
                                nx * sizeof(double),
                                d_workspace1,
@@ -397,24 +397,24 @@ void make_full_shift(double *h_in,
  */
 void correlate_fft(double *h_in,
                    vector<unsigned int> lags,
-                   size_t length,
-                   size_t nx,
-                   size_t ny,
-                   size_t nt,
-                   size_t num_chunks,
-                   size_t pitch_q,
-                   size_t pitch_t,
-                   size_t pitch_nt)
+                   unsigned long long length,
+                   unsigned long long nx,
+                   unsigned long long ny,
+                   unsigned long long nt,
+                   unsigned long long num_chunks,
+                   unsigned long long pitch_q,
+                   unsigned long long pitch_t,
+                   unsigned long long pitch_nt)
 {
-    size_t _nx = nx / 2 + 1;                             // fft2 r2c number of complex elements over x
-    size_t chunk_size = (_nx * ny - 1) / num_chunks + 1; // number of q points in a chunk
+    unsigned long long _nx = nx / 2 + 1;                             // fft2 r2c number of complex elements over x
+    unsigned long long chunk_size = (_nx * ny - 1) / num_chunks + 1; // number of q points in a chunk
 
     // ***Allocate memory on device for fft
     double *d_workspace1, *d_workspace2;
     // To speed up memory trasfer and meet the alignment requirements for coalescing,
     // we space each subarray by pitch1 (over q) or pitch2 (over t)
     gpuErrchk(cudaMalloc(&d_workspace1, chunk_size * pitch_nt * 2 * sizeof(double)));
-    size_t workspace2_size = max(chunk_size * pitch_t, pitch_q * length);
+    unsigned long long workspace2_size = max(chunk_size * pitch_t, pitch_q * length);
     gpuErrchk(cudaMalloc(&d_workspace2, workspace2_size * 2 * sizeof(double)));
 
     // helper arrays
@@ -438,11 +438,11 @@ void correlate_fft(double *h_in,
     int maxGridSizeX, maxGridSizeY;
     gpuErrchk(cudaDeviceGetAttribute(&maxGridSizeX, cudaDevAttrMaxGridDimX, 0)); // gpu id fixed to 0 for now
     gpuErrchk(cudaDeviceGetAttribute(&maxGridSizeY, cudaDevAttrMaxGridDimY, 0)); // gpu id fixed to 0 for now
-    int gridSize_tran1_x = min((chunk_size + TILE_DIM - 1) / TILE_DIM, (size_t)maxGridSizeX);
-    int gridSize_tran1_y = min((length + TILE_DIM - 1) / TILE_DIM, (size_t)maxGridSizeY);
+    int gridSize_tran1_x = min((chunk_size + TILE_DIM - 1) / TILE_DIM, (unsigned long long)maxGridSizeX);
+    int gridSize_tran1_y = min((length + TILE_DIM - 1) / TILE_DIM, (unsigned long long)maxGridSizeY);
     dim3 gridSize_tran1(gridSize_tran1_x, gridSize_tran1_y, 1);
-    int gridSize_tran2_x = min((lags.size() + TILE_DIM - 1) / TILE_DIM, (size_t)maxGridSizeX);
-    int gridSize_tran2_y = min((chunk_size + TILE_DIM - 1) / TILE_DIM, (size_t)maxGridSizeY);
+    int gridSize_tran2_x = min(((unsigned long long)(lags.size()) + TILE_DIM - 1) / TILE_DIM, (unsigned long long)maxGridSizeX);
+    int gridSize_tran2_y = min((chunk_size + TILE_DIM - 1) / TILE_DIM, (unsigned long long)maxGridSizeY);
     dim3 gridSize_tran2(gridSize_tran2_x, gridSize_tran2_y, 1);
 
     // square_modulus_kernel
@@ -451,37 +451,37 @@ void correlate_fft(double *h_in,
     int gridSize_sqmod2;
     gpuErrchk(cudaOccupancyMaxPotentialBlockSize(&minGridSize, &blockSize_sqmod, square_modulus_kernel, 0, 0));
     // Round up according to array size
-    gridSize_sqmod1 = min((chunk_size * pitch_nt / 2 + blockSize_sqmod - 1) / blockSize_sqmod, 32 * (size_t)numSMs);
-    gridSize_sqmod2 = min((chunk_size * pitch_t / 2 + blockSize_sqmod - 1) / blockSize_sqmod, 32 * (size_t)numSMs);
+    gridSize_sqmod1 = min((chunk_size * pitch_nt / 2 + blockSize_sqmod - 1) / blockSize_sqmod, 32ULL * numSMs);
+    gridSize_sqmod2 = min((chunk_size * pitch_t / 2 + blockSize_sqmod - 1) / blockSize_sqmod, 32ULL * numSMs);
 
     // scale_array_kernel
     int blockSize_scale; // The launch configurator returned block size
     int gridSize_scale;  // The actual grid size needed, based on input size
     gpuErrchk(cudaOccupancyMaxPotentialBlockSize(&minGridSize, &blockSize_scale, scale_array_kernel, 0, 0));
     // Round up according to array size
-    gridSize_scale = min((2 * chunk_size * pitch_nt + blockSize_scale - 1) / blockSize_scale, 32 * (size_t)numSMs);
+    gridSize_scale = min((2 * chunk_size * pitch_nt + blockSize_scale - 1) / blockSize_scale, 32ULL * numSMs);
 
     // linear_combination_final_kernel
     int blockSize_final; // The launch configurator returned block size
     int gridSize_final;  // The actual grid size needed, based on input size
     gpuErrchk(cudaOccupancyMaxPotentialBlockSize(&minGridSize, &blockSize_final, linear_combination_final_kernel, 0, 0));
     // Round up according to array size
-    gridSize_final = min(chunk_size, 32 * (size_t)numSMs);
+    gridSize_final = min(chunk_size, 32ULL * numSMs);
 
     // copy_selected_lags_kernel
     int blockSize_copy; // The launch configurator returned block size
     int gridSize_copy;  // The actual grid size needed, based on input size
     gpuErrchk(cudaOccupancyMaxPotentialBlockSize(&minGridSize, &blockSize_copy, copy_selected_lags_kernel, 0, 0));
     // Round up according to array size
-    gridSize_copy = min(chunk_size, 32 * (size_t)numSMs);
+    gridSize_copy = min(chunk_size, 32ULL * numSMs);
 
     // ***Loop over the chunks
-    for (size_t chunk = 0; chunk < num_chunks; chunk++)
+    for (unsigned long long chunk = 0; chunk < num_chunks; chunk++)
     {
         // ***Get initial and final q indices
-        size_t q_start = chunk * chunk_size;
-        size_t q_end = (chunk + 1) * chunk_size < _nx * ny ? (chunk + 1) * chunk_size : _nx * ny;
-        size_t curr_chunk_size = q_end - q_start;
+        unsigned long long q_start = chunk * chunk_size;
+        unsigned long long q_end = (chunk + 1) * chunk_size < _nx * ny ? (chunk + 1) * chunk_size : _nx * ny;
+        unsigned long long curr_chunk_size = q_end - q_start;
 
         // ***Check if fft plans are still ok (batch number must be the same as previous one)
         // This may be true during the very last iteration only
@@ -494,7 +494,7 @@ void correlate_fft(double *h_in,
             // also change gridSize for transpose and linear combination
             gridSize_tran1.x = (curr_chunk_size + TILE_DIM - 1) / TILE_DIM;
             gridSize_tran2.y = (curr_chunk_size + TILE_DIM - 1) / TILE_DIM;
-            gridSize_final = min(curr_chunk_size, 32 * (size_t)numSMs);
+            gridSize_final = min(curr_chunk_size, 32ULL * numSMs);
         }
 
         // ***Zero-out elements of workspace1 and workspace2 device arrays
@@ -502,9 +502,9 @@ void correlate_fft(double *h_in,
         gpuErrchk(cudaMemset(d_workspace2, 0.0, 2 * workspace2_size * sizeof(double)));
 
         // ***Copy values from host buffer to device workspace2 with pitch_q
-        size_t offset = 2 * q_start;                     // host source array offset
-        size_t spitch = 2 * (_nx * ny) * sizeof(double); // host source array pitch
-        size_t dpitch = 2 * pitch_q * sizeof(double);    // device destination array pitch
+        unsigned long long offset = 2 * q_start;                     // host source array offset
+        unsigned long long spitch = 2 * (_nx * ny) * sizeof(double); // host source array pitch
+        unsigned long long dpitch = 2 * pitch_q * sizeof(double);    // device destination array pitch
         gpuErrchk(cudaMemcpy2D(d_workspace2,
                                dpitch,
                                h_in + offset,

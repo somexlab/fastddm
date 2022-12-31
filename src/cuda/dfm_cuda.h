@@ -30,8 +30,8 @@ using namespace std;
 template <typename T>
 py::array_t<double> dfm_direct_cuda(py::array_t<T, py::array::c_style> img_seq,
                                     vector<unsigned int> lags,
-                                    size_t nx,
-                                    size_t ny);
+                                    unsigned long long nx,
+                                    unsigned long long ny);
 
 /*! \brief Compute ISF in fft mode using Wiener-Khinchin theorem on the GPU
     \param img_seq          numpy array containing the image sequence
@@ -43,9 +43,9 @@ py::array_t<double> dfm_direct_cuda(py::array_t<T, py::array::c_style> img_seq,
 template <typename T>
 py::array_t<double> dfm_fft_cuda(py::array_t<T, py::array::c_style> img_seq,
                                  vector<unsigned int> lags,
-                                 size_t nx,
-                                 size_t ny,
-                                 size_t nt);
+                                 unsigned long long nx,
+                                 unsigned long long ny,
+                                 unsigned long long nt);
 
 /*! \brief Set CUDA device to be used
     \param gpu_id   The device id (starts from 0)
