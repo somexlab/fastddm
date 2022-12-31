@@ -30,9 +30,10 @@ using namespace std;
 template <typename T>
 py::array_t<double> dfm_direct(py::array_t<T, py::array::c_style> img_seq,
                                vector<unsigned int> lags,
-                               unsigned long long nx,
-                               unsigned long long ny);
+                               size_t nx,
+                               size_t ny);
 
+                               
 
 /*! \brief Compute ISF in fft mode using Wiener-Khinchin theorem
     \param img_seq      numpy array containing the image sequence
@@ -45,11 +46,10 @@ py::array_t<double> dfm_direct(py::array_t<T, py::array::c_style> img_seq,
 template <typename T>
 py::array_t<double> dfm_fft(py::array_t<T, py::array::c_style> img_seq,
                             vector<unsigned int> lags,
-                            unsigned long long nx,
-                            unsigned long long ny,
-                            unsigned long long nt,
-                            unsigned long long chunk_size);
-
+                            size_t nx,
+                            size_t ny,
+                            size_t nt,
+                            size_t chunk_size);
 
 /*! \brief Export dfm functions to python
     \param m    Module

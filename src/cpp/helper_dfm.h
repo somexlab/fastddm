@@ -23,8 +23,8 @@ using namespace std;
  */
 void copy_vec_with_stride(vector<double> &src,
                           double *dest,
-                          unsigned long long start,
-                          unsigned long long stride);
+                          size_t start,
+                          size_t stride);
 
 /*! \brief Make full image structure function from raw output and shift elements
     \param vec  array
@@ -33,8 +33,8 @@ void copy_vec_with_stride(vector<double> &src,
     \param nt   number of frames
  */
 void make_full_shifted_isf(double *vec,
-                           unsigned long long nx,
-                           unsigned long long ny,
-                           unsigned long long nt);
+                           size_t nx,
+                           size_t ny,
+                           size_t nt);
 
 #endif

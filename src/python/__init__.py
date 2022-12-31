@@ -71,9 +71,8 @@ def ddm(
     dim_t, dim_y, dim_x = img_seq.shape
 
     # dimensions after zero padding for efficiency and for normalization
-    fftw_flag = True if core == "cpp" else False
-    dim_x_padded = next_fast_len(dim_x, fftw=fftw_flag)
-    dim_y_padded = next_fast_len(dim_y, fftw=fftw_flag)
+    dim_x_padded = next_fast_len(dim_x)
+    dim_y_padded = next_fast_len(dim_y)
 
     # select backend
     ddm_func = backend[core][mode]
@@ -83,7 +82,7 @@ def ddm(
         args = [img_seq, lags, dim_x_padded, dim_y_padded]
 
         if mode == "fft":
-            dim_t_padded = next_fast_len(2 * dim_t, fftw=True)
+            dim_t_padded = next_fast_len(2 * dim_t)
             args.append(dim_t_padded)
 
     else:
