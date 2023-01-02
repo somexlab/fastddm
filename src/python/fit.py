@@ -22,6 +22,24 @@ simple_exp_model.set_param_hint(
 )  # max value of 1 possibly causes artifacts
 
 
+def _simple_image_structure_function(
+    dt: Union[np.ndarray, float, int],
+    A: Union[np.ndarray, float],
+    B: float,
+    tau: float,
+    amplitude: float,
+) -> Union[np.ndarray, float]:
+    """Basic image structure function shape with a simple exponential."""
+    return 2 * A * (1 - _simple_exp(dt, tau, amplitude)) + 2 * B
+
+
+simple_structure_function = lm.Model(_simple_image_structure_function)
+simple_structure_function.set_param_hint("A", min=0.0, max=np.inf, value=1.0)
+simple_structure_function.set_param_hint("B", min=0.0, max=np.inf, value=1.0)
+simple_structure_function.set_param_hint("tau", min=0.0, max=np.inf, value=1.0)
+simple_structure_function.set_param_hint("amplitude", min=0.0, max=np.inf, value=1.0)
+
+
 def fit(
     model: lm.Model,
     xdata: np.ndarray,
