@@ -51,7 +51,8 @@ cufftHandle fft2_create_plan(size_t nx,
 void fft2_get_mem_size(size_t nx,
                        size_t ny,
                        size_t batch,
-                       size_t *memsize)
+                       size_t *memsize,
+                       cufftResult &cufft_res)
 {
     // Define parameters
     int rank = 2;                             // The rank of the fft (2 = fft2)
@@ -79,18 +80,18 @@ void fft2_get_mem_size(size_t nx,
                                       (int)batch));
 
     // Evaluate the memory size
-    cufftSilentSafeCall(cufftGetSizeMany(plan,
-                                         rank,
-                                         n,
-                                         inembed,
-                                         istride,
-                                         idist,
-                                         onembed,
-                                         ostride,
-                                         odist,
-                                         type,
-                                         (int)batch,
-                                         memsize));
+    cufft_res = cufftGetSizeMany(plan,
+                                 rank,
+                                 n,
+                                 inembed,
+                                 istride,
+                                 idist,
+                                 onembed,
+                                 ostride,
+                                 odist,
+                                 type,
+                                 (int)batch,
+                                 memsize);
 
     cufftSilentSafeCall(cufftDestroy(plan));
 }
@@ -136,7 +137,8 @@ cufftHandle fft_create_plan(size_t nt,
 void fft_get_mem_size(size_t nt,
                       size_t batch,
                       size_t pitch,
-                      size_t *memsize)
+                      size_t *memsize,
+                      cufftResult &cufft_res)
 {
     // Define parameters
     int rank = 1;               // The rank of the fft (1 = fft)
@@ -164,18 +166,18 @@ void fft_get_mem_size(size_t nt,
                                       (int)batch));
 
     // Evaluate the memory size
-    cufftSilentSafeCall(cufftGetSizeMany(plan,
-                                         rank,
-                                         n,
-                                         inembed,
-                                         istride,
-                                         idist,
-                                         onembed,
-                                         ostride,
-                                         odist,
-                                         type,
-                                         (int)batch,
-                                         memsize));
+    cufft_res = cufftGetSizeMany(plan,
+                                 rank,
+                                 n,
+                                 inembed,
+                                 istride,
+                                 idist,
+                                 onembed,
+                                 ostride,
+                                 odist,
+                                 type,
+                                 (int)batch,
+                                 memsize);
 
     cufftSilentSafeCall(cufftDestroy(plan));
 }

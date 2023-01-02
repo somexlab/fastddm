@@ -155,44 +155,42 @@ unsigned long long get_device_pitch(unsigned long long N,
     }
 
     return (unsigned long long)pitch;
-
-    // return ((unsigned long long)N * (unsigned long long)Nbytes + 128ULL - 1ULL) / 128ULL * (128ULL / (unsigned long long)Nbytes);
 }
 
-/*! \brief Get the device memory for fft2
-    \param nx       number of fft nodes in x direction
-    \param ny       number of fft nodes in y direction
-    \param batch    number of batch elements
+/*!
+    Get the device memory for fft2
  */
 unsigned long long get_device_fft2_mem(unsigned long long nx,
                                        unsigned long long ny,
-                                       unsigned long long batch)
+                                       unsigned long long batch,
+                                       cufftResult &cufft_res)
 {
     // The following line should be changed to move to workstations with multiple GPUs
     size_t memsize[1]; // We are only considering workstations with 1 GPU
     cudaGetFft2MemSize(nx,
                        ny,
                        batch,
-                       memsize);
+                       memsize,
+                       cufft_res);
 
     return (unsigned long long)memsize[0];
 }
 
-/*! \brief Get the device memory for fft
-    \param nt       number of fft nodes in t direction
-    \param batch    number of batch elements
-    \param pitch    pitch of input array
+/*!
+    Get the device memory for fft
  */
 unsigned long long get_device_fft_mem(unsigned long long nt,
                                       unsigned long long batch,
-                                      unsigned long long pitch)
+                                      unsigned long long pitch,
+                                      cufftResult &cufft_res)
 {
     // The following line should be changed to move to workstations with multiple GPUs
     size_t memsize[1]; // We are only considering workstations with 1 GPU
     cudaGetFftMemSize(nt,
                       batch,
                       pitch,
-                      memsize);
+                      memsize,
+                      cufft_res);
 
     return (unsigned long long)memsize[0];
 }
@@ -259,24 +257,29 @@ void chk_device_mem_direct(unsigned long long width,
         // compute the number of batched fft2
         unsigned long long fft2_batch_len = (length + num - 1ULL) / num;
 
-        // buffer
-        if (!is_input_double)
-        {
-            mem_req += _pitch_buff * height * fft2_batch_len * (unsigned long long)pixel_Nbytes;
-        }
-
-        // workspace
-        mem_req += (nx / 2ULL + 1ULL) * ny * fft2_batch_len * 16ULL;
-
         // cufft2 internal buffer
-        mem_req += get_device_fft2_mem(nx, ny, fft2_batch_len);
-
-        // check memory
-        if (free_mem > mem_req)
+        cufftResult res;
+        unsigned long long mem_fft2 = get_device_fft2_mem(nx, ny, fft2_batch_len, res);
+        if (res == CUFFT_SUCCESS)
         {
-            num_fft2 = num;
-            pitch_buff = _pitch_buff;
-            break;
+            mem_req += mem_fft2;
+
+            // buffer
+            if (!is_input_double)
+            {
+                mem_req += _pitch_buff * height * fft2_batch_len * (unsigned long long)pixel_Nbytes;
+            }
+
+            // workspace
+            mem_req += (nx / 2ULL + 1ULL) * ny * fft2_batch_len * 16ULL;
+
+            // check memory
+            if (free_mem > mem_req)
+            {
+                num_fft2 = num;
+                pitch_buff = _pitch_buff;
+                break;
+            }
         }
     }
     // do last check (worst case scenario, 1 fft2 per frame [i.e., fft2_batch_len = 1])
@@ -284,26 +287,36 @@ void chk_device_mem_direct(unsigned long long width,
     {
         mem_req = 0ULL;
 
-        // buffer
-        if (!is_input_double)
-        {
-            mem_req += _pitch_buff * height * (unsigned long long)pixel_Nbytes;
-        }
-
-        // workspace
-        mem_req += (nx / 2ULL + 1ULL) * ny * 16ULL;
-
         // cufft2 internal buffer
-        mem_req += get_device_fft2_mem(nx, ny, 1);
+        cufftResult res;
+        unsigned long long mem_fft2 = get_device_fft2_mem(nx, ny, 1, res);
 
-        if (free_mem > mem_req)
+        if (res == CUFFT_SUCCESS)
         {
-            num_fft2 = length;
-            pitch_buff = _pitch_buff;
+            mem_req += mem_fft2;
+
+            // buffer
+            if (!is_input_double)
+            {
+                mem_req += _pitch_buff * height * (unsigned long long)pixel_Nbytes;
+            }
+
+            // workspace
+            mem_req += (nx / 2ULL + 1ULL) * ny * 16ULL;
+
+            if (free_mem > mem_req)
+            {
+                num_fft2 = length;
+                pitch_buff = _pitch_buff;
+            }
+            else
+            {
+                throw std::runtime_error("Not enough space on GPU for fft2.");
+            }
         }
         else
         {
-            throw std::runtime_error("Not enough space on GPU for fft2.");
+            throw std::runtime_error("Not enough space on GPU for fft2. cufftResult #: " + res);
         }
     }
 
@@ -477,24 +490,29 @@ void chk_device_mem_fft(unsigned long long width,
         // compute the number of batched fft2
         unsigned long long fft2_batch_len = (length + num - 1ULL) / num;
 
-        // buffer
-        if (!is_input_double)
-        {
-            mem_req += _pitch_buff * height * fft2_batch_len * (unsigned long long)pixel_Nbytes;
-        }
-
-        // workspace
-        mem_req += (nx / 2ULL + 1ULL) * ny * fft2_batch_len * 16ULL;
-
         // cufft2 internal buffer
-        mem_req += get_device_fft2_mem(nx, ny, fft2_batch_len);
-
-        // check memory
-        if (free_mem > mem_req)
+        cufftResult res;
+        unsigned long long mem_fft2 = get_device_fft2_mem(nx, ny, fft2_batch_len, res);
+        if (res == CUFFT_SUCCESS)
         {
-            num_fft2 = num;
-            pitch_buff = _pitch_buff;
-            break;
+            mem_req += mem_fft2;
+
+            // buffer
+            if (!is_input_double)
+            {
+                mem_req += _pitch_buff * height * fft2_batch_len * (unsigned long long)pixel_Nbytes;
+            }
+
+            // workspace
+            mem_req += (nx / 2ULL + 1ULL) * ny * fft2_batch_len * 16ULL;
+
+            // check memory
+            if (free_mem > mem_req)
+            {
+                num_fft2 = num;
+                pitch_buff = _pitch_buff;
+                break;
+            }
         }
     }
     // do last check (worst case scenario, 1 fft2 per frame [i.e., fft2_batch_len = 1])
@@ -502,26 +520,36 @@ void chk_device_mem_fft(unsigned long long width,
     {
         mem_req = 0ULL;
 
-        // buffer
-        if (!is_input_double)
-        {
-            mem_req += _pitch_buff * height * (unsigned long long)pixel_Nbytes;
-        }
-
-        // workspace
-        mem_req += (nx / 2ULL + 1ULL) * ny * 16ULL;
-
         // cufft2 internal buffer
-        mem_req += get_device_fft2_mem(nx, ny, 1);
+        cufftResult res;
+        unsigned long long mem_fft2 = get_device_fft2_mem(nx, ny, 1, res);
 
-        if (free_mem > mem_req)
+        if (res == CUFFT_SUCCESS)
         {
-            num_fft2 = length;
-            pitch_buff = _pitch_buff;
+            mem_req += mem_fft2;
+
+            // buffer
+            if (!is_input_double)
+            {
+                mem_req += _pitch_buff * height * (unsigned long long)pixel_Nbytes;
+            }
+
+            // workspace
+            mem_req += (nx / 2ULL + 1ULL) * ny * 16ULL;
+
+            if (free_mem > mem_req)
+            {
+                num_fft2 = length;
+                pitch_buff = _pitch_buff;
+            }
+            else
+            {
+                throw std::runtime_error("Not enough space on GPU for fft2.");
+            }
         }
         else
         {
-            throw std::runtime_error("Not enough space on GPU for fft2.");
+            throw std::runtime_error("Not enough space on GPU for fft2. cufftResult #: " + res);
         }
     }
 
@@ -549,29 +577,36 @@ void chk_device_mem_fft(unsigned long long width,
 
         // compute the number of batched q vectors
         unsigned long long chunk_size = ((nx / 2ULL + 1ULL) * ny + num - 1ULL) / num;
-        // get device pitch for workspace array (q pitch, complex double)
-        _pitch_q = get_device_pitch(chunk_size, 16);
-
-        // lags
-        mem_req += (unsigned long long)lags.size() * 4ULL;
-
-        // workspace1
-        mem_req += chunk_size * _pitch_nt * 16ULL;
-
-        // workspace2
-        mem_req += max(_pitch_q * length, chunk_size * _pitch_t) * 16ULL;
 
         // cufft internal buffer
-        mem_req += get_device_fft_mem(nt, chunk_size, _pitch_nt);
+        cufftResult res;
+        unsigned long long mem_fft = get_device_fft_mem(nt, chunk_size, _pitch_nt, res);
 
-        // check memory
-        if (free_mem > mem_req)
+        if (res == CUFFT_SUCCESS)
         {
-            num_chunks = num;
-            pitch_q = _pitch_q;
-            pitch_t = _pitch_t;
-            pitch_nt = _pitch_nt;
-            break;
+            mem_req += mem_fft;
+
+            // get device pitch for workspace array (q pitch, complex double)
+            _pitch_q = get_device_pitch(chunk_size, 16);
+
+            // lags
+            mem_req += (unsigned long long)lags.size() * 4ULL;
+
+            // workspace1
+            mem_req += chunk_size * _pitch_nt * 16ULL;
+
+            // workspace2
+            mem_req += max(_pitch_q * length, chunk_size * _pitch_t) * 16ULL;
+
+            // check memory
+            if (free_mem > mem_req)
+            {
+                num_chunks = num;
+                pitch_q = _pitch_q;
+                pitch_t = _pitch_t;
+                pitch_nt = _pitch_nt;
+                break;
+            }
         }
     }
     // do last check (worst case scenario, 1 q vector per loop iteration [i.e., chunk_size = 1])
@@ -579,31 +614,41 @@ void chk_device_mem_fft(unsigned long long width,
     {
         mem_req = 0ULL;
 
-        // get device pitch for workspace array (q pitch, complex double)
-        _pitch_q = get_device_pitch(1, 16);
-
-        // lags
-        mem_req += lags.size() * 4;
-
-        // workspace1
-        mem_req += _pitch_nt * 16ULL;
-
-        // workspace2
-        mem_req += max(_pitch_q * length, _pitch_t) * 16ULL;
-
         // cufft internal buffer
-        mem_req += get_device_fft_mem(nt, 1, _pitch_nt);
+        cufftResult res;
+        unsigned long long mem_fft = get_device_fft_mem(nt, 1, _pitch_nt, res);
 
-        if (free_mem > mem_req)
+        if (res == CUFFT_SUCCESS)
         {
-            num_chunks = (nx / 2ULL + 1ULL) * ny;
-            pitch_t = _pitch_t;
-            pitch_q = _pitch_q;
-            pitch_nt = _pitch_nt;
+            mem_req += mem_fft;
+
+            // get device pitch for workspace array (q pitch, complex double)
+            _pitch_q = get_device_pitch(1, 16);
+
+            // lags
+            mem_req += lags.size() * 4;
+
+            // workspace1
+            mem_req += _pitch_nt * 16ULL;
+
+            // workspace2
+            mem_req += max(_pitch_q * length, _pitch_t) * 16ULL;
+
+            if (free_mem > mem_req)
+            {
+                num_chunks = (nx / 2ULL + 1ULL) * ny;
+                pitch_t = _pitch_t;
+                pitch_q = _pitch_q;
+                pitch_nt = _pitch_nt;
+            }
+            else
+            {
+                throw std::runtime_error("Not enough space on GPU for correlation with fft.");
+            }
         }
         else
         {
-            throw std::runtime_error("Not enough space on GPU for correlation with fft.");
+            throw std::runtime_error("Not enough space on GPU for correlation with fft. cufftResult #: " + res);
         }
     }
 

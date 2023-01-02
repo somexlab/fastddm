@@ -12,6 +12,8 @@
 #include <vector>
 #include <string>
 
+#include <cufft.h>
+
 using namespace std;
 
 // *** code ***
@@ -54,22 +56,26 @@ unsigned long long get_device_pitch(unsigned long long N,
                                     int Nbytes);
 
 /*! \brief Get the device memory for fft2
-    \param nx   number of fft nodes in x direction
-    \param ny   number of fft nodes in y direction
-    \param nt   number of elements (in t direction)
+    \param nx           number of fft nodes in x direction
+    \param ny           number of fft nodes in y direction
+    \param nt           number of elements (in t direction)
+    \param cufft_res    result of cufft function
  */
 unsigned long long get_device_fft2_mem(unsigned long long nx,
                                        unsigned long long ny,
-                                       unsigned long long nt);
+                                       unsigned long long nt,
+                                       cufftResult &cufft_res);
 
 /*! \brief Get the device memory for fft
     \param nt       number of fft nodes in t direction
     \param N        number of elements
     \param pitch    pitch of input array
+    \param cufft_res    result of cufft function
  */
 unsigned long long get_device_fft_mem(unsigned long long nt,
                                       unsigned long long N,
-                                      unsigned long long pitch);
+                                      unsigned long long pitch,
+                                      cufftResult &cufft_res);
 
 /*! \brief Estimate device memory needed for direct mode and optimize
     \param width            Width of the image

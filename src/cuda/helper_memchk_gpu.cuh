@@ -9,6 +9,7 @@
 */
 
 // *** headers ***
+#include <cufft.h>
 
 // *** code ***
 
@@ -48,25 +49,29 @@ void cudaGetDevicePitch1B(size_t N,
                           size_t &pitch);
 
 /*! \brief Evaluate the device memory size in bytes for fft2
-    \param nx       number of fft nodes in x direction
-    \param ny       number of fft nodes in y direction
-    \param batch    number of batch elements
-    \param memsize  size (in bytes) of working area for fft2
+    \param nx           number of fft nodes in x direction
+    \param ny           number of fft nodes in y direction
+    \param batch        number of batch elements
+    \param memsize      size (in bytes) of working area for fft2
+    \param cufft_res    result of cufft function
  */
 void cudaGetFft2MemSize(size_t nx,
                         size_t ny,
                         size_t batch,
-                        size_t *memsize);
+                        size_t *memsize,
+                        cufftResult &cufft_res);
 
 /*! \brief Evaluate the device memory size in bytes for fft
     \param nt       number of fft nodes in t direction
     \param batch    number of batch elements
     \param pitch    pitch of input array
     \param memsize  size (in bytes) of working area for fft
+    \param cufft_res    result of cufft function
 */
 void cudaGetFftMemSize(size_t nt,
                        size_t batch,
                        size_t pitch,
-                       size_t *memsize);
+                       size_t *memsize,
+                       cufftResult &cufft_res);
 
 #endif
