@@ -130,18 +130,18 @@ __global__ void shift_powspec_kernel(double *d_in,
     \param d_in     Input complex array
     \param length   Number of elements in each subarray
     \param pitch    Distance between the first element of two consecutive subarrays
-    \param N        Number of elements in the array
+    \param N        Number of subarrays
  */
 __global__ void square_modulus_kernel(double2 *d_in,
                                       unsigned long long length,
-                                      unsigned long long dist,
+                                      unsigned long long pitch,
                                       unsigned long long N);
 
 /*! \brief Copy real part of element into imaginary part of opposite element
     \param d_arr    Input complex array
     \param length   Number of elements in each subarray
     \param pitch    Distance (in number of elements) between the first element of two consecutive subarrays
-    \param N        Total number of elements
+    \param N        Number of subarrays
  */
 __global__ void real2imagopposite_kernel(double2 *d_arr,
                                          unsigned long long length,

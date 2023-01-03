@@ -447,12 +447,10 @@ void correlate_fft(double *h_in,
 
     // square_modulus_kernel
     int blockSize_sqmod; // The launch configurator returned block size
-    int gridSize_sqmod1; // The actual grid size needed, based on input size
-    int gridSize_sqmod2;
+    int gridSize_sqmod;  // The actual grid size needed, based on input size
     gpuErrchk(cudaOccupancyMaxPotentialBlockSize(&minGridSize, &blockSize_sqmod, square_modulus_kernel, 0, 0));
     // Round up according to array size
-    gridSize_sqmod1 = min((chunk_size * pitch_nt / 2 + blockSize_sqmod - 1) / blockSize_sqmod, 32ULL * numSMs);
-    gridSize_sqmod2 = min((chunk_size * pitch_t / 2 + blockSize_sqmod - 1) / blockSize_sqmod, 32ULL * numSMs);
+    gridSize_sqmod = min((chunk_size + blockSize_sqmod - 1) / blockSize_sqmod, 32ULL * numSMs);
 
     // scale_array_kernel
     int blockSize_scale; // The launch configurator returned block size
@@ -495,6 +493,7 @@ void correlate_fft(double *h_in,
             gridSize_tran1.x = (curr_chunk_size + TILE_DIM - 1) / TILE_DIM;
             gridSize_tran2.y = (curr_chunk_size + TILE_DIM - 1) / TILE_DIM;
             gridSize_final = min(curr_chunk_size, 32ULL * numSMs);
+            gridSize_sqmod = min((curr_chunk_size + blockSize_sqmod - 1) / blockSize_sqmod, 32ULL * numSMs);
         }
 
         // ***Zero-out elements of workspace1 and workspace2 device arrays
@@ -540,10 +539,10 @@ void correlate_fft(double *h_in,
         cufftSafeCall(cufftExecZ2Z(fft_plan, (CUFFTCOMPLEX *)d_workspace1, (CUFFTCOMPLEX *)d_workspace1, CUFFT_FORWARD));
 
         // ***Compute square modulus (d_workspace1 --> d_workspace1)
-        square_modulus_kernel<<<gridSize_sqmod1, blockSize_sqmod>>>((double2 *)d_workspace1,
-                                                                    nt,
-                                                                    pitch_nt,
-                                                                    curr_chunk_size * pitch_nt);
+        square_modulus_kernel<<<gridSize_sqmod, blockSize_sqmod>>>((double2 *)d_workspace1,
+                                                                   nt,
+                                                                   pitch_nt,
+                                                                   curr_chunk_size);
         gpuErrchk(cudaPeekAtLastError());
 
         // ***Do fft (d_workspace1 --> d_workspace1)
@@ -559,18 +558,19 @@ void correlate_fft(double *h_in,
 
         // +++ CUMULATIVE SUM PART +++
         // ***Compute square modulus (d_workspace2 --> d_workspace2)
-        square_modulus_kernel<<<gridSize_sqmod2, blockSize_sqmod>>>((double2 *)d_workspace2,
-                                                                    length,
-                                                                    pitch_t,
-                                                                    curr_chunk_size * pitch_t);
+        square_modulus_kernel<<<gridSize_sqmod, blockSize_sqmod>>>((double2 *)d_workspace2,
+                                                                   length,
+                                                                   pitch_t,
+                                                                   curr_chunk_size);
+
         gpuErrchk(cudaPeekAtLastError());
         gpuErrchk(cudaDeviceSynchronize());
 
         // ***Copy the value into the imaginary part of the opposite (with respect to time) element (d_workspace2 --> d_workspace2)
-        real2imagopposite_kernel<<<gridSize_sqmod2, blockSize_sqmod>>>((CUFFTCOMPLEX *)d_workspace2,
-                                                                       length,
-                                                                       pitch_t,
-                                                                       curr_chunk_size * pitch_t);
+        real2imagopposite_kernel<<<gridSize_sqmod, blockSize_sqmod>>>((CUFFTCOMPLEX *)d_workspace2,
+                                                                      length,
+                                                                      pitch_t,
+                                                                      curr_chunk_size);
         gpuErrchk(cudaPeekAtLastError());
         gpuErrchk(cudaDeviceSynchronize());
 

@@ -326,16 +326,36 @@ __global__ void shift_powspec_kernel(double *d_in,
 /*!
     Compute square modulus of complex array
 */
-__global__ void square_modulus_kernel(double2 *d_in,
-                                      unsigned long long length,
-                                      unsigned long long pitch,
-                                      unsigned long long N)
+__global__ void square_modulus_kernel_old(double2 *d_in,
+                                          unsigned long long length,
+                                          unsigned long long pitch,
+                                          unsigned long long N)
 {
     for (unsigned long long i = blockIdx.x * blockDim.x + threadIdx.x; i < N; i += blockDim.x * gridDim.x)
     {
         if (i - (i / pitch) * pitch < length)
         {
             d_in[i].x = d_in[i].x * d_in[i].x + d_in[i].y * d_in[i].y;
+            d_in[i].y = 0.0;
+        }
+    }
+}
+
+/*!
+    Compute square modulus of complex array
+*/
+__global__ void square_modulus_kernel(double2 *d_in,
+                                      unsigned long long length,
+                                      unsigned long long pitch,
+                                      unsigned long long N)
+{
+    for (unsigned long long row = blockIdx.x; row < N; row += gridDim.x)
+    {
+        for (unsigned long long tid = threadIdx.x; tid < length; tid += blockDim.x)
+        {
+            unsigned long long i = row * pitch + tid;
+            double2 a = d_in[i];
+            d_in[i].x = a.x * a.x + a.y * a.y;
             d_in[i].y = 0.0;
         }
     }
@@ -349,13 +369,12 @@ __global__ void real2imagopposite_kernel(double2 *d_arr,
                                          unsigned long long pitch,
                                          unsigned long long N)
 {
-    for (unsigned long long i = blockIdx.x * blockDim.x + threadIdx.x; i < N; i += blockDim.x * gridDim.x)
+    for (unsigned long long row = blockIdx.x; row < N; row += gridDim.x)
     {
-        unsigned long long el = i / pitch;
-        if (i - el * pitch < length)
+        for (unsigned long long tid = threadIdx.x; tid < length; tid += blockDim.x)
         {
-            unsigned long long idx = el * pitch + (length - 1) - (i - el * pitch);
-            d_arr[i].y = d_arr[idx].x;
+            unsigned long long opp_idx = length - tid - 1;
+            d_arr[row * pitch + tid].y = d_arr[row * pitch + opp_idx].x;
         }
     }
 }
