@@ -18,22 +18,23 @@
     \param d_in     Input array
     \param d_out    Output array
     \param width    Width of the input array
+    \param height   Height of the input array
+    \param length   Length of the input array
     \param ipitch   Pitch of the input array
     \param idist    Distance between 2 consecutive elements of the input 3D array
     \param opitch   Pitch of the output array
     \param odist    Distance between 2 consecutive elements of the output 3D array
-    \param N        Number of elements to copy/convert
  */
 template <typename T>
 __global__ void copy_convert_kernel(T *d_in,
                                     double *d_out,
                                     unsigned long long width,
-                                    unsigned long long Npixels,
+                                    unsigned long long height,
+                                    unsigned long long length,
                                     unsigned long long ipitch,
                                     unsigned long long idist,
                                     unsigned long long opitch,
-                                    unsigned long long odist,
-                                    unsigned long long N);
+                                    unsigned long long odist);
 
 /*! \brief Scale array by constant -- A * a
     \param a        input array

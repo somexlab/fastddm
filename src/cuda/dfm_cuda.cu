@@ -73,15 +73,19 @@ void compute_fft2(const T *h_in,
     // Compute efficient execution configuration
     int numSMs;      // Number of streaming multiprocessors
     gpuErrchk(cudaDeviceGetAttribute(&numSMs, cudaDevAttrMultiProcessorCount, 0));
+    int maxGridSizeX, maxGridSizeY;
+    gpuErrchk(cudaDeviceGetAttribute(&maxGridSizeX, cudaDevAttrMaxGridDimX, 0)); // gpu id fixed to 0 for now
+    gpuErrchk(cudaDeviceGetAttribute(&maxGridSizeY, cudaDevAttrMaxGridDimY, 0)); // gpu id fixed to 0 for now
 
-    // copy/convert kernel
-    int blockSize_copy = 512;                                                           // The launch configurator returned block size
-    int gridSize_copy = (width * height * batch + blockSize_copy - 1) / blockSize_copy; // The actual grid size needed, based on input size
+    // copy_convert_kernel
+    int blockSize_copy;                                                           // The launch configurator returned block size
+    int minGridSize;     // The minimum grid size needed to achieve the
+                         // maximum occupancy for a full device launch
+    gpuErrchk(cudaOccupancyMaxPotentialBlockSize(&minGridSize, &blockSize_copy, copy_convert_kernel<T>, 0, 0));
+    dim3 gridSize_copy(min(1ULL * maxGridSizeX, batch), min(1ULL * maxGridSizeY, height), 1);
 
     // scale kernel
     int blockSize_scale; // The launch configurator returned block size
-    int minGridSize;     // The minimum grid size needed to achieve the
-                         // maximum occupancy for a full device launch
     int gridSize_scale;  // The actual grid size needed, based on input size
 
     gpuErrchk(cudaOccupancyMaxPotentialBlockSize(&minGridSize, &blockSize_scale, scale_array_kernel, 0, 0));
@@ -129,12 +133,12 @@ void compute_fft2(const T *h_in,
             copy_convert_kernel<<<gridSize_copy, blockSize_copy>>>(d_buff,
                                                                    d_workspace,
                                                                    width,
-                                                                   width * height,
+                                                                   height,
+                                                                   batch,
                                                                    buff_pitch,
                                                                    buff_pitch * height,
                                                                    2 * _nx,
-                                                                   2 * _nx * ny,
-                                                                   width * height * batch);
+                                                                   2 * _nx * ny);
         }
 
         // ***Execute fft2 plan
@@ -153,7 +157,7 @@ void compute_fft2(const T *h_in,
                                                                 end - start);
 
         // ***Copy values back to host
-        gpuErrchk(cudaMemcpy(h_out + 2 * _nx * start, d_workspace, 2 * _nx * (end - start) * sizeof(double), cudaMemcpyDeviceToHost));
+        gpuErrchk(cudaMemcpy((double2 *)h_out + _nx * start, (double2 *)d_workspace, _nx * (end - start) * sizeof(double2), cudaMemcpyDeviceToHost));
     }
 
     // ***Free memory

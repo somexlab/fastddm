@@ -24,34 +24,34 @@ template <typename T>
 __global__ void copy_convert_kernel(T *d_in,
                                     double *d_out,
                                     unsigned long long width,
-                                    unsigned long long Npixels,
+                                    unsigned long long height,
+                                    unsigned long long length,
                                     unsigned long long ipitch,
                                     unsigned long long idist,
                                     unsigned long long opitch,
-                                    unsigned long long odist,
-                                    unsigned long long N)
+                                    unsigned long long odist)
 {
-    for (unsigned long long tid = 1ULL * blockIdx.x * blockDim.x + threadIdx.x; tid < N; tid += blockDim.x * gridDim.x)
+    for (unsigned long long t = blockIdx.x; t < length; t += gridDim.x)
     {
-        unsigned long long t = tid / Npixels;
-        unsigned long long y = (tid - t * Npixels) / width;
-        unsigned long long x = tid - t * Npixels - y * width;
-
-        T val = d_in[t * idist + y * ipitch + x];
-
-        d_out[t * odist + y * opitch + x] = (double)val;
+        for (unsigned long long y = blockIdx.y; y < height; y += gridDim.y)
+        {
+            for (unsigned long long x = threadIdx.x; x < width; x += blockDim.x)
+            {
+                d_out[t * odist + y * opitch + x] = (double)d_in[t * idist + y * ipitch + x];
+            }
+        }
     }
 }
 
-template __global__ void copy_convert_kernel<u_int8_t>(u_int8_t *d_in, double *d_out, unsigned long long width, unsigned long long Npixels, unsigned long long ipitch, unsigned long long idist, unsigned long long opitch, unsigned long long odist, unsigned long long N);
-template __global__ void copy_convert_kernel<int16_t>(int16_t *d_in, double *d_out, unsigned long long width, unsigned long long Npixels, unsigned long long ipitch, unsigned long long idist, unsigned long long opitch, unsigned long long odist, unsigned long long N);
-template __global__ void copy_convert_kernel<u_int16_t>(u_int16_t *d_in, double *d_out, unsigned long long width, unsigned long long Npixels, unsigned long long ipitch, unsigned long long idist, unsigned long long opitch, unsigned long long odist, unsigned long long N);
-template __global__ void copy_convert_kernel<int32_t>(int32_t *d_in, double *d_out, unsigned long long width, unsigned long long Npixels, unsigned long long ipitch, unsigned long long idist, unsigned long long opitch, unsigned long long odist, unsigned long long N);
-template __global__ void copy_convert_kernel<u_int32_t>(u_int32_t *d_in, double *d_out, unsigned long long width, unsigned long long Npixels, unsigned long long ipitch, unsigned long long idist, unsigned long long opitch, unsigned long long odist, unsigned long long N);
-template __global__ void copy_convert_kernel<int64_t>(int64_t *d_in, double *d_out, unsigned long long width, unsigned long long Npixels, unsigned long long ipitch, unsigned long long idist, unsigned long long opitch, unsigned long long odist, unsigned long long N);
-template __global__ void copy_convert_kernel<u_int64_t>(u_int64_t *d_in, double *d_out, unsigned long long width, unsigned long long Npixels, unsigned long long ipitch, unsigned long long idist, unsigned long long opitch, unsigned long long odist, unsigned long long N);
-template __global__ void copy_convert_kernel<float>(float *d_in, double *d_out, unsigned long long width, unsigned long long Npixels, unsigned long long ipitch, unsigned long long idist, unsigned long long opitch, unsigned long long odist, unsigned long long N);
-template __global__ void copy_convert_kernel<double>(double *d_in, double *d_out, unsigned long long width, unsigned long long Npixels, unsigned long long ipitch, unsigned long long idist, unsigned long long opitch, unsigned long long odist, unsigned long long N);
+template __global__ void copy_convert_kernel<u_int8_t>(u_int8_t *d_in, double *d_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long ipitch, unsigned long long idist, unsigned long long opitch, unsigned long long odist);
+template __global__ void copy_convert_kernel<int16_t>(int16_t *d_in, double *d_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long ipitch, unsigned long long idist, unsigned long long opitch, unsigned long long odist);
+template __global__ void copy_convert_kernel<u_int16_t>(u_int16_t *d_in, double *d_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long ipitch, unsigned long long idist, unsigned long long opitch, unsigned long long odist);
+template __global__ void copy_convert_kernel<int32_t>(int32_t *d_in, double *d_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long ipitch, unsigned long long idist, unsigned long long opitch, unsigned long long odist);
+template __global__ void copy_convert_kernel<u_int32_t>(u_int32_t *d_in, double *d_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long ipitch, unsigned long long idist, unsigned long long opitch, unsigned long long odist);
+template __global__ void copy_convert_kernel<int64_t>(int64_t *d_in, double *d_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long ipitch, unsigned long long idist, unsigned long long opitch, unsigned long long odist);
+template __global__ void copy_convert_kernel<u_int64_t>(u_int64_t *d_in, double *d_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long ipitch, unsigned long long idist, unsigned long long opitch, unsigned long long odist);
+template __global__ void copy_convert_kernel<float>(float *d_in, double *d_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long ipitch, unsigned long long idist, unsigned long long opitch, unsigned long long odist);
+template __global__ void copy_convert_kernel<double>(double *d_in, double *d_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long ipitch, unsigned long long idist, unsigned long long opitch, unsigned long long odist);
 
 /*!
     Compute a *= A
