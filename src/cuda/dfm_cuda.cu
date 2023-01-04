@@ -139,10 +139,14 @@ void compute_fft2(const T *h_in,
                                                                    buff_pitch * height,
                                                                    2 * _nx,
                                                                    2 * _nx * ny);
+            gpuErrchk(cudaPeekAtLastError());
+            gpuErrchk(cudaDeviceSynchronize());
         }
 
         // ***Execute fft2 plan
         cufftSafeCall(cufftExecD2Z(fft2_plan, d_workspace, (CUFFTCOMPLEX *)d_workspace));
+        gpuErrchk(cudaPeekAtLastError());
+        gpuErrchk(cudaDeviceSynchronize());
 
         // ***Normalize fft2
         // Starting index
@@ -155,6 +159,8 @@ void compute_fft2(const T *h_in,
                                                                 _nx,
                                                                 norm_fact,
                                                                 end - start);
+        gpuErrchk(cudaPeekAtLastError());
+        gpuErrchk(cudaDeviceSynchronize());
 
         // ***Copy values back to host
         gpuErrchk(cudaMemcpy((double2 *)h_out + _nx * start, (double2 *)d_workspace, _nx * (end - start) * sizeof(double2), cudaMemcpyDeviceToHost));
@@ -259,6 +265,7 @@ void correlate_direct(double *h_in,
                                                                             (curr_chunk_size + TILE_DIM - 1) / TILE_DIM,
                                                                             (length + TILE_DIM - 1) / TILE_DIM);
         gpuErrchk(cudaPeekAtLastError());
+        gpuErrchk(cudaDeviceSynchronize());
 
         // ***Zero-out workspace2
         gpuErrchk(cudaMemset(d_workspace2, 0.0, workspace_size));
@@ -284,6 +291,7 @@ void correlate_direct(double *h_in,
                                                                             (lags.size() + TILE_DIM - 1) / TILE_DIM,
                                                                             (curr_chunk_size + TILE_DIM - 1) / TILE_DIM);
         gpuErrchk(cudaPeekAtLastError());
+        gpuErrchk(cudaDeviceSynchronize());
 
         // ***Copy values from device to host
         // elements are treated as complex doubles
@@ -389,6 +397,7 @@ void make_full_shift(double *h_in,
                                                                  (nx + TILE_DIM - 1) / TILE_DIM,
                                                                  (ny * curr_chunk_size + TILE_DIM - 1) / TILE_DIM);
         gpuErrchk(cudaPeekAtLastError());
+        gpuErrchk(cudaDeviceSynchronize());
 
         // ***Copy values from device to host (make contiguous on memory)
         // Get output offset
@@ -538,6 +547,7 @@ void correlate_fft(double *h_in,
                                                                             (curr_chunk_size + TILE_DIM - 1) / TILE_DIM,
                                                                             (length + TILE_DIM - 1) / TILE_DIM);
         gpuErrchk(cudaPeekAtLastError());
+        gpuErrchk(cudaDeviceSynchronize());
 
         // ***Copy values ({d_workspace1; pitch_nt} --> {d_workspace2; pitch_t})
         dpitch = 2 * pitch_t * sizeof(double);
@@ -553,6 +563,8 @@ void correlate_fft(double *h_in,
         // +++ FFT PART +++
         // ***Do fft (d_workspace1 --> d_workspace1)
         cufftSafeCall(cufftExecZ2Z(fft_plan, (CUFFTCOMPLEX *)d_workspace1, (CUFFTCOMPLEX *)d_workspace1, CUFFT_FORWARD));
+        gpuErrchk(cudaPeekAtLastError());
+        gpuErrchk(cudaDeviceSynchronize());
 
         // ***Compute square modulus (d_workspace1 --> d_workspace1)
         square_modulus_kernel<<<gridSize_sqmod, blockSize_sqmod>>>((double2 *)d_workspace1,
@@ -560,9 +572,12 @@ void correlate_fft(double *h_in,
                                                                    pitch_nt,
                                                                    curr_chunk_size);
         gpuErrchk(cudaPeekAtLastError());
+        gpuErrchk(cudaDeviceSynchronize());
 
         // ***Do fft (d_workspace1 --> d_workspace1)
         cufftSafeCall(cufftExecZ2Z(fft_plan, (CUFFTCOMPLEX *)d_workspace1, (CUFFTCOMPLEX *)d_workspace1, CUFFT_FORWARD));
+        gpuErrchk(cudaPeekAtLastError());
+        gpuErrchk(cudaDeviceSynchronize());
 
         // ***Scale fft part (d_workspace1 --> d_workspace1)
         scale_array_kernel<<<gridSize_scale, blockSize_scale>>>((CUFFTCOMPLEX *)d_workspace1,

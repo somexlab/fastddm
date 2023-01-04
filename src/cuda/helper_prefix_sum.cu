@@ -103,6 +103,7 @@ void scanManyLargeArrays(double *output,
                                                       a1,
                                                       a2);
         gpuErrchk(cudaPeekAtLastError());
+        gpuErrchk(cudaDeviceSynchronize());
 
         // free memory
         gpuErrchk(cudaFree(a1));
@@ -169,6 +170,7 @@ void scanManyLargeEvenArrays(double *output,
                                                       ELEMENTS_PER_BLOCK,
                                                       incr);
     gpuErrchk(cudaPeekAtLastError());
+    gpuErrchk(cudaDeviceSynchronize());
 
     // free memory
     gpuErrchk(cudaFree(sums));
