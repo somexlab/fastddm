@@ -54,16 +54,21 @@ template __global__ void copy_convert_kernel<float>(float *d_in, double *d_out, 
 template __global__ void copy_convert_kernel<double>(double *d_in, double *d_out, unsigned long long width, unsigned long long Npixels, unsigned long long ipitch, unsigned long long idist, unsigned long long opitch, unsigned long long odist, unsigned long long N);
 
 /*!
-    Compute b = A * a
+    Compute a *= A
  */
-__global__ void scale_array_kernel(double *a,
+__global__ void scale_array_kernel(double2 *a,
+                                   unsigned long long pitch,
+                                   unsigned long long length,
                                    double A,
-                                   double *b,
                                    unsigned long long N)
 {
-    for (unsigned long long i = 1ULL * blockIdx.x * blockDim.x + threadIdx.x; i < N; i += blockDim.x * gridDim.x)
+    for (unsigned long long row = blockIdx.x; row < N; row += gridDim.x)
     {
-        b[i] = A * a[i];
+        for (unsigned long long tid = threadIdx.x; tid < length; tid += blockDim.x)
+        {
+            a[row * pitch + tid].x *= A;
+            a[row * pitch + tid].y *= A;
+        }
     }
 }
 

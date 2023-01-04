@@ -19,6 +19,13 @@
 
 // #include <chrono>
 // using namespace std::chrono;
+// typedef std::chrono::high_resolution_clock Time;
+// typedef std::chrono::duration<float> fsec;
+
+// auto t0 = Time::now();
+// auto t1 = Time::now();
+// fsec fs = t0 - t0;
+// fprintf(stdout, "%f\n", fs.count());
 
 #define CUFFTCOMPLEX cufftDoubleComplex
 
@@ -64,6 +71,9 @@ void compute_fft2(const T *h_in,
                                              batch);
 
     // Compute efficient execution configuration
+    int numSMs;      // Number of streaming multiprocessors
+    gpuErrchk(cudaDeviceGetAttribute(&numSMs, cudaDevAttrMultiProcessorCount, 0));
+
     // copy/convert kernel
     int blockSize_copy = 512;                                                           // The launch configurator returned block size
     int gridSize_copy = (width * height * batch + blockSize_copy - 1) / blockSize_copy; // The actual grid size needed, based on input size
@@ -76,7 +86,7 @@ void compute_fft2(const T *h_in,
 
     gpuErrchk(cudaOccupancyMaxPotentialBlockSize(&minGridSize, &blockSize_scale, scale_array_kernel, 0, 0));
     // Round up according to array size
-    gridSize_scale = (2 * _nx * ny * batch + blockSize_scale - 1) / blockSize_scale;
+    gridSize_scale = min((ny * batch + blockSize_scale - 1) / blockSize_scale, 32ULL * numSMs);
 
     // ***Batched fft2
     for (unsigned long long ii = 0; ii < num_fft2; ii++)
@@ -132,17 +142,18 @@ void compute_fft2(const T *h_in,
 
         // ***Normalize fft2
         // Starting index
-        unsigned long long start = 2 * ii * _nx * ny * batch;
+        unsigned long long start = ii * ny * batch;
         // Final index (if exceeds array size, truncate)
-        unsigned long long end = (ii + 1) * batch > length ? 2 * length * _nx * ny : 2 * (ii + 1) * _nx * ny * batch;
+        unsigned long long end = (ii + 1) * batch > length ? length * ny : (ii + 1) * ny * batch;
         // scale array
-        scale_array_kernel<<<gridSize_scale, blockSize_scale>>>(d_workspace,
+        scale_array_kernel<<<gridSize_scale, blockSize_scale>>>((double2 *)d_workspace,
+                                                                _nx,
+                                                                _nx,
                                                                 norm_fact,
-                                                                d_workspace,
                                                                 end - start);
 
         // ***Copy values back to host
-        gpuErrchk(cudaMemcpy(h_out + start, d_workspace, (end - start) * sizeof(double), cudaMemcpyDeviceToHost));
+        gpuErrchk(cudaMemcpy(h_out + 2 * _nx * start, d_workspace, 2 * _nx * (end - start) * sizeof(double), cudaMemcpyDeviceToHost));
     }
 
     // ***Free memory
@@ -457,7 +468,7 @@ void correlate_fft(double *h_in,
     int gridSize_scale;  // The actual grid size needed, based on input size
     gpuErrchk(cudaOccupancyMaxPotentialBlockSize(&minGridSize, &blockSize_scale, scale_array_kernel, 0, 0));
     // Round up according to array size
-    gridSize_scale = min((2 * chunk_size * pitch_nt + blockSize_scale - 1) / blockSize_scale, 32ULL * numSMs);
+    gridSize_scale = min((chunk_size + blockSize_scale - 1) / blockSize_scale, 32ULL * numSMs);
 
     // linear_combination_final_kernel
     int blockSize_final; // The launch configurator returned block size
@@ -494,6 +505,7 @@ void correlate_fft(double *h_in,
             gridSize_tran2.y = (curr_chunk_size + TILE_DIM - 1) / TILE_DIM;
             gridSize_final = min(curr_chunk_size, 32ULL * numSMs);
             gridSize_sqmod = min((curr_chunk_size + blockSize_sqmod - 1) / blockSize_sqmod, 32ULL * numSMs);
+            gridSize_scale = min((curr_chunk_size + blockSize_scale - 1) / blockSize_scale, 32ULL * numSMs);
         }
 
         // ***Zero-out elements of workspace1 and workspace2 device arrays
@@ -549,10 +561,11 @@ void correlate_fft(double *h_in,
         cufftSafeCall(cufftExecZ2Z(fft_plan, (CUFFTCOMPLEX *)d_workspace1, (CUFFTCOMPLEX *)d_workspace1, CUFFT_FORWARD));
 
         // ***Scale fft part (d_workspace1 --> d_workspace1)
-        scale_array_kernel<<<gridSize_scale, blockSize_scale>>>(d_workspace1,
+        scale_array_kernel<<<gridSize_scale, blockSize_scale>>>((CUFFTCOMPLEX *)d_workspace1,
+                                                                pitch_nt,
+                                                                nt,
                                                                 1.0 / (double)nt,
-                                                                d_workspace1,
-                                                                curr_chunk_size * 2 * pitch_nt);
+                                                                curr_chunk_size);
         gpuErrchk(cudaPeekAtLastError());
         gpuErrchk(cudaDeviceSynchronize());
 

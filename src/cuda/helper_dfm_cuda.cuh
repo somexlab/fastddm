@@ -35,15 +35,17 @@ __global__ void copy_convert_kernel(T *d_in,
                                     unsigned long long odist,
                                     unsigned long long N);
 
-/*! \brief Scale array by constant -- b = A * a
-\param a    input array
-\param A    multiplication factor
-\param b    output array
-\param N    number of elements in the array
-*/
-__global__ void scale_array_kernel(double *a,
+/*! \brief Scale array by constant -- A * a
+    \param a        input array
+    \param pitch    pitch of input array
+    \param length   length of each subarray
+    \param A        multiplication factor
+    \param N        number of subarrays
+ */
+__global__ void scale_array_kernel(double2 *a,
+                                   unsigned long long pitch,
+                                   unsigned long long length,
                                    double A,
-                                   double *b,
                                    unsigned long long N);
 
 /*! \brief Transpose complex matrix with pitch
