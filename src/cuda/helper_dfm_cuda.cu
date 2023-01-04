@@ -18,7 +18,7 @@ const unsigned long long TILE_DIM = 32;  // leave this unchanged!
 const unsigned long long BLOCK_ROWS = 8; // leave this unchanged!
 
 /*!
-    Convert array from float to double on device and prepare for fft2 (u_int8_t specialization)
+    Convert array from T to double on device and prepare for fft2
 */
 template <typename T>
 __global__ void copy_convert_kernel(T *d_in,
