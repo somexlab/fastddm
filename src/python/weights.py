@@ -51,7 +51,8 @@ def sector_average_weight(
 
     def gauss(x,mu,sigma):
         A = 1 / (sigma * np.sqrt(2 * np.pi))
-        return A * np.exp(-0.5 * ((x - mu) / sigma) ** 2)
+        _x = ((x - mu + np.pi) % (2 * np.pi) - np.pi) / sigma
+        return A * np.exp(- 0.5 * _x ** 2)
 
     kinds = ['uniform', 'gauss']
     if kind not in kinds:
@@ -74,17 +75,14 @@ def sector_average_weight(
     weights = np.zeros(shape, dtype=np.float64)
     ang = np.angle(X + 1j * Y)
 
-    for i in rep:
+    for i in range(rep):
         if kind == 'gauss':
-            weights += gauss(
-                ang,
-                theta_0 + i * 2 * np.pi / float(rep),
-                delta_theta
-                )
+            theta_ref = theta_0 + i * 2 * np.pi / rep
+            weights += gauss(ang, theta_ref, delta_theta / 2)
         else:
-            theta_min = theta_0 + i * 2 * np.pi / float(rep) - delta_theta / 2
-            theta_max = theta_0 + i * 2 * np.pi / float(rep) + delta_theta / 2
-            weights[(ang <= theta_max) & (ang >= theta_min)] += 1
+            theta_ref = theta_0 + i * 2 * np.pi / rep
+            x = ((ang - theta_ref + np.pi) % (2 * np.pi) - np.pi) / delta_theta
+            weights[x ** 2 < 0.25] += 1
 
     return weights
 
