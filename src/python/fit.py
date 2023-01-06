@@ -35,7 +35,7 @@ def _simple_image_structure_function(
 
 simple_structure_function = lm.Model(_simple_image_structure_function)
 simple_structure_function.set_param_hint("A", min=0.0, max=np.inf, value=1.0)
-simple_structure_function.set_param_hint("B", min=0.0, max=np.inf, value=1.0)
+simple_structure_function.set_param_hint("B", min=0.0, max=np.inf, value=0.0)
 simple_structure_function.set_param_hint("tau", min=0.0, max=np.inf, value=1.0)
 simple_structure_function.set_param_hint("amplitude", min=0.0, max=np.inf, value=1.0)
 
