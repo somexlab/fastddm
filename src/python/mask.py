@@ -41,6 +41,6 @@ def central_cross_mask(
 
     mask = np.full(shape, True)
 
-    mask[(X == 0.0) & (Y == 0.0)] = False
+    mask[(X == 0.0) | (Y == 0.0)] = False
 
     return mask
