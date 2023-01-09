@@ -13,14 +13,14 @@ from setuptools.command.build_ext import build_ext
 from setuptools.command.install_lib import install_lib
 
 
-def get_cmake_variable(name, default_value = None):
+def get_cmake_bool_flag(name, default_value = None):
     """
-    Get environment boolean variables (typically CMake flags)
-    default_value input can be either None or bool
+    Get cmake boolean flag from environment variables.
+    `default_value` input can be either None or a bool
     """
     true_ = ('on', 'true', '1', 't')  # Add more entries if you want...
     false_ = ('off', 'false', '0', 'f')  # Add more entries if you want...
-    value: str | None = os.getenv(name, None)
+    value = os.getenv(name, None)
     if value is None:
         if default_value is None:
             raise ValueError(f'Variable `{name}` not set!')
@@ -108,12 +108,12 @@ class CMakeBuild(build_ext):
         else:
             cmake_args += ['-DCMAKE_BUILD_TYPE=' + cfg]
 
-        # Set optional cmake flags
+        # Set optional CMake flags
         # C++
-        if get_cmake_variable('ENABLE_CPP', False):
+        if get_cmake_bool_flag('ENABLE_CPP', False):
             cmake_args += ['-DENABLE_CPP=ON']
         # CUDA
-        if get_cmake_variable('ENABLE_CUDA', False):
+        if get_cmake_bool_flag('ENABLE_CUDA', False):
             if platform.system() in ['Windows', 'Linux']:
                 cmake_args += ['-DENABLE_CUDA=ON']
             else:
