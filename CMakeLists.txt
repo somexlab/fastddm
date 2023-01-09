@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 3.12)
 
 cmake_policy(SET CMP0054 NEW)
 
-#project(dfmtoolbox LANGUAGES CUDA CXX)
 project(dfmtoolbox)
 
 # The default behavior is to build with optimization
@@ -16,15 +15,12 @@ else()
     set(CMAKE_BUILD_RPATH_USE_ORIGIN TRUE)
 endif()
 
-# If ENABLE_CUDA=ON, set ENABLE_CPP=ON
-if(ENABLE_CUDA)
-    set(ENABLE_CPP ON)
-endif(ENABLE_CUDA)
-
 # The library should be in a folder with the same name to make it easier to use python distutils
 set(DFMTOOLBOX_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/src/python/dfmtoolbox)
 
 if(ENABLE_CPP)
+    enable_language(CXX)
+
     # Build fftw3 as a shared lib
     add_subdirectory(lib/fftw-3.3.10)
     
@@ -57,6 +53,7 @@ endif(ENABLE_CPP)
 
 # Build with CUDA
 if(ENABLE_CUDA)
+    enable_language(CUDA)
     find_package(CUDA REQUIRED)
 
     # Set CUDA C++ standard
