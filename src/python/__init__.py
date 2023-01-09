@@ -190,7 +190,7 @@ def azimuthal_average(
         bins = len(bins) + 1
 
     # initialize azimuthal average
-    az_avg = np.zeros((dim_t, bins), dtype=np.float64)
+    az_avg = np.zeros((bins, dim_t), dtype=np.float64)
 
     # loop over bins
     for i, curr_bin_edge in enumerate(bin_edges):
@@ -202,7 +202,7 @@ def azimuthal_average(
             curr_px = (k_modulus == curr_bin_edge) & mask
 
         if np.all(np.logical_not(curr_px)):
-            az_avg[:,i] = np.full(dim_t, np.nan)
+            az_avg[i] = np.full(dim_t, np.nan)
             if i > 0:
                 e_inf = bin_edges[i-1]
                 e_sup = curr_bin_edge
@@ -214,6 +214,6 @@ def azimuthal_average(
             den = weights[curr_px].mean()
             k[i] = num / den
             w_avg = (img_str_func[:, curr_px] * weights[curr_px]).mean(axis=-1)
-            az_avg[:, i] = w_avg / den
+            az_avg[i] = w_avg / den
 
     return az_avg, k, bin_edges
