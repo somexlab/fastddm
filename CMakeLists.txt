@@ -51,10 +51,15 @@ else(ENABLE_CPP)
 endif(ENABLE_CPP)
 
 # Build with CUDA
-find_package(CUDA REQUIRED)
+if(ENABLE_CUDA)
+    find_package(CUDA REQUIRED)
 
-# Set CUDA C++ standard
-set(CMAKE_CUDA_STANDARD 11)
+    # Set CUDA C++ standard
+    set(CMAKE_CUDA_STANDARD 11)
+    set(IS_CUDA_ENABLED True)
+else(ENABLE_CUDA)
+    set(IS_CUDA_ENABLED False)
+endif(ENABLE_CUDA)
 
 # Add project library subdirectory
 add_subdirectory(src)

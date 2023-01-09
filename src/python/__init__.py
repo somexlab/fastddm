@@ -5,6 +5,7 @@ from typing import Iterable, Dict, Callable, Optional
 from functools import partial
 
 IS_CPP_ENABLED = ${IS_CPP_ENABLED}      # configured by CMake
+IS_CUDA_ENABLED = ${IS_CUDA_ENABLED}    # configured by CMake
 
 from ._dfm_python import _py_image_structure_function
 
@@ -26,12 +27,13 @@ if IS_CPP_ENABLED:
         "fft": dfm_fft_cpp
     }
 
-from ._dfm_cuda import dfm_direct_gpu, dfm_fft_gpu
-# enable cuda support in backends
-_backend["cuda"] = {
-    "direct": dfm_direct_gpu,
-    "fft": dfm_fft_gpu
-}
+if IS_CUDA_ENABLED:
+    from ._dfm_cuda import dfm_direct_gpu, dfm_fft_gpu
+    # enable cuda support in backends
+    _backend["cuda"] = {
+        "direct": dfm_direct_gpu,
+        "fft": dfm_fft_gpu
+    }
 
 def ddm(
     img_seq: np.ndarray,
