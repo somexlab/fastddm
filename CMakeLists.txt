@@ -37,6 +37,7 @@ if(ENABLE_CPP)
 
     set(IS_CPP_ENABLED True)
     # Build with python3 bindings
+    find_package(PythonInterp 3 REQUIRED)
     find_package(PythonLibs 3 REQUIRED)
     add_subdirectory(lib/pybind11)
     include_directories(${PYTHON_INCLUDE_DIRS})
