@@ -1,12 +1,30 @@
 """Main function to interface with backends."""
 
 import numpy as np
-from typing import Iterable, Dict, Callable
+from typing import Iterable, Dict, Callable, Optional
 from functools import partial
 
+IS_CPP_ENABLED = ${IS_CPP_ENABLED}      # configured by CMake
+
 from ._dfm_python import _py_image_structure_function
-from ._dfm_cpp import dfm_direct_cpp, dfm_fft_cpp
+
+## setup of backend dictionary, initially only with py backend
+_backend: Dict[str, Dict[str, Callable]] = {
+    "py": {
+        "direct": partial(_py_image_structure_function, mode="direct"),
+        "fft": partial(_py_image_structure_function, mode="fft"),
+    }
+}
+
 from ._fftopt import next_fast_len
+
+if IS_CPP_ENABLED:
+    from ._dfm_cpp import dfm_direct_cpp, dfm_fft_cpp
+    # enable cpp support in backends
+    _backend["cpp"] = {
+        "direct": dfm_direct_cpp,
+        "fft": dfm_fft_cpp
+    }
 
 
 def ddm(
@@ -42,14 +60,8 @@ def ddm(
     RuntimeError
         If a value for `mode` other than "direct" and "fft" are given.
     """
-    # mapping core/mode strings to functors
-    backend: Dict[str, Dict[str, Callable]] = {
-        "cpp": {"direct": dfm_direct_cpp, "fft": dfm_fft_cpp},
-        "py": {
-            "direct": partial(_py_image_structure_function, mode=mode),
-            "fft": partial(_py_image_structure_function, mode=mode),
-        },
-    }
+    # renaming for convenience
+    backend = _backend
     cores = list(backend.keys())
     modes = ["direct", "fft"]
 
