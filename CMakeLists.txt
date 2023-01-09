@@ -16,6 +16,11 @@ else()
     set(CMAKE_BUILD_RPATH_USE_ORIGIN TRUE)
 endif()
 
+# If ENABLE_CUDA=ON, set ENABLE_CPP=ON
+if(ENABLE_CUDA)
+    set(ENABLE_CPP ON)
+endif(ENABLE_CUDA)
+
 # The library should be in a folder with the same name to make it easier to use python distutils
 set(DFMTOOLBOX_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/src/python/dfmtoolbox)
 
