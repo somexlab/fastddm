@@ -34,6 +34,7 @@ else()
 endif(WIN32)
 
 # Build with python3 bindings
+find_package(PythonInterp 3 REQUIRED)
 find_package(PythonLibs 3 REQUIRED)
 add_subdirectory(lib/pybind11)
 include_directories(${PYTHON_INCLUDE_DIRS})
@@ -42,8 +43,6 @@ include_directories(${PYTHON_INCLUDE_DIRS})
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-
-#message(FATAL_ERROR "This is output_dir: ${DFMTOOLBOX_OUTPUT_DIR}")
 
 # Add project library subdirectory
 add_subdirectory(src)
