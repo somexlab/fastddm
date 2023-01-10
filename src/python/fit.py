@@ -1,5 +1,6 @@
 """A collection of lmfit Models and helper/wrapper functions."""
 
+from re import I
 from typing import Any, Optional, Union
 
 import lmfit as lm
@@ -24,13 +25,10 @@ simple_exp_model.set_param_hint(
 
 
 def _simple_image_structure_function(
-    dt: np.ndarray,
-    A: float,
-    B: float,
-    tau: float
-) -> np.ndarray:
+    dt: np.ndarray, A: float, B: float, tau: float
+) -> np.ndarray[Any, Any]:
     """Basic image structure function shape with a simple exponential."""
-    return 2 * A * (1 - _simple_exp(dt, tau, 1)) + 2 * B
+    return 2 * A * (1 - _simple_exp(dt, tau, 1.0)) + 2 * B  # type: ignore
 
 
 simple_structure_function = lm.Model(_simple_image_structure_function)
@@ -78,6 +76,9 @@ def fit(
 
     It is highly recommended to pass the `weights` argument for very noisy data. All keyword
     arguments in `fitargs` will directly be passed to the lm.Model.fit method (like weights).
+    If `params` is presented and `estimate_simple_parameters` is set to True, first the simple
+    parameters are estimated and the default model parameters updated, then the resulting parameters
+    are updated with the presented parameters again.
 
     Parameters
     ----------
@@ -103,23 +104,29 @@ def fit(
     lm.model.ModelResult
         The results of the fit.
     """
-    params = model.make_params() if params is None else params
-    if verbose:
-        print(":: Model parameters:")
-        params.pretty_print()
+    # initialize model parameters
+    model_params = model.make_params()
 
     # we will assume the models only have one indep. variable
     indep_var = model.independent_vars[0]
     fitargs[indep_var] = xdata  # mapping xdata to independent variable name
 
+    # estimating simple parameters and updating model parameters
     if estimate_simple_parameters:
         simple_pars = _simple_structure_function_parameter_helper(xdata, ydata)
         if verbose:
             print(":: updating given parameters with simple estimates .. ")
-        params.update(simple_pars)
+        model_params.update(simple_pars)
+
+    # updating model parameters with provided parameters
+    if params is not None:
+        model_params.update(params)
+        if verbose:
+            print(":: Model parameters:")
+            model_params.pretty_print()
 
     # fit
-    result = model.fit(ydata, params=params, **fitargs)
+    result = model.fit(ydata, params=model_params, **fitargs)
 
     if verbose:
         print(":: Fit report:")
