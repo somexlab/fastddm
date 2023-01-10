@@ -1,8 +1,9 @@
 """A collection of lmfit Models and helper/wrapper functions."""
 
+from typing import Any, Optional, Union
+
 import lmfit as lm
 import numpy as np
-from typing import Union, Any, Optional
 
 
 def _simple_exp(
@@ -23,21 +24,19 @@ simple_exp_model.set_param_hint(
 
 
 def _simple_image_structure_function(
-    dt: Union[np.ndarray, float, int],
-    A: Union[np.ndarray, float],
+    dt: np.ndarray,
+    A: float,
     B: float,
-    tau: float,
-    amplitude: float,
-) -> Union[np.ndarray, float]:
+    tau: float
+) -> np.ndarray:
     """Basic image structure function shape with a simple exponential."""
-    return 2 * A * (1 - _simple_exp(dt, tau, amplitude)) + 2 * B
+    return 2 * A * (1 - _simple_exp(dt, tau, 1)) + 2 * B
 
 
 simple_structure_function = lm.Model(_simple_image_structure_function)
 simple_structure_function.set_param_hint("A", min=0.0, max=np.inf, value=1.0)
 simple_structure_function.set_param_hint("B", min=0.0, max=np.inf, value=0.0)
 simple_structure_function.set_param_hint("tau", min=0.0, max=np.inf, value=1.0)
-simple_structure_function.set_param_hint("amplitude", min=0.0, max=np.inf, value=1.0)
 
 
 def _simple_structure_function_parameter_helper(
@@ -89,11 +88,15 @@ def fit(
     ydata : np.ndarray
         The data we want to fit the model to.
     params : Optional[Union[lm.Parameters, lm.Parameter]], optional
-        Either a single lm.Parameter or lm.Parameters, as the Model expects, by default None
+        Either a single lm.Parameter or lm.Parameters, as the Model expects, by
+        default None
     estimate_simple_parameters : bool
-        Set to true if some simple estimates to get initial values for A, B and tau should be used. These estimates are only really applicable for the simple structure function setting, by default False
+        Set to true if some simple estimates to get initial values for A, B and
+        tau should be used. These estimates are only really applicable for the
+        simple structure function setting, by default False
     verbose : bool, optional
-        Pretty prints the parameters before fitting and the fit report afterwards, by default False
+        Pretty prints the parameters before fitting and the fit report
+        afterwards, by default False
 
     Returns
     -------
