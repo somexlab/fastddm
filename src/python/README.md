@@ -59,7 +59,7 @@ sf_model = lm.Model(structure_function)
 sf_model.set_param_hint("A", min=0.0, max=np.inf, value=1.0)
 sf_model.set_param_hint("B", min=0.0, value=0.0)
 sf_model.set_param_hint("tau", min=0.0, value=1.0)
-sf_model.set_param_hint("delta", min=0.0, max=4.0, value=1.0)
+sf_model.set_param_hint("delta", min=0.1, max=1.0, value=0.5)
 
 # fitting data to model
 data = ...
@@ -67,4 +67,6 @@ dt = ...
 
 result = fit(structure_function, xdata=dt, ydata=data)
 ```
-Here we can directly set the initial values we want in the parameter hints. Not all parameter hints have to be set, but their default values (by `lmfit` may be problematic depending on the model used).
+Here we can directly set the initial values we want in the parameter hints, e.g. for the stretching exponent `delta` we set the range to $(0.1, 1.0)$ with a starting value of $0.5$.
+
+Not all parameter hints have to be set, but their default values (by `lmfit`) may be problematic depending on the model used.
