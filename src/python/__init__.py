@@ -137,7 +137,7 @@ class AzimuthalAverage:
     bin_edges : np.ndarray
         The array of bin edges.
     """
-    
+
     data : np.ndarray
     k : np.ndarray
     tau : np.ndarray
@@ -151,7 +151,7 @@ def ddm(
     core: str = "py",
     mode: str = "fft",
     **kwargs,
-) -> np.ndarray:
+) -> ImageStructureFunction:
     """Perform DDM analysis on given image sequence.
     Returns the full image structure function.
 
@@ -170,8 +170,8 @@ def ddm(
 
     Returns
     -------
-    np.ndarray
-        The normalized image structure function.
+    ImageStructureFunction
+        The image structure function.
 
     Raises
     ------
