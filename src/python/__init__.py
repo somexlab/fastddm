@@ -3,6 +3,7 @@
 import numpy as np
 from typing import Iterable, Dict, Callable, Union, Optional, Tuple
 from functools import partial
+from dataclasses import dataclass
 
 IS_CPP_ENABLED = ${IS_CPP_ENABLED}      # configured by CMake
 IS_CUDA_ENABLED = ${IS_CUDA_ENABLED}    # configured by CMake
@@ -124,7 +125,7 @@ def azimuthal_average(
     range : Optional[Tuple[float, float]] = None,
     mask : Optional[np.ndarray] = None,
     weights : Optional[np.ndarray] = None
-    ) -> Tuple[np.ndarray, np.ndarray]:
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Compute the azimuthal average of the image structure function.
     Returns the azimuthal average and the bin centers.
 
@@ -239,3 +240,71 @@ def azimuthal_average(
             az_avg[i] = w_avg / den
 
     return az_avg, k, bin_edges
+
+
+@dataclass
+class ImageStructureFunction:
+    """Image structure function container class.
+
+    Parameters
+    ----------
+    data : np.ndarray
+        The 2D image structure function.
+    kx : np.ndarray
+        The array of wavevector values over x.
+    ky : np.ndarray
+        The array of wavevector values over y.
+    tau : np.ndarray
+        The array of time delays.
+    pixel_size : float
+        The image effective pixel size.
+    delta_t : float
+        The time delay between two consecutive images.
+    """
+
+    data : np.ndarray
+    kx : np.ndarray
+    ky : np.ndarray
+    tau : np.ndarray
+    pixel_size : float = 1.0
+    delta_t : float = 1.0
+
+    def set_pixel_size(self, pixel_size : float):
+        """Set the image effective pixel size.
+
+        This will propagate also on the values of kx and ky.
+
+        Parameters
+        ----------
+        pixel_size : float
+            The effective pixel size.
+        """
+        self.pixel_size = pixel_size
+        dimy, dimx = self.data.shape[1:]
+        kx = 2 * np.pi * np.fft.fftshift(np.fft.fftfreq(dimx, d=pixel_size))
+        ky = 2 * np.pi * np.fft.fftshift(np.fft.fftfreq(dimy, d=pixel_size))
+
+    def set_delta_t(self, delta_t : float):
+        """Set the time delay between two consecutive frames.
+
+        This will propagate also on the values of tau.
+
+        Parameters
+        ----------
+        delta_t : float
+            The time delay.
+        """
+        self.tau *= delta_t / self.delta_t
+        self.delta_t = delta_t
+
+    def set_frame_rate(self, frame_rate : float):
+        """Set the acquisition frame rate.
+
+        This will propagate also on the values of tau.
+
+        Parameters
+        ----------
+        frame_rate : float
+            The acquisition frame rate.
+        """
+        self.set_delta_t(1 / frame_rate)
