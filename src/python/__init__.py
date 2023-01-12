@@ -45,6 +45,8 @@ class ImageStructureFunction:
     ----------
     data : np.ndarray
         The 2D image structure function.
+    shape : Tuple[int, int, int]
+        The shape of the image structure function data.
     kx : np.ndarray
         The array of wavevector values over x.
     ky : np.ndarray
@@ -63,6 +65,12 @@ class ImageStructureFunction:
     tau : np.ndarray
     pixel_size : float = 1.0
     delta_t : float = 1.0
+    shape : Tuple[int, int, int] = (0, 0, 0)
+
+    def __post_init__(self):
+        """Perform post init operations
+        """
+        self.shape = self.data.shape
 
     def set_pixel_size(self, pixel_size : float):
         """Set the image effective pixel size.
@@ -255,7 +263,10 @@ def azimuthal_average(
     # read actual image structure function shape
     dim_t, dim_y, dim_x = data.shape
 
-    if not isinstance(data, ImageStructureFunction):
+    if isinstance(data, ImageStructureFunction):
+        kx = data.kx
+        ky = data.ky
+    else:
         # check kx and ky
         if kx is None:
             kx = 2 * np.pi * np.fft.fftshift(np.fft.fftfreq(dim_x))
@@ -316,7 +327,10 @@ def azimuthal_average(
             num = (k_modulus[curr_px] * weights[curr_px]).mean()
             den = weights[curr_px].mean()
             k[i] = num / den
-            w_avg = (data[:, curr_px] * weights[curr_px]).mean(axis=-1)
+            if isinstance(data, ImageStructureFunction):
+                w_avg = (data.data[:, curr_px] * weights[curr_px]).mean(axis=-1)
+            else:
+                w_avg = (data[:, curr_px] * weights[curr_px]).mean(axis=-1)
             az_avg[i] = w_avg / den
 
     return az_avg, k, bin_edges
