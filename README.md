@@ -37,5 +37,6 @@ True
 True
 ```
 ## Usage examples
+Check the examples folder for jupyter notebooks!
 
 ## Citation
