@@ -37,6 +37,84 @@ if IS_CUDA_ENABLED:
     }
 
 
+@dataclass
+class ImageStructureFunction:
+    """Image structure function container class.
+
+    Parameters
+    ----------
+    data : np.ndarray
+        The 2D image structure function.
+    kx : np.ndarray
+        The array of wavevector values over x.
+    ky : np.ndarray
+        The array of wavevector values over y.
+    tau : np.ndarray
+        The array of time delays.
+    pixel_size : float
+        The image effective pixel size.
+    delta_t : float
+        The time delay between two consecutive images.
+    """
+
+    data : np.ndarray
+    kx : np.ndarray
+    ky : np.ndarray
+    tau : np.ndarray
+    pixel_size : float = 1.0
+    delta_t : float = 1.0
+
+    def set_pixel_size(self, pixel_size : float):
+        """Set the image effective pixel size.
+
+        This will propagate also on the values of kx and ky.
+
+        Parameters
+        ----------
+        pixel_size : float
+            The effective pixel size.
+        """
+        self.pixel_size = pixel_size
+        dimy, dimx = self.data.shape[1:]
+        kx = 2 * np.pi * np.fft.fftshift(np.fft.fftfreq(dimx, d=pixel_size))
+        ky = 2 * np.pi * np.fft.fftshift(np.fft.fftfreq(dimy, d=pixel_size))
+
+    def set_delta_t(self, delta_t : float):
+        """Set the time delay between two consecutive frames.
+
+        This will propagate also on the values of tau.
+
+        Parameters
+        ----------
+        delta_t : float
+            The time delay.
+        """
+        self.tau *= delta_t / self.delta_t
+        self.delta_t = delta_t
+
+    def set_frame_rate(self, frame_rate : float):
+        """Set the acquisition frame rate.
+
+        This will propagate also on the values of tau.
+
+        Parameters
+        ----------
+        frame_rate : float
+            The acquisition frame rate.
+        """
+        self.set_delta_t(1 / frame_rate)
+
+    def shape(self) -> Tuple[int, int, int]:
+        """Get the shape of the image structure function data
+
+        Returns
+        -------
+        Tuple[int, int, int]
+            Shape of image structure function
+        """
+        return self.data.shape
+
+
 def ddm(
     img_seq: np.ndarray,
     lags: Iterable[int],
@@ -120,7 +198,7 @@ def ddm(
 
 
 def azimuthal_average(
-    img_str_func : np.ndarray,
+    data : Union[ImageStructureFunction, np.ndarray],
     kx : Optional[np.ndarray] = None,
     ky : Optional[np.ndarray] = None,
     bins : Optional[Union[int,Iterable[float]]] = 10,
@@ -133,18 +211,18 @@ def azimuthal_average(
 
     Parameters
     ----------
-    img_str_func : np.ndarray
+    data : Union[ImageStructureFunction, np.ndarray]
         The image structure function.
     kx : np.ndarray, optional
-        The array of spatial frequencies along axis x. If kx is None,
-        the frequencies evaluated with
-        `2.0 * np.pi * np.fft.fftshift(np.fft.fftfreq(Nx))`
-        are used (`Nx = img_str_func.shape[2]`). Default is None.
+        The array of spatial frequencies along axis x. If kx is None
+        and data is not an ImageStructureFunction object the frequencies
+        evaluated with `2.0 * np.pi * np.fft.fftshift(np.fft.fftfreq(Nx))`
+        are used (`Nx = data.shape[2]`). Default is None.
     ky : np.ndarray, optional
-        The array of spatial frequencies along axis y. If ky is None,
-        the frequencies evaluated with
-        `2.0 * np.pi * np.fft.fftshift(np.fft.fftfreq(Ny))`
-        are used (`Ny = img_str_func.shape[1]`). Default is None.
+        The array of spatial frequencies along axis y. If ky is None
+        and data is not an ImageStructureFunction object the frequencies
+        evaluated with `2.0 * np.pi * np.fft.fftshift(np.fft.fftfreq(Ny))`
+        are used (`Ny = data.shape[1]`). Default is None.
     bins : Union[int, Iterable[float]], optional
         If `bins` is an int, it defines the number of equal-width bins in the
         given range (10, by default). If `bins` is a sequence, it defines a
@@ -158,10 +236,10 @@ def azimuthal_average(
     mask : np.ndarray, optional
         If a boolean `mask` is given, it is used to exclude grid points from
         the azimuthal average (where False is set). The array must have the
-        same y,x shape of `img_str_func`.
+        same y,x shape of `data`.
     weights : np.ndarray, optional
-        An array of weights, of the same y,x shape as `img_str_func`. Each
-        value in `img_str_func` only contributes its associated weight towards
+        An array of weights, of the same y,x shape as `data`. Each
+        value in `data` only contributes its associated weight towards
         the bin count (instead of 1).
 
     Returns
@@ -175,14 +253,14 @@ def azimuthal_average(
     """
 
     # read actual image structure function shape
-    dim_t, dim_y, dim_x = img_str_func.shape
+    dim_t, dim_y, dim_x = data.shape
 
-    # check kx and ky
-    if kx is None:
-        kx = 2 * np.pi * np.fft.fftshift(np.fft.fftfreq(dim_x))
-
-    if ky is None:
-        ky = 2 * np.pi * np.fft.fftshift(np.fft.fftfreq(dim_y))
+    if not isinstance(data, ImageStructureFunction):
+        # check kx and ky
+        if kx is None:
+            kx = 2 * np.pi * np.fft.fftshift(np.fft.fftfreq(dim_x))
+        if ky is None:
+            ky = 2 * np.pi * np.fft.fftshift(np.fft.fftfreq(dim_y))
 
     # compute the k modulus
     X, Y = np.meshgrid(kx, ky)
@@ -238,75 +316,7 @@ def azimuthal_average(
             num = (k_modulus[curr_px] * weights[curr_px]).mean()
             den = weights[curr_px].mean()
             k[i] = num / den
-            w_avg = (img_str_func[:, curr_px] * weights[curr_px]).mean(axis=-1)
+            w_avg = (data[:, curr_px] * weights[curr_px]).mean(axis=-1)
             az_avg[i] = w_avg / den
 
     return az_avg, k, bin_edges
-
-
-@dataclass
-class ImageStructureFunction:
-    """Image structure function container class.
-
-    Parameters
-    ----------
-    data : np.ndarray
-        The 2D image structure function.
-    kx : np.ndarray
-        The array of wavevector values over x.
-    ky : np.ndarray
-        The array of wavevector values over y.
-    tau : np.ndarray
-        The array of time delays.
-    pixel_size : float
-        The image effective pixel size.
-    delta_t : float
-        The time delay between two consecutive images.
-    """
-
-    data : np.ndarray
-    kx : np.ndarray
-    ky : np.ndarray
-    tau : np.ndarray
-    pixel_size : float = 1.0
-    delta_t : float = 1.0
-
-    def set_pixel_size(self, pixel_size : float):
-        """Set the image effective pixel size.
-
-        This will propagate also on the values of kx and ky.
-
-        Parameters
-        ----------
-        pixel_size : float
-            The effective pixel size.
-        """
-        self.pixel_size = pixel_size
-        dimy, dimx = self.data.shape[1:]
-        kx = 2 * np.pi * np.fft.fftshift(np.fft.fftfreq(dimx, d=pixel_size))
-        ky = 2 * np.pi * np.fft.fftshift(np.fft.fftfreq(dimy, d=pixel_size))
-
-    def set_delta_t(self, delta_t : float):
-        """Set the time delay between two consecutive frames.
-
-        This will propagate also on the values of tau.
-
-        Parameters
-        ----------
-        delta_t : float
-            The time delay.
-        """
-        self.tau *= delta_t / self.delta_t
-        self.delta_t = delta_t
-
-    def set_frame_rate(self, frame_rate : float):
-        """Set the acquisition frame rate.
-
-        This will propagate also on the values of tau.
-
-        Parameters
-        ----------
-        frame_rate : float
-            The acquisition frame rate.
-        """
-        self.set_delta_t(1 / frame_rate)
