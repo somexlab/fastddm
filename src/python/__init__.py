@@ -1,9 +1,10 @@
 """Main function to interface with backends."""
 
-import numpy as np
 from typing import Iterable, Dict, Callable, Union, Optional, Tuple
 from functools import partial
 from dataclasses import dataclass
+import numpy as np
+from scipy.interpolate import interp1d
 
 IS_CPP_ENABLED = ${IS_CPP_ENABLED}      # configured by CMake
 IS_CUDA_ENABLED = ${IS_CUDA_ENABLED}    # configured by CMake
@@ -386,6 +387,28 @@ def merge(
     Returns
     -------
     AzimuthalAverage
-        The two AzimuthalAverage objects are merged into a new object.
+        The two AzimuthalAverage objects are merged into a new one.
     """
-    pass
+
+    # az_avg1 must be the fast video
+    if az_avg1.tau[-1] > az_avg2.tau[-1]:
+        az_avg1, az_avg2 = az_avg2, az_avg1
+
+    # find multiplicative factor via least squares minimization
+    f = interp1d(x=az_avg1.tau, y=az_avg1.data, kind='cubic')
+    Nt = min(10, np.sum(az_avg2.tau < az_avg1.tau[-1]))
+    t = az_avg2.tau[:Nt]
+    sum_xiyi = np.sum(f(t) * az_avg2.data[:, :Nt], axis=1)
+    sum_xi2 = np.sum(f(t) ** 2, axis=1)
+    alpha = sum_xiyi / sum_xi2
+
+    # scale az_avg1 on az_avg2
+    az_avg1.data *= np.array([alpha]).transpose()
+
+    # keep data of az_avg1 up to (Nt/2)th tau of az_avg2
+    idx = np.argmin(np.abs(az_avg1.tau - az_avg2.tau[Nt // 2])) + 1
+    
+    # merge
+    tau = np.append(az_avg1.tau[:idx], az_avg2.tau[Nt // 2 + 1:])
+    data = np.append(az_avg1.data[:, :idx], az_avg2.data[:, Nt // 2 + 1:], axis=1)
+    return AzimuthalAverage(data, az_avg1.k, tau, az_avg1.bin_edges)
