@@ -228,20 +228,23 @@ def ddm(
 
 def azimuthal_average(
     data : Union[ImageStructureFunction, np.ndarray],
+    tau : Optional[np.ndarray] = None,
     kx : Optional[np.ndarray] = None,
     ky : Optional[np.ndarray] = None,
     bins : Optional[Union[int,Iterable[float]]] = 10,
     range : Optional[Tuple[float, float]] = None,
     mask : Optional[np.ndarray] = None,
     weights : Optional[np.ndarray] = None
-    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    ) -> AzimuthalAverage:
     """Compute the azimuthal average of the image structure function.
-    Returns the azimuthal average and the bin centers.
 
     Parameters
     ----------
     data : Union[ImageStructureFunction, np.ndarray]
         The image structure function.
+    tau : np.ndarray, optional
+        The array of time delay values. Required if data is not an
+        ImageStructureFunction object. Default is None.
     kx : np.ndarray, optional
         The array of spatial frequencies along axis x. If kx is None
         and data is not an ImageStructureFunction object the frequencies
@@ -273,26 +276,36 @@ def azimuthal_average(
 
     Returns
     -------
-    az_avg : np.ndarray
+    AzimuthalAverage
         The azimuthal average.
-    k : np.ndarray
-        The spatial frequency associated to the bin.
-    bin_edges : np.ndarray
-        The bin edges.
+
+    Raises
+    ------
+    ValueError
+        If tau, kx, and ky are not compatible with shape of data.
     """
+
+    # check input arguments
+    if isinstance(data,ImageStructureFunction):
+        tau = data.tau
+    else:
+        if tau is None:
+            raise ValueError("`tau` must be given for non-`ImageStructureFunction` data input.")
+        elif len(tau) != len(data):
+            raise ValueError("Length of `tau` not compatible with shape of `data`.")
 
     # read actual image structure function shape
     dim_t, dim_y, dim_x = data.shape
 
-    if isinstance(data, ImageStructureFunction):
-        kx = data.kx
-        ky = data.ky
-    else:
-        # check kx and ky
-        if kx is None:
-            kx = 2 * np.pi * np.fft.fftshift(np.fft.fftfreq(dim_x))
-        if ky is None:
-            ky = 2 * np.pi * np.fft.fftshift(np.fft.fftfreq(dim_y))
+    # check kx and ky
+    if kx is None:
+        kx = 2 * np.pi * np.fft.fftshift(np.fft.fftfreq(dim_x))
+    elif len(kx) != data.shape[2]:
+        raise ValueError("Length of `kx` not compatible with shape of `data`.")
+    if ky is None:
+        ky = 2 * np.pi * np.fft.fftshift(np.fft.fftfreq(dim_y))
+    elif len(ky) != data.shape[1]:
+        raise ValueError("Length of `ky` not compatible with shape of `data`.")
 
     # compute the k modulus
     X, Y = np.meshgrid(kx, ky)
@@ -354,4 +367,4 @@ def azimuthal_average(
                 w_avg = (data[:, curr_px] * weights[curr_px]).mean(axis=-1)
             az_avg[i] = w_avg / den
 
-    return az_avg, k, bin_edges
+    return AzimuthalAverage(az_avg, k, tau.astype(np.float64), bin_edges)
