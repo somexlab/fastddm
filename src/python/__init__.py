@@ -368,3 +368,24 @@ def azimuthal_average(
             az_avg[i] = w_avg / den
 
     return AzimuthalAverage(az_avg, k, tau.astype(np.float64), bin_edges)
+
+
+def merge(
+    az_avg1 : AzimuthalAverage,
+    az_avg2 : AzimuthalAverage
+    ) -> AzimuthalAverage:
+    """Merge 
+
+    Parameters
+    ----------
+    az_avg1 : AzimuthalAverage
+        One AzimuthalAverage object.
+    az_avg2 : AzimuthalAverage
+        Another AzimuthalAverage object.
+
+    Returns
+    -------
+    AzimuthalAverage
+        The two AzimuthalAverage objects are merged into a new object.
+    """
+    pass
