@@ -72,7 +72,7 @@ class ImageStructureFunction:
         """
         self.shape = self.data.shape
 
-    def set_pixel_size(self, pixel_size : float):
+    def set_pixel_size(self, pixel_size : float) -> None:
         """Set the image effective pixel size.
 
         This will propagate also on the values of kx and ky.
@@ -82,12 +82,11 @@ class ImageStructureFunction:
         pixel_size : float
             The effective pixel size.
         """
+        self.kx *= self.pixel_size / pixel_size
+        self.ky *= self.pixel_size / pixel_size
         self.pixel_size = pixel_size
-        dimy, dimx = self.data.shape[1:]
-        kx = 2 * np.pi * np.fft.fftshift(np.fft.fftfreq(dimx, d=pixel_size))
-        ky = 2 * np.pi * np.fft.fftshift(np.fft.fftfreq(dimy, d=pixel_size))
 
-    def set_delta_t(self, delta_t : float):
+    def set_delta_t(self, delta_t : float) -> None:
         """Set the time delay between two consecutive frames.
 
         This will propagate also on the values of tau.
@@ -100,7 +99,7 @@ class ImageStructureFunction:
         self.tau *= delta_t / self.delta_t
         self.delta_t = delta_t
 
-    def set_frame_rate(self, frame_rate : float):
+    def set_frame_rate(self, frame_rate : float) -> None:
         """Set the acquisition frame rate.
 
         This will propagate also on the values of tau.
@@ -121,6 +120,28 @@ class ImageStructureFunction:
             Shape of image structure function
         """
         return self.data.shape
+
+
+@dataclass
+class AzimuthalAverage:
+    """Azimuthal average container class.
+
+    Parameters
+    ----------
+    data : np.ndarray
+        The azimuthal average data.
+    k : np.ndarray
+        The array of reference wavevector values in the bins.
+    tau : np.ndarray
+        The array of time delay values.
+    bin_edges : np.ndarray
+        The array of bin edges.
+    """
+    
+    data : np.ndarray
+    k : np.ndarray
+    tau : np.ndarray
+    bin_edges : np.ndarray
 
 
 def ddm(
