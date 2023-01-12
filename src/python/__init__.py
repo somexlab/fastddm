@@ -375,7 +375,7 @@ def merge(
     az_avg1 : AzimuthalAverage,
     az_avg2 : AzimuthalAverage
     ) -> AzimuthalAverage:
-    """Merge 
+    """Merge two azimuthal averages.
 
     Parameters
     ----------
@@ -412,3 +412,28 @@ def merge(
     tau = np.append(az_avg1.tau[:idx], az_avg2.tau[Nt // 2 + 1:])
     data = np.append(az_avg1.data[:, :idx], az_avg2.data[:, Nt // 2 + 1:], axis=1)
     return AzimuthalAverage(data, az_avg1.k, tau, az_avg1.bin_edges)
+
+
+def fuse(
+    az_avg1 : AzimuthalAverage,
+    az_avg2 : AzimuthalAverage
+    ) -> AzimuthalAverage:
+    """Fuse the values of two azimuthal averages.
+    Values will then be sorted based on tau
+
+    Parameters
+    ----------
+    az_avg1 : AzimuthalAverage
+        One AzimuthalAverage object.
+    az_avg2 : AzimuthalAverage
+        Another AzimuthalAverage object.
+
+    Returns
+    -------
+    AzimuthalAverage
+        The two AzimuthalAverage objects are fused into a new one.
+    """
+    tau = np.append(az_avg1.tau, az_avg2.tau)
+    data = np.append(az_avg1.data, az_avg2.data, axis=1)
+    sortidx = np.argsort(tau)
+    return AzimuthalAverage(data[:,sortidx], az_avg1.k, tau[sortidx], az_avg1.bin_edges)
