@@ -114,7 +114,9 @@ def ddm(
     else:
         args = [img_seq, lags, dim_x_padded, dim_y_padded]
 
-    return ddm_func(*args, **kwargs)
+    kx = 2 * np.pi * np.fft.fftshift(np.fft.fftfreq(dim_x_padded))
+    ky = 2 * np.pi * np.fft.fftshift(np.fft.fftfreq(dim_y_padded))
+    return ImageStructureFunction(ddm_func(*args, **kwargs), kx, ky, lags)
 
 
 def azimuthal_average(
