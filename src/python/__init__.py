@@ -5,6 +5,7 @@ from typing import Iterable, Dict, Callable, Union, Optional, Tuple
 from functools import partial
 
 IS_CPP_ENABLED = ${IS_CPP_ENABLED}      # configured by CMake
+IS_CUDA_ENABLED = ${IS_CUDA_ENABLED}    # configured by CMake
 
 from ._dfm_python import _py_image_structure_function
 
@@ -26,6 +27,15 @@ if IS_CPP_ENABLED:
         "fft": dfm_fft_cpp
     }
 
+if IS_CUDA_ENABLED:
+    from ._dfm_cuda import dfm_direct_gpu, dfm_fft_gpu
+    # enable cuda support in backends
+    _backend["cuda"] = {
+        "direct": dfm_direct_gpu,
+        "fft": dfm_fft_gpu
+    }
+
+
 def ddm(
     img_seq: np.ndarray,
     lags: Iterable[int],
@@ -34,7 +44,8 @@ def ddm(
     mode: str = "fft",
     **kwargs,
 ) -> np.ndarray:
-    """Perform DDM analysis on given image sequence. Returns the full image structure function.
+    """Perform DDM analysis on given image sequence.
+    Returns the full image structure function.
 
     Parameters
     ----------
@@ -43,9 +54,11 @@ def ddm(
     lags : Iterable[int]
         The delays to be inspected by the analysis.
     core : str, optional
-        The backend core, choose between "py" and "cpp", by default "py"
+        The backend core, choose between "py", "cpp", and "cuda".
+        Default is "py".
     mode : str, optional
-        The mode of calculating the autocorrelation, choose between "direct" and "fft", by default "fft"
+        The mode of calculating the autocorrelation, choose between "direct"
+        and "fft". Default is "fft".
 
     Returns
     -------
@@ -55,10 +68,11 @@ def ddm(
     Raises
     ------
     RuntimeError
-        If a value for `core` other than "py" and "cpp" are given.
+        If a value for `core` other than "py", "cpp", and "cuda" are given.
     RuntimeError
         If a value for `mode` other than "direct" and "fft" are given.
     """
+
     # renaming for convenience
     backend = _backend
     cores = list(backend.keys())
@@ -82,19 +96,18 @@ def ddm(
     dim_t, dim_y, dim_x = img_seq.shape
 
     # dimensions after zero padding for efficiency and for normalization
-    fftw_flag = True if core == "cpp" else False
-    dim_x_padded = next_fast_len(dim_x, fftw=fftw_flag)
-    dim_y_padded = next_fast_len(dim_y, fftw=fftw_flag)
+    dim_x_padded = next_fast_len(dim_x, core)
+    dim_y_padded = next_fast_len(dim_y, core)
 
     # select backend
     ddm_func = backend[core][mode]
 
     # setup arguments
-    if core == "cpp":
+    if core != "py":
         args = [img_seq, lags, dim_x_padded, dim_y_padded]
 
         if mode == "fft":
-            dim_t_padded = next_fast_len(2 * dim_t, fftw=True)
+            dim_t_padded = next_fast_len(2 * dim_t, core)
             args.append(dim_t_padded)
 
     else:

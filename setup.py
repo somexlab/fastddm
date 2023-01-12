@@ -118,6 +118,9 @@ class CMakeBuild(build_ext):
                 cmake_args += ['-DENABLE_CUDA=ON']
             else:
                 raise RuntimeError('Cannot build with CUDA on MacOS.')
+            # if ENABLE_CPP is OFF, set it ON
+            if not get_cmake_bool_flag('ENABLE_CPP', False):
+                cmake_args += ['-DENABLE_CPP=ON']
 
         # Set CMAKE_BUILD_PARALLEL_LEVEL to control the parallel build level across all generators.
         if "CMAKE_BUILD_PARALLEL_LEVEL" not in os.environ:
