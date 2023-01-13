@@ -24,11 +24,15 @@ def tiff2numpy(path: str, seq: Optional[Sequence[int]] = None) -> np.ndarray:
         The array containing the image information; coordinate convention is (z,y,x).
     """
     if seq is None:
-        return io.imread(path)
+        data = io.imread(path)
+    else:
+        # load the given image sequence with tifffile
+        with tifffile.TiffFile(path) as tif:
+            data = tif.asarray(key=seq)
 
-    # load the given image sequence with tifffile
-    with tifffile.TiffFile(path) as tif:
-        data = tif.asarray(key=seq)
+    # check if images have also color channel
+    if len(data.shape) > 3:
+        data = data.transpose((3, 0, 1, 2))
     return data
 
 
@@ -44,6 +48,8 @@ def images2numpy(fnames : Sequence[str]) -> np.ndarray:
     -------
     np.ndarray
         The image sequence as a numpy array.
+        Coordinate convention is (z,y,x).
+        If images have colors, convention is (c,z,y,x).
     """
     # open first image
     tmp = io.imread(fnames[0])
