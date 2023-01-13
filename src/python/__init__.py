@@ -195,7 +195,8 @@ class AzimuthalAverage:
     tau : np.ndarray
     bin_edges : np.ndarray
 
-    def save(self,
+    def save(
+        self,
         *,
         fname : str = "analysis_blob",
         protocol : int = pickle.HIGHEST_PROTOCOL
@@ -217,6 +218,42 @@ class AzimuthalAverage:
 
         # save to file
         _store_data(self, fname=os.path.join(dir, name), protocol=protocol)
+
+    def resample(
+        self,
+        tau : np.ndarray
+        ) -> 'AzimuthalAverage':
+        """Resample with new tau values and return a new AzimuthalAverage.
+
+        Parameters
+        ----------
+        tau : np.ndarray
+            New values of tau.
+
+        Returns
+        -------
+        AzimuthalAverage
+            The resampled azimuthal average.
+        """
+        # initialize data
+        data = np.zeros((len(self.k),len(tau)))
+
+        # loop through k values
+        for i in range(len(self.k)):
+            # check for nan
+            if np.isnan(self.data[i, 0]):
+                data[i] = np.full(len(tau), np.nan)
+            else:
+                # interpolate points in loglog scale
+                f = interp1d(
+                    x=np.log(self.tau),
+                    y=np.log(self.data[i]),
+                    kind='quadratic',
+                    fill_value='extrapolate'
+                    )
+                data[i] = np.exp(f(np.log(tau)))
+        
+        return AzimuthalAverage(data, self.k, tau, self.bin_edges)
 
 
 def ddm(
