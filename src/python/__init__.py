@@ -389,31 +389,40 @@ def melt(
     Returns
     -------
     AzimuthalAverage
-        The two AzimuthalAverage objects are merged into a new one.
+        The two AzimuthalAverage objects, merged into a new one.
     """
 
-    # az_avg1 must be the fast video
-    if az_avg1.tau[-1] > az_avg2.tau[-1]:
-        az_avg1, az_avg2 = az_avg2, az_avg1
-
-    # find multiplicative factor via least squares minimization
-    f = interp1d(x=az_avg1.tau, y=az_avg1.data, kind='cubic')
-    Nt = min(10, np.sum(az_avg2.tau < az_avg1.tau[-1]))
-    t = az_avg2.tau[:Nt]
-    sum_xiyi = np.sum(f(t) * az_avg2.data[:, :Nt], axis=1)
-    sum_xi2 = np.sum(f(t) ** 2, axis=1)
-    alpha = sum_xiyi / sum_xi2
-
-    # scale az_avg1 on az_avg2
-    az_avg1.data *= np.array([alpha]).transpose()
-
-    # keep data of az_avg1 up to (Nt/2)th tau of az_avg2
-    idx = np.argmin(np.abs(az_avg1.tau - az_avg2.tau[Nt // 2])) + 1
+    # assign fast and slow acquisition
+    if az_avg1.tau[0] < az_avg2.tau[0]:
+        fast, slow = az_avg1, az_avg2
+    else:
+        fast, slow = az_avg2, az_avg1
     
-    # merge
-    tau = np.append(az_avg1.tau[:idx], az_avg2.tau[Nt // 2 + 1:])
-    data = np.append(az_avg1.data[:, :idx], az_avg2.data[:, Nt // 2 + 1:], axis=1)
-    return AzimuthalAverage(data, az_avg1.k, tau, az_avg1.bin_edges)
+    # initialize tau and data
+    Nt = min(10, np.sum(slow.tau < fast.tau[-1]))
+    # keep data of `fast` up to (Nt/2)-th tau of `slow`
+    idx = np.argmin(np.abs(fast.tau - slow.tau[Nt // 2])) + 1
+    tau = np.append(fast.tau[:idx], slow.tau[Nt // 2 + 1:])
+    data = np.zeros((len(fast.k), len(tau)))
+
+    t = slow.tau[:Nt]
+
+    # loop through k values
+    for i in range(len(fast.k)):
+        # check for nan
+        if np.any(np.isnan([fast.data[i, 0], slow.data[i, 0]])):
+            data[i] = np.full(len(tau), np.nan)
+        else:
+            # find multiplicative factor via least squares minimization
+            f = interp1d(x=fast.tau, y=fast.data[i], kind='cubic')
+            sum_xiyi = np.sum(f(t) * slow.data[i, :Nt])
+            sum_xi2 = np.sum(f(t) ** 2)
+            alpha = sum_xiyi / sum_xi2
+            
+            # scale fast on slow
+            data[i] = np.append(fast.data[i, :idx] * alpha, slow.data[i, Nt // 2 + 1:])
+
+    return AzimuthalAverage(data, fast.k, tau, fast.bin_edges)
 
 
 def mergesort(
