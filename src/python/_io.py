@@ -2,8 +2,10 @@
 
 import pickle
 from pathlib import Path
-from typing import Any
+from typing import Any, Sequence, Tuple
 from os.path import dirname
+import numpy as np
+import tifffile
 
 
 def _store_data(
@@ -51,3 +53,23 @@ def load(fname: str) -> Any:
         data = pickle.load(file)
 
     return data
+
+
+def _save_as_tiff(
+    data : np.ndarray,
+    labels : Sequence[str],
+    resolution : Tuple[float, float]
+    ) -> None:
+    """Save 3D numpy array as tiff image sequence.
+
+    Parameters
+    ----------
+    data : np.ndarray
+        The input array to be saved
+    labels : Sequence[str]
+        List of file names.
+    resolution : Tuple[float, float]
+        The resolution of the image.
+    """
+    for i, label in enumerate(labels):
+        tifffile.imwrite(label, data[i].astype(np.float32), resolution=resolution)

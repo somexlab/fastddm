@@ -1,6 +1,6 @@
 """Main function to interface with backends."""
 
-from typing import Iterable, Dict, Callable, Union, Optional, Tuple
+from typing import Iterable, Dict, Callable, Union, Optional, Tuple, Sequence
 from functools import partial
 from dataclasses import dataclass
 import pickle
@@ -11,7 +11,7 @@ from scipy.interpolate import interp1d
 IS_CPP_ENABLED = ${IS_CPP_ENABLED}      # configured by CMake
 IS_CUDA_ENABLED = ${IS_CUDA_ENABLED}    # configured by CMake
 
-from ._io import load, _store_data
+from ._io import load, _store_data, _save_as_tiff
 from ._dfm_python import _py_image_structure_function
 
 ## setup of backend dictionary, initially only with py backend
@@ -129,7 +129,7 @@ class ImageStructureFunction:
         *,
         fname : str = "analysis_blob",
         protocol : int = pickle.HIGHEST_PROTOCOL
-    ) -> None:
+        ) -> None:
         """Save ImageStructureFunction to binary file.
         The binary file is in fact a python pickle file.
 
@@ -147,6 +147,31 @@ class ImageStructureFunction:
 
         # save to file
         _store_data(self, fname=os.path.join(dir, name), protocol=protocol)
+
+    def save_as_tiff(self,
+        seq : Sequence[int],
+        fnames : Sequence[str]
+        ) -> None:
+        """Save ImageStructureFunction frames as images.
+
+        Parameters
+        ----------
+        seq : Optional[Sequence[int]]
+            List of indices to export.
+        fnames : Optional[Sequence[str]], optional
+            List of file names.
+
+        Raises
+        ------
+        RuntimeError
+            If number of elements in fnames and seq are different.
+        """
+        if len(fnames) != len(seq):
+            raise RuntimeError('Number of elements in fnames differs from one in seq.')
+
+        resolution = (1 / (self.ky[-1] - self.ky[-2]), 1 / (self.kx[-1] - self.kx[-2]))
+
+        _save_as_tiff(data=self.data[seq], labels=fnames, resolution=resolution)
 
 
 @dataclass
@@ -174,7 +199,7 @@ class AzimuthalAverage:
         *,
         fname : str = "analysis_blob",
         protocol : int = pickle.HIGHEST_PROTOCOL
-    ) -> None:
+        ) -> None:
         """Save AzimuthalAverage to binary file.
         The binary file is in fact a python pickle file.
 
@@ -201,7 +226,7 @@ def ddm(
     core: str = "py",
     mode: str = "fft",
     **kwargs,
-) -> ImageStructureFunction:
+    ) -> ImageStructureFunction:
     """Perform DDM analysis on given image sequence.
     Returns the full image structure function.
 
