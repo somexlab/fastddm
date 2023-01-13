@@ -289,6 +289,8 @@ def azimuthal_average(
     # check input arguments
     if isinstance(data,ImageStructureFunction):
         tau = data.tau
+        kx = data.kx
+        ky = data.ky
     else:
         if tau is None:
             raise ValueError("`tau` must be given for non-`ImageStructureFunction` data input.")
