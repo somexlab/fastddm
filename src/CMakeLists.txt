@@ -103,7 +103,7 @@ configure_file(python/_dfm_python.py
                ${DFMTOOLBOX_OUTPUT_DIR}/_dfm_python.py)
 
 configure_file(python/_io.py
-               ${DFMTOOLBOX_OUTPUT_DIR}/io.py)
+               ${DFMTOOLBOX_OUTPUT_DIR}/_io.py)
 
 configure_file(python/lags.py
                ${DFMTOOLBOX_OUTPUT_DIR}/lags.py)
