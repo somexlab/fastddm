@@ -371,11 +371,11 @@ def azimuthal_average(
     return AzimuthalAverage(az_avg, k, tau.astype(np.float64), bin_edges)
 
 
-def merge(
+def melt(
     az_avg1 : AzimuthalAverage,
     az_avg2 : AzimuthalAverage
     ) -> AzimuthalAverage:
-    """Merge two azimuthal averages.
+    """Melt two azimuthal averages into one object.
 
     Parameters
     ----------
@@ -414,12 +414,12 @@ def merge(
     return AzimuthalAverage(data, az_avg1.k, tau, az_avg1.bin_edges)
 
 
-def fuse(
+def mergesort(
     az_avg1 : AzimuthalAverage,
     az_avg2 : AzimuthalAverage
     ) -> AzimuthalAverage:
-    """Fuse the values of two azimuthal averages.
-    Values will then be sorted based on tau
+    """Merge the values of two azimuthal averages.
+    Values will then be sorted based on tau.
 
     Parameters
     ----------
