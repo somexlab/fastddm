@@ -3,12 +3,15 @@
 from typing import Iterable, Dict, Callable, Union, Optional, Tuple
 from functools import partial
 from dataclasses import dataclass
+import pickle
+import os.path
 import numpy as np
 from scipy.interpolate import interp1d
 
 IS_CPP_ENABLED = ${IS_CPP_ENABLED}      # configured by CMake
 IS_CUDA_ENABLED = ${IS_CUDA_ENABLED}    # configured by CMake
 
+from ._io import load, _store_data
 from ._dfm_python import _py_image_structure_function
 
 ## setup of backend dictionary, initially only with py backend
@@ -122,6 +125,29 @@ class ImageStructureFunction:
         """
         return self.data.shape
 
+    def save(self,
+        *,
+        fname : str = "analysis_blob",
+        protocol : int = pickle.HIGHEST_PROTOCOL
+    ) -> None:
+        """Save ImageStructureFunction to binary file.
+        The binary file is in fact a python pickle file.
+
+        Parameters
+        ----------
+        fname : str, optional
+            The full file name, by default "analysis_blob".
+        protocol : int, optional
+            pickle binary serialization protocol, by default
+            pickle.HIGHEST_PROTOCOL.
+        """
+        # check name
+        dir, name = os.path.split(fname)
+        name = name if name.endswith(".sf.ddm") else f"{name}.sf.ddm"
+
+        # save to file
+        _store_data(self, fname=os.path.join(dir, name), protocol=protocol)
+
 
 @dataclass
 class AzimuthalAverage:
@@ -143,6 +169,29 @@ class AzimuthalAverage:
     k : np.ndarray
     tau : np.ndarray
     bin_edges : np.ndarray
+
+    def save(self,
+        *,
+        fname : str = "analysis_blob",
+        protocol : int = pickle.HIGHEST_PROTOCOL
+    ) -> None:
+        """Save AzimuthalAverage to binary file.
+        The binary file is in fact a python pickle file.
+
+        Parameters
+        ----------
+        fname : str, optional
+            The full file name, by default "analysis_blob".
+        protocol : int, optional
+            pickle binary serialization protocol, by default
+            pickle.HIGHEST_PROTOCOL.
+        """
+        # check name
+        dir, name = os.path.split(fname)
+        name = name if name.endswith(".aa.ddm") else f"{name}.aa.ddm"
+
+        # save to file
+        _store_data(self, fname=os.path.join(dir, name), protocol=protocol)
 
 
 def ddm(

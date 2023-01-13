@@ -3,13 +3,13 @@
 import pickle
 from pathlib import Path
 from typing import Any
+from os.path import dirname
 
 
-def store_data(
+def _store_data(
     data: Any,
     *,
-    path: Path,
-    name: str = "analysis-blob",
+    fname: str,
     protocol: int = pickle.HIGHEST_PROTOCOL,
 ) -> None:
     """Pickle any (picklable) data object as binary file with `name` under `path`.
@@ -18,29 +18,26 @@ def store_data(
     ----------
     data : Any
         A picklable data object.
-    path : Path
-        The folder to contain the pickled data.
-    name : str, optional
-        The name of the pickled data file (automatically appends ".pkl" file ending), by default "analysis-blob"
+    fname : str
+        The name of the pickled data file.
     protocol : int, optional
-        The pickle protocol version to be used, by default pickle.HIGHEST_PROTOCOL
+        The pickle protocol version to be used, by default pickle.HIGHEST_PROTOCOL.
     """
     # ensure that storage folder exists
-    path.mkdir(parents=True, exist_ok=True)
+    dir_name = Path(dirname(fname))
+    dir_name = Path(dir_name)
+    dir_name.mkdir(parents=True, exist_ok=True)
 
-    # check file ending
-    name = name if name.endswith(".pkl") else f"{name}.pkl"
-
-    with open(path / name, "wb") as file:
+    with open(fname, "wb") as file:
         pickle.dump(data, file, protocol=protocol)
 
 
-def read_data(path: Path) -> Any:
+def load(fname: str) -> Any:
     """Read a pickled data object.
 
     Parameters
     ----------
-    path : Path
+    fname : str
         The path to the pickled data file.
 
     Returns
@@ -48,7 +45,9 @@ def read_data(path: Path) -> Any:
     Any
         The unpickled data.
     """
-    with open(path, "rb") as file:
+    fname = Path(fname)
+
+    with open(fname, "rb") as file:
         data = pickle.load(file)
 
     return data

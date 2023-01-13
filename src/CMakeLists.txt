@@ -102,7 +102,7 @@ endif(ENABLE_CUDA)
 configure_file(python/_dfm_python.py
                ${DFMTOOLBOX_OUTPUT_DIR}/_dfm_python.py)
 
-configure_file(python/io.py
+configure_file(python/_io.py
                ${DFMTOOLBOX_OUTPUT_DIR}/io.py)
 
 configure_file(python/lags.py
