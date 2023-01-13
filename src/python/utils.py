@@ -21,7 +21,9 @@ def tiff2numpy(path: str, seq: Optional[Sequence[int]] = None) -> np.ndarray:
     Returns
     -------
     np.ndarray
-        The array containing the image information; coordinate convention is (z,y,x).
+        The array containing the image information.
+        Coordinate convention is (z,y,x).
+        If color images are imported, convention is (c,z,y,x).
     """
     if seq is None:
         data = io.imread(path)
@@ -49,7 +51,7 @@ def images2numpy(fnames : Sequence[str]) -> np.ndarray:
     np.ndarray
         The image sequence as a numpy array.
         Coordinate convention is (z,y,x).
-        If images have colors, convention is (c,z,y,x).
+        If color images are imported, convention is (c,z,y,x).
     """
     # open first image
     tmp = io.imread(fnames[0])
