@@ -125,7 +125,8 @@ class ImageStructureFunction:
         """
         return self.data.shape
 
-    def save(self,
+    def save(
+        self,
         *,
         fname : str = "analysis_blob",
         protocol : int = pickle.HIGHEST_PROTOCOL
@@ -148,7 +149,8 @@ class ImageStructureFunction:
         # save to file
         _store_data(self, fname=os.path.join(dir, name), protocol=protocol)
 
-    def save_as_tiff(self,
+    def save_as_tiff(
+        self,
         seq : Sequence[int],
         fnames : Sequence[str]
         ) -> None:
@@ -169,9 +171,7 @@ class ImageStructureFunction:
         if len(fnames) != len(seq):
             raise RuntimeError('Number of elements in fnames differs from one in seq.')
 
-        resolution = (1 / (self.ky[-1] - self.ky[-2]), 1 / (self.kx[-1] - self.kx[-2]))
-
-        _save_as_tiff(data=self.data[seq], labels=fnames, resolution=resolution)
+        _save_as_tiff(data=self.data[seq], labels=fnames)
 
 
 @dataclass
@@ -238,6 +238,8 @@ class AzimuthalAverage:
         # initialize data
         data = np.zeros((len(self.k),len(tau)))
 
+        _tau = np.log(tau)
+
         # loop through k values
         for i in range(len(self.k)):
             # check for nan
@@ -251,7 +253,7 @@ class AzimuthalAverage:
                     kind='quadratic',
                     fill_value='extrapolate'
                     )
-                data[i] = np.exp(f(np.log(tau)))
+                data[i] = np.exp(f(_tau))
         
         return AzimuthalAverage(data, self.k, tau, self.bin_edges)
 
