@@ -44,7 +44,7 @@ def ddm(
     mode: str = "fft",
     **kwargs,
 ) -> np.ndarray:
-    """Perform DDM analysis on given image sequence.
+    """Perform Differential Dynamic Microscopy analysis on given image sequence.
     Returns the full image structure function.
 
     Parameters
