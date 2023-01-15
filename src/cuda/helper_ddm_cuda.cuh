@@ -1,11 +1,11 @@
 // Maintainer: enrico-lattuada
 
 // inclusion guard
-#ifndef __HELPER_DFM_CUDA_CUH__
-#define __HELPER_DFM_CUDA_CUH__
+#ifndef __HELPER_DDM_CUDA_CUH__
+#define __HELPER_DDM_CUDA_CUH__
 
-/*! \file helper_dfm_cuda.cuh
-    \brief Declaration of helper functions for Digital Fourier Microscopy on the GPU
+/*! \file helper_ddm_cuda.cuh
+    \brief Declaration of helper functions for Differential Dynamic Microscopy on the GPU
 */
 
 // *** headers ***
@@ -68,7 +68,7 @@ __global__ void transpose_complex_matrix_kernel(double2 *matIn,
                                                 unsigned long long NblocksX,
                                                 unsigned long long NblocksY);
 
-/*! \brief Compute correlation using differences
+/*! \brief Compute structure function using differences
     \param d_in     input array
     \param d_out    output array
     \param d_lags   array of lags
@@ -77,13 +77,13 @@ __global__ void transpose_complex_matrix_kernel(double2 *matIn,
     \param Nq       number of q values (chunk size)
     \param pitch    pitch of arrays
 */
-__global__ void correlate_with_differences_kernel(double2 *d_in,
-                                                  double2 *d_out,
-                                                  unsigned int *d_lags,
-                                                  unsigned long long length,
-                                                  unsigned long long Nlags,
-                                                  unsigned long long Nq,
-                                                  unsigned long long pitch);
+__global__ void structure_function_diff_kernel(double2 *d_in,
+                                               double2 *d_out,
+                                               unsigned int *d_lags,
+                                               unsigned long long length,
+                                               unsigned long long Nlags,
+                                               unsigned long long Nq,
+                                               unsigned long long pitch);
 
 /*! \brief Make full power spectrum (copy symmetric part)
     \param d_in     input array

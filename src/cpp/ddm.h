@@ -1,11 +1,11 @@
 // Maintainer: enrico-lattuada
 
 // inclusion guard
-#ifndef __DFM_H__
-#define __DFM_H__
+#ifndef __DDM_H__
+#define __DDM_H__
 
-/*! \file dfm.h
-    \brief Declaration of core C++ Digital Fourier Microscopy functions
+/*! \file ddm.h
+    \brief Declaration of core C++ Differential Dynamic Microscopy functions
 */
 
 // *** headers ***
@@ -21,20 +21,19 @@ using namespace std;
 
 // *** code ***
 
-/*! \brief Compute ISF in direct mode
+/*! \brief Compute image structure function in diff mode
     \param img_seq  numpy array containing the image sequence
     \param lags     lags to be analyzed
     \param nx       number of fft nodes in x direction
     \param ny       number of fft nodes in y direction
  */
 template <typename T>
-py::array_t<double> dfm_direct(py::array_t<T, py::array::c_style> img_seq,
-                               vector<unsigned int> lags,
-                               unsigned long long nx,
-                               unsigned long long ny);
+py::array_t<double> ddm_diff(py::array_t<T, py::array::c_style> img_seq,
+                             vector<unsigned int> lags,
+                             unsigned long long nx,
+                             unsigned long long ny);
 
-
-/*! \brief Compute ISF in fft mode using Wiener-Khinchin theorem
+/*! \brief Compute image structure function in fft mode using Wiener-Khinchin theorem
     \param img_seq      numpy array containing the image sequence
     \param lags         lags to be analyzed
     \param nx           number of fft nodes in x direction
@@ -43,17 +42,16 @@ py::array_t<double> dfm_direct(py::array_t<T, py::array::c_style> img_seq,
     \param chunk_size   number of fft's in the chunk
  */
 template <typename T>
-py::array_t<double> dfm_fft(py::array_t<T, py::array::c_style> img_seq,
+py::array_t<double> ddm_fft(py::array_t<T, py::array::c_style> img_seq,
                             vector<unsigned int> lags,
                             unsigned long long nx,
                             unsigned long long ny,
                             unsigned long long nt,
                             unsigned long long chunk_size);
 
-
-/*! \brief Export dfm functions to python
+/*! \brief Export ddm functions to python
     \param m    Module
  */
-void export_dfm(py::module &m);
+void export_ddm(py::module &m);
 
 #endif

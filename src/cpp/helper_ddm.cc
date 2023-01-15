@@ -1,11 +1,11 @@
 // Maintainer: enrico-lattuada
 
-/*! \file helper_dfm.cc
-    \brief Definition of helper functions for DFM calculations
+/*! \file helper_ddm.cc
+    \brief Definition of helper functions for Differential Dynamic Microscopy calculations
 */
 
 // *** headers ***
-#include "helper_dfm.h"
+#include "helper_ddm.h"
 #include "helper_fftw.h"
 
 #include <algorithm>
@@ -28,8 +28,8 @@ void copy_vec_with_stride(vector<double> &src,
 }
 
 /*!
-    Make full image structure function from raw output
-    and wap the quadrants of the isf according to fft2 convention
+    Make full image structure function from raw output and swap the quadrants
+    of the image structure function according to fft2 convention 
     (i.e., along axes x and y; leave t untouched).
     Keep only real part of vector and copy symmetric part.
     Make element contiguous in memory.

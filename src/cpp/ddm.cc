@@ -1,14 +1,14 @@
 // Maintainer: enrico-lattuada
 
-/*! \file dfm.cc
-    \brief Definition of core C++ Digital Fourier Microscopy functions
+/*! \file ddm.cc
+    \brief Definition of core C++ Differential Dynamic Microscopy functions
 */
 
 // *** headers ***
-#include "dfm.h"
+#include "ddm.h"
 
 #include "helper_fftw.h"
-#include "helper_dfm.h"
+#include "helper_ddm.h"
 #include "helper_debug.h"
 
 #include <chrono>
@@ -17,26 +17,26 @@ using namespace std::chrono;
 // *** code ***
 
 /*!
-    Compute the image structure function in direct mode
-    using differences of fourier transformed images.
+    Compute the image structure function in diff mode
+    using differences of Fourier transformed images.
  */
 template <typename T>
-py::array_t<double> dfm_direct(py::array_t<T, py::array::c_style> img_seq,
-                               vector<unsigned int> lags,
-                               unsigned long long nx,
-                               unsigned long long ny)
+py::array_t<double> ddm_diff(py::array_t<T, py::array::c_style> img_seq,
+                             vector<unsigned int> lags,
+                             unsigned long long nx,
+                             unsigned long long ny)
 {
     // ***Get input array and dimensions
     unsigned long long length = img_seq.shape()[0]; // get length of original input
     unsigned long long height = img_seq.shape()[1]; // get height of original input
     unsigned long long width = img_seq.shape()[2];  // get width of original input
-    auto p_img_seq = img_seq.data();    // get input data
+    auto p_img_seq = img_seq.data();                // get input data
 
     // ***Allocate workspace vector
     /*
     - We need to make sure that the fft2 r2c fits in the array,
       so the size of one fft2 output is ny*(nx//2 + 1) complex
-      doubles [the input needs to be twice as large]
+      double [the input needs to be twice as large]
      */
     unsigned long long _nx = nx / 2 + 1;
     py::array_t<double> out = py::array_t<double>(2 * _nx * ny * length);
@@ -63,7 +63,7 @@ py::array_t<double> dfm_direct(py::array_t<T, py::array::c_style> img_seq,
     fftw_execute(fft2_plan);
 
     // ***Normalize fft2
-    // use sqrt(num_pixels) to preserve Parseval theorem
+    // use sqrt(num_pixels) for Parseval theorem
     double norm_fact = sqrt((double)(nx * ny));
     for (unsigned long long ii = 0; ii < 2 * _nx * ny * length; ii++)
     {
@@ -115,7 +115,7 @@ py::array_t<double> dfm_direct(py::array_t<T, py::array::c_style> img_seq,
                              2 * (_nx * ny));
     }
 
-    // Convert raw output to full and shifted ISF
+    // Convert raw output to full and shifted image structure function
     make_full_shifted_isf(p_out,
                           nx,
                           ny,
@@ -145,7 +145,7 @@ py::array_t<double> dfm_direct(py::array_t<T, py::array::c_style> img_seq,
     circular correlation.
  */
 template <typename T>
-py::array_t<double> dfm_fft(py::array_t<T, py::array::c_style> img_seq,
+py::array_t<double> ddm_fft(py::array_t<T, py::array::c_style> img_seq,
                             vector<unsigned int> lags,
                             unsigned long long nx,
                             unsigned long long ny,
@@ -156,7 +156,7 @@ py::array_t<double> dfm_fft(py::array_t<T, py::array::c_style> img_seq,
     unsigned long long length = img_seq.shape()[0]; // get length of original input
     unsigned long long height = img_seq.shape()[1]; // get height of original input
     unsigned long long width = img_seq.shape()[2];  // get width of original input
-    auto p_img_seq = img_seq.data();    // get input data
+    auto p_img_seq = img_seq.data();                // get input data
 
     // ***Allocate workspace vector
     /*
@@ -191,7 +191,7 @@ py::array_t<double> dfm_fft(py::array_t<T, py::array::c_style> img_seq,
     fftw_execute(fft2_plan);
 
     // ***Normalize fft2
-    // use sqrt(num_pixels) to preserve Parseval theorem
+    // use sqrt(num_pixels) for Parseval theorem
     double norm_fact = sqrt((double)(nx * ny));
     for (unsigned long long ii = 0; ii < 2 * _nx * ny * length; ii++)
     {
@@ -291,7 +291,7 @@ py::array_t<double> dfm_fft(py::array_t<T, py::array::c_style> img_seq,
         }
     }
 
-    // Convert raw output to full and shifted ISF
+    // Convert raw output to full and shifted image structure function
     make_full_shifted_isf(p_out,
                           nx,
                           ny,
@@ -314,27 +314,27 @@ py::array_t<double> dfm_fft(py::array_t<T, py::array::c_style> img_seq,
 }
 
 /*!
-    Export dfm functions to python.
+    Export ddm functions to python.
  */
-void export_dfm(py::module &m)
+void export_ddm(py::module &m)
 {
     // Leave function export in this order!
-    m.def("dfm_direct", &dfm_direct<uint8_t>);
-    m.def("dfm_direct", &dfm_direct<int16_t>);
-    m.def("dfm_direct", &dfm_direct<uint16_t>);
-    m.def("dfm_direct", &dfm_direct<int32_t>);
-    m.def("dfm_direct", &dfm_direct<uint32_t>);
-    m.def("dfm_direct", &dfm_direct<int64_t>);
-    m.def("dfm_direct", &dfm_direct<uint64_t>);
-    m.def("dfm_direct", &dfm_direct<float>);
-    m.def("dfm_direct", &dfm_direct<double>);
-    m.def("dfm_fft", &dfm_fft<uint8_t>);
-    m.def("dfm_fft", &dfm_fft<int16_t>);
-    m.def("dfm_fft", &dfm_fft<uint16_t>);
-    m.def("dfm_fft", &dfm_fft<int32_t>);
-    m.def("dfm_fft", &dfm_fft<uint32_t>);
-    m.def("dfm_fft", &dfm_fft<int64_t>);
-    m.def("dfm_fft", &dfm_fft<uint64_t>);
-    m.def("dfm_fft", &dfm_fft<float>);
-    m.def("dfm_fft", &dfm_fft<double>);
+    m.def("ddm_diff", &ddm_diff<uint8_t>);
+    m.def("ddm_diff", &ddm_diff<int16_t>);
+    m.def("ddm_diff", &ddm_diff<uint16_t>);
+    m.def("ddm_diff", &ddm_diff<int32_t>);
+    m.def("ddm_diff", &ddm_diff<uint32_t>);
+    m.def("ddm_diff", &ddm_diff<int64_t>);
+    m.def("ddm_diff", &ddm_diff<uint64_t>);
+    m.def("ddm_diff", &ddm_diff<float>);
+    m.def("ddm_diff", &ddm_diff<double>);
+    m.def("ddm_fft", &ddm_fft<uint8_t>);
+    m.def("ddm_fft", &ddm_fft<int16_t>);
+    m.def("ddm_fft", &ddm_fft<uint16_t>);
+    m.def("ddm_fft", &ddm_fft<int32_t>);
+    m.def("ddm_fft", &ddm_fft<uint32_t>);
+    m.def("ddm_fft", &ddm_fft<int64_t>);
+    m.def("ddm_fft", &ddm_fft<uint64_t>);
+    m.def("ddm_fft", &ddm_fft<float>);
+    m.def("ddm_fft", &ddm_fft<double>);
 }

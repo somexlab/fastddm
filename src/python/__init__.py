@@ -7,12 +7,12 @@ from functools import partial
 IS_CPP_ENABLED = ${IS_CPP_ENABLED}      # configured by CMake
 IS_CUDA_ENABLED = ${IS_CUDA_ENABLED}    # configured by CMake
 
-from ._dfm_python import _py_image_structure_function
+from ._ddm_python import _py_image_structure_function
 
 ## setup of backend dictionary, initially only with py backend
 _backend: Dict[str, Dict[str, Callable]] = {
     "py": {
-        "direct": partial(_py_image_structure_function, mode="direct"),
+        "diff": partial(_py_image_structure_function, mode="diff"),
         "fft": partial(_py_image_structure_function, mode="fft"),
     }
 }
@@ -20,19 +20,19 @@ _backend: Dict[str, Dict[str, Callable]] = {
 from ._fftopt import next_fast_len
 
 if IS_CPP_ENABLED:
-    from ._dfm_cpp import dfm_direct_cpp, dfm_fft_cpp
+    from ._ddm_cpp import ddm_diff_cpp, ddm_fft_cpp
     # enable cpp support in backends
     _backend["cpp"] = {
-        "direct": dfm_direct_cpp,
-        "fft": dfm_fft_cpp
+        "diff": ddm_diff_cpp,
+        "fft": ddm_fft_cpp
     }
 
 if IS_CUDA_ENABLED:
-    from ._dfm_cuda import dfm_direct_gpu, dfm_fft_gpu
+    from ._ddm_cuda import ddm_diff_gpu, ddm_fft_gpu
     # enable cuda support in backends
     _backend["cuda"] = {
-        "direct": dfm_direct_gpu,
-        "fft": dfm_fft_gpu
+        "diff": ddm_diff_gpu,
+        "fft": ddm_fft_gpu
     }
 
 
@@ -57,7 +57,7 @@ def ddm(
         The backend core, choose between "py", "cpp", and "cuda".
         Default is "py".
     mode : str, optional
-        The mode of calculating the autocorrelation, choose between "direct"
+        The mode of calculating the autocorrelation, choose between "diff"
         and "fft". Default is "fft".
 
     Returns
@@ -70,13 +70,13 @@ def ddm(
     RuntimeError
         If a value for `core` other than "py", "cpp", and "cuda" are given.
     RuntimeError
-        If a value for `mode` other than "direct" and "fft" are given.
+        If a value for `mode` other than "diff" and "fft" are given.
     """
 
     # renaming for convenience
     backend = _backend
     cores = list(backend.keys())
-    modes = ["direct", "fft"]
+    modes = ["diff", "fft"]
 
     # sanity checks
     if core not in cores:

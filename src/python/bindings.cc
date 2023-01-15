@@ -5,7 +5,7 @@
 */
 
 // *** headers ***
-#include "../cpp/dfm.h"
+#include "../cpp/ddm.h"
 
 // *** code ***
 /*
@@ -13,5 +13,5 @@
  */
 PYBIND11_MODULE(core, m) {
 
-    export_dfm(m);
+    export_ddm(m);
 }

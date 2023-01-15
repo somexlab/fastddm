@@ -55,7 +55,7 @@ class InstallCMakeLibs(install_lib):
         # We have already built the libraries in the previous build_ext step
         self.skip_build = True
 
-        # Folder where the `dfmtoolbox` package has been placed by cmake.
+        # Folder where the `fastddm` package has been placed by cmake.
         # It is used by self.install
         self.build_dir = self.distribution.lib_dir
         self.outfiles = self.install()
@@ -68,7 +68,7 @@ class InstallCMakeLibs(install_lib):
     def get_outputs(self):
         """
         Overrides the parent class' method.
-        Returns a list of the files copied over by the `run` method 
+        Returns a list of the files copied over by the `run` method
         """
         return self.outfiles
 
@@ -152,16 +152,16 @@ class CMakeBuild(build_ext):
 
 
 setup(
-    name = "dfmtoolbox",
+    name = "fastddm",
     use_scm_version = {
         "fallback_version": "0.1.0",
     },
     packages = find_packages(),
-    url = 'https://github.com/somexlab/dfmtoolbox',
+    url = 'https://github.com/somexlab/fastddm',
     long_description = open("./README.md", 'r').read(),
     long_description_content_type = "text/markdown",
     license = 'GNU GPL 3.0',
-    ext_modules = [CMakeExtension('dfmtoolbox')],
+    ext_modules = [CMakeExtension('fastddm')],
     # add custom build_ext command
     cmdclass = {
         'build_ext': CMakeBuild,

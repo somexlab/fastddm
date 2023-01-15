@@ -4,11 +4,11 @@ import math
 import psutil
 import numpy as np
 
-from .core import dfm_direct, dfm_fft
+from ._core import ddm_diff, ddm_fft
 
 
-def dfm_direct_cpp(img_seq: np.ndarray, lags: List[int], nx: int, ny: int):
-    """Digital Fourier Microscopy, direct mode
+def ddm_diff_cpp(img_seq: np.ndarray, lags: List[int], nx: int, ny: int):
+    """Differential Dynamic Microscopy, diff mode
 
     Compute the image structure function using differences.
 
@@ -25,12 +25,12 @@ def dfm_direct_cpp(img_seq: np.ndarray, lags: List[int], nx: int, ny: int):
 
     Returns
     -------
-    isf : numpy.ndarray
+    np.ndarray
         Image structure function.
 
     Raises
     ------
-    MemoryError
+    RuntimeError
         If memory is not sufficient to perform the calculations.
     """
 
@@ -46,13 +46,13 @@ def dfm_direct_cpp(img_seq: np.ndarray, lags: List[int], nx: int, ny: int):
     # we require this space to be less than 80% of the available memory
     # to stay on the safe side
     if int(0.9*mem) < mem_req:
-        raise MemoryError('Not enough memory')
+        raise RuntimeError('Not enough memory')
 
-    return dfm_direct(img_seq, lags, nx, ny)
+    return ddm_diff(img_seq, lags, nx, ny)
 
 
-def dfm_fft_cpp(img_seq: np.ndarray, lags: List[int], nx: int, ny: int, nt: int):
-    """Digital Fourier Microscopy, fft mode
+def ddm_fft_cpp(img_seq: np.ndarray, lags: List[int], nx: int, ny: int, nt: int):
+    """Differential Dynamic Microscopy, fft mode
 
     Compute the image structure function using the Wiener-Khinchin theorem.
 
@@ -71,12 +71,12 @@ def dfm_fft_cpp(img_seq: np.ndarray, lags: List[int], nx: int, ny: int, nt: int)
 
     Returns
     -------
-    isf : numpy.ndarray
+    np.ndarray
         Image structure function.
 
     Raises
     ------
-    MemoryError
+    RuntimeError
         If memory available is not sufficient for calculations.
     """
 
@@ -105,9 +105,9 @@ def dfm_fft_cpp(img_seq: np.ndarray, lags: List[int], nx: int, ny: int, nt: int)
         if int(0.9*mem) > mem_req:
             break
         if idx == 0:
-            raise MemoryError('Not enough memory')
+            raise RuntimeError('Not enough memory')
 
-    return dfm_fft(img_seq, lags, nx, ny, nt, chunk_size)
+    return ddm_fft(img_seq, lags, nx, ny, nt, chunk_size)
 
 
 def primesfrom2to(n: int) -> List[int]:

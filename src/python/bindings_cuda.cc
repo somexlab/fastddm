@@ -5,7 +5,7 @@
 */
 
 // *** headers ***
-#include "../cuda/dfm_cuda.h"
+#include "../cuda/ddm_cuda.h"
 
 // *** code ***
 /*
@@ -13,5 +13,5 @@
  */
 PYBIND11_MODULE(core_cuda, m) {
 
-    export_dfm_cuda(m);
+    export_ddm_cuda(m);
 }
