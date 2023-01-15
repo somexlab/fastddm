@@ -516,7 +516,7 @@ def melt(
     tau = np.append(fast.tau[:idx], slow.tau[Nt // 2 + 1:])
     data = np.zeros((len(fast.k), len(tau)))
 
-    t = slow.tau[:Nt]
+    t = np.log(slow.tau[:Nt])
 
     # loop through k values
     for i in range(len(fast.k)):
@@ -525,9 +525,10 @@ def melt(
             data[i] = np.full(len(tau), np.nan)
         else:
             # find multiplicative factor via least squares minimization
-            f = interp1d(x=fast.tau, y=fast.data[i], kind='cubic')
-            sum_xiyi = np.sum(f(t) * slow.data[i, :Nt])
-            sum_xi2 = np.sum(f(t) ** 2)
+            # interpolate in loglog scale (smoother curve)
+            f = interp1d(x=np.log(fast.tau), y=np.log(fast.data[i]), kind='cubic')
+            sum_xiyi = np.sum(np.exp(f(t)) * slow.data[i, :Nt])
+            sum_xi2 = np.sum(np.exp(f(t)) ** 2)
             alpha = sum_xiyi / sum_xi2
             
             # scale fast on slow
