@@ -16,6 +16,8 @@ v0.1.0 (2023-01-16)
 * Basic central cross mask for azimuthal average computation.
 * Basic weights (sector average) functions for azimuthal average.
 * Objects loading and saving.
+* Lag selection functions.
+* Fit interface with `lmfit`.
 
 .. *Changed*
 
