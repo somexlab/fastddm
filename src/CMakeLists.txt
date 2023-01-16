@@ -117,8 +117,8 @@ configure_file(python/mask.py
 configure_file(python/weights.py
                ${FASTDDM_OUTPUT_DIR}/weights.py)
 
-configure_file(python/utils.py
-               ${FASTDDM_OUTPUT_DIR}/utils.py)
+configure_file(python/_utils.py
+               ${FASTDDM_OUTPUT_DIR}/_utils.py)
 
 configure_file(python/make_install_setup.py
                ${FASTDDM_OUTPUT_DIR}/setup.py)
