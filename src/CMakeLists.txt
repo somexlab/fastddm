@@ -102,8 +102,8 @@ endif(ENABLE_CUDA)
 configure_file(python/_ddm_python.py
                ${FASTDDM_OUTPUT_DIR}/_ddm_python.py)
 
-configure_file(python/io.py
-               ${FASTDDM_OUTPUT_DIR}/io.py)
+configure_file(python/_io.py
+               ${DFMTOOLBOX_OUTPUT_DIR}/_io.py)
 
 configure_file(python/lags.py
                ${FASTDDM_OUTPUT_DIR}/lags.py)
