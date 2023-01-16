@@ -1,15 +1,15 @@
 // Maintainer: enrico-lattuada
 
-/*! \file dfm_cuda.cu
-    \brief Definition of core CUDA Digital Fourier Microscopy functions
+/*! \file ddm_cuda.cu
+    \brief Definition of core CUDA Differential Dynamic Microscopy functions
 */
 
 // *** headers ***
-#include "dfm_cuda.cuh"
+#include "ddm_cuda.cuh"
 
 #include "helper_debug.cuh"
 #include "helper_cufft.cuh"
-#include "helper_dfm_cuda.cuh"
+#include "helper_ddm_cuda.cuh"
 #include "helper_prefix_sum.cuh"
 
 #include <cuda_runtime.h>
@@ -47,6 +47,9 @@ void compute_fft2(const T *h_in,
                   unsigned long long num_fft2,
                   unsigned long long buff_pitch)
 {
+    int device_id;
+    cudaGetDevice(&device_id);
+
     // compute half width of fft2
     unsigned long long _nx = nx / 2 + 1;
     // compute batch number of fft2
@@ -71,16 +74,16 @@ void compute_fft2(const T *h_in,
                                              batch);
 
     // Compute efficient execution configuration
-    int numSMs;      // Number of streaming multiprocessors
-    gpuErrchk(cudaDeviceGetAttribute(&numSMs, cudaDevAttrMultiProcessorCount, 0));
+    int numSMs; // Number of streaming multiprocessors
+    gpuErrchk(cudaDeviceGetAttribute(&numSMs, cudaDevAttrMultiProcessorCount, device_id));
     int maxGridSizeX, maxGridSizeY;
-    gpuErrchk(cudaDeviceGetAttribute(&maxGridSizeX, cudaDevAttrMaxGridDimX, 0)); // gpu id fixed to 0 for now
-    gpuErrchk(cudaDeviceGetAttribute(&maxGridSizeY, cudaDevAttrMaxGridDimY, 0)); // gpu id fixed to 0 for now
+    gpuErrchk(cudaDeviceGetAttribute(&maxGridSizeX, cudaDevAttrMaxGridDimX, device_id));
+    gpuErrchk(cudaDeviceGetAttribute(&maxGridSizeY, cudaDevAttrMaxGridDimY, device_id));
 
     // copy_convert_kernel
-    int blockSize_copy;                                                           // The launch configurator returned block size
-    int minGridSize;     // The minimum grid size needed to achieve the
-                         // maximum occupancy for a full device launch
+    int blockSize_copy; // The launch configurator returned block size
+    int minGridSize;    // The minimum grid size needed to achieve the
+                        // maximum occupancy for a full device launch
     gpuErrchk(cudaOccupancyMaxPotentialBlockSize(&minGridSize, &blockSize_copy, copy_convert_kernel<T>, 0, 0));
     dim3 gridSize_copy(min(1ULL * maxGridSizeX, batch), min(1ULL * maxGridSizeY, height), 1);
 
@@ -183,17 +186,20 @@ template void compute_fft2<float>(const float *h_in, double *h_out, unsigned lon
 template void compute_fft2<double>(const double *h_in, double *h_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch);
 
 /*!
-    Compute Image Structure Factor using differences on the GPU
+    Compute image structure function using differences on the GPU
  */
-void correlate_direct(double *h_in,
-                      vector<unsigned int> lags,
-                      unsigned long long length,
-                      unsigned long long nx,
-                      unsigned long long ny,
-                      unsigned long long num_chunks,
-                      unsigned long long pitch_q,
-                      unsigned long long pitch_t)
+void structure_function_diff(double *h_in,
+                             vector<unsigned int> lags,
+                             unsigned long long length,
+                             unsigned long long nx,
+                             unsigned long long ny,
+                             unsigned long long num_chunks,
+                             unsigned long long pitch_q,
+                             unsigned long long pitch_t)
 {
+    int device_id;
+    cudaGetDevice(&device_id);
+
     unsigned long long _nx = nx / 2 + 1;                             // fft2 r2c number of complex elements over x
     unsigned long long chunk_size = (_nx * ny - 1) / num_chunks + 1; // number of q points in a chunk
 
@@ -212,8 +218,8 @@ void correlate_direct(double *h_in,
     // transpose_complex_matrix_kernel
     dim3 blockSize_tran(TILE_DIM, BLOCK_ROWS, 1);
     int maxGridSizeX, maxGridSizeY;
-    gpuErrchk(cudaDeviceGetAttribute(&maxGridSizeX, cudaDevAttrMaxGridDimX, 0)); // gpu id fixed to 0 for now
-    gpuErrchk(cudaDeviceGetAttribute(&maxGridSizeY, cudaDevAttrMaxGridDimY, 0)); // gpu id fixed to 0 for now
+    gpuErrchk(cudaDeviceGetAttribute(&maxGridSizeX, cudaDevAttrMaxGridDimX, device_id));
+    gpuErrchk(cudaDeviceGetAttribute(&maxGridSizeY, cudaDevAttrMaxGridDimY, device_id));
     int gridSize_tran1_x = min((chunk_size + TILE_DIM - 1) / TILE_DIM, (unsigned long long)maxGridSizeX);
     int gridSize_tran1_y = min((length + TILE_DIM - 1) / TILE_DIM, (unsigned long long)maxGridSizeY);
     dim3 gridSize_tran1(gridSize_tran1_x, gridSize_tran1_y, 1);
@@ -270,14 +276,14 @@ void correlate_direct(double *h_in,
         // ***Zero-out workspace2
         gpuErrchk(cudaMemset(d_workspace2, 0.0, workspace_size));
 
-        // ***Correlate using differences (d_workspace1 --> d_workspace2)
-        correlate_with_differences_kernel<<<gridSize_corr, blockSize_corr, smemSize>>>((double2 *)d_workspace1,
-                                                                                       (double2 *)d_workspace2,
-                                                                                       d_lags,
-                                                                                       length,
-                                                                                       lags.size(),
-                                                                                       curr_chunk_size,
-                                                                                       pitch_t);
+        // ***Compute structure function using differences (d_workspace1 --> d_workspace2)
+        structure_function_diff_kernel<<<gridSize_corr, blockSize_corr, smemSize>>>((double2 *)d_workspace1,
+                                                                                    (double2 *)d_workspace2,
+                                                                                    d_lags,
+                                                                                    length,
+                                                                                    lags.size(),
+                                                                                    curr_chunk_size,
+                                                                                    pitch_t);
         gpuErrchk(cudaPeekAtLastError());
         gpuErrchk(cudaDeviceSynchronize());
 
@@ -311,7 +317,7 @@ void correlate_direct(double *h_in,
     gpuErrchk(cudaFree(d_lags));
 }
 
-/*! \brief Convert to full and fftshifted Image Structure Function on the GPU
+/*! \brief Convert to full and fftshifted image structure function on the GPU
     \param h_in             input array after structure function calculation
     \param lags             lags to be analyzed
     \param nx               number of fft nodes in x direction
@@ -326,6 +332,9 @@ void make_full_shift(double *h_in,
                      unsigned long long num_fullshift,
                      unsigned long long pitch_fs)
 {
+    int device_id;
+    cudaGetDevice(&device_id);
+
     unsigned long long _nx = nx / 2 + 1;                                   // fft2 r2c number of complex elements over x
     unsigned long long chunk_size = (lags.size() - 1) / num_fullshift + 1; // number of lags in a chunk
 
@@ -338,8 +347,8 @@ void make_full_shift(double *h_in,
     // ***Compute optimal kernels execution parameters
     dim3 blockSize_full(TILE_DIM, BLOCK_ROWS, 1);
     int maxGridSizeX, maxGridSizeY;
-    gpuErrchk(cudaDeviceGetAttribute(&maxGridSizeX, cudaDevAttrMaxGridDimX, 0)); // gpu id fixed to 0 for now
-    gpuErrchk(cudaDeviceGetAttribute(&maxGridSizeY, cudaDevAttrMaxGridDimY, 0)); // gpu id fixed to 0 for now
+    gpuErrchk(cudaDeviceGetAttribute(&maxGridSizeX, cudaDevAttrMaxGridDimX, device_id));
+    gpuErrchk(cudaDeviceGetAttribute(&maxGridSizeY, cudaDevAttrMaxGridDimY, device_id));
     int gridSize_full_x = min((_nx + TILE_DIM - 1) / TILE_DIM, (unsigned long long)maxGridSizeX);
     int gridSize_full_y = min((ny * chunk_size + TILE_DIM - 1) / TILE_DIM, (unsigned long long)maxGridSizeY);
     dim3 gridSize_full(gridSize_full_x, gridSize_full_y, 1);
@@ -417,19 +426,22 @@ void make_full_shift(double *h_in,
 }
 
 /*!
-    Compute Image Structure Factor using the WK theorem on the GPU
+    Compute image structure function using the WK theorem on the GPU
  */
-void correlate_fft(double *h_in,
-                   vector<unsigned int> lags,
-                   unsigned long long length,
-                   unsigned long long nx,
-                   unsigned long long ny,
-                   unsigned long long nt,
-                   unsigned long long num_chunks,
-                   unsigned long long pitch_q,
-                   unsigned long long pitch_t,
-                   unsigned long long pitch_nt)
+void structure_function_fft(double *h_in,
+                            vector<unsigned int> lags,
+                            unsigned long long length,
+                            unsigned long long nx,
+                            unsigned long long ny,
+                            unsigned long long nt,
+                            unsigned long long num_chunks,
+                            unsigned long long pitch_q,
+                            unsigned long long pitch_t,
+                            unsigned long long pitch_nt)
 {
+    int device_id;
+    cudaGetDevice(&device_id);
+
     unsigned long long _nx = nx / 2 + 1;                             // fft2 r2c number of complex elements over x
     unsigned long long chunk_size = (_nx * ny - 1) / num_chunks + 1; // number of q points in a chunk
 
@@ -455,13 +467,13 @@ void correlate_fft(double *h_in,
     int minGridSize; // The minimum grid size needed to achieve the
                      // maximum occupancy for a full device launch
     int numSMs;      // Number of streaming multiprocessors
-    gpuErrchk(cudaDeviceGetAttribute(&numSMs, cudaDevAttrMultiProcessorCount, 0));
+    gpuErrchk(cudaDeviceGetAttribute(&numSMs, cudaDevAttrMultiProcessorCount, device_id));
 
     // transpose_complex_matrix_kernel
     dim3 blockSize_tran(TILE_DIM, BLOCK_ROWS, 1);
     int maxGridSizeX, maxGridSizeY;
-    gpuErrchk(cudaDeviceGetAttribute(&maxGridSizeX, cudaDevAttrMaxGridDimX, 0)); // gpu id fixed to 0 for now
-    gpuErrchk(cudaDeviceGetAttribute(&maxGridSizeY, cudaDevAttrMaxGridDimY, 0)); // gpu id fixed to 0 for now
+    gpuErrchk(cudaDeviceGetAttribute(&maxGridSizeX, cudaDevAttrMaxGridDimX, device_id));
+    gpuErrchk(cudaDeviceGetAttribute(&maxGridSizeY, cudaDevAttrMaxGridDimY, device_id));
     int gridSize_tran1_x = min((chunk_size + TILE_DIM - 1) / TILE_DIM, (unsigned long long)maxGridSizeX);
     int gridSize_tran1_y = min((length + TILE_DIM - 1) / TILE_DIM, (unsigned long long)maxGridSizeY);
     dim3 gridSize_tran1(gridSize_tran1_x, gridSize_tran1_y, 1);

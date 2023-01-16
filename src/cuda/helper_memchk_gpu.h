@@ -23,16 +23,16 @@ using namespace std;
 */
 void get_host_free_mem(unsigned long long &free_mem);
 
-/*! \brief Estimate and check host memory needed for direct mode
+/*! \brief Estimate and check host memory needed for diff mode
     \param nx           Number of fft nodes, x direction
     \param ny           Number of fft nodes, y direction
     \param length       Number of frames
     \param lags         Vector of lags to analyze
  */
-void chk_host_mem_direct(unsigned long long nx,
-                         unsigned long long ny,
-                         unsigned long long length,
-                         vector<unsigned int> lags);
+void chk_host_mem_diff(unsigned long long nx,
+                       unsigned long long ny,
+                       unsigned long long length,
+                       vector<unsigned int> lags);
 
 /*! \brief Estimate and check host memory needed for fft mode
     \param nx           Number of fft nodes, x direction
@@ -77,7 +77,7 @@ unsigned long long get_device_fft_mem(unsigned long long nt,
                                       unsigned long long pitch,
                                       cufftResult &cufft_res);
 
-/*! \brief Estimate device memory needed for direct mode and optimize
+/*! \brief Estimate device memory needed for diff mode and optimize
     \param width            Width of the image
     \param height           Height of the image
     \param pixel_Nbytes     Number of bytes per pixel
@@ -94,21 +94,21 @@ unsigned long long get_device_fft_mem(unsigned long long nt,
     \param pitch_t          Pitch of device array (t-pitch)
     \param pitch_fs         Pitch of device array for full and shift operation
  */
-void chk_device_mem_direct(unsigned long long width,
-                           unsigned long long height,
-                           int pixel_Nbytes,
-                           unsigned long long nx,
-                           unsigned long long ny,
-                           unsigned long long length,
-                           vector<unsigned int> lags,
-                           bool is_input_double,
-                           unsigned long long &num_fft2,
-                           unsigned long long &num_chunks,
-                           unsigned long long &num_fullshift,
-                           unsigned long long &pitch_buff,
-                           unsigned long long &pitch_q,
-                           unsigned long long &pitch_t,
-                           unsigned long long &pitch_fs);
+void chk_device_mem_diff(unsigned long long width,
+                         unsigned long long height,
+                         int pixel_Nbytes,
+                         unsigned long long nx,
+                         unsigned long long ny,
+                         unsigned long long length,
+                         vector<unsigned int> lags,
+                         bool is_input_double,
+                         unsigned long long &num_fft2,
+                         unsigned long long &num_chunks,
+                         unsigned long long &num_fullshift,
+                         unsigned long long &pitch_buff,
+                         unsigned long long &pitch_q,
+                         unsigned long long &pitch_t,
+                         unsigned long long &pitch_fs);
 
 /*! \brief Estimate device memory needed for fft mode and optimize
     \param width            Width of the image

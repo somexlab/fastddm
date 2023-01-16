@@ -39,12 +39,12 @@ void get_host_free_mem(unsigned long long &free_mem)
 }
 
 /*!
-    Estimate and check host memory needed for direct mode
+    Estimate and check host memory needed for diff mode
  */
-void chk_host_mem_direct(unsigned long long nx,
-                         unsigned long long ny,
-                         unsigned long long length,
-                         vector<unsigned int> lags)
+void chk_host_mem_diff(unsigned long long nx,
+                       unsigned long long ny,
+                       unsigned long long length,
+                       vector<unsigned int> lags)
 {
     unsigned long long free_mem;
     get_host_free_mem(free_mem);
@@ -196,7 +196,7 @@ unsigned long long get_device_fft_mem(unsigned long long nt,
 }
 
 /*!
-    Estimate device memory needed for direct mode and optimize memory usage.
+    Estimate device memory needed for diff mode and optimize memory usage.
 
     Writes in the corresponding arguments the number of iterations for:
         - fft2 (frame chunks)
@@ -211,21 +211,21 @@ unsigned long long get_device_fft_mem(unsigned long long nt,
     Throws a runtime_error if the memory is not sufficient
     to perform the calculations.
  */
-void chk_device_mem_direct(unsigned long long width,
-                           unsigned long long height,
-                           int pixel_Nbytes,
-                           unsigned long long nx,
-                           unsigned long long ny,
-                           unsigned long long length,
-                           vector<unsigned int> lags,
-                           bool is_input_double,
-                           unsigned long long &num_fft2,
-                           unsigned long long &num_chunks,
-                           unsigned long long &num_fullshift,
-                           unsigned long long &pitch_buff,
-                           unsigned long long &pitch_q,
-                           unsigned long long &pitch_t,
-                           unsigned long long &pitch_fs)
+void chk_device_mem_diff(unsigned long long width,
+                         unsigned long long height,
+                         int pixel_Nbytes,
+                         unsigned long long nx,
+                         unsigned long long ny,
+                         unsigned long long length,
+                         vector<unsigned int> lags,
+                         bool is_input_double,
+                         unsigned long long &num_fft2,
+                         unsigned long long &num_chunks,
+                         unsigned long long &num_fullshift,
+                         unsigned long long &pitch_buff,
+                         unsigned long long &pitch_q,
+                         unsigned long long &pitch_t,
+                         unsigned long long &pitch_fs)
 {
     // get device memory
     unsigned long long free_mem;
@@ -320,7 +320,7 @@ void chk_device_mem_direct(unsigned long long width,
         }
     }
 
-    // To compute the image structure function in direct mode, we need
+    // To compute the image structure function in diff mode, we need
     //  - helper lags array (unsigned int, 4 bytes)
     //      lags.size() * 4 bytes
     //  - workspace1 and workspace2 (complex double, 16 bytes)

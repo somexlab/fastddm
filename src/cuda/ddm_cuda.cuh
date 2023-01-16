@@ -1,11 +1,11 @@
 // Maintainer: enrico-lattuada
 
 // inclusion guard
-#ifndef __DFM_CUDA_CUH__
-#define __DFM_CUDA_CUH__
+#ifndef __DDM_CUDA_CUH__
+#define __DDM_CUDA_CUH__
 
-/*! \file dfm_cuda.cuh
-    \brief Declaration of core CUDA Digital Fourier Microscopy functions
+/*! \file ddm_cuda.cuh
+    \brief Declaration of core CUDA Differential Dynamic Microscopy functions
 */
 
 // *** headers ***
@@ -37,7 +37,7 @@ void compute_fft2(const T *h_in,
                   unsigned long long num_fft2,
                   unsigned long long buff_pitch);
 
-/*! \brief Compute Image Structure Function using differences on the GPU
+/*! \brief Compute image structure function using differences on the GPU
     \param h_in         input array of Fourier transformed images
     \param lags         lags to be analyzed
     \param length       number of elements in z direction
@@ -47,16 +47,16 @@ void compute_fft2(const T *h_in,
     \param pitch_q      pitch of device array (q-pitch)
     \param pitch_t      pitch of device array (t-pitch)
  */
-void correlate_direct(double *h_in,
-                      vector<unsigned int> lags,
-                      unsigned long long length,
-                      unsigned long long nx,
-                      unsigned long long ny,
-                      unsigned long long num_chunks,
-                      unsigned long long pitch_q,
-                      unsigned long long pitch_t);
+void structure_function_diff(double *h_in,
+                             vector<unsigned int> lags,
+                             unsigned long long length,
+                             unsigned long long nx,
+                             unsigned long long ny,
+                             unsigned long long num_chunks,
+                             unsigned long long pitch_q,
+                             unsigned long long pitch_t);
 
-/*! \brief Convert to full and fftshifted Image Structure Function on the GPU
+/*! \brief Convert to full and fftshifted image structure function on the GPU
     \param h_in             input array after structure function calculation
     \param lags             lags to be analyzed
     \param nx               number of fft nodes in x direction
@@ -71,7 +71,7 @@ void make_full_shift(double *h_in,
                      unsigned long long num_fullshift,
                      unsigned long long pitch_fs);
 
-/*! \brief Compute Image Structure Factor using the WK theorem on the GPU
+/*! \brief Compute image structure function using the WK theorem on the GPU
     \param h_in         input array of Fourier transformed images
     \param lags         lags to be analyzed
     \param length       number of elements in z direction
@@ -83,15 +83,15 @@ void make_full_shift(double *h_in,
     \param pitch_t      pitch of workspace2 device array (t-pitch, computed for complex elements)
     \param pitch_nt     pitch of workspace1 device array (nt-pitch, computed for complex elements)
  */
-void correlate_fft(double *h_in,
-                   vector<unsigned int> lags,
-                   unsigned long long length,
-                   unsigned long long nx,
-                   unsigned long long ny,
-                   unsigned long long nt,
-                   unsigned long long num_chunks,
-                   unsigned long long pitch_q,
-                   unsigned long long pitch_t,
-                   unsigned long long pitch_nt);
+void structure_function_fft(double *h_in,
+                            vector<unsigned int> lags,
+                            unsigned long long length,
+                            unsigned long long nx,
+                            unsigned long long ny,
+                            unsigned long long nt,
+                            unsigned long long num_chunks,
+                            unsigned long long pitch_q,
+                            unsigned long long pitch_t,
+                            unsigned long long pitch_nt);
 
 #endif

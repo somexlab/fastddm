@@ -1,11 +1,11 @@
 // Maintainer: enrico-lattuada
 
-/*! \file helper_dfm_cuda.cu
-    \brief Definition of helper functions for Digital Fourier Microscopy on the GPU
+/*! \file helper_ddm_cuda.cu
+    \brief Definition of helper functions for Differential Dynamic Microscopy on the GPU
 */
 
 // *** headers ***
-#include "helper_dfm_cuda.cuh"
+#include "helper_ddm_cuda.cuh"
 #include "helper_debug.cuh"
 
 #include <cuda_runtime.h>
@@ -121,16 +121,16 @@ __global__ void transpose_complex_matrix_kernel(double2 *matIn,
 }
 
 /*!
-    Compute correlation using differences.
+    Compute structure function using differences.
     This is inspired by reduce6 from cuda samples.
  */
-__global__ void correlate_with_differences_kernel(double2 *d_in,
-                                                  double2 *d_out,
-                                                  unsigned int *d_lags,
-                                                  unsigned long long length,
-                                                  unsigned long long Nlags,
-                                                  unsigned long long Nq,
-                                                  unsigned long long pitch)
+__global__ void structure_function_diff_kernel(double2 *d_in,
+                                               double2 *d_out,
+                                               unsigned int *d_lags,
+                                               unsigned long long length,
+                                               unsigned long long Nlags,
+                                               unsigned long long Nq,
+                                               unsigned long long pitch)
 {
     // Handle to thread block group
     cg::thread_block cta = cg::this_thread_block();

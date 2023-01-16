@@ -1,11 +1,11 @@
 // Maintainer: enrico-lattuada
 
 // inclusion guard
-#ifndef __HELPER_DFM_H__
-#define __HELPER_DFM_H__
+#ifndef __HELPER_DDM_H__
+#define __HELPER_DDM_H__
 
-/*! \file helper_dfm.h
-    \brief Declaration of helper functions for DFM calculations
+/*! \file helper_ddm.h
+    \brief Declaration of helper functions for Differential Dynamic Microscopy calculations
 */
 
 // *** headers ***

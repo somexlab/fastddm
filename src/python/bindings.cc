@@ -5,13 +5,13 @@
 */
 
 // *** headers ***
-#include "../cpp/dfm.h"
+#include "../cpp/ddm.h"
 
 // *** code ***
 /*
     Export with pybind11
  */
-PYBIND11_MODULE(core, m) {
+PYBIND11_MODULE(_core, m) {
 
-    export_dfm(m);
+    export_ddm(m);
 }

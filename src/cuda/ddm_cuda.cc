@@ -1,12 +1,12 @@
 // Maintainer: enrico-lattuada
 
-/*! \file dfm_cuda.cc
-    \brief Definition of C++ handlers for Digital Fourier Microscopy functions on the GPU
+/*! \file ddm_cuda.cc
+    \brief Definition of C++ handlers for Differential Dynamic Microscopy functions on the GPU
 */
 
 // *** headers ***
-#include "dfm_cuda.h"
-#include "dfm_cuda.cuh"
+#include "ddm_cuda.h"
+#include "ddm_cuda.cuh"
 
 #include "helper_memchk_gpu.h"
 
@@ -15,48 +15,48 @@
 // *** code ***
 
 /*!
-    Compute the image structure function in direct mode
-    using differences of fourier transformed images on the GPU.
+    Compute the image structure function in diff mode
+    using differences of Fourier transformed images on the GPU.
  */
 template <typename T>
-py::array_t<double> dfm_direct_cuda(py::array_t<T, py::array::c_style> img_seq,
-                                    vector<unsigned int> lags,
-                                    unsigned long long nx,
-                                    unsigned long long ny)
+py::array_t<double> ddm_diff_cuda(py::array_t<T, py::array::c_style> img_seq,
+                                  vector<unsigned int> lags,
+                                  unsigned long long nx,
+                                  unsigned long long ny)
 {
     // ***Get input array and dimensions
     unsigned long long length = img_seq.shape()[0]; // get length of original input
     unsigned long long height = img_seq.shape()[1]; // get height of original input
     unsigned long long width = img_seq.shape()[2];  // get width of original input
-    auto p_img_seq = img_seq.data();    // get input data
+    auto p_img_seq = img_seq.data();                // get input data
 
     // Check host memory
-    chk_host_mem_direct(nx, ny, length, lags);
+    chk_host_mem_diff(nx, ny, length, lags);
 
     // Check device memory and optimize
     unsigned long long num_fft2, num_chunks, num_fullshift;
     unsigned long long pitch_buff, pitch_q, pitch_t, pitch_fs;
-    chk_device_mem_direct(width,
-                          height,
-                          sizeof(T),
-                          nx,
-                          ny,
-                          length,
-                          lags,
-                          std::is_same<T, double>::value,
-                          num_fft2,
-                          num_chunks,
-                          num_fullshift,
-                          pitch_buff,
-                          pitch_q,
-                          pitch_t,
-                          pitch_fs);
+    chk_device_mem_diff(width,
+                        height,
+                        sizeof(T),
+                        nx,
+                        ny,
+                        length,
+                        lags,
+                        std::is_same<T, double>::value,
+                        num_fft2,
+                        num_chunks,
+                        num_fullshift,
+                        pitch_buff,
+                        pitch_q,
+                        pitch_t,
+                        pitch_fs);
 
     // ***Allocate workspace vector
     /*
     - We need to make sure that the fft2 r2c fits in the array,
       so the size of one fft2 output is ny*(nx//2 + 1) complex
-      doubles [the input needs to be twice as large]
+      double [the input needs to be twice as large]
      */
     unsigned long long _nx = nx / 2 + 1;
     py::array_t<double> out = py::array_t<double>(2 * _nx * ny * length);
@@ -73,18 +73,18 @@ py::array_t<double> dfm_direct_cuda(py::array_t<T, py::array::c_style> img_seq,
                  num_fft2,
                  pitch_buff);
 
-    // ***Compute correlations
-    correlate_direct(p_out,
-                     lags,
-                     length,
-                     nx,
-                     ny,
-                     num_chunks,
-                     pitch_q,
-                     pitch_t);
+    // ***Compute image structure function
+    structure_function_diff(p_out,
+                            lags,
+                            length,
+                            nx,
+                            ny,
+                            num_chunks,
+                            pitch_q,
+                            pitch_t);
 
-    // ***Convert raw output to full and shifted ISF
-    // Convert raw output to full and shifted ISF
+    // ***Convert raw output to full and shifted image structure function
+    // Convert raw output to full and shifted image structure function
     make_full_shift(p_out,
                     lags,
                     nx,
@@ -109,7 +109,7 @@ py::array_t<double> dfm_direct_cuda(py::array_t<T, py::array::c_style> img_seq,
     circular correlation.
  */
 template <typename T>
-py::array_t<double> dfm_fft_cuda(py::array_t<T, py::array::c_style> img_seq,
+py::array_t<double> ddm_fft_cuda(py::array_t<T, py::array::c_style> img_seq,
                                  vector<unsigned int> lags,
                                  unsigned long long nx,
                                  unsigned long long ny,
@@ -119,7 +119,7 @@ py::array_t<double> dfm_fft_cuda(py::array_t<T, py::array::c_style> img_seq,
     unsigned long long length = img_seq.shape()[0]; // get length of original input
     unsigned long long height = img_seq.shape()[1]; // get height of original input
     unsigned long long width = img_seq.shape()[2];  // get width of original input
-    auto p_img_seq = img_seq.data();    // get input data
+    auto p_img_seq = img_seq.data();                // get input data
 
     // Check host memory
     chk_host_mem_fft(nx, ny, length);
@@ -166,19 +166,19 @@ py::array_t<double> dfm_fft_cuda(py::array_t<T, py::array::c_style> img_seq,
                  num_fft2,
                  pitch_buff);
 
-    // ***Compute correlations
-    correlate_fft(p_out,
-                  lags,
-                  length,
-                  nx,
-                  ny,
-                  nt,
-                  num_chunks,
-                  pitch_q,
-                  pitch_t,
-                  pitch_nt);
+    // ***Compute image structure function
+    structure_function_fft(p_out,
+                           lags,
+                           length,
+                           nx,
+                           ny,
+                           nt,
+                           num_chunks,
+                           pitch_q,
+                           pitch_t,
+                           pitch_nt);
 
-    // ***Convert raw output to full and shifted ISF
+    // ***Convert raw output to full and shifted image structure function
     make_full_shift(p_out,
                     lags,
                     nx,
@@ -215,31 +215,31 @@ void set_device(int gpu_id)
 }
 
 /*!
-    Export dfm_cuda functions to python.
+    Export ddm_cuda functions to python.
  */
-void export_dfm_cuda(py::module &m)
+void export_ddm_cuda(py::module &m)
 {
     m.def("set_device", &set_device);
     // m.def("get_device_pitch", &get_device_pitch);
     // m.def("get_device_fft2_mem", &get_device_fft2_mem);
     // m.def("get_device_fft_mem", &get_device_fft_mem);
-    // Leave functino export in this order!
-    m.def("dfm_direct_cuda", &dfm_direct_cuda<uint8_t>);
-    m.def("dfm_direct_cuda", &dfm_direct_cuda<int16_t>);
-    m.def("dfm_direct_cuda", &dfm_direct_cuda<uint16_t>);
-    m.def("dfm_direct_cuda", &dfm_direct_cuda<int32_t>);
-    m.def("dfm_direct_cuda", &dfm_direct_cuda<uint32_t>);
-    m.def("dfm_direct_cuda", &dfm_direct_cuda<int64_t>);
-    m.def("dfm_direct_cuda", &dfm_direct_cuda<uint64_t>);
-    m.def("dfm_direct_cuda", &dfm_direct_cuda<float>);
-    m.def("dfm_direct_cuda", &dfm_direct_cuda<double>);
-    m.def("dfm_fft_cuda", &dfm_fft_cuda<uint8_t>);
-    m.def("dfm_fft_cuda", &dfm_fft_cuda<int16_t>);
-    m.def("dfm_fft_cuda", &dfm_fft_cuda<uint16_t>);
-    m.def("dfm_fft_cuda", &dfm_fft_cuda<int32_t>);
-    m.def("dfm_fft_cuda", &dfm_fft_cuda<uint32_t>);
-    m.def("dfm_fft_cuda", &dfm_fft_cuda<int64_t>);
-    m.def("dfm_fft_cuda", &dfm_fft_cuda<uint64_t>);
-    m.def("dfm_fft_cuda", &dfm_fft_cuda<float>);
-    m.def("dfm_fft_cuda", &dfm_fft_cuda<double>);
+    // Leave function export in this order!
+    m.def("ddm_diff_cuda", &ddm_diff_cuda<uint8_t>);
+    m.def("ddm_diff_cuda", &ddm_diff_cuda<int16_t>);
+    m.def("ddm_diff_cuda", &ddm_diff_cuda<uint16_t>);
+    m.def("ddm_diff_cuda", &ddm_diff_cuda<int32_t>);
+    m.def("ddm_diff_cuda", &ddm_diff_cuda<uint32_t>);
+    m.def("ddm_diff_cuda", &ddm_diff_cuda<int64_t>);
+    m.def("ddm_diff_cuda", &ddm_diff_cuda<uint64_t>);
+    m.def("ddm_diff_cuda", &ddm_diff_cuda<float>);
+    m.def("ddm_diff_cuda", &ddm_diff_cuda<double>);
+    m.def("ddm_fft_cuda", &ddm_fft_cuda<uint8_t>);
+    m.def("ddm_fft_cuda", &ddm_fft_cuda<int16_t>);
+    m.def("ddm_fft_cuda", &ddm_fft_cuda<uint16_t>);
+    m.def("ddm_fft_cuda", &ddm_fft_cuda<int32_t>);
+    m.def("ddm_fft_cuda", &ddm_fft_cuda<uint32_t>);
+    m.def("ddm_fft_cuda", &ddm_fft_cuda<int64_t>);
+    m.def("ddm_fft_cuda", &ddm_fft_cuda<uint64_t>);
+    m.def("ddm_fft_cuda", &ddm_fft_cuda<float>);
+    m.def("ddm_fft_cuda", &ddm_fft_cuda<double>);
 }

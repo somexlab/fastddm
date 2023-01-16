@@ -1,4 +1,4 @@
-"""The collection of python functions to perform DDM."""
+"""The collection of python functions to perform Differential Dynamic Microscopy."""
 
 from typing import Optional, Tuple, Callable, Dict
 
@@ -193,13 +193,13 @@ def reconstruct_full_spectrum(
     return spectrum
 
 
-def _direct_image_structure_function(
+def _diff_image_structure_function(
     rfft2: np.ndarray,
     rfft2_square_mod: np.ndarray,
     lag: int,
     shape: Optional[Tuple[int, int]],
 ) -> np.ndarray:
-    """Calculate the image structure function the 'direct' way.
+    """Calculate the image structure function the 'diff' way.
 
     Uses the rfft2 and square modulus of the rfft2.
 
@@ -327,7 +327,7 @@ def _py_image_structure_function(
     ny : int, optional
         The number of Fourier nodes in y direction (for normalization), by default None.
     mode : str, optional
-        Calculate the autocorrelation function with Wiener-Khinchin theorem ('fft') or classically ('direct'), by default "fft"
+        Calculate the autocorrelation function with Wiener-Khinchin theorem ('fft') or classically ('diff'), by default "fft"
     workers : int, optional
         Number of workers to be used by scipy.fft, by default 2
 
@@ -343,7 +343,7 @@ def _py_image_structure_function(
     """
     # backend
     backend: Dict[str, Callable] = {
-        "direct": _direct_image_structure_function,
+        "diff": _diff_image_structure_function,
         "fft": image_structure_function,
     }
 
@@ -367,7 +367,7 @@ def _py_image_structure_function(
     rfft2 = normalized_rfft2(images, nx, ny, workers=workers)
     square_mod = np.abs(rfft2) ** 2
 
-    if mode == "direct":
+    if mode == "diff":
         # just needs argument setup
         args = [rfft2, square_mod]
 
@@ -426,7 +426,7 @@ def run(
     keep_full_structure: bool = True,
     workers: int = 2,
 ) -> Tuple[np.ndarray, np.ndarray, Optional[np.ndarray]]:
-    """Run the DDM analysis on a sequence of images.
+    """Run the Differential Dynamic Microscopy analysis on a sequence of images.
 
     Parameters
     ----------

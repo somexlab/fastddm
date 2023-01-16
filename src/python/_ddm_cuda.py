@@ -5,17 +5,17 @@ import numpy as np
 # from ._gpumemchk import get_free_gpu_mem
 # from .core_cuda import chk_host_mem_direct, chk_host_mem_fft
 # from .core_cuda import get_device_pitch, get_device_fft2_mem, get_device_fft_mem
-from .core_cuda import set_device
-from .core_cuda import dfm_direct_cuda, dfm_fft_cuda
+from ._core_cuda import set_device
+from ._core_cuda import ddm_diff_cuda, ddm_fft_cuda
 
-def dfm_direct_gpu(
+def ddm_diff_gpu(
     img_seq: np.ndarray,
     lags: List[int],
     nx: int,
     ny: int,
     gpu_id: Optional[int] = 0
 ) -> np.ndarray:
-    """Digital Fourier Microscopy, direct mode on GPU
+    """Differential Dynamic Microscopy, diff mode on GPU
 
     Compute the image structure function using differences on the GPU.
 
@@ -35,7 +35,7 @@ def dfm_direct_gpu(
 
     Returns
     -------
-    isf : numpy.ndarray
+    np.ndarray
         Image structure function.
 
     Raises
@@ -49,9 +49,9 @@ def dfm_direct_gpu(
     set_device(gpu_id)
 
     # analyze
-    return dfm_direct_cuda(img_seq, lags, nx, ny)
+    return ddm_diff_cuda(img_seq, lags, nx, ny)
 
-def dfm_fft_gpu(
+def ddm_fft_gpu(
     img_seq: np.ndarray,
     lags: List[int],
     nx: int,
@@ -59,7 +59,7 @@ def dfm_fft_gpu(
     nt: int,
     gpu_id: Optional[int] = 0
 ) -> np.ndarray:
-    """Digital Fourier Microscopy, fft mode on GPU
+    """Differential Dynamic Microscopy, fft mode on GPU.
 
     Compute the image structure function using the Wiener-Khinchin theorem on
     the GPU.
@@ -83,7 +83,7 @@ def dfm_fft_gpu(
 
     Returns
     -------
-    isf : numpy.ndarray
+    np.ndarray
         Image structure function.
 
     Raises
@@ -96,4 +96,4 @@ def dfm_fft_gpu(
     set_device(gpu_id)
 
     # analyze
-    return dfm_fft_cuda(img_seq, lags, nx, ny, nt)
+    return ddm_fft_cuda(img_seq, lags, nx, ny, nt)

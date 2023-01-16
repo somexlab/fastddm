@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.12)
 
 cmake_policy(SET CMP0054 NEW)
 
-project(dfmtoolbox)
+project(fastddm)
 
 # The default behavior is to build with optimization
 set(CMAKE_BUILD_TYPE Release)
@@ -16,7 +16,7 @@ else()
 endif()
 
 # The library should be in a folder with the same name to make it easier to use python distutils
-set(DFMTOOLBOX_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/src/python/dfmtoolbox)
+set(FASTDDM_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/src/python/fastddm)
 
 if(ENABLE_CPP)
     enable_language(CXX)
@@ -26,13 +26,13 @@ if(ENABLE_CPP)
     
     if(WIN32)
         set_target_properties(fftw3 PROPERTIES
-                                RUNTIME_OUTPUT_DIRECTORY_RELEASE ${DFMTOOLBOX_OUTPUT_DIR}
+                                RUNTIME_OUTPUT_DIRECTORY_RELEASE ${FASTDDM_OUTPUT_DIR}
                             )
     else()
         set_target_properties(fftw3 PROPERTIES
                                 PREFIX ""
                                 SUFFIX ".so"
-                                LIBRARY_OUTPUT_DIRECTORY ${DFMTOOLBOX_OUTPUT_DIR}
+                                LIBRARY_OUTPUT_DIRECTORY ${FASTDDM_OUTPUT_DIR}
                         )
     endif(WIN32)
 
