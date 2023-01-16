@@ -5,17 +5,17 @@ if sys.version_info < (3,6):
     sys.exit("Error, Python < 3.6 is not supported.")
 
 setup(
-    name = "dfmtoolbox",
+    name = "fastddm",
     use_scm_version = {
         "root": "${CMAKE_SOURCE_DIR}",
         "fallback_version": "0.1.0",
     },
     setup_requires = ["setuptools_scm"],
-    packages = ["dfmtoolbox"],
+    packages = ["fastddm"],
     package_dir = {
-        "dfmtoolbox": "${DFMTOOLBOX_OUTPUT_DIR}"
+        "fastddm": "${FASTDDM_OUTPUT_DIR}"
     },
     package_data = {
-        "dfmtoolbox": ['core.so']
+        "fastddm": ['_core.so', '_core_cuda.so']
     },
 )

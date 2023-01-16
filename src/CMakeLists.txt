@@ -31,7 +31,7 @@ if(ENABLE_CPP)
     set_target_properties(_fddm PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
     # Add core python module
-    pybind11_add_module(core SHARED python/bindings.cc)
+    pybind11_add_module(_core SHARED python/bindings.cc)
     target_link_libraries(_core PRIVATE _fddm)
     if(WIN32)
         set_target_properties(_core PROPERTIES

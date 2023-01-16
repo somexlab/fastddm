@@ -11,7 +11,7 @@
 /*
     Export with pybind11
  */
-PYBIND11_MODULE(core_cuda, m) {
+PYBIND11_MODULE(_core_cuda, m) {
 
     export_ddm_cuda(m);
 }
