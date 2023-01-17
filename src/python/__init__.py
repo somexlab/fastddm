@@ -48,8 +48,8 @@ class ImageStructureFunction:
 
     Parameters
     ----------
-    data : np.ndarray
-        The 2D image structure function.
+    _data : np.ndarray
+        The 2D image structure function plus the powspec plus the var.
     shape : Tuple[int, int, int]
         The shape of the image structure function data.
     kx : np.ndarray
@@ -62,15 +62,57 @@ class ImageStructureFunction:
         The image effective pixel size.
     delta_t : float
         The time delay between two consecutive images.
+    data : np.ndarray
+        The 2D image structure function.
+    powspec : np.ndarray
+        The average power spectrum of the input images.
+    var : np.ndarray
+        The variance (over time) of the Fourier transformed input images.
     """
 
-    data : np.ndarray
+    _data : np.ndarray
     kx : np.ndarray
     ky : np.ndarray
     tau : np.ndarray
     pixel_size : float = 1.0
     delta_t : float = 1.0
     shape : Tuple[int, int, int] = (0, 0, 0)
+    data : Optional[np.ndarray] = None
+    powspec : Optional[np.ndarray] = None
+    var : Optional[np.ndarray] = None
+
+    @property
+    def data(self) -> np.ndarray:
+        """The 2D image structure function.
+
+        Returns
+        -------
+        np.ndarray
+            The 2D image structure function.
+        """
+        return self._data[:-2]
+
+    @property
+    def powspec(self) -> np.ndarray:
+        """The average power spectrum of the input images.
+
+        Returns
+        -------
+        np.ndarray
+            The average power spectrum of the input images.
+        """
+        return self._data[-2]
+
+    @property
+    def var(self) -> np.ndarray:
+        """The variance (over time) of the Fourier transformed input images.
+
+        Returns
+        -------
+        np.ndarray
+            The variance (over time) of the Fourier transformed input images.
+        """
+        return self._data[-1]
 
     def __post_init__(self):
         """Perform post init operations
@@ -183,6 +225,11 @@ class AzimuthalAverage:
     ----------
     data : np.ndarray
         The azimuthal average data.
+    powspec : np.ndarray
+        The azimuthal average of the power spectrum of the input images.
+    var : np.ndarray
+        The azimuthal average of the variance (over time) of the
+        Fourier transformed images.
     k : np.ndarray
         The array of reference wavevector values in the bins.
     tau : np.ndarray
@@ -192,6 +239,8 @@ class AzimuthalAverage:
     """
 
     data : np.ndarray
+    powspec : np.ndarray
+    var : np.ndarray
     k : np.ndarray
     tau : np.ndarray
     bin_edges : np.ndarray
@@ -255,8 +304,8 @@ class AzimuthalAverage:
                     fill_value='extrapolate'
                     )
                 data[i] = np.exp(f(_tau))
-        
-        return AzimuthalAverage(data, self.k, tau, self.bin_edges)
+
+        return AzimuthalAverage(data, self.powspec, self.var, self.k, tau, self.bin_edges)
 
 
 def ddm(
@@ -484,7 +533,7 @@ def azimuthal_average(
                 w_avg = (data[:, curr_px] * weights[curr_px]).mean(axis=-1)
             az_avg[i] = w_avg / den
 
-    return AzimuthalAverage(az_avg, k, tau.astype(np.float64), bin_edges)
+    return AzimuthalAverage(az_avg, np.empty(0), np.empty(0), k, tau.astype(np.float64), bin_edges)
 
 
 def melt(
@@ -537,7 +586,7 @@ def melt(
             # scale fast on slow
             data[i] = np.append(fast.data[i, :idx] * alpha, slow.data[i, Nt // 2 + 1:])
 
-    return AzimuthalAverage(data, fast.k, tau, fast.bin_edges)
+    return AzimuthalAverage(data, np.empty(0), np.empty(0), fast.k, tau, fast.bin_edges)
 
 
 def mergesort(
@@ -562,4 +611,4 @@ def mergesort(
     tau = np.append(az_avg1.tau, az_avg2.tau)
     data = np.append(az_avg1.data, az_avg2.data, axis=1)
     sortidx = np.argsort(tau)
-    return AzimuthalAverage(data[:,sortidx], az_avg1.k, tau[sortidx], az_avg1.bin_edges)
+    return AzimuthalAverage(data[:,sortidx], np.empty(0), np.empty(0), az_avg1.k, tau[sortidx], az_avg1.bin_edges)
