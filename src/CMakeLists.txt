@@ -103,7 +103,7 @@ configure_file(python/_ddm_python.py
                ${FASTDDM_OUTPUT_DIR}/_ddm_python.py)
 
 configure_file(python/_io.py
-               ${DFMTOOLBOX_OUTPUT_DIR}/_io.py)
+               ${FASTDDM_OUTPUT_DIR}/_io.py)
 
 configure_file(python/lags.py
                ${FASTDDM_OUTPUT_DIR}/lags.py)
@@ -113,7 +113,7 @@ configure_file(python/window.py
 
 configure_file(python/mask.py
                ${FASTDDM_OUTPUT_DIR}/mask.py)
-               
+
 configure_file(python/weights.py
                ${FASTDDM_OUTPUT_DIR}/weights.py)
 
