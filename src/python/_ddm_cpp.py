@@ -39,11 +39,11 @@ def ddm_diff_cpp(img_seq: np.ndarray, lags: List[int], nx: int, ny: int):
     mem_req = 0
     # calculations are done in double precision
     # we need:
-    #  workspace -- 2 * (nx/2 + 1) * ny * len(img_seq) * 8bytes
-    mem_req += 8 * (2 * (nx//2 + 1) * ny * len(img_seq))
-    #  tmp -------- len(lags) * 8bytes
-    mem_req += 8 * len(lags)
-    # we require this space to be less than 80% of the available memory
+    #  workspace -- 2 * (nx/2 + 1) * ny * [len(img_seq) + 2] * 8bytes
+    mem_req += 8 * (2 * (nx//2 + 1) * ny * (len(img_seq) + 2))
+    #  tmp + tmp2 -------- [len(lags) + 2] * 8bytes
+    mem_req += 8 * (len(lags) + 3)
+    # we require this space to be less than 90% of the available memory
     # to stay on the safe side
     if int(0.9*mem) < mem_req:
         raise RuntimeError('Not enough memory')
@@ -93,8 +93,8 @@ def ddm_fft_cpp(img_seq: np.ndarray, lags: List[int], nx: int, ny: int, nt: int)
         mem_req = 0
         # calculations are done in double precision
         # we need:
-        #  workspace1 -- 2 * (nx/2 + 1) * ny * len(img_seq) * 8bytes
-        mem_req += 8 * (2 * (nx//2 + 1) * ny * len(img_seq))
+        #  workspace1 -- 2 * (nx/2 + 1) * ny * [len(img_seq) + 2] * 8bytes
+        mem_req += 8 * (2 * (nx//2 + 1) * ny * (len(img_seq) + 2))
         #  workspace2 -- 2 * chunk_size * nt * 8bytes
         mem_req += 8 * (2 * chunk_size * nt)
         #  tmp --------- chunk_size * 8bytes

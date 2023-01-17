@@ -39,7 +39,7 @@ py::array_t<double> ddm_diff(py::array_t<T, py::array::c_style> img_seq,
       double [the input needs to be twice as large]
      */
     unsigned long long _nx = nx / 2 + 1;
-    py::array_t<double> out = py::array_t<double>(2 * _nx * ny * length);
+    py::array_t<double> out = py::array_t<double>(2 * _nx * ny * (length + 2));
     auto p_out = out.mutable_data();
 
     // ***Create the fft2 plan
@@ -76,13 +76,15 @@ py::array_t<double> ddm_diff(py::array_t<T, py::array::c_style> img_seq,
 
     // ***Compute the image structure function
     // initialize helper vector
-    vector<double> tmp(lags.size(), 0.0);
+    vector<double> tmp(lags.size() + 2, 0.0);
+    double tmp2 = 0.0;
 
     // loop over the q values
     for (unsigned long long q = 0; q < _nx * ny; q++)
     {
         // zero out the helper vector
         fill(tmp.begin(), tmp.end(), 0);
+        tmp2 = 0.0;
 
         // loop over the lags
         for (unsigned long long _dt = 0; _dt < lags.size(); _dt++)
@@ -107,6 +109,24 @@ py::array_t<double> ddm_diff(py::array_t<T, py::array::c_style> img_seq,
             // normalize
             tmp[_dt] /= (double)(length - dt);
         }
+
+        // compute average power spectrum and variance
+        for (unsigned long long t = 0; t < length; t++)
+        {
+            double a = p_out[2 * ((t) * (_nx * ny) + q)];
+            double b = p_out[2 * ((t) * (_nx * ny) + q) + 1];
+            tmp[lags.size()] += a * a + b * b;
+            tmp[lags.size() + 1] += a;
+            tmp2 += b;
+        }
+
+        tmp[lags.size() + 1] *= - 1 * tmp[lags.size() + 1];
+        tmp[lags.size() + 1] -= tmp2 * tmp2;
+        tmp[lags.size() + 1] += tmp[lags.size() + 1];
+
+        // normalize
+        tmp[lags.size()] /= (double)length;
+        tmp[lags.size() + 1] /= (double)length;
 
         // copy the values back in the vector
         copy_vec_with_stride(tmp,
