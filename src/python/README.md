@@ -1,10 +1,10 @@
-## Using the `dfmtoolbox.fit` module
+## Using the `fastddm.fit` module
 
 The underlying framework in this module is [`lmfit`](https://lmfit.github.io//lmfit-py/). For convenience we provide a few helper tools for fitting the image structure function with a simple exponential function of the shape $D(q;\Delta t) = 2A(q)\left[1-\exp(\Delta t/\tau(q))\right] + 2B$.
 
 We assume we have the 2 arrays for $\Delta t$ and $D(q;\Delta t)$ (for a fixed value of $q$). Then we can just fit the above shape for the image structure function:
 ```python
-from dfmtoolbox.fit import simple_structure_function, fit
+from fastddm.fit import simple_structure_function, fit
 
 data = ... # the output of the azimuthal average
 dt = np.logspace(-1, 2)  # here the considered lag times; dt.shape == data.shape
@@ -43,7 +43,7 @@ Of course, the simple exponential shape of the image structure function is not s
 ```python
 import lmfit as lm
 import numpy as np
-from dfmtoolbox.fit import fit
+from fastddm.fit import fit
 
 def structure_function(dt: np.ndarray, A: float, B: float, tau: float, delta: float) -> np.ndarray:
 
