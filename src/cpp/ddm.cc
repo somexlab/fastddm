@@ -120,13 +120,17 @@ py::array_t<double> ddm_diff(py::array_t<T, py::array::c_style> img_seq,
             tmp2 += b;
         }
 
-        tmp[lags.size() + 1] *= - 1 * tmp[lags.size() + 1];
-        tmp[lags.size() + 1] -= tmp2 * tmp2;
-        tmp[lags.size() + 1] += tmp[lags.size() + 1];
-
-        // normalize
+        // normalize power spectrum
         tmp[lags.size()] /= (double)length;
+
+        // get minus square modulus of average
         tmp[lags.size() + 1] /= (double)length;
+        tmp2 /= (double)length;
+        tmp[lags.size() + 1] *= -1 * tmp[lags.size() + 1];
+        tmp[lags.size() + 1] -= tmp2 * tmp2;
+
+        // compute variance
+        tmp[lags.size() + 1] += tmp[lags.size()];
 
         // copy the values back in the vector
         copy_vec_with_stride(tmp,
