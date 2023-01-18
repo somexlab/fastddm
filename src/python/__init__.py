@@ -50,32 +50,53 @@ class ImageStructureFunction:
     ----------
     data : np.ndarray
         The 2D image structure function.
-    shape : Tuple[int, int, int]
-        The shape of the image structure function data.
     kx : np.ndarray
         The array of wavevector values over x.
     ky : np.ndarray
         The array of wavevector values over y.
     tau : np.ndarray
         The array of time delays.
-    pixel_size : float
-        The image effective pixel size.
-    delta_t : float
-        The time delay between two consecutive images.
     """
 
     data : np.ndarray
     kx : np.ndarray
     ky : np.ndarray
     tau : np.ndarray
-    pixel_size : float = 1.0
-    delta_t : float = 1.0
-    shape : Tuple[int, int, int] = (0, 0, 0)
+    _pixel_size : float = 1.0
+    _delta_t : float = 1.0
 
-    def __post_init__(self):
-        """Perform post init operations
+    @property
+    def shape(self) -> Tuple[int, int, int]:
+        """Shape of image structure function data.
+
+        Returns
+        -------
+        Tuple[int, int, int]
+            The shape of the data. 
         """
-        self.shape = self.data.shape
+        return self.data.shape
+
+    @property
+    def pixel_size(self) -> float:
+        """The effective pixel size.
+
+        Returns
+        -------
+        float
+            Pixel size.
+        """
+        return self._pixel_size
+
+    @property
+    def delta_t(self) -> float:
+        """The time delay between to consecutive frames.
+
+        Returns
+        -------
+        float
+            Time delay.
+        """
+        return self._delta_t
 
     def set_pixel_size(self, pixel_size : float) -> None:
         """Set the image effective pixel size.
@@ -87,9 +108,9 @@ class ImageStructureFunction:
         pixel_size : float
             The effective pixel size.
         """
-        self.kx *= self.pixel_size / pixel_size
-        self.ky *= self.pixel_size / pixel_size
-        self.pixel_size = pixel_size
+        self.kx *= self._pixel_size / pixel_size
+        self.ky *= self._pixel_size / pixel_size
+        self._pixel_size = pixel_size
 
     def set_delta_t(self, delta_t : float) -> None:
         """Set the time delay between two consecutive frames.
@@ -101,8 +122,8 @@ class ImageStructureFunction:
         delta_t : float
             The time delay.
         """
-        self.tau *= delta_t / self.delta_t
-        self.delta_t = delta_t
+        self.tau *= delta_t / self._delta_t
+        self._delta_t = delta_t
 
     def set_frame_rate(self, frame_rate : float) -> None:
         """Set the acquisition frame rate.
