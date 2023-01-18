@@ -55,7 +55,7 @@ def images2numpy(fnames : Sequence[str]) -> np.ndarray:
     """
     # open first image
     tmp = io.imread(fnames[0])
-    if len(tmp.shape > 2):
+    if len(tmp.shape) > 2:
         # initialize image sequence array
         shape = (tmp.shape[2], len(fnames), tmp.shape[:2])
         img_seq = np.zeros(shape=shape, dtype=tmp.dtype)
@@ -73,3 +73,5 @@ def images2numpy(fnames : Sequence[str]) -> np.ndarray:
         # read images
         for i, f in enumerate(fnames):
             img_seq[i] = io.imread(f)
+    
+    return img_seq
