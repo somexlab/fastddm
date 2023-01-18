@@ -39,7 +39,7 @@ py::array_t<double> ddm_diff(py::array_t<T, py::array::c_style> img_seq,
       double [the input needs to be twice as large]
      */
     unsigned long long _nx = nx / 2 + 1;
-    py::array_t<double> out = py::array_t<double>(2 * _nx * ny * (length + 2));
+    py::array_t<double> out = lags.size() + 2 > length ? py::array_t<double>(2 * _nx * ny * (lags.size() + 2)) : py::array_t<double>(2 * _nx * ny * length);
     auto p_out = out.mutable_data();
 
     // ***Create the fft2 plan

@@ -39,8 +39,8 @@ def ddm_diff_cpp(img_seq: np.ndarray, lags: List[int], nx: int, ny: int):
     mem_req = 0
     # calculations are done in double precision
     # we need:
-    #  workspace -- 2 * (nx/2 + 1) * ny * [len(img_seq) + 2] * 8bytes
-    mem_req += 8 * (2 * (nx//2 + 1) * ny * (len(img_seq) + 2))
+    #  workspace -- 2 * (nx/2 + 1) * ny * [max(len(img_seq), len(lags) + 2)] * 8bytes
+    mem_req += 8 * (2 * (nx//2 + 1) * ny * max(len(img_seq), len(lags) + 2))
     #  tmp + tmp2 -------- [len(lags) + 2] * 8bytes
     mem_req += 8 * (len(lags) + 3)
     # we require this space to be less than 90% of the available memory
