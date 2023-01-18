@@ -207,6 +207,17 @@ class AzimuthalAverage:
     tau : np.ndarray
     bin_edges : np.ndarray
 
+    @property
+    def shape(self) -> Tuple[int, int]:
+        """The shape of the azimuthal average data.
+
+        Returns
+        -------
+        Tuple[int, int]
+            Shape.
+        """
+        return self.data.shape
+
     def save(
         self,
         *,
