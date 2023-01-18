@@ -49,9 +49,23 @@ class ImageStructureFunction:
     Parameters
     ----------
     _data : np.ndarray
-        The 2D image structure function plus the powspec plus the var.
-    shape : Tuple[int, int, int]
-        The shape of the image structure function data.
+        The packed data (2D image structure function, power spectrum,
+        and variance).
+    kx : np.ndarray
+        The array of wavevector values over x.
+    ky : np.ndarray
+        The array of wavevector values over y.
+    tau : np.ndarray
+        The array of time delays.
+
+    Attributes
+    ----------
+    data : np.ndarray
+        The 2D image structure function.
+    powspec : np.ndarray
+        The average 2D power spectrum of the input images.
+    var : np.ndarray
+        The 2D variance of the Fourier transformed images.
     kx : np.ndarray
         The array of wavevector values over x.
     ky : np.ndarray
@@ -59,27 +73,35 @@ class ImageStructureFunction:
     tau : np.ndarray
         The array of time delays.
     pixel_size : float
-        The image effective pixel size.
+        The effective pixel size.
     delta_t : float
-        The time delay between two consecutive images.
-    data : np.ndarray
-        The 2D image structure function.
-    powspec : np.ndarray
-        The average power spectrum of the input images.
-    var : np.ndarray
-        The variance (over time) of the Fourier transformed input images.
+        The time delay between to consecutive frames.
+    shape : Tuple[int, int, int]
+        The shape of the 2D image structure function.
+
+    Methods
+    -------
+    set_pixel_size(pixel_size) : None
+        Set the image effective pixel size. This will propagate also on the
+        values of kx and ky.
+    set_delta_t(delta_t) : None
+        Set the time delay between two consecutive frames. This will propagate
+        also on the values of tau.
+    set_frame_rate(frame_rate) : None
+        Set the acquisition frame rate. This will propagate also on the values
+        of tau.
+    save(*, fname, protocol) : None
+        Save ImageStructureFunction to binary file.
+    save_as_tiff(seq, fnames) : None
+        Save ImageStructureFunction frames as tiff images.
     """
 
     _data : np.ndarray
     kx : np.ndarray
     ky : np.ndarray
     tau : np.ndarray
-    pixel_size : float = 1.0
-    delta_t : float = 1.0
-    shape : Tuple[int, int, int] = (0, 0, 0)
-    data : Optional[np.ndarray] = None
-    powspec : Optional[np.ndarray] = None
-    var : Optional[np.ndarray] = None
+    _pixel_size : float = 1.0
+    _delta_t : float = 1.0
 
     @property
     def data(self) -> np.ndarray:
@@ -91,6 +113,17 @@ class ImageStructureFunction:
             The 2D image structure function.
         """
         return self._data[:-2]
+
+    @property
+    def shape(self) -> Tuple[int, int, int]:
+        """Shape of 2D image structure function data.
+
+        Returns
+        -------
+        Tuple[int, int, int]
+            The shape of the data. 
+        """
+        return self.data.shape
 
     @property
     def powspec(self) -> np.ndarray:
@@ -114,10 +147,27 @@ class ImageStructureFunction:
         """
         return self._data[-1]
 
-    def __post_init__(self):
-        """Perform post init operations
+    @property
+    def pixel_size(self) -> float:
+        """The effective pixel size.
+
+        Returns
+        -------
+        float
+            Pixel size.
         """
-        self.shape = self.data.shape
+        return self._pixel_size
+
+    @property
+    def delta_t(self) -> float:
+        """The time delay between to consecutive frames.
+
+        Returns
+        -------
+        float
+            Time delay.
+        """
+        return self._delta_t
 
     def set_pixel_size(self, pixel_size : float) -> None:
         """Set the image effective pixel size.
@@ -129,9 +179,9 @@ class ImageStructureFunction:
         pixel_size : float
             The effective pixel size.
         """
-        self.kx *= self.pixel_size / pixel_size
-        self.ky *= self.pixel_size / pixel_size
-        self.pixel_size = pixel_size
+        self.kx *= self._pixel_size / pixel_size
+        self.ky *= self._pixel_size / pixel_size
+        self._pixel_size = pixel_size
 
     def set_delta_t(self, delta_t : float) -> None:
         """Set the time delay between two consecutive frames.
@@ -143,8 +193,8 @@ class ImageStructureFunction:
         delta_t : float
             The time delay.
         """
-        self.tau *= delta_t / self.delta_t
-        self.delta_t = delta_t
+        self.tau *= delta_t / self._delta_t
+        self._delta_t = delta_t
 
     def set_frame_rate(self, frame_rate : float) -> None:
         """Set the acquisition frame rate.
@@ -157,16 +207,6 @@ class ImageStructureFunction:
             The acquisition frame rate.
         """
         self.set_delta_t(1 / frame_rate)
-
-    def shape(self) -> Tuple[int, int, int]:
-        """Get the shape of the image structure function data
-
-        Returns
-        -------
-        Tuple[int, int, int]
-            Shape of image structure function
-        """
-        return self.data.shape
 
     def save(
         self,
@@ -223,10 +263,23 @@ class AzimuthalAverage:
 
     Parameters
     ----------
+    _data : np.ndarray
+        The packed data (azimuthal average of image structure function, power
+        spectrum, and variance).
+    k : np.ndarray
+        The array of reference wavevector values in the bins.
+    tau : np.ndarray
+        The array of time delay values.
+    bin_edges : np.ndarray
+        The array of bin edges.
+    
+    Attributes
+    ----------
     data : np.ndarray
-        The azimuthal average data.
+        The azimuthal average of the 2D image structure function.
     powspec : np.ndarray
-        The azimuthal average of the power spectrum of the input images.
+        The azimuthal average of the average power spectrum of the input
+        images.
     var : np.ndarray
         The azimuthal average of the variance (over time) of the
         Fourier transformed images.
@@ -236,14 +289,54 @@ class AzimuthalAverage:
         The array of time delay values.
     bin_edges : np.ndarray
         The array of bin edges.
+
+    Methods
+    -------
+    save(*, fname, protocol) : None
+        Save azimuthal average to binary file.
+    resample(tau) : None
+        Resample azimuthal average with new tau values.
     """
 
-    data : np.ndarray
-    powspec : np.ndarray
-    var : np.ndarray
+    _data : np.ndarray
     k : np.ndarray
     tau : np.ndarray
     bin_edges : np.ndarray
+
+    @property
+    def data(self) -> np.ndarray:
+        """The azimuthal average of the 2D image structure function
+
+        Returns
+        -------
+        np.ndarray
+            The azimuthal average data
+        """
+        return self._data[:, :-2]
+
+    @property
+    def powspec(self) -> np.ndarray:
+        """The azimuthal average of the average power spectrum of the input
+        images.
+
+        Returns
+        -------
+        np.ndarray
+            The azimuthal average of the power spectrum.
+        """
+        return self._data[:, -2]
+
+    @property
+    def var(self) -> np.ndarray:
+        """The azimuthal average of the variance (over time) of the Fourier
+        transformed input images.
+
+        Returns
+        -------
+        np.ndarray
+            The azimuthal average of the variance.
+        """
+        return self._data[:, -1]
 
     def save(
         self,
@@ -286,7 +379,7 @@ class AzimuthalAverage:
             The resampled azimuthal average.
         """
         # initialize data
-        data = np.zeros((len(self.k),len(tau)))
+        data = np.zeros((len(self.k),len(tau) + 2))
 
         _tau = np.log(tau)
 
@@ -294,7 +387,7 @@ class AzimuthalAverage:
         for i in range(len(self.k)):
             # check for nan
             if np.isnan(self.data[i, 0]):
-                data[i] = np.full(len(tau), np.nan)
+                data[i, :-2] = np.full(len(tau), np.nan)
             else:
                 # interpolate points in loglog scale
                 f = interp1d(
@@ -303,7 +396,10 @@ class AzimuthalAverage:
                     kind='quadratic',
                     fill_value='extrapolate'
                     )
-                data[i] = np.exp(f(_tau))
+                data[i, :-2] = np.exp(f(_tau))
+        
+        # copy power spectrum and variance part
+        data[:, -2:] = self._data[:, -2:].copy()
 
         return AzimuthalAverage(data, self.powspec, self.var, self.k, tau, self.bin_edges)
 
@@ -566,7 +662,7 @@ def melt(
     # keep data of `fast` up to (Nt/2)-th tau of `slow`
     idx = np.argmin(np.abs(fast.tau - slow.tau[Nt // 2])) + 1
     tau = np.append(fast.tau[:idx], slow.tau[Nt // 2 + 1:])
-    data = np.zeros((len(fast.k), len(tau)))
+    data = np.zeros((len(fast.k), len(tau) + 2))
 
     t = np.log(slow.tau[:Nt])
 
@@ -574,7 +670,7 @@ def melt(
     for i in range(len(fast.k)):
         # check for nan
         if np.any(np.isnan([fast.data[i, 0], slow.data[i, 0]])):
-            data[i] = np.full(len(tau), np.nan)
+            data[i, :-2] = np.full(len(tau), np.nan)
         else:
             # find multiplicative factor via least squares minimization
             # interpolate in loglog scale (smoother curve)
@@ -584,9 +680,12 @@ def melt(
             alpha = sum_xiyi / sum_xi2
             
             # scale fast on slow
-            data[i] = np.append(fast.data[i, :idx] * alpha, slow.data[i, Nt // 2 + 1:])
+            data[i, :-2] = np.append(fast.data[i, :idx] * alpha, slow.data[i, Nt // 2 + 1:], axis=1)
+    
+    # copy power spectrum and variance part
+    data[:, -2:] = slow._data[:, -2:].copy()
 
-    return AzimuthalAverage(data, np.empty(0), np.empty(0), fast.k, tau, fast.bin_edges)
+    return AzimuthalAverage(data, fast.k, tau, fast.bin_edges)
 
 
 def mergesort(
@@ -609,6 +708,12 @@ def mergesort(
         The two AzimuthalAverage objects are fused into a new one.
     """
     tau = np.append(az_avg1.tau, az_avg2.tau)
-    data = np.append(az_avg1.data, az_avg2.data, axis=1)
     sortidx = np.argsort(tau)
-    return AzimuthalAverage(data[:,sortidx], np.empty(0), np.empty(0), az_avg1.k, tau[sortidx], az_avg1.bin_edges)
+    data = np.zeros_like(az_avg1.data, shape=(len(az_avg1.k), len(tau) + 2))
+    data[:, :-2] = np.append(az_avg1.data, az_avg2.data, axis=1)[:,sortidx]
+    if az_avg1.tau[-1] > az_avg2.tau[-1]:
+        data[:, -2:] = az_avg1._data[:, -2:].copy()
+    else:
+        data[:, -2:] = az_avg2._data[:, -2:].copy()
+   
+    return AzimuthalAverage(data, az_avg1.k, tau[sortidx], az_avg1.bin_edges)
