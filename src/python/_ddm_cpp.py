@@ -93,8 +93,8 @@ def ddm_fft_cpp(img_seq: np.ndarray, lags: List[int], nx: int, ny: int, nt: int)
         mem_req = 0
         # calculations are done in double precision
         # we need:
-        #  workspace1 -- 2 * (nx/2 + 1) * ny * [len(img_seq) + 2] * 8bytes
-        mem_req += 8 * (2 * (nx//2 + 1) * ny * (len(img_seq) + 2))
+        #  workspace1 -- 2 * (nx/2 + 1) * ny * [max(len(img_seq), len(lags) + 2)] * 8bytes
+        mem_req += 8 * (2 * (nx//2 + 1) * ny * max(len(img_seq), len(lags) + 2))
         #  workspace2 -- 2 * chunk_size * nt * 8bytes
         mem_req += 8 * (2 * chunk_size * nt)
         #  tmp, tmpAvg --------- 2 * chunk_size * 8bytes
