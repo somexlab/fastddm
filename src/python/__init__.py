@@ -116,16 +116,6 @@ class ImageStructureFunction:
         """
         self.set_delta_t(1 / frame_rate)
 
-    def shape(self) -> Tuple[int, int, int]:
-        """Get the shape of the image structure function data
-
-        Returns
-        -------
-        Tuple[int, int, int]
-            Shape of image structure function
-        """
-        return self.data.shape
-
     def save(
         self,
         *,
