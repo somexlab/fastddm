@@ -5,6 +5,21 @@ Change Log
 v0.x
 ----
 
+v0.1.1 (YYYY-MM-DD)
+^^^^^^^^^^^^^^^^^^^
+
+.. *Added*
+
+.. *Changed*
+
+*Fixed*
+
+* Fix bug in image sequence reader.
+
+.. *Deprecated*
+
+.. *Removed*
+
 v0.1.0 (2023-01-16)
 ^^^^^^^^^^^^^^^^^^^
 
