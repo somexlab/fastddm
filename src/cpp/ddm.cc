@@ -139,7 +139,7 @@ py::array_t<double> ddm_diff(py::array_t<T, py::array::c_style> img_seq,
     make_full_shifted_isf(p_out,
                           nx,
                           ny,
-                          lags.size());
+                          lags.size() + 2);
 
     // Cleanup before finish
     tmp.clear();
@@ -147,7 +147,7 @@ py::array_t<double> ddm_diff(py::array_t<T, py::array::c_style> img_seq,
 
     // the full size of the image structure function is
     // nx * ny * #(lags)
-    out.resize({(unsigned long long)(lags.size()), ny, nx});
+    out.resize({(unsigned long long)(lags.size() + 2), ny, nx});
 
     // Return result to python
     return out;
