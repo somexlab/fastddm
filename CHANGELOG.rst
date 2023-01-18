@@ -8,7 +8,9 @@ v0.x
 v0.1.1 (YYYY-MM-DD)
 ^^^^^^^^^^^^^^^^^^^
 
-.. *Added*
+*Added*
+
+* Add `shape` property to `AzimuthalAverage` class.
 
 .. *Changed*
 

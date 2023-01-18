@@ -214,7 +214,7 @@ class AzimuthalAverage:
         Returns
         -------
         Tuple[int, int]
-            Shape.
+            The shape of the data.
         """
         return self.data.shape
 
