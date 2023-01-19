@@ -98,7 +98,8 @@ class ImageStructureFunction:
         """
         return self._delta_t
 
-    def set_pixel_size(self, pixel_size : float) -> None:
+    @pixel_size.setter
+    def pixel_size(self, pixel_size : float) -> None:
         """Set the image effective pixel size.
 
         This will propagate also on the values of kx and ky.
@@ -112,7 +113,8 @@ class ImageStructureFunction:
         self.ky *= self._pixel_size / pixel_size
         self._pixel_size = pixel_size
 
-    def set_delta_t(self, delta_t : float) -> None:
+    @delta_t.setter
+    def delta_t(self, delta_t : float) -> None:
         """Set the time delay between two consecutive frames.
 
         This will propagate also on the values of tau.
@@ -135,7 +137,7 @@ class ImageStructureFunction:
         frame_rate : float
             The acquisition frame rate.
         """
-        self.set_delta_t(1 / frame_rate)
+        self.delta_t = 1 / frame_rate
 
     def save(
         self,
