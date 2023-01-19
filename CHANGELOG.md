@@ -10,9 +10,15 @@ v0.1.1 (YYYY-MM-DD)
 
 *Added*
 
-* Add `shape` property to `AzimuthalAverage` class.
+* New `shape` property in `AzimuthalAverage` class.
+* Unified image reader function with support for Nikon .nd2 files.
 
-.. *Changed*
+*Changed*
+
+* `azimuthal_average` method now works only with `ImageStructureFunction` objects. The generic method was moved to `_azimuthal_average`.
+* `pixel_size` and `delta_t` properties of `ImageStructureFunction` class can now be set by simple assignment and work as previous `set_pixel_size` and `set_delta_t` methods.
+* Improved performance of `azimuthal_average` when `weights` are not set.
+* Improved speed of optimization step in cuda functions.
 
 *Fixed*
 
@@ -20,7 +26,10 @@ v0.1.1 (YYYY-MM-DD)
 
 .. *Deprecated*
 
-.. *Removed*
+*Removed*
+
+* `set_pixel_size` and `set_delta_t` methods of `ImageStructureFunction` class have been substituted with simple assignment.
+* Removed unused dependencies.
 
 v0.1.0 (2023-01-16)
 ^^^^^^^^^^^^^^^^^^^
