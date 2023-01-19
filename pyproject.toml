@@ -29,5 +29,6 @@ dependencies = [
     'scikit-image',
     'tifffile',
     'Pillow',
+    'nd2reader'
 ]
 dynamic = [ "license", "version" ]
