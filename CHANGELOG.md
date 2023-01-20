@@ -24,7 +24,7 @@ v0.x
 * Fixed bug in image sequence reader.
 * Fixed fatal error on import in macOS systems when using conda environment.
 
-.. *Deprecated*
+[comment]: <> (*Deprecated*)
 
 *Removed*
 
@@ -45,10 +45,10 @@ v0.x
 * Lag selection functions.
 * Fit interface with `lmfit`.
 
-.. *Changed*
+[comment]: <> (*Changed*)
 
-.. *Fixed*
+[comment]: <> (*Fixed*)
 
-.. *Deprecated*
+[comment]: <> (*Deprecated*)
 
-.. *Removed*
+[comment]: <> (*Removed*)
