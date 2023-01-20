@@ -12,7 +12,7 @@ IS_CPP_ENABLED = ${IS_CPP_ENABLED}      # configured by CMake
 IS_CUDA_ENABLED = ${IS_CUDA_ENABLED}    # configured by CMake
 
 from ._io import load, _store_data, _save_as_tiff
-from ._utils import tiff2numpy, images2numpy
+from ._utils import tiff2numpy, images2numpy, read_images
 from ._ddm_python import _py_image_structure_function
 
 ## setup of backend dictionary, initially only with py backend
