@@ -233,6 +233,24 @@ class AzimuthalAverage:
         The array of time delay values.
     bin_edges : np.ndarray
         The array of bin edges.
+    
+    Attributes
+    ----------
+    data : np.ndarray
+        The azimuthal average of the 2D image structure function.
+    k : np.ndarray
+        The array of reference wavevector values in the bins.
+    tau : np.ndarray
+        The array of time delay values.
+    bin_edges : np.ndarray
+        The array of bin edges.
+
+    Methods
+    -------
+    save(*, fname, protocol) : None
+        Save azimuthal average to binary file.
+    resample(tau) : None
+        Resample azimuthal average with new tau values.
     """
 
     data : np.ndarray
