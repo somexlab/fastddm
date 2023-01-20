@@ -56,6 +56,37 @@ class ImageStructureFunction:
         The array of wavevector values over y.
     tau : np.ndarray
         The array of time delays.
+    _pixel_size : float, optional
+        The effective pixel size. Default is 1.
+    _delta_t : float, optional
+        The time delay between two consecutive frames. Default is 1.
+
+    Attributes
+    ----------
+    data : np.ndarray
+        The 2D image structure function.
+    kx : np.ndarray
+        The array of wavevector values over x.
+    ky : np.ndarray
+        The array of wavevector values over y.
+    tau : np.ndarray
+        The array of time delays.
+    pixel_size : float
+        The effective pixel size.
+    delta_t : float
+        The time delay between to consecutive frames.
+    shape : Tuple[int, int, int]
+        The shape of the 2D image structure function.
+
+    Methods
+    -------
+    set_frame_rate(frame_rate) : None
+        Set the acquisition frame rate. This will propagate also on the values
+        of tau.
+    save(*, fname, protocol) : None
+        Save ImageStructureFunction to binary file.
+    save_as_tiff(seq, fnames) : None
+        Save ImageStructureFunction frames as tiff images.
     """
 
     data : np.ndarray
