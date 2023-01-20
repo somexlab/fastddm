@@ -39,7 +39,8 @@ py::array_t<double> ddm_diff(py::array_t<T, py::array::c_style> img_seq,
       double [the input needs to be twice as large]
      */
     unsigned long long _nx = nx / 2 + 1;
-    py::array_t<double> out = py::array_t<double>(2 * _nx * ny * length);
+    unsigned long long dim_t = max(length, (unsigned long long)(lags.size() + 2));
+    py::array_t<double> out = py::array_t<double>(2 * _nx * ny * dim_t);
     auto p_out = out.mutable_data();
 
     // ***Create the fft2 plan
@@ -76,7 +77,8 @@ py::array_t<double> ddm_diff(py::array_t<T, py::array::c_style> img_seq,
 
     // ***Compute the image structure function
     // initialize helper vector
-    vector<double> tmp(lags.size(), 0.0);
+    vector<double> tmp(lags.size() + 2, 0.0);
+    double tmp2 = 0.0;
 
     // loop over the q values
     for (unsigned long long q = 0; q < _nx * ny; q++)
@@ -108,6 +110,24 @@ py::array_t<double> ddm_diff(py::array_t<T, py::array::c_style> img_seq,
             tmp[_dt] /= (double)(length - dt);
         }
 
+        // compute average power spectrum and variance
+        for (unsigned long long t = 0; t < length; t++)
+        {
+            double a = p_out[2 * ((t) * (_nx * ny) + q)];
+            double b = p_out[2 * ((t) * (_nx * ny) + q) + 1];
+            tmp[lags.size()] += a * a + b * b;
+            tmp[lags.size() + 1] += a;
+            tmp2 += b;
+        }
+
+        tmp[lags.size() + 1] *= - 1 * tmp[lags.size() + 1];
+        tmp[lags.size() + 1] -= tmp2 * tmp2;
+        tmp[lags.size() + 1] += tmp[lags.size() + 1];
+
+        // normalize
+        tmp[lags.size()] /= (double)length;
+        tmp[lags.size() + 1] /= (double)length;
+
         // copy the values back in the vector
         copy_vec_with_stride(tmp,
                              p_out,
@@ -119,7 +139,7 @@ py::array_t<double> ddm_diff(py::array_t<T, py::array::c_style> img_seq,
     make_full_shifted_isf(p_out,
                           nx,
                           ny,
-                          lags.size());
+                          lags.size() + 2);
 
     // Cleanup before finish
     tmp.clear();
@@ -127,7 +147,7 @@ py::array_t<double> ddm_diff(py::array_t<T, py::array::c_style> img_seq,
 
     // the full size of the image structure function is
     // nx * ny * #(lags)
-    out.resize({(unsigned long long)(lags.size()), ny, nx});
+    out.resize({(unsigned long long)(lags.size() + 2), ny, nx});
 
     // Return result to python
     return out;
