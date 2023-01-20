@@ -12,7 +12,7 @@ IS_CPP_ENABLED = ${IS_CPP_ENABLED}      # configured by CMake
 IS_CUDA_ENABLED = ${IS_CUDA_ENABLED}    # configured by CMake
 
 from ._io import load, _store_data, _save_as_tiff
-from ._utils import tiff2numpy, images2numpy
+from ._utils import tiff2numpy, images2numpy, read_images
 from ._ddm_python import _py_image_structure_function
 
 ## setup of backend dictionary, initially only with py backend
@@ -50,8 +50,21 @@ class ImageStructureFunction:
     ----------
     data : np.ndarray
         The 2D image structure function.
-    shape : Tuple[int, int, int]
-        The shape of the image structure function data.
+    kx : np.ndarray
+        The array of wavevector values over x.
+    ky : np.ndarray
+        The array of wavevector values over y.
+    tau : np.ndarray
+        The array of time delays.
+    _pixel_size : float, optional
+        The effective pixel size. Default is 1.
+    _delta_t : float, optional
+        The time delay between two consecutive frames. Default is 1.
+
+    Attributes
+    ----------
+    data : np.ndarray
+        The 2D image structure function.
     kx : np.ndarray
         The array of wavevector values over x.
     ky : np.ndarray
@@ -59,25 +72,65 @@ class ImageStructureFunction:
     tau : np.ndarray
         The array of time delays.
     pixel_size : float
-        The image effective pixel size.
+        The effective pixel size.
     delta_t : float
-        The time delay between two consecutive images.
+        The time delay between to consecutive frames.
+    shape : Tuple[int, int, int]
+        The shape of the 2D image structure function.
+
+    Methods
+    -------
+    set_frame_rate(frame_rate) : None
+        Set the acquisition frame rate. This will propagate also on the values
+        of tau.
+    save(*, fname, protocol) : None
+        Save ImageStructureFunction to binary file.
+    save_as_tiff(seq, fnames) : None
+        Save ImageStructureFunction frames as tiff images.
     """
 
     data : np.ndarray
     kx : np.ndarray
     ky : np.ndarray
     tau : np.ndarray
-    pixel_size : float = 1.0
-    delta_t : float = 1.0
-    shape : Tuple[int, int, int] = (0, 0, 0)
+    _pixel_size : float = 1.0
+    _delta_t : float = 1.0
 
-    def __post_init__(self):
-        """Perform post init operations
+    @property
+    def shape(self) -> Tuple[int, int, int]:
+        """Shape of image structure function data.
+
+        Returns
+        -------
+        Tuple[int, int, int]
+            The shape of the data. 
         """
-        self.shape = self.data.shape
+        return self.data.shape
 
-    def set_pixel_size(self, pixel_size : float) -> None:
+    @property
+    def pixel_size(self) -> float:
+        """The effective pixel size.
+
+        Returns
+        -------
+        float
+            Pixel size.
+        """
+        return self._pixel_size
+
+    @property
+    def delta_t(self) -> float:
+        """The time delay between to consecutive frames.
+
+        Returns
+        -------
+        float
+            Time delay.
+        """
+        return self._delta_t
+
+    @pixel_size.setter
+    def pixel_size(self, pixel_size : float) -> None:
         """Set the image effective pixel size.
 
         This will propagate also on the values of kx and ky.
@@ -87,11 +140,12 @@ class ImageStructureFunction:
         pixel_size : float
             The effective pixel size.
         """
-        self.kx *= self.pixel_size / pixel_size
-        self.ky *= self.pixel_size / pixel_size
-        self.pixel_size = pixel_size
+        self.kx *= self._pixel_size / pixel_size
+        self.ky *= self._pixel_size / pixel_size
+        self._pixel_size = pixel_size
 
-    def set_delta_t(self, delta_t : float) -> None:
+    @delta_t.setter
+    def delta_t(self, delta_t : float) -> None:
         """Set the time delay between two consecutive frames.
 
         This will propagate also on the values of tau.
@@ -101,8 +155,8 @@ class ImageStructureFunction:
         delta_t : float
             The time delay.
         """
-        self.tau *= delta_t / self.delta_t
-        self.delta_t = delta_t
+        self.tau *= delta_t / self._delta_t
+        self._delta_t = delta_t
 
     def set_frame_rate(self, frame_rate : float) -> None:
         """Set the acquisition frame rate.
@@ -114,17 +168,7 @@ class ImageStructureFunction:
         frame_rate : float
             The acquisition frame rate.
         """
-        self.set_delta_t(1 / frame_rate)
-
-    def shape(self) -> Tuple[int, int, int]:
-        """Get the shape of the image structure function data
-
-        Returns
-        -------
-        Tuple[int, int, int]
-            Shape of image structure function
-        """
-        return self.data.shape
+        self.delta_t = 1 / frame_rate
 
     def save(
         self,
@@ -189,12 +233,41 @@ class AzimuthalAverage:
         The array of time delay values.
     bin_edges : np.ndarray
         The array of bin edges.
+    
+    Attributes
+    ----------
+    data : np.ndarray
+        The azimuthal average of the 2D image structure function.
+    k : np.ndarray
+        The array of reference wavevector values in the bins.
+    tau : np.ndarray
+        The array of time delay values.
+    bin_edges : np.ndarray
+        The array of bin edges.
+
+    Methods
+    -------
+    save(*, fname, protocol) : None
+        Save azimuthal average to binary file.
+    resample(tau) : None
+        Resample azimuthal average with new tau values.
     """
 
     data : np.ndarray
     k : np.ndarray
     tau : np.ndarray
     bin_edges : np.ndarray
+
+    @property
+    def shape(self) -> Tuple[int, int]:
+        """The shape of the azimuthal average data.
+
+        Returns
+        -------
+        Tuple[int, int]
+            The shape of the data.
+        """
+        return self.data.shape
 
     def save(
         self,
@@ -342,8 +415,55 @@ def ddm(
 
 
 def azimuthal_average(
-    data : Union[ImageStructureFunction, np.ndarray],
-    tau : Optional[np.ndarray] = None,
+    img_str_func : ImageStructureFunction,
+    bins : Optional[Union[int,Iterable[float]]] = 10,
+    range : Optional[Tuple[float, float]] = None,
+    mask : Optional[np.ndarray] = None,
+    weights : Optional[np.ndarray] = None
+    ) -> AzimuthalAverage:
+    """Compute the azimuthal average of the image structure function.
+
+    Parameters
+    ----------
+    img_str_func : ImageStructureFunction
+        The image structure function.
+    bins : Union[int, Iterable[float]], optional
+        If `bins` is an int, it defines the number of equal-width bins in the
+        given range (10, by default). If `bins` is a sequence, it defines a
+        monotonically increasing array of bin edges, including the rightmost
+        edge, allowing for non-uniform bin widths.
+    range : (float, float), optional
+        The lower and upper range of the bins. If not provided, range is simply
+        `(k.min(), k.max())`, where `k` is the vector modulus computed from
+        `kx` and `ky`. Values outside the range are ignored. The first element
+        of the range must be less than or equal to the second.
+    mask : np.ndarray, optional
+        If a boolean `mask` is given, it is used to exclude grid points from
+        the azimuthal average (where False is set). The array must have the
+        same y,x shape of `data`.
+    weights : np.ndarray, optional
+        An array of weights, of the same y,x shape as `data`. Each
+        value in `data` only contributes its associated weight towards
+        the bin count (instead of 1).
+
+    Returns
+    -------
+    AzimuthalAverage
+        The azimuthal average.
+    """
+    return _azimuthal_average(
+        data=img_str_func.data,
+        tau=img_str_func.tau,
+        kx=img_str_func.kx,
+        ky=img_str_func.ky,
+        bins=bins,
+        range=range,
+        mask=mask,
+        weights=weights)
+
+def _azimuthal_average(
+    data : np.ndarray,
+    tau : np.ndarray,
     kx : Optional[np.ndarray] = None,
     ky : Optional[np.ndarray] = None,
     bins : Optional[Union[int,Iterable[float]]] = 10,
@@ -355,20 +475,19 @@ def azimuthal_average(
 
     Parameters
     ----------
-    data : Union[ImageStructureFunction, np.ndarray]
+    data : np.ndarray
         The image structure function.
-    tau : np.ndarray, optional
-        The array of time delay values. Required if data is not an
-        ImageStructureFunction object. Default is None.
+    tau : np.ndarray
+        The array of time delay values.
     kx : np.ndarray, optional
-        The array of spatial frequencies along axis x. If kx is None
-        and data is not an ImageStructureFunction object the frequencies
-        evaluated with `2.0 * np.pi * np.fft.fftshift(np.fft.fftfreq(Nx))`
+        The array of spatial frequencies along axis x. If kx is None,
+        the frequencies evaluated with
+        `2.0 * np.pi * np.fft.fftshift(np.fft.fftfreq(Nx))`
         are used (`Nx = data.shape[2]`). Default is None.
     ky : np.ndarray, optional
         The array of spatial frequencies along axis y. If ky is None
-        and data is not an ImageStructureFunction object the frequencies
-        evaluated with `2.0 * np.pi * np.fft.fftshift(np.fft.fftfreq(Ny))`
+        the frequencies evaluated with
+        `2.0 * np.pi * np.fft.fftshift(np.fft.fftfreq(Ny))`
         are used (`Ny = data.shape[1]`). Default is None.
     bins : Union[int, Iterable[float]], optional
         If `bins` is an int, it defines the number of equal-width bins in the
@@ -401,15 +520,10 @@ def azimuthal_average(
     """
 
     # check input arguments
-    if isinstance(data,ImageStructureFunction):
-        tau = data.tau
-        kx = data.kx
-        ky = data.ky
-    else:
-        if tau is None:
-            raise ValueError("`tau` must be given for non-`ImageStructureFunction` data input.")
-        elif len(tau) != len(data):
-            raise ValueError("Length of `tau` not compatible with shape of `data`.")
+    if tau is None:
+        raise ValueError("`tau` must be given for non-`ImageStructureFunction` data input.")
+    elif len(tau) != len(data):
+        raise ValueError("Length of `tau` not compatible with shape of `data`.")
 
     # read actual image structure function shape
     dim_t, dim_y, dim_x = data.shape
@@ -439,10 +553,6 @@ def azimuthal_average(
     if mask is None:
         mask = np.full((dim_y, dim_x), True)
 
-    # check weights
-    if weights is None:
-        weights = np.ones((dim_y, dim_x), dtype=np.float64)
-
     # compute bin edges and initialize k
     if isinstance(bins, int):
         bin_edges = np.linspace(k_min, k_max, bins)
@@ -455,7 +565,7 @@ def azimuthal_average(
         bins = len(bins) + 1
 
     # initialize azimuthal average
-    az_avg = np.zeros((bins, dim_t), dtype=np.float64)
+    az_avg = np.full((bins, dim_t), fill_value=np.nan, dtype=np.float64)
 
     # loop over bins
     for i, curr_bin_edge in enumerate(bin_edges):
@@ -467,7 +577,6 @@ def azimuthal_average(
             curr_px = (k_modulus == curr_bin_edge) & mask
 
         if np.all(np.logical_not(curr_px)):
-            az_avg[i] = np.full(dim_t, np.nan)
             if i > 0:
                 e_inf = bin_edges[i-1]
                 e_sup = curr_bin_edge
@@ -475,14 +584,15 @@ def azimuthal_average(
             else:
                 k[0] = curr_bin_edge
         else:
-            num = (k_modulus[curr_px] * weights[curr_px]).mean()
-            den = weights[curr_px].mean()
-            k[i] = num / den
-            if isinstance(data, ImageStructureFunction):
-                w_avg = (data.data[:, curr_px] * weights[curr_px]).mean(axis=-1)
-            else:
+            if weights is not None:
+                num = (k_modulus[curr_px] * weights[curr_px]).mean()
+                den = weights[curr_px].mean()
+                k[i] = num / den
                 w_avg = (data[:, curr_px] * weights[curr_px]).mean(axis=-1)
-            az_avg[i] = w_avg / den
+                az_avg[i] = w_avg / den
+            else:
+                k[i] = k_modulus[curr_px].mean()
+                az_avg[i] = data[:, curr_px].mean(axis=-1)
 
     return AzimuthalAverage(az_avg, k, tau.astype(np.float64), bin_edges)
 
