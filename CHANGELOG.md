@@ -11,7 +11,7 @@ v0.1.1 (YYYY-MM-DD)
 *Added*
 
 * New `shape` property in `AzimuthalAverage` class.
-* Unified image reader function with support for Nikon .nd2 files.
+* Unified `read_images` function with support for Nikon .nd2 files.
 
 *Changed*
 
@@ -22,7 +22,8 @@ v0.1.1 (YYYY-MM-DD)
 
 *Fixed*
 
-* Fix bug in image sequence reader.
+* Fixed bug in image sequence reader.
+* Fixed fatal error on import in macOS systems when using conda environment.
 
 .. *Deprecated*
 
