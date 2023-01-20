@@ -5,8 +5,7 @@ Change Log
 v0.x
 ----
 
-v0.1.1 (2023-01-20)
-^^^^^^^^^^^^^^^^^^^
+### v0.1.1 (2023-01-20)
 
 *Added*
 
@@ -32,8 +31,7 @@ v0.1.1 (2023-01-20)
 * `set_pixel_size` and `set_delta_t` methods of `ImageStructureFunction` class have been substituted with simple assignment.
 * Removed unused dependencies.
 
-v0.1.0 (2023-01-16)
-^^^^^^^^^^^^^^^^^^^
+### v0.1.0 (2023-01-16)
 
 *Added*
 
