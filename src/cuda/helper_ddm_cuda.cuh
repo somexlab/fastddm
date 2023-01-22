@@ -192,12 +192,25 @@ __global__ void copy_selected_lags_kernel(double2 *d_in,
     \param d_out    Output complex array
     \param length   Number of elements in each subarray
     \param pitch    Pitch of input array
-    \param N        Number of subarrays
+    \param Nq       Number of subarrays
 */
 __global__ void average_power_spectrum_kernel(double2 *d_in,
                                               double2 *d_out,
                                               unsigned long long length,
                                               unsigned long long pitch,
-                                              unsigned long long N);
+                                              unsigned long long Nq);
+
+/*! \brief Average over time of Fourier transformed input images
+    \param d_in     Input complex array
+    \param d_out    Output complex array
+    \param length   Number of elements in each subarray
+    \param pitch    Pitch of input array
+    \param Nq       Number of subarrays
+*/
+__global__ void average_complex_kernel(double2 *d_in,
+                                       double2 *d_out,
+                                       unsigned long long length,
+                                       unsigned long long pitch,
+                                       unsigned long long Nq);
 
 #endif

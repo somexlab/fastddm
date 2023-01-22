@@ -237,6 +237,11 @@ void structure_function_diff(double *h_in,
     dim3 gridSize_corr(gridSize_corr_x, gridSize_corr_y, 1);
     int smemSize = (blockSize_corr <= 32) ? 2ULL * blockSize_corr * sizeof(double) : 1ULL * blockSize_corr * sizeof(double);
 
+    // power spectrum and variance (reduction)
+    int blockSize_red = min(nextPowerOfTwo(length), 512ULL);
+    int gridSize_red = min(chunk_size, (unsigned long long)maxGridSizeX);
+    int smemSize2 = (blockSize_corr <= 32) ? 2ULL * blockSize_corr * sizeof(double2) : 1ULL * blockSize_corr * sizeof(double2);
+
     // ***Loop over chunks
     for (unsigned long long chunk = 0; chunk < num_chunks; chunk++)
     {
@@ -289,6 +294,13 @@ void structure_function_diff(double *h_in,
                                                                                     pitch_t);
         gpuErrchk(cudaPeekAtLastError());
         gpuErrchk(cudaDeviceSynchronize());
+
+        // ***Compute power spectrum (d_workspace1 --> d_power_spect)
+        average_power_spectrum_kernel<<<gridSize_red, blockSize_red, smemSize>>>((double2 *)d_workspace1,
+                                                                                 d_power_spec,
+                                                                                 length,
+                                                                                 pitch_t,
+                                                                                 curr_chunk_size);
 
         // ***Transpose array (d_workspace2 --> d_workspace1)
         transpose_complex_matrix_kernel<<<gridSize_tran2, blockSize_tran>>>((double2 *)d_workspace2,
@@ -350,7 +362,7 @@ void make_full_shift(double *h_in,
     int device_id;
     cudaGetDevice(&device_id);
 
-    unsigned long long _nx = nx / 2 + 1;                                   // fft2 r2c number of complex elements over x
+    unsigned long long _nx = nx / 2 + 1;                             // fft2 r2c number of complex elements over x
     unsigned long long chunk_size = (Nlags - 1) / num_fullshift + 1; // number of lags in a chunk
 
     // ***Allocate space on device

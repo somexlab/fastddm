@@ -17,6 +17,20 @@ namespace cg = cooperative_groups;
 const unsigned long long TILE_DIM = 32;  // leave this unchanged!
 const unsigned long long BLOCK_ROWS = 8; // leave this unchanged!
 
+//! double2 addition
+HOSTDEVICE inline double2 &operator+=(double2 &a, const double2 &b)
+{
+    a.x += b.x;
+    a.y += b.y;
+    return a;
+}
+
+//! double2 division
+HOSTDEVICE inline double2 &operator/(double2 &a, const double2 &b)
+{
+    return make_double2(a.x / b.x, a.y / b.y);
+}
+
 /*!
     Convert array from T to double on device and prepare for fft2
 */
@@ -447,7 +461,7 @@ __global__ void average_power_spectrum_kernel(double2 *d_in,
                                               double2 *d_out,
                                               unsigned long long length,
                                               unsigned long long pitch,
-                                              unsigned long long N)
+                                              unsigned long long Nq)
 {
     // Handle to thread block group
     cg::thread_block cta = cg::this_thread_block();
@@ -517,6 +531,89 @@ __global__ void average_power_spectrum_kernel(double2 *d_in,
         if (cta.thread_rank() == 0)
         {
             d_out[q].x = tmp_sum / (double)length;
+        }
+    }
+}
+
+/*!
+    Average over time of Fourier transformed input images
+*/
+__global__ void average_complex_kernel(double2 *d_in,
+                                       double2 *d_out,
+                                       unsigned long long length,
+                                       unsigned long long pitch,
+                                       unsigned long long Nq)
+{
+    // Handle to thread block group
+    cg::thread_block cta = cg::this_thread_block();
+    extern __shared__ double2 sdata[];
+    unsigned long long blockSize = 2 * blockDim.x;
+    unsigned long long tid = threadIdx.x;
+
+    for (unsigned long long q = blockIdx.x; q < Nq; q += gridDim.x)
+    {
+        double2 tmp_sum = make_double2(0.0, 0.0);
+        for (unsigned long long t = tid; t < length; t += blockSize)
+        {
+            double2 a = d_in[q * pitch + t];
+            tmp_sum.x += a.x;
+            tmp_sum.y += a.y;
+
+            // Ensure we don't read out of bounds
+            if (t + blockDim.x < length)
+            {
+                a = d_in[q * pitch + t + blockDim.x];
+                tmp_sum.x += a.x;
+                tmp_sum.y += a.y;
+            }
+        }
+
+        // Each thread puts its local sum into shared memory
+        sdata[tid] = tmp_sum;
+        cg::sync(cta);
+
+        // do reduction in shared mem
+        if ((blockDim.x >= 512) && (tid < 256))
+        {
+            sdata[tid] = tmp_sum = tmp_sum + sdata[tid + 256];
+        }
+
+        cg::sync(cta);
+
+        if ((blockDim.x >= 256) && (tid < 128))
+        {
+            sdata[tid] = tmp_sum = tmp_sum + sdata[tid + 128];
+        }
+
+        cg::sync(cta);
+
+        if ((blockDim.x >= 128) && (tid < 64))
+        {
+            sdata[tid] = tmp_sum = tmp_sum + sdata[tid + 64];
+        }
+
+        cg::sync(cta);
+
+        cg::thread_block_tile<32> tile32 = cg::tiled_partition<32>(cta);
+
+        if (cta.thread_rank() < 32)
+        {
+            // Fetch final intermediate sum from 2nd warp
+            if (blockDim.x >= 64)
+                tmp_sum += sdata[tid + 32];
+            // Reduce final warp using shuffle
+            for (int offset = tile32.size() / 2; offset > 0; offset /= 2)
+            {
+                tmp_sum += tile32.shfl_down(tmp_sum, offset);
+            }
+        }
+
+        // Write result for this block to global mem
+        // Also normalize by number of frames
+        // WARNING!!! IF WE ADD EXCLUDED FRAMES, WE NEED TO CHANGE THIS!!
+        if (cta.thread_rank() == 0)
+        {
+            d_out[q] = tmp_sum / make_double2(length, length);
         }
     }
 }
