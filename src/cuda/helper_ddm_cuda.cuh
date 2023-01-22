@@ -187,4 +187,17 @@ __global__ void copy_selected_lags_kernel(double2 *d_in,
                                           unsigned long long opitch,
                                           unsigned long long N);
 
+/*! \brief Average power spectrum of input images
+    \param d_in     Input complex array
+    \param d_out    Output complex array
+    \param length   Number of elements in each subarray
+    \param pitch    Pitch of input array
+    \param N        Number of subarrays
+*/
+__global__ void average_power_spectrum_kernel(double2 *d_in,
+                                              double2 *d_out,
+                                              unsigned long long length,
+                                              unsigned long long pitch,
+                                              unsigned long long N);
+
 #endif
