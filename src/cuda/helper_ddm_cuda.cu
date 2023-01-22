@@ -17,20 +17,6 @@ namespace cg = cooperative_groups;
 const unsigned long long TILE_DIM = 32;  // leave this unchanged!
 const unsigned long long BLOCK_ROWS = 8; // leave this unchanged!
 
-//! double2 addition
-HOSTDEVICE inline double2& operator+=(double2 &a, const double2 &b)
-{
-    a.x += b.x;
-    a.y += b.y;
-    return a;
-}
-
-//! double2 division
-HOSTDEVICE inline double2 operator/(const double2 &a, const double2 &b)
-{
-    return make_double2(a.x / b.x, a.y / b.y);
-}
-
 /*!
     Convert array from T to double on device and prepare for fft2
 */
@@ -471,7 +457,7 @@ __global__ void average_power_spectrum_kernel(double2 *d_in,
 
     for (unsigned long long q = blockIdx.x; q < Nq; q += gridDim.x)
     {
-        double2 tmp_sum = 0.0;
+        double tmp_sum = 0.0;
         for (unsigned long long t = tid; t < length; t += blockSize)
         {
             double2 a = d_in[q * pitch + t];
@@ -546,50 +532,55 @@ __global__ void average_complex_kernel(double2 *d_in,
 {
     // Handle to thread block group
     cg::thread_block cta = cg::this_thread_block();
-    extern __shared__ double2 sdata[];
+    extern __shared__ double2 sdata2[];
     unsigned long long blockSize = 2 * blockDim.x;
     unsigned long long tid = threadIdx.x;
 
     for (unsigned long long q = blockIdx.x; q < Nq; q += gridDim.x)
     {
-        double2 tmp_sum = make_double2(0.0, 0.0);
+        double tmp_sum_r = 0.0;
+        double tmp_sum_i = 0.0;
         for (unsigned long long t = tid; t < length; t += blockSize)
         {
             double2 a = d_in[q * pitch + t];
-            tmp_sum.x += a.x;
-            tmp_sum.y += a.y;
+            tmp_sum_r += a.x;
+            tmp_sum_i += a.y;
 
             // Ensure we don't read out of bounds
             if (t + blockDim.x < length)
             {
                 a = d_in[q * pitch + t + blockDim.x];
-                tmp_sum.x += a.x;
-                tmp_sum.y += a.y;
+                tmp_sum_r += a.x;
+                tmp_sum_i += a.y;
             }
         }
 
         // Each thread puts its local sum into shared memory
-        sdata[tid] = tmp_sum;
+        sdata2[tid].x = tmp_sum_r;
+        sdata2[tid].y = tmp_sum_i;
         cg::sync(cta);
 
         // do reduction in shared mem
         if ((blockDim.x >= 512) && (tid < 256))
         {
-            sdata[tid] = tmp_sum = tmp_sum + sdata[tid + 256];
+            sdata2[tid].x = tmp_sum_r = tmp_sum_r + sdata2[tid + 256].x;
+            sdata2[tid].y = tmp_sum_i = tmp_sum_i + sdata2[tid + 256].y;
         }
 
         cg::sync(cta);
 
         if ((blockDim.x >= 256) && (tid < 128))
         {
-            sdata[tid] = tmp_sum = tmp_sum + sdata[tid + 128];
+            sdata2[tid].x = tmp_sum_r = tmp_sum_r + sdata2[tid + 128].x;
+            sdata2[tid].y = tmp_sum_i = tmp_sum_i + sdata2[tid + 128].y;
         }
 
         cg::sync(cta);
 
         if ((blockDim.x >= 128) && (tid < 64))
         {
-            sdata[tid] = tmp_sum = tmp_sum + sdata[tid + 64];
+            sdata2[tid].x = tmp_sum_r = tmp_sum_r + sdata2[tid + 64].x;
+            sdata2[tid].y = tmp_sum_i = tmp_sum_i + sdata2[tid + 64].y;
         }
 
         cg::sync(cta);
@@ -600,11 +591,13 @@ __global__ void average_complex_kernel(double2 *d_in,
         {
             // Fetch final intermediate sum from 2nd warp
             if (blockDim.x >= 64)
-                tmp_sum += sdata[tid + 32];
+                tmp_sum_r += sdata2[tid + 32].x;
+                tmp_sum_i += sdata2[tid + 32].y;
             // Reduce final warp using shuffle
             for (int offset = tile32.size() / 2; offset > 0; offset /= 2)
             {
-                tmp_sum += tile32.shfl_down(tmp_sum, offset);
+                tmp_sum_r += tile32.shfl_down(tmp_sum_r, offset);
+                tmp_sum_i += tile32.shfl_down(tmp_sum_i, offset);
             }
         }
 
@@ -613,7 +606,8 @@ __global__ void average_complex_kernel(double2 *d_in,
         // WARNING!!! IF WE ADD EXCLUDED FRAMES, WE NEED TO CHANGE THIS!!
         if (cta.thread_rank() == 0)
         {
-            d_out[q] = tmp_sum / make_double2(length, length);
+            d_out[q].x = tmp_sum_r / (double)length;
+            d_out[q].y = tmp_sum_i / (double)length;
         }
     }
 }
