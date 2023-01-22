@@ -390,6 +390,8 @@ void optimize_diff(unsigned long long &pitch_q,
     //      lags.size() * 4 bytes
     //  - workspace1 and workspace2 (complex double, 16 bytes)
     //      max(pitch_q * length, chunk_size * pitch_t) * 16 bytes
+    //  - power_spec and var arrays (double2, 16 bytes)
+    //      2 * chunk_size * 16 bytes
 
     // memory required
     unsigned long long mem_req = 0ULL;
@@ -418,6 +420,9 @@ void optimize_diff(unsigned long long &pitch_q,
 
         // add memory required for workspace1 and workspace2
         mem_req += 2ULL * max(_pitch_q * length, chunk_size * pitch_t) * 16ULL;
+
+        // add memory required for power_spec and var helper arrays
+        mem_req += 2ULL * chunk_size * 16ULL;
 
         // check memory
         if (free_mem > mem_req)

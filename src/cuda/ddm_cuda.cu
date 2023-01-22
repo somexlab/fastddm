@@ -211,8 +211,11 @@ void structure_function_diff(double *h_in,
     gpuErrchk(cudaMalloc(&d_workspace2, workspace_size));
     // helper arrays
     unsigned int *d_lags;
+    double2 *d_power_spec, *d_var;
     gpuErrchk(cudaMalloc(&d_lags, lags.size() * sizeof(unsigned int)));
     gpuErrchk(cudaMemcpy(d_lags, lags.data(), lags.size() * sizeof(unsigned int), cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMalloc(&d_power_spec, chunk_size * sizeof(double2)));
+    gpuErrchk(cudaMalloc(&d_var, chunk_size * sizeof(double2)));
 
     // ***Compute optimal kernels execution parameters
     // transpose_complex_matrix_kernel
@@ -309,12 +312,24 @@ void structure_function_diff(double *h_in,
                                2 * curr_chunk_size * sizeof(double),
                                lags.size(),
                                cudaMemcpyDeviceToHost));
+        // copy power spectrum
+        gpuErrchk(cudaMemcpy((double2 *)h_in + (unsigned long long)(lags.size()) * _nx * ny + q_start,
+                             d_power_spec,
+                             curr_chunk_size,
+                             cudaMemcpyDeviceToHost));
+        // copy variance
+        gpuErrchk(cudaMemcpy((double2 *)h_in + (unsigned long long)(lags.size() + 1) * _nx * ny + q_start,
+                             d_var,
+                             curr_chunk_size,
+                             cudaMemcpyDeviceToHost));
     }
 
     // ***Free memory
     gpuErrchk(cudaFree(d_workspace1));
     gpuErrchk(cudaFree(d_workspace2));
     gpuErrchk(cudaFree(d_lags));
+    gpuErrchk(cudaFree(d_power_spec));
+    gpuErrchk(cudaFree(d_var));
 }
 
 /*! \brief Convert to full and fftshifted image structure function on the GPU
