@@ -18,7 +18,7 @@ const unsigned long long TILE_DIM = 32;  // leave this unchanged!
 const unsigned long long BLOCK_ROWS = 8; // leave this unchanged!
 
 //! double2 addition
-HOSTDEVICE inline double2 &operator+=(double2 &a, const double2 &b)
+HOSTDEVICE inline double2& operator+=(double2 &a, const double2 &b)
 {
     a.x += b.x;
     a.y += b.y;
@@ -26,7 +26,7 @@ HOSTDEVICE inline double2 &operator+=(double2 &a, const double2 &b)
 }
 
 //! double2 division
-HOSTDEVICE inline double2 &operator/(double2 &a, const double2 &b)
+HOSTDEVICE inline double2 operator/(const double2 &a, const double2 &b)
 {
     return make_double2(a.x / b.x, a.y / b.y);
 }
