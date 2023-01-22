@@ -85,6 +85,7 @@ py::array_t<double> ddm_diff(py::array_t<T, py::array::c_style> img_seq,
     {
         // zero out the helper vector
         fill(tmp.begin(), tmp.end(), 0);
+        tmp2 = 0.0;
 
         // loop over the lags
         for (unsigned long long _dt = 0; _dt < lags.size(); _dt++)
