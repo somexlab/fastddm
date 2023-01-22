@@ -315,12 +315,12 @@ void structure_function_diff(double *h_in,
         // copy power spectrum
         gpuErrchk(cudaMemcpy((double2 *)h_in + (unsigned long long)(lags.size()) * _nx * ny + q_start,
                              d_power_spec,
-                             curr_chunk_size,
+                             curr_chunk_size * sizeof(double2),
                              cudaMemcpyDeviceToHost));
         // copy variance
         gpuErrchk(cudaMemcpy((double2 *)h_in + (unsigned long long)(lags.size() + 1) * _nx * ny + q_start,
                              d_var,
-                             curr_chunk_size,
+                             curr_chunk_size * sizeof(double2),
                              cudaMemcpyDeviceToHost));
     }
 
