@@ -226,6 +226,6 @@ __global__ void linear_combination_kernel(double2 *c,
                                           double2 A,
                                           double2 *b,
                                           double2 B,
-                                          unsigned long long N);
+                                          unsigned int N);
 
 #endif
