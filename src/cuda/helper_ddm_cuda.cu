@@ -592,7 +592,7 @@ __global__ void average_complex_kernel(double2 *d_in,
             // Fetch final intermediate sum from 2nd warp
             if (blockDim.x >= 64)
                 tmp_sum_r += sdata2[tid + 32].x;
-                tmp_sum_i += sdata2[tid + 32].y;
+            tmp_sum_i += sdata2[tid + 32].y;
             // Reduce final warp using shuffle
             for (int offset = tile32.size() / 2; offset > 0; offset /= 2)
             {
@@ -609,5 +609,24 @@ __global__ void average_complex_kernel(double2 *d_in,
             d_out[q].x = tmp_sum_r / (double)length;
             d_out[q].y = tmp_sum_i / (double)length;
         }
+    }
+}
+
+/*!
+    Linear combination c = A * a + B * b
+*/
+__global__ void linear_combination_kernel(double2 *c,
+                                          double2 *a,
+                                          double2 A,
+                                          double2 *b,
+                                          double2 B,
+                                          unsigned int N)
+{
+    unsigned int tid = blockDim.x * blockIdx.x + threadIdx.x;
+
+    if (tid < N)
+    {
+        c[tid].x = A.x * a[tid].x + B.x * b[tid].x;
+        c[tid].y = A.y * a[tid].y + B.y * b[tid].y;
     }
 }

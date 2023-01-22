@@ -238,9 +238,20 @@ void structure_function_diff(double *h_in,
     int smemSize = (blockSize_corr <= 32) ? 2ULL * blockSize_corr * sizeof(double) : 1ULL * blockSize_corr * sizeof(double);
 
     // power spectrum and variance (reduction)
+    int minGridSize; // The minimum grid size needed to achieve the
+                     // maximum occupancy for a full device launch
+    int numSMs;      // Number of streaming multiprocessors
+    gpuErrchk(cudaDeviceGetAttribute(&numSMs, cudaDevAttrMultiProcessorCount, device_id));
+
     int blockSize_red = min(nextPowerOfTwo(length), 512ULL);
     int gridSize_red = min(chunk_size, (unsigned long long)maxGridSizeX);
     int smemSize2 = (blockSize_corr <= 32) ? 2ULL * blockSize_corr * sizeof(double2) : 1ULL * blockSize_corr * sizeof(double2);
+
+    int blockSize_lc; // The launch configurator returned block size
+    int gridSize_lc;  // The actual grid size needed, based on input size
+    gpuErrchk(cudaOccupancyMaxPotentialBlockSize(&minGridSize, &blockSize_lc, linear_combination_kernel, 0, 0));
+    // Round up according to array size
+    gridSize_lc = min((chunk_size + blockSize_lc - 1) / blockSize_lc, 32ULL * numSMs);
 
     // ***Loop over chunks
     for (unsigned long long chunk = 0; chunk < num_chunks; chunk++)
@@ -301,6 +312,40 @@ void structure_function_diff(double *h_in,
                                                                                  length,
                                                                                  pitch_t,
                                                                                  curr_chunk_size);
+
+        gpuErrchk(cudaPeekAtLastError());
+        gpuErrchk(cudaDeviceSynchronize());
+
+        // ***Compute variance (d_workspace1 --> d_var)
+        // compute average over time
+        average_complex_kernel<<<gridSize_red, blockSize_red, smemSize2>>>((double2 *)d_workspace1,
+                                                                           d_var,
+                                                                           length,
+                                                                           pitch_t,
+                                                                           curr_chunk_size);
+
+        gpuErrchk(cudaPeekAtLastError());
+        gpuErrchk(cudaDeviceSynchronize());
+
+        // compute square modulus
+        square_modulus_kernel<<<gridSize_lc, blockSize_lc>>>(d_var,
+                                                             1,
+                                                             1,
+                                                             curr_chunk_size);
+
+        gpuErrchk(cudaPeekAtLastError());
+        gpuErrchk(cudaDeviceSynchronize());
+
+        // linear combination (d_var = d_power_spec - d_var)
+        linear_combination_kernel<<<gridSize_lc, blockSize_lc>>>(d_var,
+                                                                 d_power_spec,
+                                                                 make_double2(1.0, 0.0),
+                                                                 d_var,
+                                                                 make_double2(-1.0, 0.0),
+                                                                 curr_chunk_size);
+
+        gpuErrchk(cudaPeekAtLastError());
+        gpuErrchk(cudaDeviceSynchronize());
 
         // ***Transpose array (d_workspace2 --> d_workspace1)
         transpose_complex_matrix_kernel<<<gridSize_tran2, blockSize_tran>>>((double2 *)d_workspace2,

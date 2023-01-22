@@ -213,4 +213,19 @@ __global__ void average_complex_kernel(double2 *d_in,
                                        unsigned long long pitch,
                                        unsigned long long Nq);
 
+/*! \brief Linear combination c = A * a + B * b
+    \param c    Output complex array
+    \param a    Input complex array 1, a
+    \param A    Scaling coefficient 1, A
+    \param b    Input complex array 2, b
+    \param B    Scaling coefficient 2, B
+    \param N    Number of elements
+*/
+__global__ void linear_combination_kernel(double2 *c,
+                                          double2 *a,
+                                          double2 A,
+                                          double2 *b,
+                                          double2 B,
+                                          unsigned long long N);
+
 #endif
