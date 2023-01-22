@@ -31,7 +31,7 @@ py::array_t<double> ddm_diff_cuda(py::array_t<T, py::array::c_style> img_seq,
     auto p_img_seq = img_seq.data();                // get input data
 
     // Check host memory
-    chk_host_mem_diff(nx, ny, length, lags);
+    chk_host_mem_diff(nx, ny, length, lags.size());
 
     // Check device memory and optimize
     unsigned long long num_fft2, num_chunks, num_fullshift;
@@ -123,7 +123,7 @@ py::array_t<double> ddm_fft_cuda(py::array_t<T, py::array::c_style> img_seq,
     auto p_img_seq = img_seq.data();                // get input data
 
     // Check host memory
-    chk_host_mem_fft(nx, ny, length);
+    chk_host_mem_fft(nx, ny, length, lags.size());
 
     // Check device memory and optimize
     unsigned long long num_fft2, num_chunks, num_fullshift;

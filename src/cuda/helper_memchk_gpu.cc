@@ -44,7 +44,7 @@ void get_host_free_mem(unsigned long long &free_mem)
 void chk_host_mem_diff(unsigned long long nx,
                        unsigned long long ny,
                        unsigned long long length,
-                       vector<unsigned int> lags)
+                       unsigned long long Nlags)
 {
     unsigned long long free_mem;
     get_host_free_mem(free_mem);
@@ -65,7 +65,7 @@ void chk_host_mem_diff(unsigned long long nx,
      */
     unsigned long long mem_required = 0;
 
-    unsigned long long dim_t = max(length, (unsigned long long)(lags.size() + 2));
+    unsigned long long dim_t = max(length, Nlags + 2);
     mem_required += (nx / 2ULL + 1ULL) * ny * dim_t * 16ULL;
 
     if (mem_required >= free_mem)
@@ -79,7 +79,8 @@ void chk_host_mem_diff(unsigned long long nx,
  */
 void chk_host_mem_fft(unsigned long long nx,
                       unsigned long long ny,
-                      unsigned long long length)
+                      unsigned long long length,
+                      unsigned long long Nlags)
 {
     unsigned long long free_mem;
     get_host_free_mem(free_mem);
@@ -100,7 +101,7 @@ void chk_host_mem_fft(unsigned long long nx,
      */
     unsigned long long mem_required = 0;
 
-    unsigned long long dim_t = max(length, (unsigned long long)(lags.size() + 2));
+    unsigned long long dim_t = max(length, Nlags + 2);
     mem_required += (nx / 2ULL + 1ULL) * ny * dim_t * 16ULL;
 
     if (mem_required >= free_mem)
