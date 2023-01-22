@@ -319,14 +319,14 @@ void structure_function_diff(double *h_in,
 
 /*! \brief Convert to full and fftshifted image structure function on the GPU
     \param h_in             input array after structure function calculation
-    \param lags             lags to be analyzed
+    \param Nlags            number of lags analyzed
     \param nx               number of fft nodes in x direction
     \param ny               number of fft nodes in y direction
     \param num_fullshift    number of full and shift chunks
     \param pitch_fs         pitch of device array for full and shift operations
  */
 void make_full_shift(double *h_in,
-                     vector<unsigned int> lags,
+                     unsigned long long Nlags,
                      unsigned long long nx,
                      unsigned long long ny,
                      unsigned long long num_fullshift,
@@ -336,7 +336,7 @@ void make_full_shift(double *h_in,
     cudaGetDevice(&device_id);
 
     unsigned long long _nx = nx / 2 + 1;                                   // fft2 r2c number of complex elements over x
-    unsigned long long chunk_size = (lags.size() - 1) / num_fullshift + 1; // number of lags in a chunk
+    unsigned long long chunk_size = (Nlags - 1) / num_fullshift + 1; // number of lags in a chunk
 
     // ***Allocate space on device
     // workspaces
@@ -362,7 +362,7 @@ void make_full_shift(double *h_in,
         // Get input offset
         unsigned long long ioffset = chunk * chunk_size * 2 * _nx * ny;
         // Get current chunk size
-        unsigned long long curr_chunk_size = (chunk + 1) * chunk_size > (unsigned long long)(lags.size()) ? lags.size() - chunk * chunk_size : chunk_size;
+        unsigned long long curr_chunk_size = (chunk + 1) * chunk_size > Nlags ? Nlags - chunk * chunk_size : chunk_size;
 
         if (curr_chunk_size != chunk_size)
         {
