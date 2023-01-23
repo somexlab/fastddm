@@ -27,21 +27,23 @@ void get_host_free_mem(unsigned long long &free_mem);
     \param nx           Number of fft nodes, x direction
     \param ny           Number of fft nodes, y direction
     \param length       Number of frames
-    \param lags         Vector of lags to analyze
+    \param lags         Number of lags analyzed
  */
 void chk_host_mem_diff(unsigned long long nx,
                        unsigned long long ny,
                        unsigned long long length,
-                       vector<unsigned int> lags);
+                       unsigned long long Nlags);
 
 /*! \brief Estimate and check host memory needed for fft mode
     \param nx           Number of fft nodes, x direction
     \param ny           Number of fft nodes, y direction
     \param length       Number of frames
+    \param lags         Number of lags analyzed
  */
 void chk_host_mem_fft(unsigned long long nx,
                       unsigned long long ny,
-                      unsigned long long length);
+                      unsigned long long length,
+                      unsigned long long Nlags);
 
 /*! \brief Get free device memory (in bytes)
     \param free_mem     Device free memory returned (in bytes)

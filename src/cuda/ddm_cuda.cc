@@ -31,7 +31,7 @@ py::array_t<double> ddm_diff_cuda(py::array_t<T, py::array::c_style> img_seq,
     auto p_img_seq = img_seq.data();                // get input data
 
     // Check host memory
-    chk_host_mem_diff(nx, ny, length, lags);
+    chk_host_mem_diff(nx, ny, length, lags.size());
 
     // Check device memory and optimize
     unsigned long long num_fft2, num_chunks, num_fullshift;
@@ -59,7 +59,8 @@ py::array_t<double> ddm_diff_cuda(py::array_t<T, py::array::c_style> img_seq,
       double [the input needs to be twice as large]
      */
     unsigned long long _nx = nx / 2 + 1;
-    py::array_t<double> out = py::array_t<double>(2 * _nx * ny * length);
+    unsigned long long dim_t = max(length, (unsigned long long)(lags.size() + 2));
+    py::array_t<double> out = py::array_t<double>(2 * _nx * ny * dim_t);
     auto p_out = out.mutable_data();
 
     // ***Transfer data to GPU and compute fft2
@@ -86,7 +87,7 @@ py::array_t<double> ddm_diff_cuda(py::array_t<T, py::array::c_style> img_seq,
     // ***Convert raw output to full and shifted image structure function
     // Convert raw output to full and shifted image structure function
     make_full_shift(p_out,
-                    lags,
+                    lags.size() + 2,
                     nx,
                     ny,
                     num_fullshift,
@@ -95,7 +96,7 @@ py::array_t<double> ddm_diff_cuda(py::array_t<T, py::array::c_style> img_seq,
     // ***Resize output
     // the full size of the image structure function is
     // nx * ny * #(lags)
-    out.resize({(unsigned long long)(lags.size()), ny, nx});
+    out.resize({(unsigned long long)(lags.size() + 2), ny, nx});
 
     // ***Return result to python
     return out;
@@ -122,7 +123,7 @@ py::array_t<double> ddm_fft_cuda(py::array_t<T, py::array::c_style> img_seq,
     auto p_img_seq = img_seq.data();                // get input data
 
     // Check host memory
-    chk_host_mem_fft(nx, ny, length);
+    chk_host_mem_fft(nx, ny, length, lags.size());
 
     // Check device memory and optimize
     unsigned long long num_fft2, num_chunks, num_fullshift;
@@ -152,7 +153,8 @@ py::array_t<double> ddm_fft_cuda(py::array_t<T, py::array::c_style> img_seq,
       doubles [the input needs to be twice as large]
      */
     unsigned long long _nx = nx / 2 + 1;
-    py::array_t<double> out = py::array_t<double>(2 * _nx * ny * length);
+    unsigned long long dim_t = max(length, (unsigned long long)(lags.size() + 2));
+    py::array_t<double> out = py::array_t<double>(2 * _nx * ny * dim_t);
     auto p_out = out.mutable_data();
 
     // ***Transfer data to GPU and compute fft2
@@ -180,7 +182,7 @@ py::array_t<double> ddm_fft_cuda(py::array_t<T, py::array::c_style> img_seq,
 
     // ***Convert raw output to full and shifted image structure function
     make_full_shift(p_out,
-                    lags,
+                    lags.size() + 2,
                     nx,
                     ny,
                     num_fullshift,
@@ -189,7 +191,7 @@ py::array_t<double> ddm_fft_cuda(py::array_t<T, py::array::c_style> img_seq,
     // ***Resize output
     // the full size of the image structure function is
     // nx * ny * #(lags)
-    out.resize({(unsigned long long)(lags.size()), ny, nx});
+    out.resize({(unsigned long long)(lags.size() + 2), ny, nx});
 
     // ***Return result to python
     return out;

@@ -44,7 +44,7 @@ void get_host_free_mem(unsigned long long &free_mem)
 void chk_host_mem_diff(unsigned long long nx,
                        unsigned long long ny,
                        unsigned long long length,
-                       vector<unsigned int> lags)
+                       unsigned long long Nlags)
 {
     unsigned long long free_mem;
     get_host_free_mem(free_mem);
@@ -55,17 +55,18 @@ void chk_host_mem_diff(unsigned long long nx,
     /*
     Calculations are done in double precision.
     - The store the output, we need
-        nx * ny * #lags * 8 bytes
+        nx * ny * (#lags + 2) * 8 bytes
 
     - To store the fft2, we need
         (nx / 2 + 1) * ny * length * 16 bytes
-      This is always larger (or equal) than the output size.
-      We then use this space as a workspace for both the fft2
-      intermediate output and the final result (output is then cropped).
+    
+    To store both, we need
+        (nx / 2 + 1) * ny * max(length, #lags + 2) * 16 bytes
      */
     unsigned long long mem_required = 0;
 
-    mem_required += (nx / 2ULL + 1ULL) * ny * length * 16ULL;
+    unsigned long long dim_t = max(length, Nlags + 2);
+    mem_required += (nx / 2ULL + 1ULL) * ny * dim_t * 16ULL;
 
     if (mem_required >= free_mem)
     {
@@ -78,7 +79,8 @@ void chk_host_mem_diff(unsigned long long nx,
  */
 void chk_host_mem_fft(unsigned long long nx,
                       unsigned long long ny,
-                      unsigned long long length)
+                      unsigned long long length,
+                      unsigned long long Nlags)
 {
     unsigned long long free_mem;
     get_host_free_mem(free_mem);
@@ -93,13 +95,14 @@ void chk_host_mem_fft(unsigned long long nx,
 
     - To store the fft2, we need
         (nx / 2 + 1) * ny * length * 16 bytes
-      This is always larger (or equal) than the output size.
-      We then use this space as a workspace for both the fft2
-      intermediate output and the final result (output is then cropped).
+
+    To store both, we need
+        (nx / 2 + 1) * ny * max(length, #lags + 2) * 16 bytes
      */
     unsigned long long mem_required = 0;
 
-    mem_required += (nx / 2ULL + 1ULL) * ny * length * 16ULL;
+    unsigned long long dim_t = max(length, Nlags + 2);
+    mem_required += (nx / 2ULL + 1ULL) * ny * dim_t * 16ULL;
 
     if (mem_required >= free_mem)
     {
@@ -387,6 +390,8 @@ void optimize_diff(unsigned long long &pitch_q,
     //      lags.size() * 4 bytes
     //  - workspace1 and workspace2 (complex double, 16 bytes)
     //      max(pitch_q * length, chunk_size * pitch_t) * 16 bytes
+    //  - power_spec and var arrays (double2, 16 bytes)
+    //      2 * chunk_size * 16 bytes
 
     // memory required
     unsigned long long mem_req = 0ULL;
@@ -415,6 +420,9 @@ void optimize_diff(unsigned long long &pitch_q,
 
         // add memory required for workspace1 and workspace2
         mem_req += 2ULL * max(_pitch_q * length, chunk_size * pitch_t) * 16ULL;
+
+        // add memory required for power_spec and var helper arrays
+        mem_req += 2ULL * chunk_size * 16ULL;
 
         // check memory
         if (free_mem > mem_req)
@@ -481,6 +489,8 @@ void optimize_fft(unsigned long long &pitch_q,
     //      {programmatically determined...}
     //  - prefix sum
     //      (length / 1024 + 2) * chunk_size * 16 bytes
+    //  - power_spec and var arrays (double2, 16 bytes)
+    //      2 * chunk_size * 16 bytes
 
     // memory required
     unsigned long long mem_req = 0ULL;
@@ -522,6 +532,9 @@ void optimize_fft(unsigned long long &pitch_q,
 
             // add memory required for workspace2
             mem_req += max(_pitch_q * length, chunk_size * pitch_t) * 16ULL;
+
+            // add memory required for power_spec and var helper arrays
+            mem_req += 2ULL * chunk_size * 16ULL;
 
             // check memory
             if (free_mem > mem_req)
