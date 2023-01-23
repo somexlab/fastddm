@@ -605,7 +605,7 @@ def _azimuthal_average(
     # check input arguments
     if tau is None:
         raise ValueError("`tau` must be given for non-`ImageStructureFunction` data input.")
-    elif len(tau) != len(data):
+    elif (len(tau) + 2) != len(data):
         raise ValueError("Length of `tau` not compatible with shape of `data`.")
 
     # read actual image structure function shape
