@@ -14,8 +14,10 @@
 
 #ifdef WIN32
 #include <windows.h>
-#else
+#elif APPLE
 #include <sys/sysinfo.h>
+#else
+#include <fstream>
 #endif
 
 #include <stdexcept>
@@ -31,10 +33,27 @@ void get_host_free_mem(unsigned long long &free_mem)
     MEMORYSTATUSEX statex;
     GlobalMemoryStatusEx(&statex);
     free_mem = statex.ullAvailPhys;
-#else
+#elif APPLE
     struct sysinfo info;
     sysinfo(&info);
     free_mem = info.freeram + info.bufferram;
+#else
+    // https://github.com/doleron/cpp-linux-system-stats/blob/main/include/linux-system-usage.hpp
+    ifstream proc_meminfo("/proc/meminfo");
+
+    if (proc_meminfo.good())
+    {
+        string content((istreambuf_iterator<char>(proc_meminfo)), istreambuf_iterator<char>());
+        string target = "MemAvailable:";
+        size_t start = content.find(target);
+        if (start != string::npos)
+        {
+            int begin = start + target.length();
+            size_t end = content.find("kB", start);
+            string substr = content.substr(begin, end - begin);
+            free_mem = stoull(substr) * 1024;
+        }
+    }
 #endif
 }
 
