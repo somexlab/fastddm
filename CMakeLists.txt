@@ -44,7 +44,7 @@ if(ENABLE_CPP)
     include_directories(${PYTHON_INCLUDE_DIRS})
 
     # Set C++ standard
-    set(CMAKE_CXX_STANDARD 11)
+    set(CMAKE_CXX_STANDARD 14)
     set(CMAKE_CXX_STANDARD_REQUIRED ON)
     set(CMAKE_CXX_EXTENSIONS OFF)
 else(ENABLE_CPP)

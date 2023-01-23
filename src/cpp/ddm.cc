@@ -150,6 +150,9 @@ py::array_t<double> ddm_diff(py::array_t<T, py::array::c_style> img_seq,
     // nx * ny * #(lags)
     out.resize({(unsigned long long)(lags.size() + 2), ny, nx});
 
+    // release pointer to output array
+    p_out = NULL;
+
     // Return result to python
     return out;
 }
@@ -335,6 +338,9 @@ py::array_t<double> ddm_fft(py::array_t<T, py::array::c_style> img_seq,
     // nx * ny * #(lags)
     out.resize({(unsigned long long)(lags.size() + 2), ny, nx});
 
+    // release pointer to output array
+    p_out = NULL;
+
     // Return result to python
     return out;
 }
@@ -345,22 +351,22 @@ py::array_t<double> ddm_fft(py::array_t<T, py::array::c_style> img_seq,
 void export_ddm(py::module &m)
 {
     // Leave function export in this order!
-    m.def("ddm_diff", &ddm_diff<uint8_t>);
-    m.def("ddm_diff", &ddm_diff<int16_t>);
-    m.def("ddm_diff", &ddm_diff<uint16_t>);
-    m.def("ddm_diff", &ddm_diff<int32_t>);
-    m.def("ddm_diff", &ddm_diff<uint32_t>);
-    m.def("ddm_diff", &ddm_diff<int64_t>);
-    m.def("ddm_diff", &ddm_diff<uint64_t>);
-    m.def("ddm_diff", &ddm_diff<float>);
-    m.def("ddm_diff", &ddm_diff<double>);
-    m.def("ddm_fft", &ddm_fft<uint8_t>);
-    m.def("ddm_fft", &ddm_fft<int16_t>);
-    m.def("ddm_fft", &ddm_fft<uint16_t>);
-    m.def("ddm_fft", &ddm_fft<int32_t>);
-    m.def("ddm_fft", &ddm_fft<uint32_t>);
-    m.def("ddm_fft", &ddm_fft<int64_t>);
-    m.def("ddm_fft", &ddm_fft<uint64_t>);
-    m.def("ddm_fft", &ddm_fft<float>);
-    m.def("ddm_fft", &ddm_fft<double>);
+    m.def("ddm_diff", &ddm_diff<uint8_t>, py::return_value_policy::take_ownership);
+    m.def("ddm_diff", &ddm_diff<int16_t>, py::return_value_policy::take_ownership);
+    m.def("ddm_diff", &ddm_diff<uint16_t>, py::return_value_policy::take_ownership);
+    m.def("ddm_diff", &ddm_diff<int32_t>, py::return_value_policy::take_ownership);
+    m.def("ddm_diff", &ddm_diff<uint32_t>, py::return_value_policy::take_ownership);
+    m.def("ddm_diff", &ddm_diff<int64_t>, py::return_value_policy::take_ownership);
+    m.def("ddm_diff", &ddm_diff<uint64_t>, py::return_value_policy::take_ownership);
+    m.def("ddm_diff", &ddm_diff<float>, py::return_value_policy::take_ownership);
+    m.def("ddm_diff", &ddm_diff<double>, py::return_value_policy::take_ownership);
+    m.def("ddm_fft", &ddm_fft<uint8_t>, py::return_value_policy::take_ownership);
+    m.def("ddm_fft", &ddm_fft<int16_t>, py::return_value_policy::take_ownership);
+    m.def("ddm_fft", &ddm_fft<uint16_t>, py::return_value_policy::take_ownership);
+    m.def("ddm_fft", &ddm_fft<int32_t>, py::return_value_policy::take_ownership);
+    m.def("ddm_fft", &ddm_fft<uint32_t>, py::return_value_policy::take_ownership);
+    m.def("ddm_fft", &ddm_fft<int64_t>, py::return_value_policy::take_ownership);
+    m.def("ddm_fft", &ddm_fft<uint64_t>, py::return_value_policy::take_ownership);
+    m.def("ddm_fft", &ddm_fft<float>, py::return_value_policy::take_ownership);
+    m.def("ddm_fft", &ddm_fft<double>, py::return_value_policy::take_ownership);
 }

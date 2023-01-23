@@ -98,6 +98,9 @@ py::array_t<double> ddm_diff_cuda(py::array_t<T, py::array::c_style> img_seq,
     // nx * ny * #(lags)
     out.resize({(unsigned long long)(lags.size() + 2), ny, nx});
 
+    // release pointer to output array
+    p_out = NULL;
+
     // ***Return result to python
     return out;
 }
@@ -193,6 +196,9 @@ py::array_t<double> ddm_fft_cuda(py::array_t<T, py::array::c_style> img_seq,
     // nx * ny * #(lags)
     out.resize({(unsigned long long)(lags.size() + 2), ny, nx});
 
+    // release pointer to output array
+    p_out = NULL;
+
     // ***Return result to python
     return out;
 }
@@ -226,22 +232,22 @@ void export_ddm_cuda(py::module &m)
     // m.def("get_device_fft2_mem", &get_device_fft2_mem);
     // m.def("get_device_fft_mem", &get_device_fft_mem);
     // Leave function export in this order!
-    m.def("ddm_diff_cuda", &ddm_diff_cuda<uint8_t>);
-    m.def("ddm_diff_cuda", &ddm_diff_cuda<int16_t>);
-    m.def("ddm_diff_cuda", &ddm_diff_cuda<uint16_t>);
-    m.def("ddm_diff_cuda", &ddm_diff_cuda<int32_t>);
-    m.def("ddm_diff_cuda", &ddm_diff_cuda<uint32_t>);
-    m.def("ddm_diff_cuda", &ddm_diff_cuda<int64_t>);
-    m.def("ddm_diff_cuda", &ddm_diff_cuda<uint64_t>);
-    m.def("ddm_diff_cuda", &ddm_diff_cuda<float>);
-    m.def("ddm_diff_cuda", &ddm_diff_cuda<double>);
-    m.def("ddm_fft_cuda", &ddm_fft_cuda<uint8_t>);
-    m.def("ddm_fft_cuda", &ddm_fft_cuda<int16_t>);
-    m.def("ddm_fft_cuda", &ddm_fft_cuda<uint16_t>);
-    m.def("ddm_fft_cuda", &ddm_fft_cuda<int32_t>);
-    m.def("ddm_fft_cuda", &ddm_fft_cuda<uint32_t>);
-    m.def("ddm_fft_cuda", &ddm_fft_cuda<int64_t>);
-    m.def("ddm_fft_cuda", &ddm_fft_cuda<uint64_t>);
-    m.def("ddm_fft_cuda", &ddm_fft_cuda<float>);
-    m.def("ddm_fft_cuda", &ddm_fft_cuda<double>);
+    m.def("ddm_diff_cuda", &ddm_diff_cuda<uint8_t>, py::return_value_policy::take_ownership);
+    m.def("ddm_diff_cuda", &ddm_diff_cuda<int16_t>, py::return_value_policy::take_ownership);
+    m.def("ddm_diff_cuda", &ddm_diff_cuda<uint16_t>, py::return_value_policy::take_ownership);
+    m.def("ddm_diff_cuda", &ddm_diff_cuda<int32_t>, py::return_value_policy::take_ownership);
+    m.def("ddm_diff_cuda", &ddm_diff_cuda<uint32_t>, py::return_value_policy::take_ownership);
+    m.def("ddm_diff_cuda", &ddm_diff_cuda<int64_t>, py::return_value_policy::take_ownership);
+    m.def("ddm_diff_cuda", &ddm_diff_cuda<uint64_t>, py::return_value_policy::take_ownership);
+    m.def("ddm_diff_cuda", &ddm_diff_cuda<float>, py::return_value_policy::take_ownership);
+    m.def("ddm_diff_cuda", &ddm_diff_cuda<double>, py::return_value_policy::take_ownership);
+    m.def("ddm_fft_cuda", &ddm_fft_cuda<uint8_t>, py::return_value_policy::take_ownership);
+    m.def("ddm_fft_cuda", &ddm_fft_cuda<int16_t>, py::return_value_policy::take_ownership);
+    m.def("ddm_fft_cuda", &ddm_fft_cuda<uint16_t>, py::return_value_policy::take_ownership);
+    m.def("ddm_fft_cuda", &ddm_fft_cuda<int32_t>, py::return_value_policy::take_ownership);
+    m.def("ddm_fft_cuda", &ddm_fft_cuda<uint32_t>, py::return_value_policy::take_ownership);
+    m.def("ddm_fft_cuda", &ddm_fft_cuda<int64_t>, py::return_value_policy::take_ownership);
+    m.def("ddm_fft_cuda", &ddm_fft_cuda<uint64_t>, py::return_value_policy::take_ownership);
+    m.def("ddm_fft_cuda", &ddm_fft_cuda<float>, py::return_value_policy::take_ownership);
+    m.def("ddm_fft_cuda", &ddm_fft_cuda<double>, py::return_value_policy::take_ownership);
 }

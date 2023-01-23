@@ -34,7 +34,7 @@ void get_host_free_mem(unsigned long long &free_mem)
 #else
     struct sysinfo info;
     sysinfo(&info);
-    free_mem = info.freeram;
+    free_mem = info.freeram + info.bufferram;
 #endif
 }
 
