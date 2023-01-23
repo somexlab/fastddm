@@ -489,6 +489,8 @@ void optimize_fft(unsigned long long &pitch_q,
     //      {programmatically determined...}
     //  - prefix sum
     //      (length / 1024 + 2) * chunk_size * 16 bytes
+    //  - power_spec and var arrays (double2, 16 bytes)
+    //      2 * chunk_size * 16 bytes
 
     // memory required
     unsigned long long mem_req = 0ULL;
@@ -530,6 +532,9 @@ void optimize_fft(unsigned long long &pitch_q,
 
             // add memory required for workspace2
             mem_req += max(_pitch_q * length, chunk_size * pitch_t) * 16ULL;
+
+            // add memory required for power_spec and var helper arrays
+            mem_req += 2ULL * chunk_size * 16ULL;
 
             // check memory
             if (free_mem > mem_req)

@@ -99,9 +99,8 @@ def ddm_fft_cpp(img_seq: np.ndarray, lags: List[int], nx: int, ny: int, nt: int)
         mem_req += 8 * (2 * chunk_size * nt)
         #  tmp, tmpAvg --------- chunk_size * 2 * 8bytes
         mem_req += 8 * chunk_size * 2
-        # we require this space to be less than 80% of the available memory
+        # we require this space to be less than 90% of the available memory
         # to stay on the safe side
-
         if int(0.9*mem) > mem_req:
             break
         if idx == 0:

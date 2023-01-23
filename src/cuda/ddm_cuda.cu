@@ -247,6 +247,7 @@ void structure_function_diff(double *h_in,
     int gridSize_red = min(chunk_size, (unsigned long long)maxGridSizeX);
     int smemSize2 = (blockSize_corr <= 32) ? 2ULL * blockSize_corr * sizeof(double2) : 1ULL * blockSize_corr * sizeof(double2);
 
+    // linear combination for variance
     int blockSize_lc; // The launch configurator returned block size
     int gridSize_lc;  // The actual grid size needed, based on input size
     gpuErrchk(cudaOccupancyMaxPotentialBlockSize(&minGridSize, &blockSize_lc, linear_combination_kernel, 0, 0));
@@ -529,6 +530,9 @@ void structure_function_fft(double *h_in,
     unsigned int *d_lags;
     gpuErrchk(cudaMalloc(&d_lags, lags.size() * sizeof(unsigned int)));
     gpuErrchk(cudaMemcpy(d_lags, lags.data(), lags.size() * sizeof(unsigned int), cudaMemcpyHostToDevice));
+    double2 *d_power_spec, *d_var;
+    gpuErrchk(cudaMalloc(&d_power_spec, chunk_size * sizeof(double2)));
+    gpuErrchk(cudaMalloc(&d_var, chunk_size * sizeof(double2)));
 
     // ***Create fft plan
     cufftHandle fft_plan = fft_create_plan(nt,
@@ -580,6 +584,13 @@ void structure_function_fft(double *h_in,
     gpuErrchk(cudaOccupancyMaxPotentialBlockSize(&minGridSize, &blockSize_copy, copy_selected_lags_kernel, 0, 0));
     // Round up according to array size
     gridSize_copy = min(chunk_size, 32ULL * numSMs);
+
+    // linear combination for power spectrum and variance
+    int blockSize_lc; // The launch configurator returned block size
+    int gridSize_lc;  // The actual grid size needed, based on input size
+    gpuErrchk(cudaOccupancyMaxPotentialBlockSize(&minGridSize, &blockSize_lc, linear_combination_kernel, 0, 0));
+    // Round up according to array size
+    gridSize_lc = min((chunk_size + blockSize_lc - 1) / blockSize_lc, 32ULL * numSMs);
 
     // ***Loop over the chunks
     for (unsigned long long chunk = 0; chunk < num_chunks; chunk++)
@@ -658,6 +669,15 @@ void structure_function_fft(double *h_in,
         gpuErrchk(cudaPeekAtLastError());
         gpuErrchk(cudaDeviceSynchronize());
 
+        // ***Copy square modulus of sum part
+        gpuErrchk(cudaMemcpy2D(d_var,
+                               sizeof(double2),
+                               d_workspace1,
+                               pitch_nt * sizeof(double2),
+                               sizeof(double2),
+                               curr_chunk_size,
+                               cudaMemcpyDeviceToDevice));
+
         // ***Do fft (d_workspace1 --> d_workspace1)
         cufftSafeCall(cufftExecZ2Z(fft_plan, (CUFFTCOMPLEX *)d_workspace1, (CUFFTCOMPLEX *)d_workspace1, CUFFT_FORWARD));
         gpuErrchk(cudaPeekAtLastError());
@@ -671,6 +691,31 @@ void structure_function_fft(double *h_in,
                                                                 curr_chunk_size);
         gpuErrchk(cudaPeekAtLastError());
         gpuErrchk(cudaDeviceSynchronize());
+
+        // ***Copy power spectrum part
+        gpuErrchk(cudaMemcpy2D(d_power_spec,
+                               sizeof(double2),
+                               d_workspace1,
+                               pitch_nt * sizeof(double2),
+                               sizeof(double2),
+                               curr_chunk_size,
+                               cudaMemcpyDeviceToDevice));
+
+        // scale power spectrum (d_power_spec = d_power_spec * 1/length + 0)
+        linear_combination_kernel<<<gridSize_lc, blockSize_lc>>>(d_power_spec,
+                                                                 d_power_spec,
+                                                                 make_double2(1.0 / (double)length, 0.0),
+                                                                 d_power_spec,
+                                                                 make_double2(0.0, 0.0),
+                                                                 curr_chunk_size);
+
+        // ***Compute variance (d_var = (1.0, 0.0) * d_power_spec + (-1.0/(length * length), 0.0) * d_var)
+        linear_combination_kernel<<<gridSize_lc, blockSize_lc>>>(d_var,
+                                                                 d_power_spec,
+                                                                 make_double2(1.0, 0.0),
+                                                                 d_var,
+                                                                 make_double2(- 1.0 / (double)(length * length), 0.0),
+                                                                 curr_chunk_size);
 
         // +++ CUMULATIVE SUM PART +++
         // ***Compute square modulus (d_workspace2 --> d_workspace2)
@@ -745,6 +790,17 @@ void structure_function_fft(double *h_in,
                                2 * curr_chunk_size * sizeof(double),
                                lags.size(),
                                cudaMemcpyDeviceToHost));
+
+        // copy power spectrum
+        gpuErrchk(cudaMemcpy((double2 *)h_in + (unsigned long long)(lags.size()) * _nx * ny + q_start,
+                             d_power_spec,
+                             curr_chunk_size * sizeof(double2),
+                             cudaMemcpyDeviceToHost));
+        // copy variance
+        gpuErrchk(cudaMemcpy((double2 *)h_in + (unsigned long long)(lags.size() + 1) * _nx * ny + q_start,
+                             d_var,
+                             curr_chunk_size * sizeof(double2),
+                             cudaMemcpyDeviceToHost));
     }
 
     // ***Free memory
@@ -752,4 +808,6 @@ void structure_function_fft(double *h_in,
     gpuErrchk(cudaFree(d_workspace1));
     gpuErrchk(cudaFree(d_workspace2));
     gpuErrchk(cudaFree(d_lags));
+    gpuErrchk(cudaFree(d_power_spec));
+    gpuErrchk(cudaFree(d_var));
 }
