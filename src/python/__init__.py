@@ -196,6 +196,17 @@ class ImageStructureFunction:
         self.tau *= delta_t / self._delta_t
         self._delta_t = delta_t
 
+    def __len__(self):
+        """The length of the image structure function data.
+        It coincides with the number of lags.
+
+        Returns
+        -------
+        int
+            The length of data.
+        """
+        return len(self.data)
+
     def set_frame_rate(self, frame_rate : float) -> None:
         """Set the acquisition frame rate.
 
