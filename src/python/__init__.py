@@ -48,8 +48,9 @@ class ImageStructureFunction:
 
     Parameters
     ----------
-    data : np.ndarray
-        The 2D image structure function.
+    _data : np.ndarray
+        The packed data (2D image structure function, power spectrum,
+        and variance).
     kx : np.ndarray
         The array of wavevector values over x.
     ky : np.ndarray
@@ -65,6 +66,10 @@ class ImageStructureFunction:
     ----------
     data : np.ndarray
         The 2D image structure function.
+    power_spec: np.ndarray
+        The average 2D power spectrum of the input images.
+    var : np.ndarray
+        The 2D variance (over time) of the Fourier transformed images.
     kx : np.ndarray
         The array of wavevector values over x.
     ky : np.ndarray
@@ -89,12 +94,45 @@ class ImageStructureFunction:
         Save ImageStructureFunction frames as tiff images.
     """
 
-    data : np.ndarray
+    _data : np.ndarray
     kx : np.ndarray
     ky : np.ndarray
     tau : np.ndarray
     _pixel_size : float = 1.0
     _delta_t : float = 1.0
+
+    @property
+    def data(self) -> np.ndarray:
+        """The 2D image structure function.
+
+        Returns
+        -------
+        np.ndarray
+            The 2D image structure function.
+        """
+        return self._data[:-2]
+
+    @property
+    def power_spec(self) -> np.ndarray:
+        """The average 2D power spectrum of the input images.
+
+        Returns
+        -------
+        np.ndarray
+            The average 2D power spectrum of the input images.
+        """
+        return self._data[-2]
+
+    @property
+    def var(self) -> np.ndarray:
+        """The variance (over time) of the Fourier transformed input images.
+
+        Returns
+        -------
+        np.ndarray
+            The variance (over time) of the Fourier transformed input images.
+        """
+        return self._data[-1]
 
     @property
     def shape(self) -> Tuple[int, int, int]:
@@ -157,6 +195,17 @@ class ImageStructureFunction:
         """
         self.tau *= delta_t / self._delta_t
         self._delta_t = delta_t
+
+    def __len__(self):
+        """The length of the image structure function data.
+        It coincides with the number of lags.
+
+        Returns
+        -------
+        int
+            The length of data.
+        """
+        return len(self.data)
 
     def set_frame_rate(self, frame_rate : float) -> None:
         """Set the acquisition frame rate.
@@ -225,8 +274,9 @@ class AzimuthalAverage:
 
     Parameters
     ----------
-    data : np.ndarray
-        The azimuthal average data.
+    _data : np.ndarray
+        The packed data (azimuthal average of image structure function, power
+        spectrum, and variance).
     k : np.ndarray
         The array of reference wavevector values in the bins.
     tau : np.ndarray
@@ -238,6 +288,12 @@ class AzimuthalAverage:
     ----------
     data : np.ndarray
         The azimuthal average of the 2D image structure function.
+    power_spec: np.ndarray
+        The azimuthal average of the average 2D power spectrum of the input
+        images.
+    var : np.ndarray
+        The azimuthal average of the 2D variance (over time) of the
+        Fourier transformed images.
     k : np.ndarray
         The array of reference wavevector values in the bins.
     tau : np.ndarray
@@ -253,10 +309,45 @@ class AzimuthalAverage:
         Resample azimuthal average with new tau values.
     """
 
-    data : np.ndarray
+    _data : np.ndarray
     k : np.ndarray
     tau : np.ndarray
     bin_edges : np.ndarray
+
+    @property
+    def data(self) -> np.ndarray:
+        """The azimuthal average of the 2D image structure function.
+
+        Returns
+        -------
+        np.ndarray
+            The azimuthal average data.
+        """
+        return self._data[:, :-2]
+
+    @property
+    def power_spec(self) -> np.ndarray:
+        """The azimuthal average of the average 2D power spectrum of the input
+        images.
+
+        Returns
+        -------
+        np.ndarray
+            The azimuthal average of the power spectrum.
+        """
+        return self._data[:, -2]
+
+    @property
+    def var(self) -> np.ndarray:
+        """The azimuthal average of the 2D variance (over time) of the Fourier
+        transformed input images.
+
+        Returns
+        -------
+        np.ndarray
+            The azimuthal average of the variance.
+        """
+        return self._data[:, -1]
 
     @property
     def shape(self) -> Tuple[int, int]:
@@ -452,7 +543,7 @@ def azimuthal_average(
         The azimuthal average.
     """
     return _azimuthal_average(
-        data=img_str_func.data,
+        data=img_str_func._data,
         tau=img_str_func.tau,
         kx=img_str_func.kx,
         ky=img_str_func.ky,
@@ -476,7 +567,10 @@ def _azimuthal_average(
     Parameters
     ----------
     data : np.ndarray
-        The image structure function.
+        The image structure function packed data. Second last and last frames
+        should contain the average 2D power spectrum of the input images and
+        the 2D variance (over time) of the 2D Fourier transformed images,
+        respectively.
     tau : np.ndarray
         The array of time delay values.
     kx : np.ndarray, optional
@@ -522,7 +616,7 @@ def _azimuthal_average(
     # check input arguments
     if tau is None:
         raise ValueError("`tau` must be given for non-`ImageStructureFunction` data input.")
-    elif len(tau) != len(data):
+    elif (len(tau) + 2) != len(data):
         raise ValueError("Length of `tau` not compatible with shape of `data`.")
 
     # read actual image structure function shape
@@ -627,7 +721,7 @@ def melt(
     # keep data of `fast` up to (Nt/2)-th tau of `slow`
     idx = np.argmin(np.abs(fast.tau - slow.tau[Nt // 2])) + 1
     tau = np.append(fast.tau[:idx], slow.tau[Nt // 2 + 1:])
-    data = np.zeros((len(fast.k), len(tau)))
+    data = np.zeros((len(fast.k), len(tau) + 2))
 
     t = np.log(slow.tau[:Nt])
 
@@ -635,7 +729,7 @@ def melt(
     for i in range(len(fast.k)):
         # check for nan
         if np.any(np.isnan([fast.data[i, 0], slow.data[i, 0]])):
-            data[i] = np.full(len(tau), np.nan)
+            data[i] = np.full(len(tau) + 2, np.nan)
         else:
             # find multiplicative factor via least squares minimization
             # interpolate in loglog scale (smoother curve)
@@ -645,7 +739,9 @@ def melt(
             alpha = sum_xiyi / sum_xi2
             
             # scale fast on slow
-            data[i] = np.append(fast.data[i, :idx] * alpha, slow.data[i, Nt // 2 + 1:])
+            data[i, :-2] = np.append(fast.data[i, :idx] * alpha, slow.data[i, Nt // 2 + 1:])
+            # copy power spectrum and variance from slow
+            data[i, -2:] = slow._data[i, -2:]
 
     return AzimuthalAverage(data, fast.k, tau, fast.bin_edges)
 
@@ -670,6 +766,19 @@ def mergesort(
         The two AzimuthalAverage objects are fused into a new one.
     """
     tau = np.append(az_avg1.tau, az_avg2.tau)
-    data = np.append(az_avg1.data, az_avg2.data, axis=1)
     sortidx = np.argsort(tau)
-    return AzimuthalAverage(data[:,sortidx], az_avg1.k, tau[sortidx], az_avg1.bin_edges)
+
+    # create new data
+    dim_k, dim_tau = az_avg1.shape
+    data = np.zeros_like(az_avg1, shape=(dim_k, len(tau) + 2))
+
+    # populate data
+    data[:, :-2] = np.append(az_avg1.data, az_avg2.data, axis=1)[:,sortidx]
+
+    # copy power spectrum and variance from input with longer tau
+    if az_avg1.tau[-1] > az_avg2.tau[-1]:
+        data[:,-2:] = az_avg1._data[:,-2:]
+    else:
+        data[:,-2:] = az_avg2._data[:,-2:]
+
+    return AzimuthalAverage(data, az_avg1.k, tau[sortidx], az_avg1.bin_edges)

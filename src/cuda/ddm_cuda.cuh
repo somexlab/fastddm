@@ -58,14 +58,14 @@ void structure_function_diff(double *h_in,
 
 /*! \brief Convert to full and fftshifted image structure function on the GPU
     \param h_in             input array after structure function calculation
-    \param lags             lags to be analyzed
+    \param Nlags            number of lags analyzed
     \param nx               number of fft nodes in x direction
     \param ny               number of fft nodes in y direction
     \param num_fullshift    number of full and shift chunks
     \param pitch_fs         pitch of device array for full and shift operations
  */
 void make_full_shift(double *h_in,
-                     vector<unsigned int> lags,
+                     unsigned long long Nlags,
                      unsigned long long nx,
                      unsigned long long ny,
                      unsigned long long num_fullshift,

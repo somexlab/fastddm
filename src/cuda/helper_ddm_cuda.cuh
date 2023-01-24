@@ -187,4 +187,45 @@ __global__ void copy_selected_lags_kernel(double2 *d_in,
                                           unsigned long long opitch,
                                           unsigned long long N);
 
+/*! \brief Average power spectrum of input images
+    \param d_in     Input complex array
+    \param d_out    Output complex array
+    \param length   Number of elements in each subarray
+    \param pitch    Pitch of input array
+    \param Nq       Number of subarrays
+*/
+__global__ void average_power_spectrum_kernel(double2 *d_in,
+                                              double2 *d_out,
+                                              unsigned long long length,
+                                              unsigned long long pitch,
+                                              unsigned long long Nq);
+
+/*! \brief Average over time of Fourier transformed input images
+    \param d_in     Input complex array
+    \param d_out    Output complex array
+    \param length   Number of elements in each subarray
+    \param pitch    Pitch of input array
+    \param Nq       Number of subarrays
+*/
+__global__ void average_complex_kernel(double2 *d_in,
+                                       double2 *d_out,
+                                       unsigned long long length,
+                                       unsigned long long pitch,
+                                       unsigned long long Nq);
+
+/*! \brief Linear combination c = A * a + B * b
+    \param c    Output complex array
+    \param a    Input complex array 1, a
+    \param A    Scaling coefficient 1, A
+    \param b    Input complex array 2, b
+    \param B    Scaling coefficient 2, B
+    \param N    Number of elements
+*/
+__global__ void linear_combination_kernel(double2 *c,
+                                          double2 *a,
+                                          double2 A,
+                                          double2 *b,
+                                          double2 B,
+                                          unsigned int N);
+
 #endif

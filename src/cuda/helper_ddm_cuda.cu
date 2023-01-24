@@ -439,3 +439,194 @@ __global__ void copy_selected_lags_kernel(double2 *d_in,
         }
     }
 }
+
+/*!
+    Average power spectrum of input images
+*/
+__global__ void average_power_spectrum_kernel(double2 *d_in,
+                                              double2 *d_out,
+                                              unsigned long long length,
+                                              unsigned long long pitch,
+                                              unsigned long long Nq)
+{
+    // Handle to thread block group
+    cg::thread_block cta = cg::this_thread_block();
+    extern __shared__ double sdata[];
+    unsigned long long blockSize = 2 * blockDim.x;
+    unsigned long long tid = threadIdx.x;
+
+    for (unsigned long long q = blockIdx.x; q < Nq; q += gridDim.x)
+    {
+        double tmp_sum = 0.0;
+        for (unsigned long long t = tid; t < length; t += blockSize)
+        {
+            double2 a = d_in[q * pitch + t];
+            tmp_sum += a.x * a.x + a.y * a.y;
+
+            // ensure we don't read out of bounds
+            if (t + blockDim.x < length)
+            {
+                a = d_in[q * pitch + t + blockDim.x];
+                tmp_sum += a.x * a.x + a.y * a.y;
+            }
+        }
+
+        // Each thread puts its local sum into shared memory
+        sdata[tid] = tmp_sum;
+        cg::sync(cta);
+
+        // do reduction in shared mem
+        if ((blockDim.x >= 512) && (tid < 256))
+        {
+            sdata[tid] = tmp_sum = tmp_sum + sdata[tid + 256];
+        }
+
+        cg::sync(cta);
+
+        if ((blockDim.x >= 256) && (tid < 128))
+        {
+            sdata[tid] = tmp_sum = tmp_sum + sdata[tid + 128];
+        }
+
+        cg::sync(cta);
+
+        if ((blockDim.x >= 128) && (tid < 64))
+        {
+            sdata[tid] = tmp_sum = tmp_sum + sdata[tid + 64];
+        }
+
+        cg::sync(cta);
+
+        cg::thread_block_tile<32> tile32 = cg::tiled_partition<32>(cta);
+
+        if (cta.thread_rank() < 32)
+        {
+            // Fetch final intermediate sum from 2nd warp
+            if (blockDim.x >= 64)
+                tmp_sum += sdata[tid + 32];
+            // Reduce final warp using shuffle
+            for (int offset = tile32.size() / 2; offset > 0; offset /= 2)
+            {
+                tmp_sum += tile32.shfl_down(tmp_sum, offset);
+            }
+        }
+
+        // Write result for this block to global mem
+        // Also normalize by number of frames
+        // WARNING!!! IF WE ADD EXCLUDED FRAMES, WE NEED TO CHANGE THIS!!
+        if (cta.thread_rank() == 0)
+        {
+            d_out[q].x = tmp_sum / (double)length;
+        }
+    }
+}
+
+/*!
+    Average over time of Fourier transformed input images
+*/
+__global__ void average_complex_kernel(double2 *d_in,
+                                       double2 *d_out,
+                                       unsigned long long length,
+                                       unsigned long long pitch,
+                                       unsigned long long Nq)
+{
+    // Handle to thread block group
+    cg::thread_block cta = cg::this_thread_block();
+    extern __shared__ double2 sdata2[];
+    unsigned long long blockSize = 2 * blockDim.x;
+    unsigned long long tid = threadIdx.x;
+
+    for (unsigned long long q = blockIdx.x; q < Nq; q += gridDim.x)
+    {
+        double tmp_sum_r = 0.0;
+        double tmp_sum_i = 0.0;
+        for (unsigned long long t = tid; t < length; t += blockSize)
+        {
+            double2 a = d_in[q * pitch + t];
+            tmp_sum_r += a.x;
+            tmp_sum_i += a.y;
+
+            // Ensure we don't read out of bounds
+            if (t + blockDim.x < length)
+            {
+                a = d_in[q * pitch + t + blockDim.x];
+                tmp_sum_r += a.x;
+                tmp_sum_i += a.y;
+            }
+        }
+
+        // Each thread puts its local sum into shared memory
+        sdata2[tid].x = tmp_sum_r;
+        sdata2[tid].y = tmp_sum_i;
+        cg::sync(cta);
+
+        // do reduction in shared mem
+        if ((blockDim.x >= 512) && (tid < 256))
+        {
+            sdata2[tid].x = tmp_sum_r = tmp_sum_r + sdata2[tid + 256].x;
+            sdata2[tid].y = tmp_sum_i = tmp_sum_i + sdata2[tid + 256].y;
+        }
+
+        cg::sync(cta);
+
+        if ((blockDim.x >= 256) && (tid < 128))
+        {
+            sdata2[tid].x = tmp_sum_r = tmp_sum_r + sdata2[tid + 128].x;
+            sdata2[tid].y = tmp_sum_i = tmp_sum_i + sdata2[tid + 128].y;
+        }
+
+        cg::sync(cta);
+
+        if ((blockDim.x >= 128) && (tid < 64))
+        {
+            sdata2[tid].x = tmp_sum_r = tmp_sum_r + sdata2[tid + 64].x;
+            sdata2[tid].y = tmp_sum_i = tmp_sum_i + sdata2[tid + 64].y;
+        }
+
+        cg::sync(cta);
+
+        cg::thread_block_tile<32> tile32 = cg::tiled_partition<32>(cta);
+
+        if (cta.thread_rank() < 32)
+        {
+            // Fetch final intermediate sum from 2nd warp
+            if (blockDim.x >= 64)
+                tmp_sum_r += sdata2[tid + 32].x;
+            tmp_sum_i += sdata2[tid + 32].y;
+            // Reduce final warp using shuffle
+            for (int offset = tile32.size() / 2; offset > 0; offset /= 2)
+            {
+                tmp_sum_r += tile32.shfl_down(tmp_sum_r, offset);
+                tmp_sum_i += tile32.shfl_down(tmp_sum_i, offset);
+            }
+        }
+
+        // Write result for this block to global mem
+        // Also normalize by number of frames
+        // WARNING!!! IF WE ADD EXCLUDED FRAMES, WE NEED TO CHANGE THIS!!
+        if (cta.thread_rank() == 0)
+        {
+            d_out[q].x = tmp_sum_r / (double)length;
+            d_out[q].y = tmp_sum_i / (double)length;
+        }
+    }
+}
+
+/*!
+    Linear combination c = A * a + B * b
+*/
+__global__ void linear_combination_kernel(double2 *c,
+                                          double2 *a,
+                                          double2 A,
+                                          double2 *b,
+                                          double2 B,
+                                          unsigned int N)
+{
+    unsigned int tid = blockDim.x * blockIdx.x + threadIdx.x;
+
+    if (tid < N)
+    {
+        c[tid].x = A.x * a[tid].x + B.x * b[tid].x;
+        c[tid].y = A.y * a[tid].y + B.y * b[tid].y;
+    }
+}

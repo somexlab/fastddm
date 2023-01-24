@@ -39,7 +39,8 @@ py::array_t<double> ddm_diff(py::array_t<T, py::array::c_style> img_seq,
       double [the input needs to be twice as large]
      */
     unsigned long long _nx = nx / 2 + 1;
-    py::array_t<double> out = py::array_t<double>(2 * _nx * ny * length);
+    unsigned long long dim_t = max(length, (unsigned long long)(lags.size() + 2));
+    py::array_t<double> out = py::array_t<double>(2 * _nx * ny * dim_t);
     auto p_out = out.mutable_data();
 
     // ***Create the fft2 plan
@@ -76,13 +77,15 @@ py::array_t<double> ddm_diff(py::array_t<T, py::array::c_style> img_seq,
 
     // ***Compute the image structure function
     // initialize helper vector
-    vector<double> tmp(lags.size(), 0.0);
+    vector<double> tmp(lags.size() + 2, 0.0);
+    double tmp2 = 0.0;
 
     // loop over the q values
     for (unsigned long long q = 0; q < _nx * ny; q++)
     {
         // zero out the helper vector
         fill(tmp.begin(), tmp.end(), 0);
+        tmp2 = 0.0;
 
         // loop over the lags
         for (unsigned long long _dt = 0; _dt < lags.size(); _dt++)
@@ -108,6 +111,24 @@ py::array_t<double> ddm_diff(py::array_t<T, py::array::c_style> img_seq,
             tmp[_dt] /= (double)(length - dt);
         }
 
+        // compute average power spectrum and variance
+        for (unsigned long long t = 0; t < length; t++)
+        {
+            double a = p_out[2 * ((t) * (_nx * ny) + q)];
+            double b = p_out[2 * ((t) * (_nx * ny) + q) + 1];
+            tmp[lags.size()] += a * a + b * b;
+            tmp[lags.size() + 1] += a;
+            tmp2 += b;
+        }
+
+        // power spectrum
+        tmp[lags.size()] /= (double)length;
+
+        // variance
+        tmp[lags.size() + 1] /= (double)length;
+        tmp2 /= (double)length;
+        tmp[lags.size() + 1] = tmp[lags.size()] - tmp[lags.size() + 1] * tmp[lags.size() + 1] - tmp2 * tmp2;
+
         // copy the values back in the vector
         copy_vec_with_stride(tmp,
                              p_out,
@@ -119,7 +140,7 @@ py::array_t<double> ddm_diff(py::array_t<T, py::array::c_style> img_seq,
     make_full_shifted_isf(p_out,
                           nx,
                           ny,
-                          lags.size());
+                          lags.size() + 2);
 
     // Cleanup before finish
     tmp.clear();
@@ -127,7 +148,10 @@ py::array_t<double> ddm_diff(py::array_t<T, py::array::c_style> img_seq,
 
     // the full size of the image structure function is
     // nx * ny * #(lags)
-    out.resize({(unsigned long long)(lags.size()), ny, nx});
+    out.resize({(unsigned long long)(lags.size() + 2), ny, nx});
+
+    // release pointer to output array
+    p_out = NULL;
 
     // Return result to python
     return out;
@@ -167,7 +191,8 @@ py::array_t<double> ddm_fft(py::array_t<T, py::array::c_style> img_seq,
       (allocated after fft2 part)
      */
     unsigned long long _nx = nx / 2 + 1;
-    py::array_t<double> out = py::array_t<double>(2 * _nx * ny * length);
+    unsigned long long dim_t = max(length, (unsigned long long)(lags.size() + 2));
+    py::array_t<double> out = py::array_t<double>(2 * _nx * ny * dim_t);
     auto p_out = out.mutable_data();
 
     // ***Create the fft2 plan
@@ -213,6 +238,8 @@ py::array_t<double> ddm_fft(py::array_t<T, py::array::c_style> img_seq,
     // ***Compute the image structure function
     // initialize helper vector used in average part
     vector<double> tmp(chunk_size);
+    // initialize helper vector used in square modulus of average Fourier transform
+    vector<double> tmpAvg(chunk_size);
     for (unsigned long long i = 0; i < (_nx * ny - 1) / chunk_size + 1; i++)
     {
         // Step1: correlation part
@@ -242,11 +269,17 @@ py::array_t<double> ddm_fft(py::array_t<T, py::array::c_style> img_seq,
             workspace[2 * j + 1] = 0.0;                                                                           // imag
         }
 
+        // copy value in 0
+        for (unsigned long long q = 0; q < chunk_size; q++)
+        {
+            tmpAvg[q] = workspace[2 * q * nt] / (double)(length * length);
+        }
+
         // compute ifft
         fftw_execute(fft_plan);
 
         // Step2: average part
-        unsigned long long idx = lags.size() - 1;
+        unsigned long long idx = 0;
         for (unsigned long long t = 0; t < length; t++)
         {
             for (unsigned long long q = 0; q < chunk_size; q++)
@@ -260,34 +293,28 @@ py::array_t<double> ddm_fft(py::array_t<T, py::array::c_style> img_seq,
             }
 
             // add contribution only if delay in list
-            if (length - t - 1 == lags[idx])
+            if ((idx < lags.size()) && (length - t - 1 == lags[lags.size() - 1 - idx]))
             {
                 for (unsigned long long q = 0; q < chunk_size; ++q)
                 {
                     // also divide corr part by nt to normalize fft
-                    workspace[2 * (q * nt + lags[idx])] = tmp[q] - 2 * workspace[2 * (q * nt + lags[idx])] / (double)nt;
+                    workspace[2 * (q * nt + lags[lags.size() - 1 - idx])] = tmp[q] - 2 * workspace[2 * (q * nt + lags[lags.size() - 1 - idx])] / (double)nt;
                     // finally, normalize output
-                    workspace[2 * (q * nt + lags[idx])] /= (double)(length - lags[idx]);
+                    workspace[2 * (q * nt + lags[lags.size() - 1 - idx])] /= (double)(length - lags[lags.size() - 1 - idx]);
                 }
-                if (idx == 0)
-                {
-                    fill(tmp.begin(), tmp.end(), 0.0);
-                    break;
-                }
-                else
-                {
-                    idx--;
-                }
+                idx++;
             }
         }
 
         // Step3: copy results to workspace1
-        for (unsigned long long idx = 0; idx < lags.size(); idx++)
+        for (unsigned long long q = 0; q < chunk_size; q++)
         {
-            for (unsigned long long q = 0; q < chunk_size; q++)
+            for (unsigned long long idx = 0; idx < lags.size(); idx++)
             {
                 p_out[2 * (idx * _nx * ny + i * chunk_size + q)] = workspace[2 * (q * nt + lags[idx])];
             }
+            p_out[2 * (lags.size() * _nx * ny + i * chunk_size + q)] = 0.5 * tmp[q] / (double)length;
+            p_out[2 * ((lags.size() + 1) * _nx * ny + i * chunk_size + q)] = p_out[2 * (lags.size() * _nx * ny + i * chunk_size + q)] - tmpAvg[q];
         }
     }
 
@@ -295,7 +322,7 @@ py::array_t<double> ddm_fft(py::array_t<T, py::array::c_style> img_seq,
     make_full_shifted_isf(p_out,
                           nx,
                           ny,
-                          lags.size());
+                          lags.size() + 2);
 
     // Cleanup before finish
     fftw_destroy_plan(fft_plan);
@@ -304,10 +331,15 @@ py::array_t<double> ddm_fft(py::array_t<T, py::array::c_style> img_seq,
     workspace.shrink_to_fit();
     tmp.clear();
     tmp.shrink_to_fit();
+    tmpAvg.clear();
+    tmpAvg.shrink_to_fit();
 
     // the full size of the image structure function is
     // nx * ny * #(lags)
-    out.resize({(unsigned long long)(lags.size()), ny, nx});
+    out.resize({(unsigned long long)(lags.size() + 2), ny, nx});
+
+    // release pointer to output array
+    p_out = NULL;
 
     // Return result to python
     return out;
@@ -319,22 +351,22 @@ py::array_t<double> ddm_fft(py::array_t<T, py::array::c_style> img_seq,
 void export_ddm(py::module &m)
 {
     // Leave function export in this order!
-    m.def("ddm_diff", &ddm_diff<uint8_t>);
-    m.def("ddm_diff", &ddm_diff<int16_t>);
-    m.def("ddm_diff", &ddm_diff<uint16_t>);
-    m.def("ddm_diff", &ddm_diff<int32_t>);
-    m.def("ddm_diff", &ddm_diff<uint32_t>);
-    m.def("ddm_diff", &ddm_diff<int64_t>);
-    m.def("ddm_diff", &ddm_diff<uint64_t>);
-    m.def("ddm_diff", &ddm_diff<float>);
-    m.def("ddm_diff", &ddm_diff<double>);
-    m.def("ddm_fft", &ddm_fft<uint8_t>);
-    m.def("ddm_fft", &ddm_fft<int16_t>);
-    m.def("ddm_fft", &ddm_fft<uint16_t>);
-    m.def("ddm_fft", &ddm_fft<int32_t>);
-    m.def("ddm_fft", &ddm_fft<uint32_t>);
-    m.def("ddm_fft", &ddm_fft<int64_t>);
-    m.def("ddm_fft", &ddm_fft<uint64_t>);
-    m.def("ddm_fft", &ddm_fft<float>);
-    m.def("ddm_fft", &ddm_fft<double>);
+    m.def("ddm_diff", &ddm_diff<uint8_t>, py::return_value_policy::take_ownership);
+    m.def("ddm_diff", &ddm_diff<int16_t>, py::return_value_policy::take_ownership);
+    m.def("ddm_diff", &ddm_diff<uint16_t>, py::return_value_policy::take_ownership);
+    m.def("ddm_diff", &ddm_diff<int32_t>, py::return_value_policy::take_ownership);
+    m.def("ddm_diff", &ddm_diff<uint32_t>, py::return_value_policy::take_ownership);
+    m.def("ddm_diff", &ddm_diff<int64_t>, py::return_value_policy::take_ownership);
+    m.def("ddm_diff", &ddm_diff<uint64_t>, py::return_value_policy::take_ownership);
+    m.def("ddm_diff", &ddm_diff<float>, py::return_value_policy::take_ownership);
+    m.def("ddm_diff", &ddm_diff<double>, py::return_value_policy::take_ownership);
+    m.def("ddm_fft", &ddm_fft<uint8_t>, py::return_value_policy::take_ownership);
+    m.def("ddm_fft", &ddm_fft<int16_t>, py::return_value_policy::take_ownership);
+    m.def("ddm_fft", &ddm_fft<uint16_t>, py::return_value_policy::take_ownership);
+    m.def("ddm_fft", &ddm_fft<int32_t>, py::return_value_policy::take_ownership);
+    m.def("ddm_fft", &ddm_fft<uint32_t>, py::return_value_policy::take_ownership);
+    m.def("ddm_fft", &ddm_fft<int64_t>, py::return_value_policy::take_ownership);
+    m.def("ddm_fft", &ddm_fft<uint64_t>, py::return_value_policy::take_ownership);
+    m.def("ddm_fft", &ddm_fft<float>, py::return_value_policy::take_ownership);
+    m.def("ddm_fft", &ddm_fft<double>, py::return_value_policy::take_ownership);
 }
