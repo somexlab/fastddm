@@ -5,11 +5,12 @@ Change Log
 v0.x
 ----
 
-### v0.1.2 (YYYY-MM-DD)
+### v0.1.2 (2023-01-24)
 
 *Added*
 
 * New `power_spec` and `var` properties in `ImageStructureFunction` and `AzimuthalAverage` classes, containing the average power spectrum of the input images and the variance of the temporal fluctuations of the 2D Fourier transformed images.
+* `len()` method in `ImageStructureFunction` class, which returns the length of the underlying `data`.
 
 [comment]: <> (*Changed*)
 
