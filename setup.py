@@ -154,7 +154,7 @@ class CMakeBuild(build_ext):
 setup(
     name = "fastddm",
     use_scm_version = {
-        "fallback_version": "0.1.2",
+        "fallback_version": "0.1.3",
     },
     packages = find_packages(),
     url = 'https://github.com/somexlab/fastddm',
