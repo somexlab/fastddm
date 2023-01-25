@@ -3,10 +3,10 @@ import numpy as np
 
 # from ._memchk import get_free_mem
 # from ._gpumemchk import get_free_gpu_mem
-# from .core_cuda import chk_host_mem_direct, chk_host_mem_fft
-# from .core_cuda import get_device_pitch, get_device_fft2_mem, get_device_fft_mem
-from ._core_cuda import set_device
-from ._core_cuda import ddm_diff_cuda, ddm_fft_cuda
+# from .core import chk_host_mem_direct, chk_host_mem_fft
+# from .core import get_device_pitch, get_device_fft2_mem, get_device_fft_mem
+from ._core import set_device
+from ._core import ddm_diff_cuda, ddm_fft_cuda
 
 def ddm_diff_gpu(
     img_seq: np.ndarray,

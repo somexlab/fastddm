@@ -1,3 +1,16 @@
+# translate CMake true/false to python
+if(ENABLE_CPP)
+    SET(IS_CPP_ENABLED True)
+else()
+    SET(IS_CPP_ENABLED False)
+endif()
+
+if(ENABLE_CUDA)
+    SET(IS_CUDA_ENABLED True)
+else()
+    SET(IS_CUDA_ENABLED False)
+endif()
+
 if(ENABLE_CPP)
     SET(_fddm_sources
         cpp/ddm.cc
@@ -7,12 +20,17 @@ if(ENABLE_CPP)
 endif(ENABLE_CPP)
 
 if(ENABLE_CUDA)
-    SET(_fddm_lib_cu_SOURCES
+    SET(_fddm_cu_sources
         cuda/ddm_cuda.cu
         cuda/helper_cufft.cu
         cuda/helper_ddm_cuda.cu
         cuda/helper_prefix_sum.cu
         cuda/helper_memchk_gpu.cu
+    )
+
+    list(APPEND _fddm_sources
+         cuda/ddm_cuda.cc
+         cuda/helper_memchk_gpu.cc
     )
 endif(ENABLE_CUDA)
 
@@ -32,7 +50,7 @@ if(ENABLE_CPP)
     set_target_properties(_fddm PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
     # Add core python module
-    pybind11_add_module(_core SHARED python/bindings.cc)
+    pybind11_add_module(_core SHARED python/bindings.cc ${_fddm_sources})
     target_link_libraries(_core PRIVATE _fddm)
     if(WIN32)
         set_target_properties(_core PROPERTIES
@@ -47,11 +65,12 @@ if(ENABLE_CPP)
 endif(ENABLE_CPP)
 
 if(ENABLE_CUDA)
+    target_compile_definitions(_core PUBLIC ENABLE_CUDA)
     include_directories(${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
 
     # Add _fddm_cuda library
     include(select_compute_arch.cmake)
-    add_library(_fddm_cuda STATIC ${_fddm_lib_cu_SOURCES})
+    add_library(_fddm_cuda STATIC ${_fddm_cu_sources})
     if(${CMAKE_VERSION} VERSION_LESS "3.18.0")
         CUDA_SELECT_NVCC_ARCH_FLAGS(ARCH_FLAGS Auto)
         message(STATUS "Generating code for the following CUDA architectures: ${ARCH_FLAGS_readable}")
@@ -69,12 +88,7 @@ if(ENABLE_CUDA)
     endif()
 
     # Add core_cuda python module
-    pybind11_add_module(_core_cuda SHARED cuda/ddm_cuda.cc cuda/helper_memchk_gpu.cc python/bindings_cuda.cc)
-    target_link_libraries(_core_cuda PRIVATE _fddm_cuda cufft nvidia-ml)
-    set_target_properties(_core_cuda PROPERTIES
-                                SUFFIX ".so"
-                                LIBRARY_OUTPUT_DIRECTORY ${FASTDDM_OUTPUT_DIR}
-                        )
+    target_link_libraries(_core PRIVATE _fddm_cuda cufft nvidia-ml)
 endif(ENABLE_CUDA)
 
 # Copy the files required to install the library with python's setuptools

@@ -36,7 +36,6 @@ if(ENABLE_CPP)
                         )
     endif(WIN32)
 
-    set(IS_CPP_ENABLED True)
     # Build with python3 bindings
     find_package(PythonInterp 3 REQUIRED)
     find_package(PythonLibs 3 REQUIRED)
@@ -47,8 +46,6 @@ if(ENABLE_CPP)
     set(CMAKE_CXX_STANDARD 14)
     set(CMAKE_CXX_STANDARD_REQUIRED ON)
     set(CMAKE_CXX_EXTENSIONS OFF)
-else(ENABLE_CPP)
-    set(IS_CPP_ENABLED False)
 endif(ENABLE_CPP)
 
 # Build with CUDA
@@ -58,9 +55,6 @@ if(ENABLE_CUDA)
 
     # Set CUDA C++ standard
     set(CMAKE_CUDA_STANDARD 11)
-    set(IS_CUDA_ENABLED True)
-else(ENABLE_CUDA)
-    set(IS_CUDA_ENABLED False)
 endif(ENABLE_CUDA)
 
 # Add project library subdirectory

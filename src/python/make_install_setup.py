@@ -8,7 +8,7 @@ setup(
     name = "fastddm",
     use_scm_version = {
         "root": "${CMAKE_SOURCE_DIR}",
-        "fallback_version": "0.1.2",
+        "fallback_version": "0.1.3",
     },
     setup_requires = ["setuptools_scm"],
     packages = ["fastddm"],
@@ -16,6 +16,6 @@ setup(
         "fastddm": "${FASTDDM_OUTPUT_DIR}"
     },
     package_data = {
-        "fastddm": ['_core.so', '_core_cuda.so']
+        "fastddm": ['_core.so']
     },
 )
