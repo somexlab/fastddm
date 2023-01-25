@@ -401,7 +401,7 @@ class AzimuthalAverage:
             The resampled azimuthal average.
         """
         # initialize data
-        data = np.zeros((len(self.k),len(tau)))
+        _data = np.zeros((len(self.k),len(tau) + 2))
 
         _tau = np.log(tau)
 
@@ -409,7 +409,7 @@ class AzimuthalAverage:
         for i in range(len(self.k)):
             # check for nan
             if np.isnan(self.data[i, 0]):
-                data[i] = np.full(len(tau), np.nan)
+                _data[i, :-2] = np.full(len(tau), np.nan)
             else:
                 # interpolate points in loglog scale
                 f = interp1d(
@@ -418,9 +418,13 @@ class AzimuthalAverage:
                     kind='quadratic',
                     fill_value='extrapolate'
                     )
-                data[i] = np.exp(f(_tau))
+                _data[i, :-2] = np.exp(f(_tau))
+
+        # append power_spec and var
+        _data[:,-2] = self.power_spec
+        _data[:,-1] = self.var 
         
-        return AzimuthalAverage(data, self.k, tau, self.bin_edges)
+        return AzimuthalAverage(_data, self.k, tau, self.bin_edges)
 
 
 def ddm(
