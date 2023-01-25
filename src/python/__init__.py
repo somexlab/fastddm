@@ -221,8 +221,8 @@ class ImageStructureFunction:
 
     def save(
         self,
-        *,
         fname : str = "analysis_blob",
+        *,
         protocol : int = pickle.HIGHEST_PROTOCOL
         ) -> None:
         """Save ImageStructureFunction to binary file.
@@ -362,8 +362,8 @@ class AzimuthalAverage:
 
     def save(
         self,
-        *,
         fname : str = "analysis_blob",
+        *,
         protocol : int = pickle.HIGHEST_PROTOCOL
         ) -> None:
         """Save AzimuthalAverage to binary file.
