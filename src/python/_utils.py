@@ -1,12 +1,15 @@
 """Collection of helper functions."""
 
-from typing import Optional, Sequence, Union, List
+from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional, Sequence, Union
 
 import numpy as np
 import skimage.io as io
 import tifffile
-
 from nd2reader import ND2Reader
+
+# custom types
+Metadata = Dict[str, Any]
 
 
 def tiff2numpy(path: str, seq: Optional[Sequence[int]] = None) -> np.ndarray:
@@ -115,3 +118,47 @@ def read_images(src: Union[str, List[str]], seq: Optional[Sequence[int]] = None)
 
     else:
         raise RuntimeError(f"Failed to open {src}.")
+
+
+def read_metadata(src: str) -> Metadata:
+    """Reads an images metadata and returns it as a dictionary.
+
+    Currently only supports .nd2 files.
+
+    Parameters
+    ----------
+    src : str
+        Path to file location.
+
+    Returns
+    -------
+    Metadata
+        A dictionary of all available metadata (no content checking is performed).
+
+    Raises
+    ------
+    NotImplementedError
+        If a folder is given as argument.
+    FileNotFoundError
+        If the given file does not exist.
+    RuntimeError
+        For non-supported image file types.
+    """
+    type_reader: Dict[str, Callable[[str], Metadata]] = {
+        ".nd2": lambda s: ND2Reader(s).metadata
+    }
+    supported_types = type_reader.keys()  # for readability
+
+    path = Path(src)
+    if path.is_dir():
+        raise NotImplementedError(
+            "It is not yet supported to read the metadata of multiple images in a directory."
+        )
+    
+    elif not path.exists():
+        raise FileNotFoundError(f"Given file '{src}' does not exist.")
+    
+    elif path.suffix not in supported_types:
+        raise RuntimeError(f"Given file extension '{path.suffix}' is not supported.")
+    
+    return type_reader[path.suffix](src)
