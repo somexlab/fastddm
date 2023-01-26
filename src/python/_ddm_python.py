@@ -243,7 +243,8 @@ def _diff_image_structure_function(
 
 
 def image_structure_function(
-    square_modulus: np.ndarray,
+    sq_mod_cumsum: np.ndarray,
+    sq_mod_cumsum_rev: np.ndarray,
     autocorrelation: np.ndarray,
     lag: int,
     shape: Optional[Tuple[int, ...]] = None,
@@ -260,8 +261,12 @@ def image_structure_function(
 
     Parameters
     ----------
-    square_modulus : np.ndarray
-        The square modulus of the spatial FFT of an image timeseries, e.g. np.abs(rfft2(imgs))**2.
+    sq_mod_cumsum : np.ndarray
+        The cumulative sum of the square modulus of the spatial FFT of an image time series, e.g.
+        np.cumsum(np.abs(rfft2(imgs))**2, axis=0).
+    sq_mod_cumsum_rev : np.ndarray
+        The cumulative sum of the reversed square modulus of the spatial FFT of an image time
+        series, e.g. np.cumsum(np.abs(rfft2(imgs)[::-1])**2, axis=0).
     autocorrelation : np.ndarray
         The autocorrelation function of the spatial FFT of an image timeseries.
     lag : int
@@ -280,25 +285,15 @@ def image_structure_function(
     RuntimeError
         If the given lag time is longer than the timeseries.
     """
-    length, *_ = square_modulus.shape
+    length, *_ = sq_mod_cumsum.shape
 
     if lag >= length:
         raise RuntimeError("Time lag cannot be longer than the timeseries itself!")
 
-    # handling slicing with zeroth index
-    if lag == 0:
-        shifted_abs_square = square_modulus
-        cropped_abs_square = square_modulus
-
-    else:
-        shifted_abs_square = square_modulus[lag:]
-        cropped_abs_square = square_modulus[:-lag]
-
     autocorrelation = autocorrelation[lag].real
 
-    sum_of_parts = (
-        np.sum(shifted_abs_square + cropped_abs_square, axis=0) - 2 * autocorrelation
-    )
+    offset = lag + 1
+    sum_of_parts = sq_mod_cumsum[-offset] + sq_mod_cumsum_rev[-offset] - 2 * autocorrelation
     sum_of_parts /= length - lag  # normalization
 
     return reconstruct_full_spectrum(sum_of_parts, shape=shape)  # full plane
@@ -369,12 +364,15 @@ def _py_image_structure_function(
 
     if mode == "diff":
         # just needs argument setup
-        args = [rfft2, square_mod]
+        args = (rfft2, square_mod)
 
     else:
         # autocorrelation for fft mode
         autocorr = autocorrelation(rfft2, workers=workers)
-        args = [square_mod, autocorr]
+        cumsum = np.cumsum(square_mod, axis=0)
+        cumsum_rev = np.cumsum(square_mod[::-1], axis=0)
+        
+        args = (cumsum, cumsum_rev, autocorr)
 
     for i, lag in enumerate(lags):
         dqt[i] = calc_dqt(*args, lag, shape=output_shape)
