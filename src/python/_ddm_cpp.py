@@ -4,7 +4,7 @@ import math
 import psutil
 import numpy as np
 
-from ._core import ddm_diff, ddm_fft
+from ._core import ddm_diff, ddm_fft, ddm_diff_single, ddm_fft_single
 
 
 def ddm_diff_cpp(img_seq: np.ndarray, lags: List[int], nx: int, ny: int):
