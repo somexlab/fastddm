@@ -35,7 +35,7 @@ py::array_t<double> ddm_diff_cuda(py::array_t<T, py::array::c_style> img_seq,
 
     // Check device memory and optimize
     unsigned long long num_fft2, num_chunks, num_fullshift;
-    unsigned long long pitch_buff, pitch_q, pitch_t, pitch_fs;
+    unsigned long long pitch_buff, pitch_nx, pitch_q, pitch_t, pitch_fs;
     chk_device_mem_diff(width,
                         height,
                         sizeof(T),
@@ -48,6 +48,7 @@ py::array_t<double> ddm_diff_cuda(py::array_t<T, py::array::c_style> img_seq,
                         num_chunks,
                         num_fullshift,
                         pitch_buff,
+                        pitch_nx,
                         pitch_q,
                         pitch_t,
                         pitch_fs);
@@ -72,7 +73,8 @@ py::array_t<double> ddm_diff_cuda(py::array_t<T, py::array::c_style> img_seq,
                  nx,
                  ny,
                  num_fft2,
-                 pitch_buff);
+                 pitch_buff,
+                 pitch_nx);
 
     // ***Compute image structure function
     structure_function_diff(p_out,
@@ -130,7 +132,7 @@ py::array_t<double> ddm_fft_cuda(py::array_t<T, py::array::c_style> img_seq,
 
     // Check device memory and optimize
     unsigned long long num_fft2, num_chunks, num_fullshift;
-    unsigned long long pitch_buff, pitch_q, pitch_t, pitch_nt, pitch_fs;
+    unsigned long long pitch_buff, pitch_nx, pitch_q, pitch_t, pitch_nt, pitch_fs;
     chk_device_mem_fft(width,
                        height,
                        sizeof(T),
@@ -144,6 +146,7 @@ py::array_t<double> ddm_fft_cuda(py::array_t<T, py::array::c_style> img_seq,
                        num_chunks,
                        num_fullshift,
                        pitch_buff,
+                       pitch_nx,
                        pitch_q,
                        pitch_t,
                        pitch_nt,
@@ -169,7 +172,8 @@ py::array_t<double> ddm_fft_cuda(py::array_t<T, py::array::c_style> img_seq,
                  nx,
                  ny,
                  num_fft2,
-                 pitch_buff);
+                 pitch_buff,
+                 pitch_nx);
 
     // ***Compute image structure function
     structure_function_fft(p_out,

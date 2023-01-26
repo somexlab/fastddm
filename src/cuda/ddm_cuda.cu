@@ -45,7 +45,8 @@ void compute_fft2(const T *h_in,
                   unsigned long long nx,
                   unsigned long long ny,
                   unsigned long long num_fft2,
-                  unsigned long long buff_pitch)
+                  unsigned long long buff_pitch,
+                  unsigned long long pitch_nx)
 {
     int device_id;
     cudaGetDevice(&device_id);
@@ -60,7 +61,7 @@ void compute_fft2(const T *h_in,
     // ***Allocate device arrays
     // workspace
     double *d_workspace;
-    gpuErrchk(cudaMalloc(&d_workspace, 2 * _nx * ny * batch * sizeof(double)));
+    gpuErrchk(cudaMalloc(&d_workspace, 2 * pitch_nx * ny * batch * sizeof(double)));
     // buffer (only allocate if T is not double)
     T *d_buff;
     if (!std::is_same<T, double>::value)
@@ -71,7 +72,8 @@ void compute_fft2(const T *h_in,
     // ***Create fft2 plan
     cufftHandle fft2_plan = fft2_create_plan(nx,
                                              ny,
-                                             batch);
+                                             batch,
+                                             pitch_nx);
 
     // Compute efficient execution configuration
     int numSMs; // Number of streaming multiprocessors
@@ -99,7 +101,7 @@ void compute_fft2(const T *h_in,
     for (unsigned long long ii = 0; ii < num_fft2; ii++)
     {
         // rezero workspace array
-        gpuErrchk(cudaMemset(d_workspace, 0.0, 2 * _nx * ny * batch * sizeof(double)));
+        gpuErrchk(cudaMemset(d_workspace, 0.0, 2 * pitch_nx * ny * batch * sizeof(double)));
 
         // ***Copy values to device
         if (std::is_same<T, double>::value)
@@ -114,7 +116,7 @@ void compute_fft2(const T *h_in,
             params.srcPtr = make_cudaPitchedPtr((double *)h_in, width * sizeof(double), width, height);
             params.dstArray = NULL;
             params.dstPos = make_cudaPos(0, 0, 0);
-            params.dstPtr = make_cudaPitchedPtr(d_workspace, 2 * _nx * sizeof(double), 2 * _nx, ny);
+            params.dstPtr = make_cudaPitchedPtr(d_workspace, 2 * pitch_nx * sizeof(double), 2 * pitch_nx, ny);
             params.extent = make_cudaExtent(width * sizeof(double), height, num_imgs_copy);
             params.kind = cudaMemcpyHostToDevice;
 
@@ -140,8 +142,8 @@ void compute_fft2(const T *h_in,
                                                                    batch,
                                                                    buff_pitch,
                                                                    buff_pitch * height,
-                                                                   2 * _nx,
-                                                                   2 * _nx * ny);
+                                                                   2 * pitch_nx,
+                                                                   2 * pitch_nx * ny);
             gpuErrchk(cudaPeekAtLastError());
             gpuErrchk(cudaDeviceSynchronize());
         }
@@ -158,7 +160,7 @@ void compute_fft2(const T *h_in,
         unsigned long long end = (ii + 1) * batch > length ? length * ny : (ii + 1) * ny * batch;
         // scale array
         scale_array_kernel<<<gridSize_scale, blockSize_scale>>>((double2 *)d_workspace,
-                                                                _nx,
+                                                                pitch_nx,
                                                                 _nx,
                                                                 norm_fact,
                                                                 end - start);
@@ -166,7 +168,7 @@ void compute_fft2(const T *h_in,
         gpuErrchk(cudaDeviceSynchronize());
 
         // ***Copy values back to host
-        gpuErrchk(cudaMemcpy((double2 *)h_out + _nx * start, (double2 *)d_workspace, _nx * (end - start) * sizeof(double2), cudaMemcpyDeviceToHost));
+        gpuErrchk(cudaMemcpy2D((double2 *)h_out + _nx * start, _nx * sizeof(double2), (double2 *)d_workspace, pitch_nx * sizeof(double2), _nx * sizeof(double2), end - start, cudaMemcpyDeviceToHost));
     }
 
     // ***Free memory
@@ -175,15 +177,15 @@ void compute_fft2(const T *h_in,
     cufftSafeCall(cufftDestroy(fft2_plan));
 }
 
-template void compute_fft2<u_int8_t>(const u_int8_t *h_in, double *h_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch);
-template void compute_fft2<int16_t>(const int16_t *h_in, double *h_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch);
-template void compute_fft2<u_int16_t>(const u_int16_t *h_in, double *h_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch);
-template void compute_fft2<int32_t>(const int32_t *h_in, double *h_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch);
-template void compute_fft2<u_int32_t>(const u_int32_t *h_in, double *h_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch);
-template void compute_fft2<int64_t>(const int64_t *h_in, double *h_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch);
-template void compute_fft2<u_int64_t>(const u_int64_t *h_in, double *h_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch);
-template void compute_fft2<float>(const float *h_in, double *h_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch);
-template void compute_fft2<double>(const double *h_in, double *h_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch);
+template void compute_fft2<u_int8_t>(const u_int8_t *h_in, double *h_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch, unsigned long long pitch_nx);
+template void compute_fft2<int16_t>(const int16_t *h_in, double *h_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch, unsigned long long pitch_nx);
+template void compute_fft2<u_int16_t>(const u_int16_t *h_in, double *h_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch, unsigned long long pitch_nx);
+template void compute_fft2<int32_t>(const int32_t *h_in, double *h_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch, unsigned long long pitch_nx);
+template void compute_fft2<u_int32_t>(const u_int32_t *h_in, double *h_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch, unsigned long long pitch_nx);
+template void compute_fft2<int64_t>(const int64_t *h_in, double *h_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch, unsigned long long pitch_nx);
+template void compute_fft2<u_int64_t>(const u_int64_t *h_in, double *h_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch, unsigned long long pitch_nx);
+template void compute_fft2<float>(const float *h_in, double *h_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch, unsigned long long pitch_nx);
+template void compute_fft2<double>(const double *h_in, double *h_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch, unsigned long long pitch_nx);
 
 /*!
     Compute image structure function using differences on the GPU
