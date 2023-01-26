@@ -21,8 +21,9 @@ using namespace std;
     \param start    starting index
     \param stride   stride between elements in destination
  */
-void copy_vec_with_stride(vector<double> &src,
-                          double *dest,
+template <typename S>
+void copy_vec_with_stride(vector<S> &src,
+                          S *dest,
                           unsigned long long start,
                           unsigned long long stride);
 
@@ -32,7 +33,8 @@ void copy_vec_with_stride(vector<double> &src,
     \param ny   number of fft nodes in y direction
     \param nt   number of frames
  */
-void make_full_shifted_isf(double *vec,
+template <typename S>
+void make_full_shifted_isf(S *vec,
                            unsigned long long nx,
                            unsigned long long ny,
                            unsigned long long nt);

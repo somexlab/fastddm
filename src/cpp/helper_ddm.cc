@@ -16,8 +16,9 @@
     Copy the elements of src to dest, so that the k-th element of src
     is at (k*stride + start)-th position in dest
  */
-void copy_vec_with_stride(vector<double> &src,
-                          double *dest,
+template <typename S>
+void copy_vec_with_stride(vector<S> &src,
+                          S *dest,
                           unsigned long long start,
                           unsigned long long stride)
 {
@@ -34,7 +35,8 @@ void copy_vec_with_stride(vector<double> &src,
     Keep only real part of vector and copy symmetric part.
     Make element contiguous in memory.
  */
-void make_full_shifted_isf(double *vec,
+template <typename S>
+void make_full_shifted_isf(S *vec,
                            unsigned long long nx,
                            unsigned long long ny,
                            unsigned long long nt)
@@ -57,7 +59,7 @@ void make_full_shifted_isf(double *vec,
     }
     else
     {
-        double tmp = 0.0;
+        S tmp = 0.0;
         for (unsigned long long t = 0; t < nt; t++)
         {
             for (unsigned long long x = 0; x < _nx; x++)
