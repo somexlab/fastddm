@@ -120,7 +120,6 @@ def images2numpy(fnames : Sequence[str], color_seq: Optional[Sequence[int]] = No
     """
     # get available memory
     mem = psutil.virtual_memory().available
-    print(mem)
 
     # open first image
     tmp = io.imread(fnames[0])
