@@ -28,12 +28,22 @@ if(ENABLE_CPP)
         set_target_properties(fftw3 PROPERTIES
                                 RUNTIME_OUTPUT_DIRECTORY_RELEASE ${FASTDDM_OUTPUT_DIR}
                             )
+        set_target_properties(fftw3f PROPERTIES
+                                RUNTIME_OUTPUT_DIRECTORY_RELEASE ${FASTDDM_OUTPUT_DIR}
+                            )
+        target_compile_definitions(fftw3f PUBLIC ENABLE_FLOAT)
     else()
         set_target_properties(fftw3 PROPERTIES
                                 PREFIX ""
                                 SUFFIX ".so"
                                 LIBRARY_OUTPUT_DIRECTORY ${FASTDDM_OUTPUT_DIR}
-                        )
+                            )
+        set_target_properties(fftw3f PROPERTIES
+                                PREFIX ""
+                                SUFFIX ".so"
+                                LIBRARY_OUTPUT_DIRECTORY ${FASTDDM_OUTPUT_DIR}
+                            )
+        target_compile_definitions(fftw3f PUBLIC ENABLE_FLOAT)
     endif(WIN32)
 
     # Build with python3 bindings
