@@ -26,7 +26,7 @@ simple_exp_model.set_param_hint(
 
 def _simple_image_structure_function(
     dt: np.ndarray, A: float, B: float, tau: float
-) -> np.ndarray[Any, Any]:
+) -> np.ndarray:
     """Basic image structure function shape with a simple exponential."""
     return 2 * A * (1 - _simple_exp(dt, tau, 1.0)) + 2 * B  # type: ignore
 
