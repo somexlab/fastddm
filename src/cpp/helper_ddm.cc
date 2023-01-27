@@ -28,6 +28,9 @@ void copy_vec_with_stride(vector<S> &src,
     }
 }
 
+template void copy_vec_with_stride<double>(vector<double> &src, double *dest, unsigned long long start, unsigned long long stride);
+template void copy_vec_with_stride<float>(vector<float> &src, float *dest, unsigned long long start, unsigned long long stride);
+
 /*!
     Make full image structure function from raw output and swap the quadrants
     of the image structure function according to fft2 convention 
@@ -132,3 +135,6 @@ void make_full_shifted_isf(S *vec,
         }
     }
 }
+
+template void make_full_shifted_isf<double>(double *vec, unsigned long long nx, unsigned long long ny, unsigned long long nt);
+template void make_full_shifted_isf<float>(float *vec, unsigned long long nx, unsigned long long ny, unsigned long long nt);
