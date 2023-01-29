@@ -22,7 +22,7 @@ if(ENABLE_CPP)
     enable_language(CXX)
 
     # Build fftw3 as a shared lib
-    add_subdirectory(lib/fftw-3.3.10)
+    add_subdirectory(lib/fftw-3.3.10 ${CMAKE_CURRENT_BINARY_DIR}/lib/fftw-3.3.10)
     
     if(WIN32)
         set_target_properties(fftw3 PROPERTIES
@@ -30,6 +30,22 @@ if(ENABLE_CPP)
                             )
     else()
         set_target_properties(fftw3 PROPERTIES
+                                PREFIX ""
+                                SUFFIX ".so"
+                                LIBRARY_OUTPUT_DIRECTORY ${FASTDDM_OUTPUT_DIR}
+                            )
+    endif(WIN32)
+
+    # Build fftw3f as a shared lib
+    set(ENABLE_FLOAT ON CACHE INTERNAL "")
+    add_subdirectory(lib/fftw-3.3.10 ${CMAKE_CURRENT_BINARY_DIR}/lib/fftw-3.3.10-single)
+
+    if(WIN32)
+        set_target_properties(fftw3f PROPERTIES
+                                RUNTIME_OUTPUT_DIRECTORY_RELEASE ${FASTDDM_OUTPUT_DIR}
+                            )
+    else()
+        set_target_properties(fftw3f PROPERTIES
                                 PREFIX ""
                                 SUFFIX ".so"
                                 LIBRARY_OUTPUT_DIRECTORY ${FASTDDM_OUTPUT_DIR}

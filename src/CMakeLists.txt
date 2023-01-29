@@ -42,10 +42,10 @@ if(ENABLE_CPP)
     # Add _fddm library
     add_library(_fddm STATIC ${_fddm_sources})
     if(WIN32)
-        target_link_libraries(_fddm ${PYTHON_LIBRARIES} fftw3)
+        target_link_libraries(_fddm ${PYTHON_LIBRARIES} fftw3 fftw3f)
     else(WIN32)
         #target_link_libraries(_fddm ${PYTHON_LIBRARIES} fftw3 m)
-        target_link_libraries(_fddm fftw3 m)
+        target_link_libraries(_fddm fftw3 fftw3f m)
     endif(WIN32)
     set_target_properties(_fddm PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
