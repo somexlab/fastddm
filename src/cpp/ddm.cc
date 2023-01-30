@@ -218,8 +218,9 @@ py::array_t<float> ddm_diff_single(py::array_t<T, py::array::c_style> img_seq,
 
     // ***Compute the image structure function
     // initialize helper vector
-    vector<float> tmp(lags.size() + 2, 0.0);
-    float tmp2 = 0.0;
+    // accumulate in double precision
+    vector<double> tmp(lags.size() + 2, 0.0);
+    double tmp2 = 0.0;
 
     // loop over the q values
     for (unsigned long long q = 0; q < _nx * ny; q++)
@@ -240,34 +241,34 @@ py::array_t<float> ddm_diff_single(py::array_t<T, py::array::c_style> img_seq,
                 // compute the power spectrum of the difference of pixel at time t and time t+dt, i.e.
                 // [(a+ib) - (c+id)] * conj[(a+ib) - (c+id)] = (a-c)^2+(b-d)^2
                 // notice fft is complex, so the stride between two consecutive pixels is two
-                float a = p_out[2 * ((t + dt) * (_nx * ny) + q)];
-                float b = p_out[2 * ((t + dt) * (_nx * ny) + q) + 1];
-                float c = p_out[2 * ((t) * (_nx * ny) + q)];
-                float d = p_out[2 * ((t) * (_nx * ny) + q) + 1];
+                double a = (double)(p_out[2 * ((t + dt) * (_nx * ny) + q)]);
+                double b = (double)(p_out[2 * ((t + dt) * (_nx * ny) + q) + 1]);
+                double c = (double)(p_out[2 * ((t) * (_nx * ny) + q)]);
+                double d = (double)(p_out[2 * ((t) * (_nx * ny) + q) + 1]);
 
                 tmp[_dt] += (a - c) * (a - c) + (b - d) * (b - d);
             }
 
             // normalize
-            tmp[_dt] /= (float)(length - dt);
+            tmp[_dt] /= (double)(length - dt);
         }
 
         // compute average power spectrum and variance
         for (unsigned long long t = 0; t < length; t++)
         {
-            float a = p_out[2 * ((t) * (_nx * ny) + q)];
-            float b = p_out[2 * ((t) * (_nx * ny) + q) + 1];
+            double a = (double)(p_out[2 * ((t) * (_nx * ny) + q)]);
+            double b = (double)(p_out[2 * ((t) * (_nx * ny) + q) + 1]);
             tmp[lags.size()] += a * a + b * b;
             tmp[lags.size() + 1] += a;
             tmp2 += b;
         }
 
         // power spectrum
-        tmp[lags.size()] /= (float)length;
+        tmp[lags.size()] /= (double)length;
 
         // variance
-        tmp[lags.size() + 1] /= (float)length;
-        tmp2 /= (float)length;
+        tmp[lags.size() + 1] /= (double)length;
+        tmp2 /= (double)length;
         tmp[lags.size() + 1] = tmp[lags.size()] - tmp[lags.size() + 1] * tmp[lags.size() + 1] - tmp2 * tmp2;
 
         // copy the values back in the vector
@@ -566,7 +567,8 @@ py::array_t<float> ddm_fft_single(py::array_t<T, py::array::c_style> img_seq,
 
     // ***Compute the image structure function
     // initialize helper vector used in average part
-    vector<float> tmp(chunk_size);
+    // accumulate in double precision
+    vector<double> tmp(chunk_size);
     // initialize helper vector used in square modulus of average Fourier transform
     vector<float> tmpAvg(chunk_size);
     for (unsigned long long i = 0; i < (_nx * ny - 1) / chunk_size + 1; i++)
@@ -613,11 +615,11 @@ py::array_t<float> ddm_fft_single(py::array_t<T, py::array::c_style> img_seq,
         {
             for (unsigned long long q = 0; q < chunk_size; q++)
             {
-                float a = p_out[2 * (t * _nx * ny + i * chunk_size + q)];     // real
-                float b = p_out[2 * (t * _nx * ny + i * chunk_size + q) + 1]; // imag
+                double a = (double)(p_out[2 * (t * _nx * ny + i * chunk_size + q)]);     // real
+                double b = (double)(p_out[2 * (t * _nx * ny + i * chunk_size + q) + 1]); // imag
                 tmp[q] += a * a + b * b;
-                a = p_out[2 * ((length - t - 1) * _nx * ny + i * chunk_size + q)];     // real
-                b = p_out[2 * ((length - t - 1) * _nx * ny + i * chunk_size + q) + 1]; // imag
+                a = (double)(p_out[2 * ((length - t - 1) * _nx * ny + i * chunk_size + q)]);     // real
+                b = (double)(p_out[2 * ((length - t - 1) * _nx * ny + i * chunk_size + q) + 1]); // imag
                 tmp[q] += a * a + b * b;
             }
 
@@ -627,7 +629,7 @@ py::array_t<float> ddm_fft_single(py::array_t<T, py::array::c_style> img_seq,
                 for (unsigned long long q = 0; q < chunk_size; ++q)
                 {
                     // also divide corr part by nt to normalize fft
-                    workspace[2 * (q * nt + lags[lags.size() - 1 - idx])] = tmp[q] - 2 * workspace[2 * (q * nt + lags[lags.size() - 1 - idx])] / (float)nt;
+                    workspace[2 * (q * nt + lags[lags.size() - 1 - idx])] = (float)tmp[q] - 2 * workspace[2 * (q * nt + lags[lags.size() - 1 - idx])] / (float)nt;
                     // finally, normalize output
                     workspace[2 * (q * nt + lags[lags.size() - 1 - idx])] /= (float)(length - lags[lags.size() - 1 - idx]);
                 }
@@ -642,7 +644,7 @@ py::array_t<float> ddm_fft_single(py::array_t<T, py::array::c_style> img_seq,
             {
                 p_out[2 * (idx * _nx * ny + i * chunk_size + q)] = workspace[2 * (q * nt + lags[idx])];
             }
-            p_out[2 * (lags.size() * _nx * ny + i * chunk_size + q)] = 0.5 * tmp[q] / (float)length;
+            p_out[2 * (lags.size() * _nx * ny + i * chunk_size + q)] = 0.5 * (float)tmp[q] / (float)length;
             p_out[2 * ((lags.size() + 1) * _nx * ny + i * chunk_size + q)] = p_out[2 * (lags.size() * _nx * ny + i * chunk_size + q)] - tmpAvg[q];
         }
     }

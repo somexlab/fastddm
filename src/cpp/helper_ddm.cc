@@ -17,7 +17,7 @@
     is at (k*stride + start)-th position in dest
  */
 template <typename S>
-void copy_vec_with_stride(vector<S> &src,
+void copy_vec_with_stride(vector<double> &src,
                           S *dest,
                           unsigned long long start,
                           unsigned long long stride)
@@ -29,7 +29,7 @@ void copy_vec_with_stride(vector<S> &src,
 }
 
 template void copy_vec_with_stride<double>(vector<double> &src, double *dest, unsigned long long start, unsigned long long stride);
-template void copy_vec_with_stride<float>(vector<float> &src, float *dest, unsigned long long start, unsigned long long stride);
+template void copy_vec_with_stride<float>(vector<double> &src, float *dest, unsigned long long start, unsigned long long stride);
 
 /*!
     Make full image structure function from raw output and swap the quadrants

@@ -22,7 +22,7 @@ using namespace std;
     \param stride   stride between elements in destination
  */
 template <typename S>
-void copy_vec_with_stride(vector<S> &src,
+void copy_vec_with_stride(vector<double> &src,
                           S *dest,
                           unsigned long long start,
                           unsigned long long stride);
