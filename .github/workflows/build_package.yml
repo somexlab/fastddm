@@ -1,0 +1,40 @@
+name: Build and install package
+
+on:
+  workflow_dispatch:
+  
+jobs:
+
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        #os: [ubuntu-latest, windows-latest, macos-latest, ubuntu-22.04, ubuntu-20.04, ubuntu-18.04, macos-12, macos-11]
+        #python-version: ["3.8", "3.9", "3.10", "3.11"]
+        os: [ubuntu-latest, windows-latest, macos-latest, ubuntu-22.04, ubuntu-20.04]
+        python-version: ["3.8", "3.11"]
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip wheel setuptools
+        
+      - name: Build fastddm and install it through pip
+        env:
+          ENABLE_CPP: ON
+        run: |
+          echo "ENABLE_CPP is $ENABLE_CPP"
+          pip install .
+        
+      - name: Check import from the command line
+        run: |
+          mkdir test-folder && pushd test-folder
+          python -c 'import fastddm'
+          popd
