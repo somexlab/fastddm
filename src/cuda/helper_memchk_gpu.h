@@ -61,11 +61,13 @@ unsigned long long get_device_pitch(unsigned long long N,
     \param nx           number of fft nodes in x direction
     \param ny           number of fft nodes in y direction
     \param nt           number of elements (in t direction)
+    \param pitch_nx     pitch of fft2 complex output array
     \param cufft_res    result of cufft function
  */
 unsigned long long get_device_fft2_mem(unsigned long long nx,
                                        unsigned long long ny,
                                        unsigned long long nt,
+                                       unsigned long long pitch_nx,
                                        cufftResult &cufft_res);
 
 /*! \brief Get the device memory for fft
@@ -81,6 +83,7 @@ unsigned long long get_device_fft_mem(unsigned long long nt,
 
 /*! \brief Optimize fft2 execution parameters based on available gpu memory
     \param pitch_buff       Pitch of buffer device array
+    \param pitch_nx         Pitch of fft2 complex output array
     \param num_fft2         Number of fft2 batches
     \param is_input_double  True if pixel value is double
     \param pixel_Nbytes     Number of bytes per pixel
@@ -92,6 +95,7 @@ unsigned long long get_device_fft_mem(unsigned long long nt,
     \param free_mem         Available gpu memory
  */
 void optimize_fft2(unsigned long long &pitch_buff,
+                   unsigned long long &pitch_nx,
                    unsigned long long &num_fft2,
                    bool is_input_double,
                    unsigned long long pixel_Nbytes,
@@ -172,6 +176,7 @@ void optimize_fft(unsigned long long &pitch_q,
     \param num_chunks       Number of q points chunks
     \param num_fullshift    Number of full and shift chunks
     \param pitch_buff       Pitch of buffer device array
+    \param pitch_nx         Pitch of device fft2 output array (nx-pitch)
     \param pitch_q          Pitch of device array (q-pitch)
     \param pitch_t          Pitch of device array (t-pitch)
     \param pitch_fs         Pitch of device array for full and shift operation
@@ -188,6 +193,7 @@ void chk_device_mem_diff(unsigned long long width,
                          unsigned long long &num_chunks,
                          unsigned long long &num_fullshift,
                          unsigned long long &pitch_buff,
+                         unsigned long long &pitch_nx,
                          unsigned long long &pitch_q,
                          unsigned long long &pitch_t,
                          unsigned long long &pitch_fs);
@@ -206,6 +212,7 @@ void chk_device_mem_diff(unsigned long long width,
     \param num_chunks       Number of q points chunks
     \param num_fullshift    Number of full and shift chunks
     \param pitch_buff       Pitch of buffer device array
+    \param pitch_nx         Pitch of device fft2 output array (nx-pitch)
     \param pitch_q          Pitch of device array (q-pitch)
     \param pitch_t          Pitch of device array (t-pitch)
     \param pitch_nt         Pitch of workspace1 device array (nt-pitch)
@@ -224,6 +231,7 @@ void chk_device_mem_fft(unsigned long long width,
                         unsigned long long &num_chunks,
                         unsigned long long &num_fullshift,
                         unsigned long long &pitch_buff,
+                        unsigned long long &pitch_nx,
                         unsigned long long &pitch_q,
                         unsigned long long &pitch_t,
                         unsigned long long &pitch_nt,

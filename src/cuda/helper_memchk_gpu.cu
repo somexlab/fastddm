@@ -94,12 +94,14 @@ void cudaGetDevicePitch1B(size_t N,
 void cudaGetFft2MemSize(size_t nx,
                         size_t ny,
                         size_t batch,
+                        size_t pitch,
                         size_t *memsize,
                         cufftResult &cufft_res)
 {
     fft2_get_mem_size(nx,
                       ny,
                       batch,
+                      pitch,
                       memsize,
                       cufft_res);
 }

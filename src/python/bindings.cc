@@ -6,6 +6,7 @@
 
 // *** headers ***
 #include "../cpp/ddm.h"
+#include "../cuda/ddm_cuda.h"
 
 // *** code ***
 /*
@@ -14,4 +15,7 @@
 PYBIND11_MODULE(_core, m) {
 
     export_ddm(m);
+#if ENABLE_CUDA
+    export_ddm_cuda(m);
+#endif
 }

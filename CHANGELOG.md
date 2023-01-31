@@ -5,6 +5,22 @@ Change Log
 v0.x
 ----
 
+### v0.1.3 (YYYY-MM-DD)
+
+[comment]: <> (*Added*)
+
+*Changed*
+
+* Now `save` method in `ImageStructureFunction` and `AzimuthalAverage` allow the usage of the filename without the argument keyword.
+* `read_images` and related functions allow for the selection of color channels when reading image files.
+* Improved speed in cuda fft2 step.
+
+[comment]: <> (*Fixed*)
+
+[comment]: <> (*Deprecated*)
+
+[comment]: <> (*Removed*)
+
 ### v0.1.2 (2023-01-24)
 
 *Added*
