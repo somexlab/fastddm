@@ -18,27 +18,35 @@ from ._ddm_python import _py_image_structure_function
 ## setup of backend dictionary, initially only with py backend
 _backend: Dict[str, Dict[str, Callable]] = {
     "py": {
-        "diff": partial(_py_image_structure_function, mode="diff"),
-        "fft": partial(_py_image_structure_function, mode="fft"),
+        "diff": {"double" : partial(_py_image_structure_function, mode="diff")},
+        "fft": {"double" : partial(_py_image_structure_function, mode="fft")},
     }
 }
 
 from ._fftopt import next_fast_len
 
 if IS_CPP_ENABLED:
-    from ._ddm_cpp import ddm_diff_cpp, ddm_fft_cpp
+    from ._ddm_cpp import ddm_diff_cpp, ddm_fft_cpp, ddm_diff_cpp_single, ddm_fft_cpp_single
     # enable cpp support in backends
     _backend["cpp"] = {
-        "diff": ddm_diff_cpp,
-        "fft": ddm_fft_cpp
+        "diff": {"single" : ddm_diff_cpp_single,
+                 "double" : ddm_diff_cpp
+        },
+        "fft": {"single" : ddm_fft_cpp_single,
+                "double" : ddm_fft_cpp
+        }
     }
 
 if IS_CUDA_ENABLED:
-    from ._ddm_cuda import ddm_diff_gpu, ddm_fft_gpu
+    from ._ddm_cuda import ddm_diff_gpu, ddm_fft_gpu, ddm_diff_gpu_single, ddm_fft_gpu_single
     # enable cuda support in backends
     _backend["cuda"] = {
-        "diff": ddm_diff_gpu,
-        "fft": ddm_fft_gpu
+        "diff": {"single" : ddm_diff_gpu_single,
+                 "double" : ddm_diff_gpu
+        },
+        "fft": {"single" : ddm_fft_gpu_single,
+                "double" : ddm_fft_gpu
+        }
     }
 
 
@@ -433,6 +441,7 @@ def ddm(
     *,
     core: str = "py",
     mode: str = "fft",
+    prec: str = "double",
     **kwargs,
     ) -> ImageStructureFunction:
     """Perform Differential Dynamic Microscopy analysis on given image sequence.
@@ -468,6 +477,7 @@ def ddm(
     backend = _backend
     cores = list(backend.keys())
     modes = ["diff", "fft"]
+    precs = ["single", "double"]
 
     # sanity checks
     if core not in cores:
@@ -478,6 +488,16 @@ def ddm(
     if mode not in modes:
         raise RuntimeError(
             f"Unknown mode '{mode}' selected. Only possible options are {modes}."
+        )
+
+    if prec not in precs:
+        raise RuntimeError(
+            f"Unknown precision '{prec}' selected. Only possible options are {precs}."
+        )
+
+    if prec == "single" and core == "py":
+        raise NotImplementedError(
+            f"Single precision not yet implemented for python core."
         )
 
     # throw out duplicates and sort lags in ascending order
@@ -491,7 +511,7 @@ def ddm(
     dim_y_padded = next_fast_len(dim_y, core)
 
     # select backend
-    ddm_func = backend[core][mode]
+    ddm_func = backend[core][mode][prec]
 
     # setup arguments
     if core != "py":
