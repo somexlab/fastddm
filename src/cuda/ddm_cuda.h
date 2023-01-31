@@ -33,6 +33,18 @@ py::array_t<double> ddm_diff_cuda(py::array_t<T, py::array::c_style> img_seq,
                                   unsigned long long nx,
                                   unsigned long long ny);
 
+/*! \brief Compute image structure function in diff mode using differences on the GPU (single precision)
+    \param img_seq      numpy array containing the image sequence
+    \param lags         lags to be analyzed
+    \param nx           number of fft nodes in x direction
+    \param ny           number of fft nodes in y direction
+ */
+template <typename T>
+py::array_t<float> ddm_diff_cuda_single(py::array_t<T, py::array::c_style> img_seq,
+                                        vector<unsigned int> lags,
+                                        unsigned long long nx,
+                                        unsigned long long ny);
+
 /*! \brief Compute image structure function in fft mode using Wiener-Khinchin theorem on the GPU
     \param img_seq      numpy array containing the image sequence
     \param lags         lags to be analyzed
@@ -46,6 +58,20 @@ py::array_t<double> ddm_fft_cuda(py::array_t<T, py::array::c_style> img_seq,
                                  unsigned long long nx,
                                  unsigned long long ny,
                                  unsigned long long nt);
+
+/*! \brief Compute image structure function in fft mode using Wiener-Khinchin theorem on the GPU (single precision)
+    \param img_seq      numpy array containing the image sequence
+    \param lags         lags to be analyzed
+    \param nx           number of fft nodes in x direction
+    \param ny           number of fft nodes in y direction
+    \param nt           number of fft nodes in t direction
+ */
+template <typename T>
+py::array_t<float> ddm_fft_cuda_single(py::array_t<T, py::array::c_style> img_seq,
+                                       vector<unsigned int> lags,
+                                       unsigned long long nx,
+                                       unsigned long long ny,
+                                       unsigned long long nt);
 
 /*! \brief Set CUDA device to be used
     \param gpu_id       The device id (starts from 0)

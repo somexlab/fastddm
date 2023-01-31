@@ -16,18 +16,19 @@
 cufftHandle fft2_create_plan(size_t nx,
                              size_t ny,
                              size_t batch,
-                             size_t pitch)
+                             size_t pitch,
+                             bool is_double_prec)
 {
     // Define parameters
-    int rank = 2;                               // The rank of the fft (2 = fft2)
-    int n[2] = {(int)ny, (int)nx};              // Dimensions
-    int inembed[2] = {(int)ny, 2 * (int)pitch}; // nembed input values (NULL is equivalent to passing n)
-    int istride = 1;                            // Distance between two elements in the input
-    int idist = (int)(2 * ny * pitch);          // Distance between k-th and (k+1)-th input elements
-    int onembed[2] = {(int)ny, (int)pitch};     // nembed output values (NULL is equivalent to passing n)
-    int ostride = 1;                            // Distance between two elements in the output
-    int odist = (int)(ny * pitch);              // Distance between k-th and (k+1)-th output elements
-    cufftType type = CUFFT_D2Z;                 // Fft type (real to complex, double precision, here)
+    int rank = 2;                                            // The rank of the fft (2 = fft2)
+    int n[2] = {(int)ny, (int)nx};                           // Dimensions
+    int inembed[2] = {(int)ny, 2 * (int)pitch};              // nembed input values (NULL is equivalent to passing n)
+    int istride = 1;                                         // Distance between two elements in the input
+    int idist = (int)(2 * ny * pitch);                       // Distance between k-th and (k+1)-th input elements
+    int onembed[2] = {(int)ny, (int)pitch};                  // nembed output values (NULL is equivalent to passing n)
+    int ostride = 1;                                         // Distance between two elements in the output
+    int odist = (int)(ny * pitch);                           // Distance between k-th and (k+1)-th output elements
+    cufftType type = is_double_prec ? CUFFT_D2Z : CUFFT_R2C; // Fft type (real to complex)
 
     // Create the fft2 plan
     cufftHandle plan;
@@ -53,19 +54,20 @@ void fft2_get_mem_size(size_t nx,
                        size_t ny,
                        size_t batch,
                        size_t pitch,
+                       bool is_double_prec,
                        size_t *memsize,
                        cufftResult &cufft_res)
 {
     // Define parameters
-    int rank = 2;                               // The rank of the fft (2 = fft2)
-    int n[2] = {(int)ny, (int)nx};              // Dimensions
-    int inembed[2] = {(int)ny, 2 * (int)pitch}; // nembed input values (NULL is equivalent to passing n)
-    int istride = 1;                            // Distance between two elements in the input
-    int idist = (int)(2 * ny * pitch);          // Distance between k-th and (k+1)-th input elements
-    int onembed[2] = {(int)ny, (int)pitch};     // nembed output values (NULL is equivalent to passing n)
-    int ostride = 1;                            // Distance between two elements in the output
-    int odist = (int)(ny * pitch);              // Distance between k-th and (k+1)-th output elements
-    cufftType type = CUFFT_D2Z;                 // Fft type (real to complex, double precision, here)
+    int rank = 2;                                            // The rank of the fft (2 = fft2)
+    int n[2] = {(int)ny, (int)nx};                           // Dimensions
+    int inembed[2] = {(int)ny, 2 * (int)pitch};              // nembed input values (NULL is equivalent to passing n)
+    int istride = 1;                                         // Distance between two elements in the input
+    int idist = (int)(2 * ny * pitch);                       // Distance between k-th and (k+1)-th input elements
+    int onembed[2] = {(int)ny, (int)pitch};                  // nembed output values (NULL is equivalent to passing n)
+    int ostride = 1;                                         // Distance between two elements in the output
+    int odist = (int)(ny * pitch);                           // Distance between k-th and (k+1)-th output elements
+    cufftType type = is_double_prec ? CUFFT_D2Z : CUFFT_R2C; // Fft type (real to complex)
 
     // Create the fft2 plan
     cufftHandle plan;
@@ -103,18 +105,19 @@ void fft2_get_mem_size(size_t nx,
  */
 cufftHandle fft_create_plan(size_t nt,
                             size_t batch,
-                            size_t pitch)
+                            size_t pitch,
+                            bool is_double_prec)
 {
     // Define parameters
-    int rank = 1;                 // The rank of the fft (1 = fft)
-    int n[1] = {(int)nt};         // Dimensions
-    int inembed[] = {(int)pitch}; // NULL is equivalent to passing n
-    int istride = 1;              // Distance between two elements in the input
-    int idist = (int)pitch;       // Distance between k-th and (k+1)-th input elements
-    int onembed[] = {(int)pitch}; // NULL is equivalent to passing n
-    int ostride = 1;              // Distance between two elements in the output
-    int odist = (int)pitch;       // Distance between k-th and (k+1)-th output elements
-    cufftType type = CUFFT_Z2Z;   // Fft type (complex to complex, double precision, here)
+    int rank = 1;                                            // The rank of the fft (1 = fft)
+    int n[1] = {(int)nt};                                    // Dimensions
+    int inembed[] = {(int)pitch};                            // NULL is equivalent to passing n
+    int istride = 1;                                         // Distance between two elements in the input
+    int idist = (int)pitch;                                  // Distance between k-th and (k+1)-th input elements
+    int onembed[] = {(int)pitch};                            // NULL is equivalent to passing n
+    int ostride = 1;                                         // Distance between two elements in the output
+    int odist = (int)pitch;                                  // Distance between k-th and (k+1)-th output elements
+    cufftType type = is_double_prec ? CUFFT_Z2Z : CUFFT_C2C; // Fft type (complex to complex)
 
     // Create the fft plan
     cufftHandle plan;
@@ -139,19 +142,20 @@ cufftHandle fft_create_plan(size_t nt,
 void fft_get_mem_size(size_t nt,
                       size_t batch,
                       size_t pitch,
+                      bool is_double_prec,
                       size_t *memsize,
                       cufftResult &cufft_res)
 {
     // Define parameters
-    int rank = 1;               // The rank of the fft (1 = fft)
-    int n[1] = {(int)nt};       // Dimensions
-    int *inembed = NULL;        // NULL is equivalent to passing n
-    int istride = 1;            // Distance between two elements in the input
-    int idist = (int)pitch;     // Distance between k-th and (k+1)-th input elements
-    int *onembed = NULL;        // NULL is equivalent to passing n
-    int ostride = 1;            // Distance between two elements in the output
-    int odist = (int)pitch;     // Distance between k-th and (k+1)-th output elements
-    cufftType type = CUFFT_Z2Z; // Fft type (complex to complex, double precision, here)
+    int rank = 1;                                            // The rank of the fft (1 = fft)
+    int n[1] = {(int)nt};                                    // Dimensions
+    int *inembed = NULL;                                     // NULL is equivalent to passing n
+    int istride = 1;                                         // Distance between two elements in the input
+    int idist = (int)pitch;                                  // Distance between k-th and (k+1)-th input elements
+    int *onembed = NULL;                                     // NULL is equivalent to passing n
+    int ostride = 1;                                         // Distance between two elements in the output
+    int odist = (int)pitch;                                  // Distance between k-th and (k+1)-th output elements
+    cufftType type = is_double_prec ? CUFFT_Z2Z : CUFFT_C2C; // Fft type (complex to complex)
 
     // Create the fft plan
     cufftHandle plan;

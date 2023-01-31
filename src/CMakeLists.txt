@@ -25,6 +25,7 @@ if(ENABLE_CUDA)
         cuda/helper_cufft.cu
         cuda/helper_ddm_cuda.cu
         cuda/helper_prefix_sum.cu
+        cuda/helper_prefix_sum_single.cu
         cuda/helper_memchk_gpu.cu
     )
 

@@ -1,18 +1,17 @@
 // Maintainer: enrico-lattuada
 
-/*! \file helper_prefix_sum.cu
-    \brief Definition of helper functions for cumulative sum (prefix sum) on GPU
+/*! \file helper_prefix_sum_single.cu
+    \brief Definition of helper functions for cumulative sum (prefix sum) on GPU (single precision)
 */
 
 // *** headers ***
 #include "helper_prefix_sum.cuh"
+#include "helper_prefix_sum_single.cuh"
 #include "helper_debug.cuh"
 
 #include <cuda_runtime.h>
 
 // definitions
-//#define NUM_BANKS 32ULL
-//#define LOG_NUM_BANKS 5ULL
 const unsigned long long NUM_BANKS = 32;
 const unsigned long long LOG_NUM_BANKS = 5;
 //#ifdef ZERO_BANK_CONFLICTS
@@ -34,8 +33,8 @@ const unsigned long long ELEMENTS_PER_BLOCK = BLOCK_SIZE * 2;
 /*!
     Scan multiple large arrays on the GPU
  */
-void scanManyLargeArrays(double *output,
-                         double *input,
+void scanManyLargeArrays(float *output,
+                         float *input,
                          unsigned long long length,
                          unsigned long long dist,
                          unsigned long long N)
@@ -57,8 +56,8 @@ void scanManyLargeArrays(double *output,
         unsigned long long length_even = length - remainder;
 
         // copy the last element of the even part of the subarray before prefix sum
-        double *a1;
-        gpuErrchk(cudaMalloc(&a1, N * sizeof(double)));
+        float *a1;
+        gpuErrchk(cudaMalloc(&a1, N * sizeof(float)));
         int numSMs;
         gpuErrchk(cudaDeviceGetAttribute(&numSMs, cudaDevAttrMultiProcessorCount, 0));
         int gridSize_copy = min(N, 32ULL * numSMs);
@@ -85,8 +84,8 @@ void scanManyLargeArrays(double *output,
                             N);
 
         // copy the last element of the even part of the subarray after prefix sum
-        double *a2;
-        gpuErrchk(cudaMalloc(&a2, N * sizeof(double)));
+        float *a2;
+        gpuErrchk(cudaMalloc(&a2, N * sizeof(float)));
         copy_every_kernel<<<gridSize_copy, 1>>>(a2,
                                                 output + length_even - 1,
                                                 dist,
@@ -116,23 +115,23 @@ void scanManyLargeArrays(double *output,
 /*!
     Scan multiple large even arrays on the GPU
  */
-void scanManyLargeEvenArrays(double *output,
-                             double *input,
+void scanManyLargeEvenArrays(float *output,
+                             float *input,
                              unsigned long long length,
                              unsigned long long dist,
                              unsigned long long Nx,
                              unsigned long long N)
 {
     // compute execution parameters
-    const unsigned long long shared_mem_size = ELEMENTS_PER_BLOCK * sizeof(double);
+    const unsigned long long shared_mem_size = ELEMENTS_PER_BLOCK * sizeof(float);
     int numSMs;
     gpuErrchk(cudaDeviceGetAttribute(&numSMs, cudaDevAttrMultiProcessorCount, 0));
     int gridSize = min(Nx * N, 32ULL * numSMs);
 
     // allocate partial sums and incr arrays
-    double *sums, *incr;
-    gpuErrchk(cudaMalloc(&sums, Nx * N * sizeof(double)));
-    gpuErrchk(cudaMalloc(&incr, Nx * N * sizeof(double)));
+    float *sums, *incr;
+    gpuErrchk(cudaMalloc(&sums, Nx * N * sizeof(float)));
+    gpuErrchk(cudaMalloc(&incr, Nx * N * sizeof(float)));
 
     // do scan
     prescan_many_even_kernel<<<gridSize, BLOCK_SIZE, 2 * shared_mem_size>>>(output,
@@ -182,8 +181,8 @@ void scanManyLargeEvenArrays(double *output,
 /*!
     Scan multiple small arrays on the GPU
  */
-void scanManySmallArrays(double *output,
-                         double *input,
+void scanManySmallArrays(float *output,
+                         float *input,
                          unsigned long long length,
                          unsigned long long dist,
                          unsigned long long N)
@@ -191,7 +190,7 @@ void scanManySmallArrays(double *output,
     unsigned long long powerOfTwo = nextPowerOfTwo(length);
 
     // Compute execution parameters
-    const unsigned long long shared_mem_size = powerOfTwo * sizeof(double);
+    const unsigned long long shared_mem_size = powerOfTwo * sizeof(float);
     int numSMs;
     gpuErrchk(cudaDeviceGetAttribute(&numSMs, cudaDevAttrMultiProcessorCount, 0));
     int gridSize = min(N, 32ULL * numSMs);
@@ -211,8 +210,8 @@ void scanManySmallArrays(double *output,
 /*!
     Wrapper function to compute cumulative sum on multiple subarrays on the GPU
  */
-void scan_wrap(double *output,
-               double *input,
+void scan_wrap(float *output,
+               float *input,
                unsigned long long length,
                unsigned long long dist,
                unsigned long long N)
@@ -239,15 +238,15 @@ void scan_wrap(double *output,
     Step 1 of cumsummany:
     Compute cumulative sum on multiple even portions of the subarrays on the GPU
  */
-__global__ void prescan_many_even_kernel(double *output,
-                                         double *input,
+__global__ void prescan_many_even_kernel(float *output,
+                                         float *input,
                                          unsigned long long dist,
                                          unsigned long long Nx,
                                          unsigned long long NxNy,
                                          unsigned long long n,
-                                         double *sums)
+                                         float *sums)
 {
-    extern __shared__ double temp[];
+    extern __shared__ float temp[];
 
     for (unsigned long long blockID = blockIdx.x; blockID < NxNy; blockID += gridDim.x)
     {
@@ -300,7 +299,7 @@ __global__ void prescan_many_even_kernel(double *output,
                 ai += CONFLICT_FREE_OFFSET(ai);
                 bi += CONFLICT_FREE_OFFSET(bi);
 
-                double t = temp[ai];
+                float t = temp[ai];
                 temp[ai] = temp[bi];
                 temp[bi] += t;
             }
@@ -316,14 +315,14 @@ __global__ void prescan_many_even_kernel(double *output,
     Step 2 of cumsummany:
     Compute cumulative sum on multiple arbitrary (small) portions of the subarrays on the GPU
  */
-__global__ void prescan_many_arbitrary_kernel(double *output,
-                                              double *input,
+__global__ void prescan_many_arbitrary_kernel(float *output,
+                                              float *input,
                                               unsigned long long dist,
                                               unsigned long long N,
                                               unsigned long long n,
                                               unsigned long long powerOfTwo)
 {
-    extern __shared__ double temp[];
+    extern __shared__ float temp[];
 
     for (unsigned long long blockID = blockIdx.x; blockID < N; blockID += gridDim.x)
     {
@@ -383,7 +382,7 @@ __global__ void prescan_many_arbitrary_kernel(double *output,
                 ai += CONFLICT_FREE_OFFSET(ai);
                 bi += CONFLICT_FREE_OFFSET(bi);
 
-                double t = temp[ai];
+                float t = temp[ai];
                 temp[ai] = temp[bi];
                 temp[bi] += t;
             }
@@ -398,12 +397,12 @@ __global__ void prescan_many_arbitrary_kernel(double *output,
     }
 }
 
-__global__ void add_many_kernel(double *output,
+__global__ void add_many_kernel(float *output,
                                 unsigned long long dist,
                                 unsigned long long Nx,
                                 unsigned long long NxNy,
                                 unsigned long long n,
-                                double *a)
+                                float *a)
 {
     for (unsigned long long blockID = blockIdx.x; blockID < NxNy; blockID += gridDim.x)
     {
@@ -418,13 +417,13 @@ __global__ void add_many_kernel(double *output,
     }
 }
 
-__global__ void add_many_kernel(double *output,
+__global__ void add_many_kernel(float *output,
                                 unsigned long long dist,
                                 unsigned long long Nx,
                                 unsigned long long NxNy,
                                 unsigned long long n,
-                                double *a1,
-                                double *a2)
+                                float *a1,
+                                float *a2)
 {
     for (unsigned long long blockID = blockIdx.x; blockID < NxNy; blockID += gridDim.x)
     {
@@ -439,8 +438,8 @@ __global__ void add_many_kernel(double *output,
     }
 }
 
-__global__ void copy_every_kernel(double *output,
-                                  double *input,
+__global__ void copy_every_kernel(float *output,
+                                  float *input,
                                   unsigned long long dist,
                                   unsigned long long N)
 {
@@ -448,17 +447,4 @@ __global__ void copy_every_kernel(double *output,
     {
         output[blockID] = input[blockID * dist];
     }
-}
-
-/*!
-    Compute next power of two larger or equal to n
- */
-unsigned long long nextPowerOfTwo(unsigned long long n)
-{
-    unsigned long long power = 1;
-    while (power < n)
-    {
-        power *= 2;
-    }
-    return power;
 }
