@@ -146,7 +146,7 @@ def read_images(
 
     elif isinstance(src, str):
         if src.endswith(".nd2"):
-            return np.array(ND2Reader(src)[seq])
+            return np.array(ND2Reader(src))[seq]
         else:
             return tiff2numpy(src, seq=seq, color_seq=color_seq)
 
