@@ -22,6 +22,12 @@
 
 #include <stdexcept>
 
+#ifndef SINGLE_PRECISION
+unsigned long long SCALAR_SIZE = 8;
+#else
+unsigned long long SCALAR_SIZE = 4;
+#endif
+
 // *** code ***
 
 /*!
@@ -63,32 +69,28 @@ void get_host_free_mem(unsigned long long &free_mem)
 void chk_host_mem_diff(unsigned long long nx,
                        unsigned long long ny,
                        unsigned long long length,
-                       unsigned long long Nlags,
-                       bool double_prec)
+                       unsigned long long Nlags)
 {
     unsigned long long free_mem;
     get_host_free_mem(free_mem);
-
-    unsigned long long OUT_TYPE_SIZE = double_prec ? 8 : 4;
 
     // leave some free space
     free_mem = (unsigned long long)(0.95 * (double)free_mem);
 
     /*
-    Output type size is OUT_TYPE_SIZE
     - The store the output, we need
-        nx * ny * (#lags + 2) * OUT_TYPE_SIZE
+        nx * ny * (#lags + 2) * (SCALAR_SIZE) bytes
 
     - To store the fft2, we need
-        (nx / 2 + 1) * ny * length * 2 * OUT_TYPE_SIZE
+        (nx / 2 + 1) * ny * length * 2 * (SCALAR_SIZE) bytes
 
     To store both, we need
-        (nx / 2 + 1) * ny * max(length, #lags + 2) * 2 * OUT_TYPE_SIZE
+        (nx / 2 + 1) * ny * max(length, #lags + 2) * 2 * (SCALAR_SIZE) bytes
      */
     unsigned long long mem_required = 0;
 
     unsigned long long dim_t = max(length, Nlags + 2);
-    mem_required += (nx / 2ULL + 1ULL) * ny * dim_t * 2ULL * OUT_TYPE_SIZE;
+    mem_required += (nx / 2ULL + 1ULL) * ny * dim_t * 2ULL * SCALAR_SIZE;
 
     if (mem_required >= free_mem)
     {
@@ -102,32 +104,28 @@ void chk_host_mem_diff(unsigned long long nx,
 void chk_host_mem_fft(unsigned long long nx,
                       unsigned long long ny,
                       unsigned long long length,
-                      unsigned long long Nlags,
-                      bool double_prec)
+                      unsigned long long Nlags)
 {
     unsigned long long free_mem;
     get_host_free_mem(free_mem);
-
-    unsigned long long OUT_TYPE_SIZE = double_prec ? 8 : 4;
 
     // leave some free space
     free_mem = (unsigned long long)(0.95 * (double)free_mem);
 
     /*
-    Output type size is OUT_TYPE_SIZE
     - The store the output, we need
-        nx * ny * (#lags + 2) * OUT_TYPE_SIZE bytes
+        nx * ny * (#lags + 2) * (SCALAR_SIZE) bytes
 
     - To store the fft2, we need
-        (nx / 2 + 1) * ny * length * 2 * OUT_TYPE_SIZE bytes
+        (nx / 2 + 1) * ny * length * 2 * (SCALAR_SIZE) bytes
 
     To store both, we need
-        (nx / 2 + 1) * ny * max(length, #lags + 2) * 2 * OUT_TYPE_SIZE bytes
+        (nx / 2 + 1) * ny * max(length, #lags + 2) * 2 * (SCALAR_SIZE) bytes
      */
     unsigned long long mem_required = 0;
 
     unsigned long long dim_t = max(length, Nlags + 2);
-    mem_required += (nx / 2ULL + 1ULL) * ny * dim_t * 2ULL * OUT_TYPE_SIZE;
+    mem_required += (nx / 2ULL + 1ULL) * ny * dim_t * 2ULL * SCALAR_SIZE;
 
     if (mem_required >= free_mem)
     {
@@ -192,7 +190,6 @@ unsigned long long get_device_fft2_mem(unsigned long long nx,
                                        unsigned long long ny,
                                        unsigned long long batch,
                                        unsigned long long pitch,
-                                       bool is_double_prec,
                                        cufftResult &cufft_res)
 {
     // The following line should be changed to move to workstations with multiple GPUs
@@ -201,7 +198,6 @@ unsigned long long get_device_fft2_mem(unsigned long long nx,
                        ny,
                        batch,
                        pitch,
-                       is_double_prec,
                        memsize,
                        cufft_res);
 
@@ -214,7 +210,6 @@ unsigned long long get_device_fft2_mem(unsigned long long nx,
 unsigned long long get_device_fft_mem(unsigned long long nt,
                                       unsigned long long batch,
                                       unsigned long long pitch,
-                                      bool is_double_prec,
                                       cufftResult &cufft_res)
 {
     // The following line should be changed to move to workstations with multiple GPUs
@@ -222,7 +217,6 @@ unsigned long long get_device_fft_mem(unsigned long long nt,
     cudaGetFftMemSize(nt,
                       batch,
                       pitch,
-                      is_double_prec,
                       memsize,
                       cufft_res);
 
@@ -243,7 +237,6 @@ void optimize_fft2(unsigned long long &pitch_buff,
                    unsigned long long &pitch_nx,
                    unsigned long long &num_fft2,
                    bool input_no_conv,
-                   bool is_double_prec,
                    unsigned long long pixel_Nbytes,
                    unsigned long long width,
                    unsigned long long height,
@@ -256,13 +249,12 @@ void optimize_fft2(unsigned long long &pitch_buff,
     // To compute the fft2, we need
     //  - for the buffer (only if input is not double):
     //      pitch_x * height * fft2_batch_len * pixel_Nbytes bytes
-    //  - for the workspace (complex double, 16 bytes):
-    //      (nx / 2 + 1) * ny * fft2_batch_len * 16 bytes
+    //  - for the workspace (complex, 2 * SCALAR_SIZE bytes):
+    //      (nx / 2 + 1) * ny * fft2_batch_len * 2 * SCALAR_SIZE bytes
     //  - for the cufft2 internal buffer:
     //      {programmatically determined...}
 
     unsigned long long _nx = nx / 2ULL + 1ULL;
-    unsigned long long OUT_TYPE_SIZE = is_double_prec ? 8ULL : 4ULL;
 
     // memory required
     unsigned long long mem_req = 0ULL;
@@ -271,7 +263,7 @@ void optimize_fft2(unsigned long long &pitch_buff,
     pitch_buff = input_no_conv ? 0ULL : get_device_pitch(width, pixel_Nbytes);
 
     // get device pitch for fft2 output complex array
-    pitch_nx = get_device_pitch(_nx, 2 * OUT_TYPE_SIZE);
+    pitch_nx = get_device_pitch(_nx, 2 * SCALAR_SIZE);
 
     // start with worst case scenario:
     // we need to perform as many fft2 loops as the number of images
@@ -292,7 +284,6 @@ void optimize_fft2(unsigned long long &pitch_buff,
                                                           ny,
                                                           fft2_batch_len,
                                                           pitch_nx,
-                                                          is_double_prec,
                                                           res);
         if (res == CUFFT_SUCCESS)
         {
@@ -303,7 +294,7 @@ void optimize_fft2(unsigned long long &pitch_buff,
             mem_req += input_no_conv ? 0ULL : pitch_buff * height * fft2_batch_len * (unsigned long long)pixel_Nbytes;
 
             // add memory required for workspace
-            mem_req += pitch_nx * ny * fft2_batch_len * 2ULL * OUT_TYPE_SIZE;
+            mem_req += pitch_nx * ny * fft2_batch_len * 2ULL * SCALAR_SIZE;
 
             // check memory
             if (free_mem > mem_req)
@@ -342,7 +333,7 @@ void optimize_fft2(unsigned long long &pitch_buff,
 
     Writes in the corresponding arguments:
         - the number of iterations for full and fftshift (frame chunks)
-        - the pitch in number of elements for full&shift workspace (pitch_fs, complex double)
+        - the pitch in number of elements for full&shift workspace (pitch_fs, complex)
 
     Throws a runtime_error if the memory is not sufficient
     to perform the calculations.
@@ -351,21 +342,18 @@ void optimize_fullshift(unsigned long long &pitch_fs,
                         unsigned long long &num_fullshift,
                         unsigned long long nx,
                         unsigned long long ny,
-                        bool is_double_prec,
                         unsigned long long num_lags,
                         unsigned long long free_mem)
 {
-    // Calculations are done in double precision.
     // To compute the full and shift conversion, we need
-    //  - workspace1 and workspace2 (complex double, 16 bytes)
-    //      pitch_fs * ny * fullshift_batch_len * 16 bytes
+    //  - workspace1 and workspace2 (complex, 2 * SCALAR_SIZE bytes)
+    //      pitch_fs * ny * fullshift_batch_len * 2 * SCALAR_SIZE bytes
 
     // memory required
     unsigned long long mem_req = 0ULL;
-    unsigned long long OUT_TYPE_SIZE = is_double_prec ? 8 : 4;
 
-    // get device pitch for workspace array (full&shift pitch, complex double)
-    pitch_fs = get_device_pitch((nx / 2ULL + 1ULL), 2 * OUT_TYPE_SIZE);
+    // get device pitch for workspace array (full&shift pitch, complex)
+    pitch_fs = get_device_pitch((nx / 2ULL + 1ULL), 2 * SCALAR_SIZE);
 
     // start with worst case scenario:
     // we need to perform as many fullshift loops as the number of frames (num_lags)
@@ -381,7 +369,7 @@ void optimize_fullshift(unsigned long long &pitch_fs,
         unsigned long long fullshift_batch_len = (num_lags + num_fullshift - 1ULL) / num_fullshift;
 
         // add workspace1 and workspace2 memory
-        mem_req += 2ULL * pitch_fs * ny * fullshift_batch_len * 2ULL * OUT_TYPE_SIZE;
+        mem_req += 2ULL * pitch_fs * ny * fullshift_batch_len * 2ULL * SCALAR_SIZE;
 
         // check memory
         if (free_mem > mem_req)
@@ -427,25 +415,22 @@ void optimize_diff(unsigned long long &pitch_q,
                    unsigned long long length,
                    unsigned long long nx,
                    unsigned long long ny,
-                   bool is_double_prec,
                    unsigned long long num_lags,
                    unsigned long long free_mem)
 {
-    // The element size of the output is OUT_TYPE_SIZE.
     // To compute the image structure function in diff mode, we need
     //  - helper lags array (unsigned int, 4 bytes)
     //      lags.size() * 4 bytes
-    //  - workspace1 and workspace2 (complex double, 2 * OUT_TYPE_SIZE bytes)
-    //      max(pitch_q * length, chunk_size * pitch_t) * 2 * OUT_TYPE_SIZE bytes
-    //  - power_spec and var arrays (double2, 2 * OUT_TYPE_SIZE bytes)
-    //      2 * chunk_size * 2 * OUT_TYPE_SIZE bytes
+    //  - workspace1 and workspace2 (complex, 2 * SCALAR_SIZE bytes)
+    //      max(pitch_q * length, chunk_size * pitch_t) * 2 * SCALAR_SIZE bytes
+    //  - power_spec and var arrays (Scalar2, 2 * SCALAR_SIZE bytes)
+    //      2 * chunk_size * 2 * SCALAR_SIZE bytes
 
     // memory required
     unsigned long long mem_req = 0ULL;
-    unsigned long long OUT_TYPE_SIZE = is_double_prec ? 8 : 4;
 
     // get device pitch for workspace array (time pitch, complex)
-    pitch_t = get_device_pitch(length, 2 * OUT_TYPE_SIZE);
+    pitch_t = get_device_pitch(length, 2 * SCALAR_SIZE);
 
     // start with worst case scenario:
     // we need to perform as many loop iterations as the number of q vectors
@@ -461,16 +446,16 @@ void optimize_diff(unsigned long long &pitch_q,
         unsigned long long chunk_size = ((nx / 2ULL + 1ULL) * ny + num_chunks - 1ULL) / num_chunks;
 
         // get device pitch for workspace array (q pitch, complex)
-        unsigned long long _pitch_q = get_device_pitch(chunk_size, 2 * OUT_TYPE_SIZE);
+        unsigned long long _pitch_q = get_device_pitch(chunk_size, 2 * SCALAR_SIZE);
 
         // add memory required for helper lags array
         mem_req += num_lags * 4ULL;
 
         // add memory required for workspace1 and workspace2
-        mem_req += 2ULL * max(_pitch_q * length, chunk_size * pitch_t) * 2ULL * OUT_TYPE_SIZE;
+        mem_req += 2ULL * max(_pitch_q * length, chunk_size * pitch_t) * 2ULL * SCALAR_SIZE;
 
         // add memory required for power_spec and var helper arrays
-        mem_req += 2ULL * chunk_size * 2ULL * OUT_TYPE_SIZE;
+        mem_req += 2ULL * chunk_size * 2ULL * SCALAR_SIZE;
 
         // check memory
         if (free_mem > mem_req)
@@ -496,7 +481,7 @@ void optimize_diff(unsigned long long &pitch_q,
         {
             num_chunks = prev_num_chunks;
             unsigned long long chunk_size = ((nx / 2ULL + 1ULL) * ny + num_chunks - 1ULL) / num_chunks;
-            pitch_q = get_device_pitch(chunk_size, 2 * OUT_TYPE_SIZE);
+            pitch_q = get_device_pitch(chunk_size, 2 * SCALAR_SIZE);
             break;
         }
     }
@@ -522,33 +507,30 @@ void optimize_fft(unsigned long long &pitch_q,
                   unsigned long long nx,
                   unsigned long long ny,
                   unsigned long long nt,
-                  bool is_double_prec,
                   unsigned long long num_lags,
                   unsigned long long free_mem)
 {
-    // Calculations are done in double precision.
     // To compute the image structure function in fft mode, we need
     //  - helper lags array (unsigned int, 4 bytes)
     //      lags.size() * 4 bytes
-    //  - workspace1 (complex double, 16 bytes)
-    //      chunk_size * pitch_nt * 16 bytes
-    //  - workspace2 (complex double, 16 bytes)
-    //      max(pitch_q * length, chunk_size * pitch_t) * 16 bytes
+    //  - workspace1 (complex, 2 * SCALAR_SIZE bytes)
+    //      chunk_size * pitch_nt * 2 * SCALAR_SIZE bytes
+    //  - workspace2 (complex, 2 * SCALAR_SIZE bytes)
+    //      max(pitch_q * length, chunk_size * pitch_t) * 2 * SCALAR_SIZE bytes
     //  - cufft internal buffer
     //      {programmatically determined...}
     //  - prefix sum
     //      (length / 1024 + 2) * chunk_size * 16 bytes
-    //  - power_spec and var arrays (double2, 16 bytes)
-    //      2 * chunk_size * 16 bytes
+    //  - power_spec and var arrays (Scalar2, 2 * SCALAR_SIZE bytes)
+    //      2 * chunk_size * 2 * SCALAR_SIZE bytes
 
     // memory required
     unsigned long long mem_req = 0ULL;
-    unsigned long long OUT_TYPE_SIZE = is_double_prec ? 8 : 4;
 
-    // get device pitch for workspace array (time pitch, complex double)
-    pitch_t = get_device_pitch(length, 2 * OUT_TYPE_SIZE);
-    // get device pitch for workspace array (fft pitch, complex double)
-    pitch_nt = get_device_pitch(nt, 2 * OUT_TYPE_SIZE);
+    // get device pitch for workspace array (time pitch, complex)
+    pitch_t = get_device_pitch(length, 2 * SCALAR_SIZE);
+    // get device pitch for workspace array (fft pitch, complex)
+    pitch_nt = get_device_pitch(nt, 2 * SCALAR_SIZE);
 
     // start with worst case scenario:
     // we need to perform as many loop iterations as the number of q vectors
@@ -565,26 +547,30 @@ void optimize_fft(unsigned long long &pitch_q,
 
         // cufft internal buffer
         cufftResult res;
-        unsigned long long mem_fft = get_device_fft_mem(nt, chunk_size, pitch_nt, is_double_prec, res);
+        unsigned long long mem_fft = get_device_fft_mem(nt,
+                                                        chunk_size,
+                                                        pitch_nt,
+                                                        res);
+
         if (res == CUFFT_SUCCESS)
         {
             // add internal buffer memory required for cufft
             mem_req += mem_fft;
 
-            // get device pitch for workspace array (q pitch, complex double)
-            unsigned long long _pitch_q = get_device_pitch(chunk_size, 2 * OUT_TYPE_SIZE);
+            // get device pitch for workspace array (q pitch, complex)
+            unsigned long long _pitch_q = get_device_pitch(chunk_size, 2 * SCALAR_SIZE);
 
             // add memory required for helper lags array
             mem_req += num_lags * 4ULL;
 
             // add memory required for workspace1
-            mem_req += chunk_size * pitch_nt * 2ULL * OUT_TYPE_SIZE;
+            mem_req += chunk_size * pitch_nt * 2ULL * SCALAR_SIZE;
 
             // add memory required for workspace2
-            mem_req += max(_pitch_q * length, chunk_size * pitch_t) * 2ULL * OUT_TYPE_SIZE;
+            mem_req += max(_pitch_q * length, chunk_size * pitch_t) * 2ULL * SCALAR_SIZE;
 
             // add memory required for power_spec and var helper arrays
-            mem_req += 2ULL * chunk_size * 2ULL * OUT_TYPE_SIZE;
+            mem_req += 2ULL * chunk_size * 2ULL * SCALAR_SIZE;
 
             // check memory
             if (free_mem > mem_req)
@@ -610,7 +596,7 @@ void optimize_fft(unsigned long long &pitch_q,
             {
                 num_chunks = prev_num_chunks;
                 unsigned long long chunk_size = ((nx / 2ULL + 1ULL) * ny + num_chunks - 1ULL) / num_chunks;
-                pitch_q = get_device_pitch(chunk_size, 2 * OUT_TYPE_SIZE);
+                pitch_q = get_device_pitch(chunk_size, 2 * SCALAR_SIZE);
                 break;
             }
         }
@@ -630,9 +616,9 @@ void optimize_fft(unsigned long long &pitch_q,
         - full and fftshift (frame chunks)
     and the pitch in number of elements for:
         - buffer array (real values)
-        - workspace (pitch_q, complex double)
-        - workspace (pitch_t, complex double)
-        - full&shift workspace (pitch_fs, complex double)
+        - workspace (pitch_q, complex)
+        - workspace (pitch_t, complex)
+        - full&shift workspace (pitch_fs, complex)
 
     Throws a runtime_error if the memory is not sufficient
     to perform the calculations.
@@ -645,7 +631,6 @@ void chk_device_mem_diff(unsigned long long width,
                          unsigned long long length,
                          vector<unsigned int> lags,
                          bool input_no_conv,
-                         bool is_double_prec,
                          unsigned long long &num_fft2,
                          unsigned long long &num_chunks,
                          unsigned long long &num_fullshift,
@@ -667,7 +652,6 @@ void chk_device_mem_diff(unsigned long long width,
                   pitch_nx,
                   num_fft2,
                   input_no_conv,
-                  is_double_prec,
                   pixel_Nbytes,
                   width,
                   height,
@@ -683,7 +667,6 @@ void chk_device_mem_diff(unsigned long long width,
                   length,
                   nx,
                   ny,
-                  is_double_prec,
                   lags.size(),
                   free_mem);
 
@@ -692,7 +675,6 @@ void chk_device_mem_diff(unsigned long long width,
                        num_fullshift,
                        nx,
                        ny,
-                       is_double_prec,
                        lags.size(),
                        free_mem);
 }
@@ -706,10 +688,10 @@ void chk_device_mem_diff(unsigned long long width,
         - full and fftshift (frame chunks)
     and the pitch in number of elements for:
         - buffer array (real values)
-        - workspace (pitch_q, complex double)
-        - workspace (pitch_t, complex double)
-        - workspace (pitch_nt, complex double)
-        - full&shift workspace (pitch_fs, complex double)
+        - workspace (pitch_q, complex)
+        - workspace (pitch_t, complex)
+        - workspace (pitch_nt, complex)
+        - full&shift workspace (pitch_fs, complex)
 
     Throws a runtime_error if the memory is not sufficient
     to perform the calculations.
@@ -723,7 +705,6 @@ void chk_device_mem_fft(unsigned long long width,
                         unsigned long long length,
                         vector<unsigned int> lags,
                         bool input_no_conv,
-                        bool is_double_prec,
                         unsigned long long &num_fft2,
                         unsigned long long &num_chunks,
                         unsigned long long &num_fullshift,
@@ -746,7 +727,6 @@ void chk_device_mem_fft(unsigned long long width,
                   pitch_nx,
                   num_fft2,
                   input_no_conv,
-                  is_double_prec,
                   pixel_Nbytes,
                   width,
                   height,
@@ -764,7 +744,6 @@ void chk_device_mem_fft(unsigned long long width,
                  nx,
                  ny,
                  nt,
-                 is_double_prec,
                  lags.size(),
                  free_mem);
 
@@ -773,7 +752,6 @@ void chk_device_mem_fft(unsigned long long width,
                        num_fullshift,
                        nx,
                        ny,
-                       is_double_prec,
                        lags.size(),
                        free_mem);
 }

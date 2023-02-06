@@ -13,6 +13,12 @@
 
 using namespace std;
 
+#ifndef SINGLE_PRECISION
+typedef double Scalar;
+#else
+typedef float Scalar;
+#endif
+
 // *** code ***
 
 /*! \brief Copy src to dest with stride
@@ -21,9 +27,8 @@ using namespace std;
     \param start    starting index
     \param stride   stride between elements in destination
  */
-template <typename S>
 void copy_vec_with_stride(vector<double> &src,
-                          S *dest,
+                          Scalar *dest,
                           unsigned long long start,
                           unsigned long long stride);
 
@@ -33,8 +38,7 @@ void copy_vec_with_stride(vector<double> &src,
     \param ny   number of fft nodes in y direction
     \param nt   number of frames
  */
-template <typename S>
-void make_full_shifted_isf(S *vec,
+void make_full_shifted_isf(Scalar *vec,
                            unsigned long long nx,
                            unsigned long long ny,
                            unsigned long long nt);

@@ -4,8 +4,10 @@ import math
 import psutil
 import numpy as np
 
-from ._core import ddm_diff, ddm_fft, ddm_diff_single, ddm_fft_single
+from ._config import *
+from ._core import ddm_diff, ddm_fft
 
+SCALAR_SIZE = 4 if IS_SINGLE_PRECISION else 8
 
 def ddm_diff_cpp(img_seq: np.ndarray, lags: List[int], nx: int, ny: int):
     """Differential Dynamic Microscopy, diff mode
@@ -39,8 +41,8 @@ def ddm_diff_cpp(img_seq: np.ndarray, lags: List[int], nx: int, ny: int):
     mem_req = 0
     # calculations are done in double precision
     # we need:
-    #  workspace -- 2 * (nx/2 + 1) * ny * max(len(img_seq), len(lags) + 2) * 8bytes
-    mem_req += 8 * (2 * (nx//2 + 1) * ny * max(len(img_seq), len(lags) + 2))
+    #  workspace -- 2 * (nx/2 + 1) * ny * max(len(img_seq), len(lags) + 2) * (SCALAR_SIZE)bytes
+    mem_req += SCALAR_SIZE * (2 * (nx//2 + 1) * ny * max(len(img_seq), len(lags) + 2))
     #  tmp, tmp2 -------- [len(lags) + 3] * 8bytes
     mem_req += 8 * (len(lags) + 3)
     # we require this space to be less than 90% of the available memory
@@ -49,50 +51,6 @@ def ddm_diff_cpp(img_seq: np.ndarray, lags: List[int], nx: int, ny: int):
         raise RuntimeError('Not enough memory')
 
     return ddm_diff(img_seq, lags, nx, ny)
-
-
-def ddm_diff_cpp_single(img_seq: np.ndarray, lags: List[int], nx: int, ny: int):
-    """Differential Dynamic Microscopy, diff mode (single precision)
-
-    Compute the image structure function using differences.
-
-    Parameters
-    ----------
-    img_seq : numpy.ndarray
-        Input image sequence.
-    lags : array_like
-        List of selected lags.
-    nx : int
-        Number of fft nodes in x direction.
-    ny : int
-        Number of fft nodes in y direction.
-
-    Returns
-    -------
-    np.ndarray
-        Image structure function.
-
-    Raises
-    ------
-    RuntimeError
-        If memory is not sufficient to perform the calculations.
-    """
-
-    # get available memory
-    mem = psutil.virtual_memory().available
-    mem_req = 0
-    # calculations are done in double precision
-    # we need:
-    #  workspace -- 2 * (nx/2 + 1) * ny * max(len(img_seq), len(lags) + 2) * 4bytes
-    mem_req += 4 * (2 * (nx//2 + 1) * ny * max(len(img_seq), len(lags) + 2))
-    #  tmp, tmp2 -------- [len(lags) + 3] * 8bytes
-    mem_req += 8 * (len(lags) + 3)
-    # we require this space to be less than 90% of the available memory
-    # to stay on the safe side
-    if int(0.9*mem) < mem_req:
-        raise RuntimeError('Not enough memory')
-
-    return ddm_diff_single(img_seq, lags, nx, ny)
 
 
 def ddm_fft_cpp(img_seq: np.ndarray, lags: List[int], nx: int, ny: int, nt: int):
@@ -137,12 +95,14 @@ def ddm_fft_cpp(img_seq: np.ndarray, lags: List[int], nx: int, ny: int, nt: int)
         mem_req = 0
         # calculations are done in double precision
         # we need:
-        #  workspace1 -- 2 * (nx/2 + 1) * ny * max(len(img_seq), len(lags) + 2) * 8bytes
-        mem_req += 8 * (2 * (nx//2 + 1) * ny * max(len(img_seq), len(lags) + 2))
-        #  workspace2 -- 2 * chunk_size * nt * 8bytes
-        mem_req += 8 * (2 * chunk_size * nt)
-        #  tmp, tmpAvg --------- chunk_size * 2 * 8bytes
-        mem_req += 8 * chunk_size * 2
+        #  workspace1 -- 2 * (nx/2 + 1) * ny * max(len(img_seq), len(lags) + 2) * (SCALAR_SIZE)bytes
+        mem_req += SCALAR_SIZE * (2 * (nx//2 + 1) * ny * max(len(img_seq), len(lags) + 2))
+        #  workspace2 -- 2 * chunk_size * nt * (SCALAR_SIZE)bytes
+        mem_req += SCALAR_SIZE * (2 * chunk_size * nt)
+        #  tmp --------- chunk_size * 8bytes
+        mem_req += 8 * chunk_size
+        #  tmpAvg --------- chunk_size * (SCALAR_SIZE)bytes
+        mem_req += SCALAR_SIZE * chunk_size
         # we require this space to be less than 90% of the available memory
         # to stay on the safe side
         if int(0.9*mem) > mem_req:
@@ -151,66 +111,6 @@ def ddm_fft_cpp(img_seq: np.ndarray, lags: List[int], nx: int, ny: int, nt: int)
             raise RuntimeError('Not enough memory')
 
     return ddm_fft(img_seq, lags, nx, ny, nt, chunk_size)
-
-
-def ddm_fft_cpp_single(img_seq: np.ndarray, lags: List[int], nx: int, ny: int, nt: int):
-    """Differential Dynamic Microscopy, fft mode (single precision)
-
-    Compute the image structure function using the Wiener-Khinchin theorem.
-
-    Parameters
-    ----------
-    img_seq : numpy.ndarray
-        Input image sequence.
-    lags : array_like
-        List of selected lags.
-    nx : int
-        Number of fft nodes in x direction.
-    ny : int
-        Number of fft nodes in y direction.
-    nt : int
-        Number of fft nodes in t direction.
-
-    Returns
-    -------
-    np.ndarray
-        Image structure function.
-
-    Raises
-    ------
-    RuntimeError
-        If memory available is not sufficient for calculations.
-    """
-
-    # get available memory
-    mem = psutil.virtual_memory().available
-
-    # compute the optimal chunk size
-    divisors = find_divisors((nx//2 + 1)*ny)
-    idx = len(divisors)
-    while True:
-        idx -= 1
-        chunk_size = divisors[idx]
-
-        mem_req = 0
-        # calculations are done in double precision
-        # we need:
-        #  workspace1 -- 2 * (nx/2 + 1) * ny * max(len(img_seq), len(lags) + 2) * 4bytes
-        mem_req += 4 * (2 * (nx//2 + 1) * ny * max(len(img_seq), len(lags) + 2))
-        #  workspace2 -- 2 * chunk_size * nt * 4bytes
-        mem_req += 4 * (2 * chunk_size * nt)
-        #  tmp --------- chunk_size * 8bytes
-        mem_req += 8 * chunk_size
-        #  tmpAvg --------- chunk_size * 4bytes
-        mem_req += 4 * chunk_size
-        # we require this space to be less than 90% of the available memory
-        # to stay on the safe side
-        if int(0.9*mem) > mem_req:
-            break
-        if idx == 0:
-            raise RuntimeError('Not enough memory')
-
-    return ddm_fft_single(img_seq, lags, nx, ny, nt, chunk_size)
 
 
 def primesfrom2to(n: int) -> List[int]:

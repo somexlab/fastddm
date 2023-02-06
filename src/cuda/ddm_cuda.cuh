@@ -13,6 +13,12 @@
 
 using namespace std;
 
+#ifndef SINGLE_PRECISION
+typedef double Scalar;
+#else
+typedef float Scalar;
+#endif
+
 // *** code ***
 
 /*! \brief Transfer images on GPU and compute fft2
@@ -29,7 +35,7 @@ using namespace std;
  */
 template <typename T>
 void compute_fft2(const T *h_in,
-                  double *h_out,
+                  Scalar *h_out,
                   unsigned long long width,
                   unsigned long long height,
                   unsigned long long length,
@@ -38,30 +44,6 @@ void compute_fft2(const T *h_in,
                   unsigned long long num_fft2,
                   unsigned long long buff_pitch,
                   unsigned long long pitch_nx);
-
-/*! \brief Transfer images on GPU and compute fft2 (single precision)
-    \param h_in         input array
-    \param h_out        output array
-    \param width        width of input array
-    \param height       height of input array
-    \param length       number of elements in z direction
-    \param nx           number of fft nodes in x direction
-    \param ny           number of fft nodes in y direction
-    \param num_fft2     number of fft2 chunks
-    \param buff_pitch   pitch of buffer device array
-    \param pitch_nx     pitch of output fft2 array (for complex values)
- */
-template <typename T>
-void compute_fft2_single(const T *h_in,
-                         float *h_out,
-                         unsigned long long width,
-                         unsigned long long height,
-                         unsigned long long length,
-                         unsigned long long nx,
-                         unsigned long long ny,
-                         unsigned long long num_fft2,
-                         unsigned long long buff_pitch,
-                         unsigned long long pitch_nx);
 
 /*! \brief Compute image structure function using differences on the GPU
     \param h_in         input array of Fourier transformed images
@@ -73,7 +55,7 @@ void compute_fft2_single(const T *h_in,
     \param pitch_q      pitch of device array (q-pitch)
     \param pitch_t      pitch of device array (t-pitch)
  */
-void structure_function_diff(double *h_in,
+void structure_function_diff(Scalar *h_in,
                              vector<unsigned int> lags,
                              unsigned long long length,
                              unsigned long long nx,
@@ -81,25 +63,6 @@ void structure_function_diff(double *h_in,
                              unsigned long long num_chunks,
                              unsigned long long pitch_q,
                              unsigned long long pitch_t);
-
-/*! \brief Compute image structure function using differences on the GPU (single precision)
-    \param h_in         input array of Fourier transformed images
-    \param lags         lags to be analyzed
-    \param length       number of elements in z direction
-    \param nx           number of fft nodes in x direction
-    \param ny           number of fft nodes in y direction
-    \param num_chunks   number of q points chunks
-    \param pitch_q      pitch of device array (q-pitch)
-    \param pitch_t      pitch of device array (t-pitch)
- */
-void structure_function_diff_single(float *h_in,
-                                    vector<unsigned int> lags,
-                                    unsigned long long length,
-                                    unsigned long long nx,
-                                    unsigned long long ny,
-                                    unsigned long long num_chunks,
-                                    unsigned long long pitch_q,
-                                    unsigned long long pitch_t);
 
 /*! \brief Convert to full and fftshifted image structure function on the GPU
     \param h_in             input array after structure function calculation
@@ -109,27 +72,12 @@ void structure_function_diff_single(float *h_in,
     \param num_fullshift    number of full and shift chunks
     \param pitch_fs         pitch of device array for full and shift operations
  */
-void make_full_shift(double *h_in,
+void make_full_shift(Scalar *h_in,
                      unsigned long long Nlags,
                      unsigned long long nx,
                      unsigned long long ny,
                      unsigned long long num_fullshift,
                      unsigned long long pitch_fs);
-
-/*! \brief Convert to full and fftshifted image structure function on the GPU (single precision)
-    \param h_in             input array after structure function calculation
-    \param Nlags            number of lags analyzed
-    \param nx               number of fft nodes in x direction
-    \param ny               number of fft nodes in y direction
-    \param num_fullshift    number of full and shift chunks
-    \param pitch_fs         pitch of device array for full and shift operations
- */
-void make_full_shift_single(float *h_in,
-                            unsigned long long Nlags,
-                            unsigned long long nx,
-                            unsigned long long ny,
-                            unsigned long long num_fullshift,
-                            unsigned long long pitch_fs);
 
 /*! \brief Compute image structure function using the WK theorem on the GPU
     \param h_in         input array of Fourier transformed images
@@ -143,7 +91,7 @@ void make_full_shift_single(float *h_in,
     \param pitch_t      pitch of workspace2 device array (t-pitch, computed for complex elements)
     \param pitch_nt     pitch of workspace1 device array (nt-pitch, computed for complex elements)
  */
-void structure_function_fft(double *h_in,
+void structure_function_fft(Scalar *h_in,
                             vector<unsigned int> lags,
                             unsigned long long length,
                             unsigned long long nx,
@@ -153,28 +101,5 @@ void structure_function_fft(double *h_in,
                             unsigned long long pitch_q,
                             unsigned long long pitch_t,
                             unsigned long long pitch_nt);
-
-/*! \brief Compute image structure function using the WK theorem on the GPU (single precision)
-    \param h_in         input array of Fourier transformed images
-    \param lags         lags to be analyzed
-    \param length       number of elements in z direction
-    \param nx           number of fft nodes in x direction
-    \param ny           number of fft nodes in y direction
-    \param nt           number of fft nodes in t direction
-    \param num_chunks   number of q points chunks
-    \param pitch_q      pitch of workspace1 device array (q-pitch, computed for complex elements)
-    \param pitch_t      pitch of workspace2 device array (t-pitch, computed for complex elements)
-    \param pitch_nt     pitch of workspace1 device array (nt-pitch, computed for complex elements)
- */
-void structure_function_fft_single(float *h_in,
-                                   vector<unsigned int> lags,
-                                   unsigned long long length,
-                                   unsigned long long nx,
-                                   unsigned long long ny,
-                                   unsigned long long nt,
-                                   unsigned long long num_chunks,
-                                   unsigned long long pitch_q,
-                                   unsigned long long pitch_t,
-                                   unsigned long long pitch_nt);
 
 #endif

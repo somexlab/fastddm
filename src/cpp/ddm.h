@@ -19,6 +19,12 @@
 namespace py = pybind11;
 using namespace std;
 
+#ifndef SINGLE_PRECISION
+typedef double Scalar;
+#else
+typedef float Scalar;
+#endif
+
 // *** code ***
 
 /*! \brief Compute image structure function in diff mode
@@ -28,22 +34,10 @@ using namespace std;
     \param ny       number of fft nodes in y direction
  */
 template <typename T>
-py::array_t<double> ddm_diff(py::array_t<T, py::array::c_style> img_seq,
+py::array_t<Scalar> ddm_diff(py::array_t<T, py::array::c_style> img_seq,
                              vector<unsigned int> lags,
                              unsigned long long nx,
                              unsigned long long ny);
-
-/*! \brief Compute image structure function in diff mode (single precision)
-    \param img_seq  numpy array containing the image sequence
-    \param lags     lags to be analyzed
-    \param nx       number of fft nodes in x direction
-    \param ny       number of fft nodes in y direction
- */
-template <typename T>
-py::array_t<float> ddm_diff_single(py::array_t<T, py::array::c_style> img_seq,
-                                   vector<unsigned int> lags,
-                                   unsigned long long nx,
-                                   unsigned long long ny);
 
 /*! \brief Compute image structure function in fft mode using Wiener-Khinchin theorem
     \param img_seq      numpy array containing the image sequence
@@ -54,28 +48,12 @@ py::array_t<float> ddm_diff_single(py::array_t<T, py::array::c_style> img_seq,
     \param chunk_size   number of fft's in the chunk
  */
 template <typename T>
-py::array_t<double> ddm_fft(py::array_t<T, py::array::c_style> img_seq,
+py::array_t<Scalar> ddm_fft(py::array_t<T, py::array::c_style> img_seq,
                             vector<unsigned int> lags,
                             unsigned long long nx,
                             unsigned long long ny,
                             unsigned long long nt,
                             unsigned long long chunk_size);
-
-/*! \brief Compute image structure function in fft mode using Wiener-Khinchin theorem (single precision)
-    \param img_seq      numpy array containing the image sequence
-    \param lags         lags to be analyzed
-    \param nx           number of fft nodes in x direction
-    \param ny           number of fft nodes in y direction
-    \param nt           number of fft nodes in t direction
-    \param chunk_size   number of fft's in the chunk
- */
-template <typename T>
-py::array_t<float> ddm_fft_single(py::array_t<T, py::array::c_style> img_seq,
-                                  vector<unsigned int> lags,
-                                  unsigned long long nx,
-                                  unsigned long long ny,
-                                  unsigned long long nt,
-                                  unsigned long long chunk_size);
 
 /*! \brief Export ddm functions to python
     \param m    Module

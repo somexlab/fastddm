@@ -6,7 +6,6 @@
 
 // *** headers ***
 #include "helper_ddm.h"
-#include "helper_fftw.h"
 
 #include <algorithm>
 
@@ -16,9 +15,8 @@
     Copy the elements of src to dest, so that the k-th element of src
     is at (k*stride + start)-th position in dest
  */
-template <typename S>
 void copy_vec_with_stride(vector<double> &src,
-                          S *dest,
+                          Scalar *dest,
                           unsigned long long start,
                           unsigned long long stride)
 {
@@ -28,9 +26,6 @@ void copy_vec_with_stride(vector<double> &src,
     }
 }
 
-template void copy_vec_with_stride<double>(vector<double> &src, double *dest, unsigned long long start, unsigned long long stride);
-template void copy_vec_with_stride<float>(vector<double> &src, float *dest, unsigned long long start, unsigned long long stride);
-
 /*!
     Make full image structure function from raw output and swap the quadrants
     of the image structure function according to fft2 convention 
@@ -38,8 +33,7 @@ template void copy_vec_with_stride<float>(vector<double> &src, float *dest, unsi
     Keep only real part of vector and copy symmetric part.
     Make element contiguous in memory.
  */
-template <typename S>
-void make_full_shifted_isf(S *vec,
+void make_full_shifted_isf(Scalar *vec,
                            unsigned long long nx,
                            unsigned long long ny,
                            unsigned long long nt)
@@ -62,7 +56,7 @@ void make_full_shifted_isf(S *vec,
     }
     else
     {
-        S tmp = 0.0;
+        Scalar tmp = 0.0;
         for (unsigned long long t = 0; t < nt; t++)
         {
             for (unsigned long long x = 0; x < _nx; x++)
@@ -135,6 +129,3 @@ void make_full_shifted_isf(S *vec,
         }
     }
 }
-
-template void make_full_shifted_isf<double>(double *vec, unsigned long long nx, unsigned long long ny, unsigned long long nt);
-template void make_full_shifted_isf<float>(float *vec, unsigned long long nx, unsigned long long ny, unsigned long long nt);

@@ -95,7 +95,6 @@ void cudaGetFft2MemSize(size_t nx,
                         size_t ny,
                         size_t batch,
                         size_t pitch,
-                        bool is_double_prec,
                         size_t *memsize,
                         cufftResult &cufft_res)
 {
@@ -103,7 +102,6 @@ void cudaGetFft2MemSize(size_t nx,
                       ny,
                       batch,
                       pitch,
-                      is_double_prec,
                       memsize,
                       cufft_res);
 }
@@ -114,14 +112,12 @@ void cudaGetFft2MemSize(size_t nx,
 void cudaGetFftMemSize(size_t nt,
                        size_t batch,
                        size_t pitch,
-                       bool is_double_prec,
                        size_t *memsize,
                        cufftResult &cufft_res)
 {
     fft_get_mem_size(nt,
                      batch,
                      pitch,
-                     is_double_prec,
                      memsize,
                      cufft_res);
 }

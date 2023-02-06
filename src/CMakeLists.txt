@@ -11,6 +11,12 @@ else()
     SET(IS_CUDA_ENABLED False)
 endif()
 
+if(SINGLE_PRECISION)
+    SET(IS_SINGLE_PRECISION True)
+else()
+    SET(IS_SINGLE_PRECISION False)
+endif()
+
 if(ENABLE_CPP)
     SET(_fddm_sources
         cpp/ddm.cc
@@ -25,7 +31,6 @@ if(ENABLE_CUDA)
         cuda/helper_cufft.cu
         cuda/helper_ddm_cuda.cu
         cuda/helper_prefix_sum.cu
-        cuda/helper_prefix_sum_single.cu
         cuda/helper_memchk_gpu.cu
     )
 
@@ -42,12 +47,22 @@ if(ENABLE_CPP)
 
     # Add _fddm library
     add_library(_fddm STATIC ${_fddm_sources})
-    if(WIN32)
-        target_link_libraries(_fddm ${PYTHON_LIBRARIES} fftw3 fftw3f)
-    else(WIN32)
-        #target_link_libraries(_fddm ${PYTHON_LIBRARIES} fftw3 m)
-        target_link_libraries(_fddm fftw3 fftw3f m)
-    endif(WIN32)
+    if(SINGLE_PRECISION)
+        target_compile_definitions(_fddm PUBLIC SINGLE_PRECISION)
+        if(WIN32)
+            target_link_libraries(_fddm ${PYTHON_LIBRARIES} fftw3f)
+        else(WIN32)
+            #target_link_libraries(_fddm ${PYTHON_LIBRARIES} fftw3 m)
+            target_link_libraries(_fddm fftw3f m)
+        endif(WIN32)
+    else(SINGLE_PRECISION)
+        if(WIN32)
+            target_link_libraries(_fddm ${PYTHON_LIBRARIES} fftw3)
+        else(WIN32)
+            #target_link_libraries(_fddm ${PYTHON_LIBRARIES} fftw3 m)
+            target_link_libraries(_fddm fftw3 m)
+        endif(WIN32)
+    endif()
     set_target_properties(_fddm PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
     # Add core python module
@@ -72,6 +87,9 @@ if(ENABLE_CUDA)
     # Add _fddm_cuda library
     include(select_compute_arch.cmake)
     add_library(_fddm_cuda STATIC ${_fddm_cu_sources})
+    if(SINGLE_PRECISION)
+        target_compile_definitions(_fddm_cuda PUBLIC SINGLE_PRECISION)
+    endif(SINGLE_PRECISION)
     if(${CMAKE_VERSION} VERSION_LESS "3.18.0")
         CUDA_SELECT_NVCC_ARCH_FLAGS(ARCH_FLAGS Auto)
         message(STATUS "Generating code for the following CUDA architectures: ${ARCH_FLAGS_readable}")
@@ -95,6 +113,9 @@ endif(ENABLE_CUDA)
 # Copy the files required to install the library with python's setuptools
 configure_file(python/__init__.py
                ${FASTDDM_OUTPUT_DIR}/__init__.py)
+
+configure_file(python/_config.py
+               ${FASTDDM_OUTPUT_DIR}/_config.py)
 
 configure_file(python/_fftopt.py
                ${FASTDDM_OUTPUT_DIR}/_fftopt.py)

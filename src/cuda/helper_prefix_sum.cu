@@ -34,8 +34,9 @@ const unsigned long long ELEMENTS_PER_BLOCK = BLOCK_SIZE * 2;
 /*!
     Scan multiple large arrays on the GPU
  */
-void scanManyLargeArrays(double *output,
-                         double *input,
+template<typename T>
+void scanManyLargeArrays(T *output,
+                         T *input,
                          unsigned long long length,
                          unsigned long long dist,
                          unsigned long long N)
@@ -113,11 +114,17 @@ void scanManyLargeArrays(double *output,
     }
 }
 
+template void scanManyLargeArrays<Scalar>(Scalar *output, Scalar *input, unsigned long long length, unsigned long long dist, unsigned long long N);
+#ifdef SINGLE_PRECISION
+template void scanManyLargeArrays<double>(double *output, double *input, unsigned long long length, unsigned long long dist, unsigned long long N);
+#endif
+
 /*!
     Scan multiple large even arrays on the GPU
  */
-void scanManyLargeEvenArrays(double *output,
-                             double *input,
+template<typename T>
+void scanManyLargeEvenArrays(T *output,
+                             T *input,
                              unsigned long long length,
                              unsigned long long dist,
                              unsigned long long Nx,
@@ -179,11 +186,17 @@ void scanManyLargeEvenArrays(double *output,
     gpuErrchk(cudaFree(incr));
 }
 
+template void scanManyLargeEvenArrays<Scalar>(Scalar *output, Scalar *input, unsigned long long length, unsigned long long dist, unsigned long long Nx, unsigned long long N);
+#ifdef SINGLE_PRECISION
+template void scanManyLargeEvenArrays<double>(double *output, double *input, unsigned long long length, unsigned long long dist, unsigned long long Nx, unsigned long long N);
+#endif
+
 /*!
     Scan multiple small arrays on the GPU
  */
-void scanManySmallArrays(double *output,
-                         double *input,
+template<typename T>
+void scanManySmallArrays(T *output,
+                         T *input,
                          unsigned long long length,
                          unsigned long long dist,
                          unsigned long long N)
@@ -208,11 +221,16 @@ void scanManySmallArrays(double *output,
     gpuErrchk(cudaDeviceSynchronize());
 }
 
+template void scanManySmallArrays<Scalar>(Scalar *output, Scalar *input, unsigned long long length, unsigned long long dist, unsigned long long N);
+#ifdef SINGLE_PRECISION
+template void scanManySmallArrays<double>(double *output, double *input, unsigned long long length, unsigned long long dist, unsigned long long N);
+#endif
+
 /*!
     Wrapper function to compute cumulative sum on multiple subarrays on the GPU
  */
-void scan_wrap(double *output,
-               double *input,
+void scan_wrap(Scalar *output,
+               Scalar *input,
                unsigned long long length,
                unsigned long long dist,
                unsigned long long N)
@@ -239,8 +257,9 @@ void scan_wrap(double *output,
     Step 1 of cumsummany:
     Compute cumulative sum on multiple even portions of the subarrays on the GPU
  */
-__global__ void prescan_many_even_kernel(double *output,
-                                         double *input,
+template<typename T>
+__global__ void prescan_many_even_kernel(T *output,
+                                         T *input,
                                          unsigned long long dist,
                                          unsigned long long Nx,
                                          unsigned long long NxNy,
@@ -260,8 +279,8 @@ __global__ void prescan_many_even_kernel(double *output,
         unsigned long long bi = threadID + (n / 2);
         unsigned long long bankOffsetA = CONFLICT_FREE_OFFSET(ai);
         unsigned long long bankOffsetB = CONFLICT_FREE_OFFSET(bi);
-        temp[ai + bankOffsetA] = input[blockOffset + ai];
-        temp[bi + bankOffsetB] = input[blockOffset + bi];
+        temp[ai + bankOffsetA] = (double)(input[blockOffset + ai]);
+        temp[bi + bankOffsetB] = (double)(input[blockOffset + bi]);
 
         // build sum in place up the tree
         unsigned long long offset = 1;
@@ -307,17 +326,23 @@ __global__ void prescan_many_even_kernel(double *output,
         }
         __syncthreads();
 
-        output[blockOffset + ai] = temp[ai + bankOffsetA];
-        output[blockOffset + bi] = temp[bi + bankOffsetB];
+        output[blockOffset + ai] = (T)(temp[ai + bankOffsetA]);
+        output[blockOffset + bi] = (T)(temp[bi + bankOffsetB]);
     }
 }
+
+template __global__ void prescan_many_even_kernel<Scalar>(Scalar *output, Scalar *input, unsigned long long dist, unsigned long long Nx, unsigned long long NxNy, unsigned long long n, double *sums);
+#ifdef SINGLE_PRECISION
+template __global__ void prescan_many_even_kernel<double>(double *output, double *input, unsigned long long dist, unsigned long long Nx, unsigned long long NxNy, unsigned long long n, double *sums);
+#endif
 
 /*!
     Step 2 of cumsummany:
     Compute cumulative sum on multiple arbitrary (small) portions of the subarrays on the GPU
  */
-__global__ void prescan_many_arbitrary_kernel(double *output,
-                                              double *input,
+template<typename T>
+__global__ void prescan_many_arbitrary_kernel(T *output,
+                                              T *input,
                                               unsigned long long dist,
                                               unsigned long long N,
                                               unsigned long long n,
@@ -338,8 +363,8 @@ __global__ void prescan_many_arbitrary_kernel(double *output,
 
         if (threadID < n)
         {
-            temp[ai + bankOffsetA] = input[blockOffset + ai];
-            temp[bi + bankOffsetB] = input[blockOffset + bi];
+            temp[ai + bankOffsetA] = (double)(input[blockOffset + ai]);
+            temp[bi + bankOffsetB] = (double)(input[blockOffset + bi]);
         }
         else
         {
@@ -368,7 +393,7 @@ __global__ void prescan_many_arbitrary_kernel(double *output,
         // clear the last element
         if (threadID == 0)
         {
-            temp[powerOfTwo - 1 + CONFLICT_FREE_OFFSET(powerOfTwo - 1)] = 0;
+            temp[powerOfTwo - 1 + CONFLICT_FREE_OFFSET(powerOfTwo - 1)] = 0.0;
         }
 
         // traverse down tree and build scan
@@ -392,18 +417,24 @@ __global__ void prescan_many_arbitrary_kernel(double *output,
 
         if (threadID < n)
         {
-            output[blockOffset + ai] = temp[ai + bankOffsetA];
-            output[blockOffset + bi] = temp[bi + bankOffsetB];
+            output[blockOffset + ai] = (T)(temp[ai + bankOffsetA]);
+            output[blockOffset + bi] = (T)(temp[bi + bankOffsetB]);
         }
     }
 }
 
-__global__ void add_many_kernel(double *output,
+template __global__ void prescan_many_arbitrary_kernel<Scalar>(Scalar *output, Scalar *input, unsigned long long dist, unsigned long long N, unsigned long long n, unsigned long long powerOfTwo);
+#ifdef SINGLE_PRECISION
+template __global__ void prescan_many_arbitrary_kernel<double>(double *output, double *input, unsigned long long dist, unsigned long long N, unsigned long long n, unsigned long long powerOfTwo);
+#endif
+
+template<typename T, typename S>
+__global__ void add_many_kernel(T *output,
                                 unsigned long long dist,
                                 unsigned long long Nx,
                                 unsigned long long NxNy,
-                                unsigned long long n,
-                                double *a)
+                                const unsigned long long n,
+                                S *a)
 {
     for (unsigned long long blockID = blockIdx.x; blockID < NxNy; blockID += gridDim.x)
     {
@@ -413,12 +444,19 @@ __global__ void add_many_kernel(double *output,
             unsigned long long y = (blockID / Nx);
             unsigned long long blockOffset = y * dist + (blockID - y * Nx) * n;
 
-            output[blockOffset + threadID] += a[blockID];
+            output[blockOffset + threadID] += (T)(a[blockID]);
         }
     }
 }
 
-__global__ void add_many_kernel(double *output,
+template __global__ void add_many_kernel<Scalar, Scalar>(Scalar *output, unsigned long long dist, unsigned long long Nx, unsigned long long NxNy, const unsigned long long n, Scalar *a);
+#ifdef SINGLE_PRECISION
+template __global__ void add_many_kernel<double, double>(double *output, unsigned long long dist, unsigned long long Nx, unsigned long long NxNy, const unsigned long long n, double *a);
+template __global__ void add_many_kernel<Scalar, double>(Scalar *output, unsigned long long dist, unsigned long long Nx, unsigned long long NxNy, const unsigned long long n, double *a);
+#endif
+
+template<typename T>
+__global__ void add_many_kernel(T *output,
                                 unsigned long long dist,
                                 unsigned long long Nx,
                                 unsigned long long NxNy,
@@ -439,8 +477,14 @@ __global__ void add_many_kernel(double *output,
     }
 }
 
+template __global__ void add_many_kernel<Scalar>(Scalar *output, unsigned long long dist, unsigned long long Nx, unsigned long long NxNy, unsigned long long n, double *a1, double *a2);
+#ifdef SINGLE_PRECISION
+template __global__ void add_many_kernel<double>(double *output, unsigned long long dist, unsigned long long Nx, unsigned long long NxNy, unsigned long long n, double *a1, double *a2);
+#endif
+
+template<typename T>
 __global__ void copy_every_kernel(double *output,
-                                  double *input,
+                                  T *input,
                                   unsigned long long dist,
                                   unsigned long long N)
 {
@@ -449,6 +493,11 @@ __global__ void copy_every_kernel(double *output,
         output[blockID] = input[blockID * dist];
     }
 }
+
+template __global__ void copy_every_kernel<Scalar>(double *output, Scalar *input, unsigned long long dist, unsigned long long N);
+#ifdef SINGLE_PRECISION
+template __global__ void copy_every_kernel<double>(double *output, double *input, unsigned long long dist, unsigned long long N);
+#endif
 
 /*!
     Compute next power of two larger or equal to n

@@ -28,26 +28,22 @@ void get_host_free_mem(unsigned long long &free_mem);
     \param ny               Number of fft nodes, y direction
     \param length           Number of frames
     \param Nlags            Number of lags analyzed
-    \param is_double_prec   True if calculations are done in double precision
  */
 void chk_host_mem_diff(unsigned long long nx,
                        unsigned long long ny,
                        unsigned long long length,
-                       unsigned long long Nlags,
-                       bool is_double_prec);
+                       unsigned long long Nlags);
 
 /*! \brief Estimate and check host memory needed for fft mode
     \param nx               Number of fft nodes, x direction
     \param ny               Number of fft nodes, y direction
     \param length           Number of frames
     \param Nlags            Number of lags analyzed
-    \param is_double_prec   True if calculations are done in double precision
  */
 void chk_host_mem_fft(unsigned long long nx,
                       unsigned long long ny,
                       unsigned long long length,
-                      unsigned long long Nlags,
-                      bool is_double_prec);
+                      unsigned long long Nlags);
 
 /*! \brief Get free device memory (in bytes)
     \param free_mem     Device free memory returned (in bytes)
@@ -66,27 +62,23 @@ unsigned long long get_device_pitch(unsigned long long N,
     \param ny               number of fft nodes in y direction
     \param nt               number of elements (in t direction)
     \param pitch_nx         pitch of fft2 complex output array
-    \param is_double_prec   True if calculations are done in double precision
     \param cufft_res        result of cufft function
  */
 unsigned long long get_device_fft2_mem(unsigned long long nx,
                                        unsigned long long ny,
                                        unsigned long long nt,
                                        unsigned long long pitch_nx,
-                                       bool is_double_prec,
                                        cufftResult &cufft_res);
 
 /*! \brief Get the device memory for fft
     \param nt               number of fft nodes in t direction
     \param N                number of elements
     \param pitch            pitch of input array
-    \param is_double_prec   True if calculations are done in double precision
     \param cufft_res        result of cufft function
  */
 unsigned long long get_device_fft_mem(unsigned long long nt,
                                       unsigned long long N,
                                       unsigned long long pitch,
-                                      bool is_double_prec,
                                       cufftResult &cufft_res);
 
 /*! \brief Optimize fft2 execution parameters based on available gpu memory
@@ -94,7 +86,6 @@ unsigned long long get_device_fft_mem(unsigned long long nt,
     \param pitch_nx         Pitch of fft2 complex output array
     \param num_fft2         Number of fft2 batches
     \param input_no_conv    True if input should not be converted
-    \param is_double_prec   True if calculations are done in double precision
     \param pixel_Nbytes     Number of bytes per pixel
     \param width            Width of the image
     \param height           Height of the image
@@ -107,7 +98,6 @@ void optimize_fft2(unsigned long long &pitch_buff,
                    unsigned long long &pitch_nx,
                    unsigned long long &num_fft2,
                    bool input_no_conv,
-                   bool is_double_prec,
                    unsigned long long pixel_Nbytes,
                    unsigned long long width,
                    unsigned long long height,
@@ -121,7 +111,6 @@ void optimize_fft2(unsigned long long &pitch_buff,
     \param num_fullshift    Number of full and shift chunks
     \param nx               Number of fft nodes, x direction
     \param ny               Number of fft nodes, y direction
-    \param is_double_prec   True if calculations are done in double precision
     \param num_lags         Number of lags analysed
     \param free_mem         Available gpu memory
  */
@@ -129,7 +118,6 @@ void optimize_fullshift(unsigned long long &pitch_fs,
                         unsigned long long &num_fullshift,
                         unsigned long long nx,
                         unsigned long long ny,
-                        bool is_double_prec,
                         unsigned long long num_lags,
                         unsigned long long free_mem);
 
@@ -140,7 +128,6 @@ void optimize_fullshift(unsigned long long &pitch_fs,
     \param length           Number of frames
     \param nx               Number of fft nodes, x direction
     \param ny               Number of fft nodes, y direction
-    \param is_double_prec   True if calculations are done in double precision
     \param num_lags         Number of lags analysed
     \param free_mem         Available gpu memory
  */
@@ -150,7 +137,6 @@ void optimize_diff(unsigned long long &pitch_q,
                    unsigned long long length,
                    unsigned long long nx,
                    unsigned long long ny,
-                   bool is_double_prec,
                    unsigned long long num_lags,
                    unsigned long long free_mem);
 
@@ -163,7 +149,6 @@ void optimize_diff(unsigned long long &pitch_q,
     \param nx               Number of fft nodes, x direction
     \param ny               Number of fft nodes, y direction
     \param nt               Number of fft nodes, t direction
-    \param is_double_prec   True if calculations are done in double precision
     \param num_lags         Number of lags analysed
     \param free_mem         Available gpu memory
  */
@@ -175,7 +160,6 @@ void optimize_fft(unsigned long long &pitch_q,
                   unsigned long long nx,
                   unsigned long long ny,
                   unsigned long long nt,
-                  bool is_double_prec,
                   unsigned long long num_lags,
                   unsigned long long free_mem);
 
@@ -188,7 +172,6 @@ void optimize_fft(unsigned long long &pitch_q,
     \param length           Number of frames
     \param lags             Vector of lags to analyze
     \param input_no_conv    True if input should not be converted
-    \param is_double_prec   True if calculations are done in double precision
     \param num_fft2         Number of fft2 batches
     \param num_chunks       Number of q points chunks
     \param num_fullshift    Number of full and shift chunks
@@ -206,7 +189,6 @@ void chk_device_mem_diff(unsigned long long width,
                          unsigned long long length,
                          vector<unsigned int> lags,
                          bool input_no_conv,
-                         bool is_double_prec,
                          unsigned long long &num_fft2,
                          unsigned long long &num_chunks,
                          unsigned long long &num_fullshift,
@@ -226,7 +208,6 @@ void chk_device_mem_diff(unsigned long long width,
     \param length           Number of frames
     \param lags             Vector of lags to analyze
     \param input_no_conv    True if input should not be converted
-    \param is_double_prec   True if calculations are done in double precision
     \param num_fft2         Number of fft2 batches
     \param num_chunks       Number of q points chunks
     \param num_fullshift    Number of full and shift chunks
@@ -246,7 +227,6 @@ void chk_device_mem_fft(unsigned long long width,
                         unsigned long long length,
                         vector<unsigned int> lags,
                         bool input_no_conv,
-                        bool is_double_prec,
                         unsigned long long &num_fft2,
                         unsigned long long &num_chunks,
                         unsigned long long &num_fullshift,

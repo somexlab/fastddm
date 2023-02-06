@@ -19,7 +19,7 @@
     using differences of Fourier transformed images on the GPU.
  */
 template <typename T>
-py::array_t<double> ddm_diff_cuda(py::array_t<T, py::array::c_style> img_seq,
+py::array_t<Scalar> ddm_diff_cuda(py::array_t<T, py::array::c_style> img_seq,
                                   vector<unsigned int> lags,
                                   unsigned long long nx,
                                   unsigned long long ny)
@@ -30,14 +30,11 @@ py::array_t<double> ddm_diff_cuda(py::array_t<T, py::array::c_style> img_seq,
     unsigned long long width = img_seq.shape()[2];  // get width of original input
     auto p_img_seq = img_seq.data();                // get input data
 
-    bool is_double_prec = true;
-
     // Check host memory
     chk_host_mem_diff(nx,
                       ny,
                       length,
-                      lags.size(),
-                      is_double_prec);
+                      lags.size());
 
     // Check device memory and optimize
     unsigned long long num_fft2, num_chunks, num_fullshift;
@@ -49,8 +46,7 @@ py::array_t<double> ddm_diff_cuda(py::array_t<T, py::array::c_style> img_seq,
                         ny,
                         length,
                         lags,
-                        std::is_same<T, double>::value,
-                        is_double_prec,
+                        std::is_same<T, Scalar>::value,
                         num_fft2,
                         num_chunks,
                         num_fullshift,
@@ -64,11 +60,11 @@ py::array_t<double> ddm_diff_cuda(py::array_t<T, py::array::c_style> img_seq,
     /*
     - We need to make sure that the fft2 r2c fits in the array,
       so the size of one fft2 output is ny*(nx//2 + 1) complex
-      double [the input needs to be twice as large]
+      [the input needs to be twice as large]
      */
     unsigned long long _nx = nx / 2 + 1;
     unsigned long long dim_t = max(length, (unsigned long long)(lags.size() + 2));
-    py::array_t<double> out = py::array_t<double>(2 * _nx * ny * dim_t);
+    py::array_t<Scalar> out = py::array_t<Scalar>(2 * _nx * ny * dim_t);
     auto p_out = out.mutable_data();
 
     // ***Transfer data to GPU and compute fft2
@@ -115,107 +111,6 @@ py::array_t<double> ddm_diff_cuda(py::array_t<T, py::array::c_style> img_seq,
 }
 
 /*!
-    Compute the image structure function in diff mode
-    using differences of Fourier transformed images on the GPU.
-    Single precision.
- */
-template <typename T>
-py::array_t<float> ddm_diff_cuda_single(py::array_t<T, py::array::c_style> img_seq,
-                                        vector<unsigned int> lags,
-                                        unsigned long long nx,
-                                        unsigned long long ny)
-{
-    // ***Get input array and dimensions
-    unsigned long long length = img_seq.shape()[0]; // get length of original input
-    unsigned long long height = img_seq.shape()[1]; // get height of original input
-    unsigned long long width = img_seq.shape()[2];  // get width of original input
-    auto p_img_seq = img_seq.data();                // get input data
-
-    bool is_double_prec = false;
-
-    // Check host memory
-    chk_host_mem_diff(nx,
-                      ny,
-                      length,
-                      lags.size(),
-                      is_double_prec);
-
-    // Check device memory and optimize
-    unsigned long long num_fft2, num_chunks, num_fullshift;
-    unsigned long long pitch_buff, pitch_nx, pitch_q, pitch_t, pitch_fs;
-    chk_device_mem_diff(width,
-                        height,
-                        sizeof(T),
-                        nx,
-                        ny,
-                        length,
-                        lags,
-                        std::is_same<T, float>::value,
-                        is_double_prec,
-                        num_fft2,
-                        num_chunks,
-                        num_fullshift,
-                        pitch_buff,
-                        pitch_nx,
-                        pitch_q,
-                        pitch_t,
-                        pitch_fs);
-
-    // ***Allocate workspace vector
-    /*
-    - We need to make sure that the fft2 r2c fits in the array,
-      so the size of one fft2 output is ny*(nx//2 + 1) complex
-      double [the input needs to be twice as large]
-     */
-    unsigned long long _nx = nx / 2 + 1;
-    unsigned long long dim_t = max(length, (unsigned long long)(lags.size() + 2));
-    py::array_t<float> out = py::array_t<float>(2 * _nx * ny * dim_t);
-    auto p_out = out.mutable_data();
-
-    // ***Transfer data to GPU and compute fft2
-    compute_fft2_single(p_img_seq,
-                        p_out,
-                        width,
-                        height,
-                        length,
-                        nx,
-                        ny,
-                        num_fft2,
-                        pitch_buff,
-                        pitch_nx);
-
-    // ***Compute image structure function
-    structure_function_diff_single(p_out,
-                                   lags,
-                                   length,
-                                   nx,
-                                   ny,
-                                   num_chunks,
-                                   pitch_q,
-                                   pitch_t);
-
-    // ***Convert raw output to full and shifted image structure function
-    // Convert raw output to full and shifted image structure function
-    make_full_shift_single(p_out,
-                           lags.size() + 2,
-                           nx,
-                           ny,
-                           num_fullshift,
-                           pitch_fs);
-
-    // ***Resize output
-    // the full size of the image structure function is
-    // nx * ny * #(lags)
-    out.resize({(unsigned long long)(lags.size() + 2), ny, nx});
-
-    // release pointer to output array
-    p_out = NULL;
-
-    // ***Return result to python
-    return out;
-}
-
-/*!
     Compute the image structure function in fft mode
     using the Wiener-Khinchin theorem on the GPU.
 
@@ -223,7 +118,7 @@ py::array_t<float> ddm_diff_cuda_single(py::array_t<T, py::array::c_style> img_s
     circular correlation.
  */
 template <typename T>
-py::array_t<double> ddm_fft_cuda(py::array_t<T, py::array::c_style> img_seq,
+py::array_t<Scalar> ddm_fft_cuda(py::array_t<T, py::array::c_style> img_seq,
                                  vector<unsigned int> lags,
                                  unsigned long long nx,
                                  unsigned long long ny,
@@ -235,14 +130,11 @@ py::array_t<double> ddm_fft_cuda(py::array_t<T, py::array::c_style> img_seq,
     unsigned long long width = img_seq.shape()[2];  // get width of original input
     auto p_img_seq = img_seq.data();                // get input data
 
-    bool is_double_prec = true;
-
     // Check host memory
     chk_host_mem_fft(nx,
                      ny,
                      length,
-                     lags.size(),
-                     is_double_prec);
+                     lags.size());
 
     // Check device memory and optimize
     unsigned long long num_fft2, num_chunks, num_fullshift;
@@ -255,8 +147,7 @@ py::array_t<double> ddm_fft_cuda(py::array_t<T, py::array::c_style> img_seq,
                        nt,
                        length,
                        lags,
-                       std::is_same<T, double>::value,
-                       is_double_prec,
+                       std::is_same<T, Scalar>::value,
                        num_fft2,
                        num_chunks,
                        num_fullshift,
@@ -271,11 +162,11 @@ py::array_t<double> ddm_fft_cuda(py::array_t<T, py::array::c_style> img_seq,
     /*
     - We need to make sure that the fft2 r2c fits in the array,
       so the size of one fft2 output is ny*(nx//2 + 1) complex
-      doubles [the input needs to be twice as large]
+      [the input needs to be twice as large]
      */
     unsigned long long _nx = nx / 2 + 1;
     unsigned long long dim_t = max(length, (unsigned long long)(lags.size() + 2));
-    py::array_t<double> out = py::array_t<double>(2 * _nx * ny * dim_t);
+    py::array_t<Scalar> out = py::array_t<Scalar>(2 * _nx * ny * dim_t);
     auto p_out = out.mutable_data();
 
     // ***Transfer data to GPU and compute fft2
@@ -309,114 +200,6 @@ py::array_t<double> ddm_fft_cuda(py::array_t<T, py::array::c_style> img_seq,
                     ny,
                     num_fullshift,
                     pitch_fs);
-
-    // ***Resize output
-    // the full size of the image structure function is
-    // nx * ny * #(lags)
-    out.resize({(unsigned long long)(lags.size() + 2), ny, nx});
-
-    // release pointer to output array
-    p_out = NULL;
-
-    // ***Return result to python
-    return out;
-}
-
-/*!
-    Compute the image structure function in fft mode
-    using the Wiener-Khinchin theorem on the GPU.
-    Single precision.
-
-    Notice that nt must be at least 2*length to avoid
-    circular correlation.
- */
-template <typename T>
-py::array_t<float> ddm_fft_cuda_single(py::array_t<T, py::array::c_style> img_seq,
-                                       vector<unsigned int> lags,
-                                       unsigned long long nx,
-                                       unsigned long long ny,
-                                       unsigned long long nt)
-{
-    // ***Get input array and dimensions
-    unsigned long long length = img_seq.shape()[0]; // get length of original input
-    unsigned long long height = img_seq.shape()[1]; // get height of original input
-    unsigned long long width = img_seq.shape()[2];  // get width of original input
-    auto p_img_seq = img_seq.data();                // get input data
-
-    bool is_double_prec = false;
-
-    // Check host memory
-    chk_host_mem_fft(nx,
-                     ny,
-                     length,
-                     lags.size(),
-                     is_double_prec);
-
-    // Check device memory and optimize
-    unsigned long long num_fft2, num_chunks, num_fullshift;
-    unsigned long long pitch_buff, pitch_nx, pitch_q, pitch_t, pitch_nt, pitch_fs;
-    chk_device_mem_fft(width,
-                       height,
-                       sizeof(T),
-                       nx,
-                       ny,
-                       nt,
-                       length,
-                       lags,
-                       std::is_same<T, float>::value,
-                       is_double_prec,
-                       num_fft2,
-                       num_chunks,
-                       num_fullshift,
-                       pitch_buff,
-                       pitch_nx,
-                       pitch_q,
-                       pitch_t,
-                       pitch_nt,
-                       pitch_fs);
-
-    // ***Allocate workspace vector
-    /*
-    - We need to make sure that the fft2 r2c fits in the array,
-      so the size of one fft2 output is ny*(nx//2 + 1) complex
-      doubles [the input needs to be twice as large]
-     */
-    unsigned long long _nx = nx / 2 + 1;
-    unsigned long long dim_t = max(length, (unsigned long long)(lags.size() + 2));
-    py::array_t<float> out = py::array_t<float>(2 * _nx * ny * dim_t);
-    auto p_out = out.mutable_data();
-
-    // ***Transfer data to GPU and compute fft2
-    compute_fft2_single(p_img_seq,
-                        p_out,
-                        width,
-                        height,
-                        length,
-                        nx,
-                        ny,
-                        num_fft2,
-                        pitch_buff,
-                        pitch_nx);
-
-    // ***Compute image structure function
-    structure_function_fft_single(p_out,
-                                  lags,
-                                  length,
-                                  nx,
-                                  ny,
-                                  nt,
-                                  num_chunks,
-                                  pitch_q,
-                                  pitch_t,
-                                  pitch_nt);
-
-    // ***Convert raw output to full and shifted image structure function
-    make_full_shift_single(p_out,
-                           lags.size() + 2,
-                           nx,
-                           ny,
-                           num_fullshift,
-                           pitch_fs);
 
     // ***Resize output
     // the full size of the image structure function is
@@ -468,15 +251,6 @@ void export_ddm_cuda(py::module &m)
     m.def("ddm_diff_cuda", &ddm_diff_cuda<uint64_t>, py::return_value_policy::take_ownership);
     m.def("ddm_diff_cuda", &ddm_diff_cuda<float>, py::return_value_policy::take_ownership);
     m.def("ddm_diff_cuda", &ddm_diff_cuda<double>, py::return_value_policy::take_ownership);
-    m.def("ddm_diff_cuda_single", &ddm_diff_cuda_single<uint8_t>, py::return_value_policy::take_ownership);
-    m.def("ddm_diff_cuda_single", &ddm_diff_cuda_single<int16_t>, py::return_value_policy::take_ownership);
-    m.def("ddm_diff_cuda_single", &ddm_diff_cuda_single<uint16_t>, py::return_value_policy::take_ownership);
-    m.def("ddm_diff_cuda_single", &ddm_diff_cuda_single<int32_t>, py::return_value_policy::take_ownership);
-    m.def("ddm_diff_cuda_single", &ddm_diff_cuda_single<uint32_t>, py::return_value_policy::take_ownership);
-    m.def("ddm_diff_cuda_single", &ddm_diff_cuda_single<int64_t>, py::return_value_policy::take_ownership);
-    m.def("ddm_diff_cuda_single", &ddm_diff_cuda_single<uint64_t>, py::return_value_policy::take_ownership);
-    m.def("ddm_diff_cuda_single", &ddm_diff_cuda_single<float>, py::return_value_policy::take_ownership);
-    m.def("ddm_diff_cuda_single", &ddm_diff_cuda_single<double>, py::return_value_policy::take_ownership);
     m.def("ddm_fft_cuda", &ddm_fft_cuda<uint8_t>, py::return_value_policy::take_ownership);
     m.def("ddm_fft_cuda", &ddm_fft_cuda<int16_t>, py::return_value_policy::take_ownership);
     m.def("ddm_fft_cuda", &ddm_fft_cuda<uint16_t>, py::return_value_policy::take_ownership);
@@ -486,13 +260,4 @@ void export_ddm_cuda(py::module &m)
     m.def("ddm_fft_cuda", &ddm_fft_cuda<uint64_t>, py::return_value_policy::take_ownership);
     m.def("ddm_fft_cuda", &ddm_fft_cuda<float>, py::return_value_policy::take_ownership);
     m.def("ddm_fft_cuda", &ddm_fft_cuda<double>, py::return_value_policy::take_ownership);
-    m.def("ddm_fft_cuda_single", &ddm_fft_cuda_single<uint8_t>, py::return_value_policy::take_ownership);
-    m.def("ddm_fft_cuda_single", &ddm_fft_cuda_single<int16_t>, py::return_value_policy::take_ownership);
-    m.def("ddm_fft_cuda_single", &ddm_fft_cuda_single<uint16_t>, py::return_value_policy::take_ownership);
-    m.def("ddm_fft_cuda_single", &ddm_fft_cuda_single<int32_t>, py::return_value_policy::take_ownership);
-    m.def("ddm_fft_cuda_single", &ddm_fft_cuda_single<uint32_t>, py::return_value_policy::take_ownership);
-    m.def("ddm_fft_cuda_single", &ddm_fft_cuda_single<int64_t>, py::return_value_policy::take_ownership);
-    m.def("ddm_fft_cuda_single", &ddm_fft_cuda_single<uint64_t>, py::return_value_policy::take_ownership);
-    m.def("ddm_fft_cuda_single", &ddm_fft_cuda_single<float>, py::return_value_policy::take_ownership);
-    m.def("ddm_fft_cuda_single", &ddm_fft_cuda_single<double>, py::return_value_policy::take_ownership);
 }
