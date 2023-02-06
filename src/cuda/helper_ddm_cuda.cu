@@ -591,8 +591,10 @@ __global__ void average_complex_kernel(double2 *d_in,
         {
             // Fetch final intermediate sum from 2nd warp
             if (blockDim.x >= 64)
+            {
                 tmp_sum_r += sdata2[tid + 32].x;
-            tmp_sum_i += sdata2[tid + 32].y;
+                tmp_sum_i += sdata2[tid + 32].y;
+            }
             // Reduce final warp using shuffle
             for (int offset = tile32.size() / 2; offset > 0; offset /= 2)
             {
