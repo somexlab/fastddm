@@ -1,7 +1,9 @@
+from typing import Tuple
+
 import numpy as np
 
 
-def blackman(shape):
+def blackman(shape : Tuple[int, ...]):
     r"""Blackman window.
 
     In the 1D case, the equation for the periodic three-term exact Blackman
@@ -19,7 +21,7 @@ def blackman(shape):
 
     Parameters
     ----------
-    shape : tuple
+    shape : Tuple[int, ...]
         Image (or sequence) shape.
         Last two values are used.
 
@@ -28,12 +30,14 @@ def blackman(shape):
     numpy.ndarray
         A Blackman window.
     """
-
+    
+    *rest, ydim, xdim = shape
+    
     a = [7938 / 18608, 9240 / 18608, 1430 / 18608]
-    x = np.array([i / float(shape[-1]) for i in range(shape[-1])])
-    y = np.array([i / float(shape[-2]) for i in range(shape[-2])])
-    Wx = np.zeros(shape[-1])
-    Wy = np.zeros(shape[-2])
+    x = np.linspace(0, (xdim - 1) / xdim, num=xdim)
+    y = np.linspace(0, (ydim - 1) / ydim, num=ydim)
+    Wx = np.zeros(xdim)
+    Wy = np.zeros(ydim)
 
     for n in range(3):
         Wx += (-1) ** n * a[n] * np.cos(2.0 * np.pi * n * x)
@@ -44,7 +48,7 @@ def blackman(shape):
     return Wx * Wy
 
 
-def blackman_harris(shape: tuple[int, ...]) -> np.ndarray:
+def blackman_harris(shape: Tuple[int, ...]) -> np.ndarray:
     r"""Blackman-Harris window.
 
     In the 1D case, the equation for the periodic four-term Blackman-Harris
@@ -63,7 +67,7 @@ def blackman_harris(shape: tuple[int, ...]) -> np.ndarray:
 
     Parameters
     ----------
-    shape : tuple[int, ...]
+    shape : Tuple[int, ...]
         Image (or sequence) shape.
         Last two values are used.
 
