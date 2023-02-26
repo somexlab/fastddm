@@ -1,6 +1,5 @@
 """A collection of lmfit Models and helper/wrapper functions."""
 
-from re import I
 from typing import Any, Optional, Union
 
 import lmfit as lm
