@@ -1,4 +1,7 @@
-"""Collection of helper functions."""
+"""Collection of helper functions.
+
+Author: Fabian Krautgasser | fkrautgasser@posteo.org
+"""
 
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Sequence, Union
@@ -13,9 +16,9 @@ Metadata = Dict[str, Any]
 
 
 def tiff2numpy(
-    path: str, 
-    seq: Optional[Sequence[int]] = None, 
-    color_seq: Optional[Sequence[int]] = None
+    path: str,
+    seq: Optional[Sequence[int]] = None,
+    color_seq: Optional[Sequence[int]] = None,
 ) -> np.ndarray:
     """Read a TIFF file (or a sequence inside a multipage TIFF) and return it as a numpy array.
 
@@ -30,7 +33,7 @@ def tiff2numpy(
         A sequence, e.g. `range(5, 10)`, to describe a specific range within
         a multipage TIFF, by default None.
     color_seq : Sequence[int], optional
-        A sequence, e.g. `range(2)`, to describe a specific color sequence to be selected, by 
+        A sequence, e.g. `range(2)`, to describe a specific color sequence to be selected, by
         default None
 
     Returns
@@ -41,8 +44,8 @@ def tiff2numpy(
         If color images are imported, convention is (C,Z,Y,X).
     """
     if not path.endswith(".tif"):  # read anything but tif files with io.imread
-        return io.imread(path)  
-    
+        return io.imread(path)
+
     with tifffile.TiffFile(path) as tif:
         data = tif.asarray(key=seq)
 
@@ -54,11 +57,13 @@ def tiff2numpy(
 
     if color_seq is not None and len(data.shape) >= 3:
         data = data[color_seq, ...]
-    
+
     return data
 
 
-def images2numpy(fnames : Sequence[str], color_seq: Optional[Sequence[int]] = None) -> np.ndarray:
+def images2numpy(
+    fnames: Sequence[str], color_seq: Optional[Sequence[int]] = None
+) -> np.ndarray:
     """Read a sequence of image files and return it as a numpy array.
 
     Parameters
@@ -66,7 +71,7 @@ def images2numpy(fnames : Sequence[str], color_seq: Optional[Sequence[int]] = No
     fnames : Sequence[str]
         A sequence of file names.
     color_seq : Sequence[int], optional
-        A sequence, e.g. `range(2)`, to describe a specific color sequence to be selected, by 
+        A sequence, e.g. `range(2)`, to describe a specific color sequence to be selected, by
         default None
 
     Returns
@@ -82,14 +87,14 @@ def images2numpy(fnames : Sequence[str], color_seq: Optional[Sequence[int]] = No
     if len(tmp.shape) > 2:
         # initialize image sequence array
         dim_y, dim_x, dim_col = tmp.shape
-        
+
         # check if color sequence is given
         if color_seq is not None:
             color_seq = tuple(color_seq)
-            
+
             # set dim_col to new value
             dim_col = len(color_seq)
-        else: 
+        else:
             color_seq = range(dim_col)  # all color channels
 
         shape = (dim_col, len(fnames), dim_y, dim_x)
@@ -98,9 +103,9 @@ def images2numpy(fnames : Sequence[str], color_seq: Optional[Sequence[int]] = No
         # read images in c,t,y,x order
         for i, f in enumerate(fnames):
             tmp = io.imread(f)
-            
+
             for j in color_seq:
-                img_seq[j,i] = tmp[:,:,j]
+                img_seq[j, i] = tmp[:, :, j]
     else:
         # initialize image sequence array
         shape = (len(fnames), *tmp.shape)
@@ -114,9 +119,9 @@ def images2numpy(fnames : Sequence[str], color_seq: Optional[Sequence[int]] = No
 
 
 def read_images(
-    src: Union[str, List[str]], 
-    seq: Optional[Sequence[int]] = None, 
-    color_seq: Optional[Sequence[int]] = None
+    src: Union[str, List[str]],
+    seq: Optional[Sequence[int]] = None,
+    color_seq: Optional[Sequence[int]] = None,
 ) -> np.ndarray:
     """Read a single image file or a list of image files.
 
@@ -131,7 +136,7 @@ def read_images(
     seq : Optional[Sequence[int]], optional
         A subset of a multi-image file, can be set e.g. via a `range` object, by default None
     color_seq : Sequence[int], optional
-        A sequence, e.g. `range(2)`, to describe a specific color sequence to be selected, by 
+        A sequence, e.g. `range(2)`, to describe a specific color sequence to be selected, by
         default None
     Returns
     -------
@@ -193,11 +198,52 @@ def read_metadata(src: str) -> Metadata:
         raise NotImplementedError(
             "It is not yet supported to read the metadata of multiple images in a directory."
         )
-    
+
     elif not path.exists():
         raise FileNotFoundError(f"Given file '{src}' does not exist.")
-    
+
     elif path.suffix not in supported_types:
         raise RuntimeError(f"Given file extension '{path.suffix}' is not supported.")
-    
+
     return type_reader[path.suffix](src)
+
+
+def chunkify(data: np.ndarray, chunksize: int, overlap: int = 0) -> List[np.ndarray]:
+    """akes a dataset (or dataset indices) and chunks it into smaller portions of size
+    `chunksize`, with a given `overlap` with the previous chunk.
+
+    The last chunk may not be of the right size. The chunking will happen along the __first__ axis.
+
+    Parameters
+    ----------
+    data : np.ndarray
+        A numpy array of to be chunked content
+    chunksize : int
+        The size of the output chunks.
+    overlap : int, optional
+        Give a number > 0 by how much the chunks should overlap, i.e. overlap=2 would result in [[1 2 3], [2 3 4], [3 4 5], ...], by default 0
+
+    Returns
+    -------
+    List[np.ndarray]
+        The list of chunks.
+    """
+    size = len(data)
+    nchunks = size // chunksize
+    if nchunks == 0:  # nothing to do here
+        return [data]
+
+    left, right, diff = 0, chunksize, chunksize - overlap
+    chunks = []
+
+    # main chunks
+    while right < size:
+        chunks.append(data[left:right])
+        left += diff
+        right += diff
+
+    # rest chunk if any
+    if len(data[left:]) > 0:
+        chunks.append(data[left:])
+
+    return chunks
