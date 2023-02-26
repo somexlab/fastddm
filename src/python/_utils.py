@@ -1,4 +1,7 @@
-"""Collection of helper functions."""
+"""Collection of helper functions.
+
+Author: Fabian Krautgasser | fkrautgasser@posteo.org
+"""
 
 from typing import Optional, Sequence, Union, List
 
@@ -40,7 +43,7 @@ def tiff2numpy(path: str, seq: Optional[Sequence[int]] = None) -> np.ndarray:
     return data
 
 
-def images2numpy(fnames : Sequence[str]) -> np.ndarray:
+def images2numpy(fnames: Sequence[str]) -> np.ndarray:
     """Read a sequence of image files and return it as a numpy array.
 
     Parameters
@@ -67,7 +70,7 @@ def images2numpy(fnames : Sequence[str]) -> np.ndarray:
         for i, f in enumerate(fnames):
             tmp = io.imread(f)
             for j in range(dim_col):
-                img_seq[j,i] = tmp[:,:,j]
+                img_seq[j, i] = tmp[:, :, j]
     else:
         # initialize image sequence array
         shape = (len(fnames), *tmp.shape)
@@ -80,7 +83,9 @@ def images2numpy(fnames : Sequence[str]) -> np.ndarray:
     return img_seq
 
 
-def read_images(src: Union[str, List[str]], seq: Optional[Sequence[int]] = None) -> np.ndarray:
+def read_images(
+    src: Union[str, List[str]], seq: Optional[Sequence[int]] = None
+) -> np.ndarray:
     """Read a single image file or a list of image files.
 
     The single image file can itself be a sequence of images, like multipage tiff or nd2. If `seq`
@@ -115,3 +120,44 @@ def read_images(src: Union[str, List[str]], seq: Optional[Sequence[int]] = None)
 
     else:
         raise RuntimeError(f"Failed to open {src}.")
+
+
+def chunkify(data: np.ndarray, chunksize: int, overlap: int = 0) -> List[np.ndarray]:
+    """akes a dataset (or dataset indices) and chunks it into smaller portions of size
+    `chunksize`, with a given `overlap` with the previous chunk.
+
+    The last chunk may not be of the right size. The chunking will happen along the __first__ axis.
+
+    Parameters
+    ----------
+    data : np.ndarray
+        A numpy array of to be chunked content
+    chunksize : int
+        The size of the output chunks.
+    overlap : int, optional
+        Give a number > 0 by how much the chunks should overlap, i.e. overlap=2 would result in [[1 2 3], [2 3 4], [3 4 5], ...], by default 0
+
+    Returns
+    -------
+    List[np.ndarray]
+        The list of chunks.
+    """
+    size = len(data)
+    nchunks = size // chunksize
+    if nchunks == 0:  # nothing to do here
+        return [data]
+
+    left, right, diff = 0, chunksize, chunksize - overlap
+    chunks = []
+
+    # main chunks
+    while right < size:
+        chunks.append(data[left:right])
+        left += diff
+        right += diff
+
+    # rest chunk if any
+    if len(data[left:]) > 0:
+        chunks.append(data[left:])
+
+    return chunks
