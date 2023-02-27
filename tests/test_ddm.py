@@ -23,7 +23,8 @@ def ddm_baseline():
 
 def test_ddm_cpp_fft(regtest, ddm_baseline):
 
-    print(ddm_baseline._data, file=regtest)
+    with np.printoptions(threshold=np.inf):  # type: ignore
+        print(ddm_baseline._data, file=regtest)
 
 
 def test_ddm_cpp_diff(ddm_baseline):
