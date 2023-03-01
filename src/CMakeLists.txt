@@ -60,19 +60,16 @@ if(ENABLE_CPP)
 endif(ENABLE_CPP)
 
 if(ENABLE_CUDA)
-    target_compile_definitions(_core PUBLIC ENABLE_CUDA)
     include_directories(${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
-    include(select_compute_arch.cmake)
+    include(CUDAsetup.cmake)
+
+    target_compile_definitions(_core PUBLIC ENABLE_CUDA)
 
     if(${CMAKE_VERSION} VERSION_LESS "3.18.0")
-        CUDA_SELECT_NVCC_ARCH_FLAGS(ARCH_FLAGS Auto)
-        message(STATUS "Generating code for the following CUDA architectures: ${ARCH_FLAGS_readable}")
-        target_compile_options(_core PUBLIC $<$<COMPILE_LANGUAGE:CUDA>:${ARCH_FLAGS}>)
+        target_compile_options(_core PUBLIC $<$<COMPILE_LANGUAGE:CUDA>:-arch=sm_${_cuda_min_arch})
     else()
-        CUDA_SELECT_NVCC_ARCH(ARCHS Auto)
-        message(STATUS "Generating code for the following CUDA architectures: ${ARCHS_readable}")
         set_target_properties(_core PROPERTIES
-                                    CUDA_ARCHITECTURES ${ARCHS}
+                                    CUDA_ARCHITECTURES ${_cuda_min_arch}
                             )
     endif()
 
