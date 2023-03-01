@@ -1,3 +1,6 @@
+# Copyright (c) 2023-2023 University of Vienna, Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino.
+# Part of FastDDM, released under the GNU GPL-3.0 License.
+
 """Main function to interface with backends."""
 
 from typing import Iterable, Dict, Callable, Union, Optional, Tuple, Sequence
@@ -16,7 +19,7 @@ __maintainer__ = 'Enrico Lattuada'
 __email__ = 'lattuada.enrico@gmail.com'
 __status__ = 'Development'
 __license__ = 'GNU GPL 3.0'
-__copyright__ = 'Copyright 2023 University of Vienna, Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino'
+__copyright__ = 'Copyright (c) 2023-2023 University of Vienna, Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino'
 
 
 # automatically retrieve version
