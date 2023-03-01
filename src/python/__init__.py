@@ -8,6 +8,25 @@ import os.path
 import numpy as np
 from scipy.interpolate import interp1d
 
+__title__ = 'fastddm'
+__description__ = 'A Python/C++ library for the analysis of Differential Dynamic Microscopy experiments'
+__url__ = 'https://github.com/somexlab/fastddm'
+__author__ = 'Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino'
+__maintainer__ = 'Enrico Lattuada'
+__email__ = 'lattuada.enrico@gmail.com'
+__status__ = 'Development'
+__license__ = 'GNU GPL 3.0'
+__copyright__ = 'Copyright 2023 University of Vienna, Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino'
+
+
+# automatically retrieve version
+from pkg_resources import get_distribution, DistributionNotFound
+try:
+    __version__ = get_distribution("fastddm").version
+except DistributionNotFound:
+    # package is not installed
+    pass
+
 IS_CPP_ENABLED = ${IS_CPP_ENABLED}      # configured by CMake
 IS_CUDA_ENABLED = ${IS_CUDA_ENABLED}    # configured by CMake
 

@@ -13,7 +13,6 @@ readme = "README.md"
 authors = [
     { name ="Enrico Lattuada", email = "lattuada.enrico@gmail.com" },
     { name = "Fabian Krautgasser" },
-    { name = "Fabio Giavazzi" },
     { name = "Roberto Cerbino" },
 ]
 maintainers = [
