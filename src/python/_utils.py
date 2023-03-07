@@ -208,15 +208,20 @@ def read_metadata(src: str) -> Metadata:
     return type_reader[path.suffix](src)
 
 
-def chunkify(data: np.ndarray, chunksize: int, overlap: int = 0) -> List[np.ndarray]:
-    """akes a dataset (or dataset indices) and chunks it into smaller portions of size
-    `chunksize`, with a given `overlap` with the previous chunk.
+def chunkify(seq: np.ndarray, chunksize: int, overlap: int = 0) -> List[np.ndarray]:
+    """Takes a sequence `seq` and chunks it into smaller portions of size `chunksize`, with a given
+    `overlap` with the previous chunk.
+
+    The sequence could be e.g. image indices, or an image sequence itself. However, be aware that
+    in the latter case, depending on the chunksize & overlap settings the needed amount of memory
+    could be very high! (It is recommended to use image sequence indices, see example below.)
 
     The last chunk may not be of the right size. The chunking will happen along the __first__ axis.
 
+
     Parameters
     ----------
-    data : np.ndarray
+    seq : np.ndarray
         A numpy array of to be chunked content
     chunksize : int
         The size of the output chunks.
@@ -227,23 +232,28 @@ def chunkify(data: np.ndarray, chunksize: int, overlap: int = 0) -> List[np.ndar
     -------
     List[np.ndarray]
         The list of chunks.
+
+    Examples
+    --------
+    >>> chunkify(np.arange(10), chunksize=5, overlap=2)
+    [array([0, 1, 2, 3, 4]), array([3, 4, 5, 6, 7]), array([6, 7, 8, 9])]
     """
-    size = len(data)
+    size = len(seq)
     nchunks = size // chunksize
     if nchunks == 0:  # nothing to do here
-        return [data]
+        return [seq]
 
     left, right, diff = 0, chunksize, chunksize - overlap
     chunks = []
 
     # main chunks
     while right < size:
-        chunks.append(data[left:right])
+        chunks.append(seq[left:right])
         left += diff
         right += diff
 
     # rest chunk if any
-    if len(data[left:]) > 0:
-        chunks.append(data[left:])
+    if len(seq[left:]) > 0:
+        chunks.append(seq[left:])
 
     return chunks
