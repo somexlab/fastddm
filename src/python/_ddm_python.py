@@ -234,10 +234,14 @@ def _diff_image_structure_function(
     if lag >= length:
         raise RuntimeError("Time delay cannot be longer than the timeseries itself!")
 
-    cropped_conj = rfft2[:-lag].conj()
-    shifted = rfft2[lag:]
-    shifted_abs_square = rfft2_square_mod[lag:]
-    cropped_abs_square = rfft2_square_mod[:-lag]
+    # use slice objects to handle cropping of arrays better
+    crop = slice(None, -lag) if lag != 0 else slice(None, None)
+    shift = slice(lag, None) 
+    
+    cropped_conj = rfft2[crop].conj()
+    shifted = rfft2[shift]
+    shifted_abs_square = rfft2_square_mod[shift]
+    cropped_abs_square = rfft2_square_mod[crop]
 
     sum_of_parts = (
         shifted_abs_square + cropped_abs_square - 2 * (cropped_conj * shifted).real
@@ -360,7 +364,7 @@ def _py_image_structure_function(
     if nx is None or ny is None:
         _, ny, nx = images.shape
     length = len(lags)
-    dqt = np.zeros((length, ny, nx))
+    dqt = np.zeros((length + 2, ny, nx))  # +2 for (avg) power spectrum & variance 
     output_shape = (ny, nx)
 
     # spatial fft & square modulus
@@ -381,6 +385,10 @@ def _py_image_structure_function(
 
     for i, lag in enumerate(lags):
         dqt[i] = calc_dqt(*args, lag, shape=output_shape)
+
+    # add the power spectrum and the variance as the last two entries in the dqt array
+    dqt[-2] = reconstruct_full_spectrum(square_mod.mean(axis=0), shape=output_shape)
+    dqt[-1] = reconstruct_full_spectrum(rfft2.var(axis=0), shape=output_shape)
 
     return dqt
 
