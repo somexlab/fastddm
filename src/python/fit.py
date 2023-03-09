@@ -1,5 +1,7 @@
 # Copyright (c) 2023-2023 University of Vienna, Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino.
 # Part of FastDDM, released under the GNU GPL-3.0 License.
+# Author: Fabian Krautgasser
+# Maintainer: Fabian Krautgasser
 
 """A collection of lmfit Models and helper/wrapper functions."""
 

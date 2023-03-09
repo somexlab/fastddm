@@ -1,5 +1,7 @@
 # Copyright (c) 2023-2023 University of Vienna, Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino.
 # Part of FastDDM, released under the GNU GPL-3.0 License.
+# Authors: Enrico Lattuada and Fabian Krautgasser
+# Maintainers: Enrico Lattuada and Fabian Krautgasser
 
 """Collection of functions to write and read binary files."""
 
