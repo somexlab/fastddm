@@ -229,10 +229,14 @@ def _diff_image_structure_function(
     if lag >= length:
         raise RuntimeError("Time delay cannot be longer than the timeseries itself!")
 
-    cropped_conj = rfft2[:-lag].conj()
-    shifted = rfft2[lag:]
-    shifted_abs_square = rfft2_square_mod[lag:]
-    cropped_abs_square = rfft2_square_mod[:-lag]
+    # use slice objects to handle cropping of arrays better
+    crop = slice(None, -lag) if lag != 0 else slice(None, None)
+    shift = slice(lag, None) 
+    
+    cropped_conj = rfft2[crop].conj()
+    shifted = rfft2[shift]
+    shifted_abs_square = rfft2_square_mod[shift]
+    cropped_abs_square = rfft2_square_mod[crop]
 
     sum_of_parts = (
         shifted_abs_square + cropped_abs_square - 2 * (cropped_conj * shifted).real
