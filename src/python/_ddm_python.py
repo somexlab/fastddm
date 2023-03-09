@@ -355,7 +355,7 @@ def _py_image_structure_function(
     if nx is None or ny is None:
         _, ny, nx = images.shape
     length = len(lags)
-    dqt = np.zeros((length, ny, nx))
+    dqt = np.zeros((length + 2, ny, nx))  # +2 for (avg) power spectrum & variance 
     output_shape = (ny, nx)
 
     # spatial fft & square modulus
@@ -376,6 +376,10 @@ def _py_image_structure_function(
 
     for i, lag in enumerate(lags):
         dqt[i] = calc_dqt(*args, lag, shape=output_shape)
+
+    # add the power spectrum and the variance as the last two entries in the dqt array
+    dqt[-2] = reconstruct_full_spectrum(square_mod.mean(axis=0), shape=output_shape)
+    dqt[-1] = reconstruct_full_spectrum(rfft2.var(axis=0), shape=output_shape)
 
     return dqt
 

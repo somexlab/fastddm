@@ -36,13 +36,13 @@ def test_ddm_cpp_diff(ddm_baseline):
 def test_ddm_py_fft(ddm_baseline):
     result = fddm.ddm(imgs, lags, core="py", mode="fft")
 
-    assert np.isclose(result._data, ddm_baseline.data).all()
+    assert np.isclose(result._data, ddm_baseline._data).all()
 
 
 def test_ddm_py_diff(ddm_baseline):
     result = fddm.ddm(imgs, lags, core="py", mode="diff")
 
-    assert np.isclose(result._data, ddm_baseline.data).all()
+    assert np.isclose(result._data, ddm_baseline._data).all()
 
 
 @pytest.mark.skipif("cuda" not in CORES, reason="needs CUDA installed")
