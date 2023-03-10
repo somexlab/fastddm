@@ -1,4 +1,8 @@
-// Maintainer: enrico-lattuada
+// Copyright (c) 2023-2023 University of Vienna, Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino.
+// Part of FastDDM, released under the GNU GPL-3.0 License.
+
+// Author: Enrico Lattuada
+// Maintainer: Enrico Lattuada
 
 // inclusion guard
 #ifndef __HELPER_MEMCHK_GPU_H__
@@ -237,4 +241,4 @@ void chk_device_mem_fft(unsigned long long width,
                         unsigned long long &pitch_nt,
                         unsigned long long &pitch_fs);
 
-#endif
+#endif  // __HELPER_MEMCHK_GPU_H__

@@ -1,4 +1,8 @@
-// Maintainer: enrico-lattuada
+// Copyright (c) 2023-2023 University of Vienna, Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino.
+// Part of FastDDM, released under the GNU GPL-3.0 License.
+
+// Author: Enrico Lattuada
+// Maintainer: Enrico Lattuada
 
 // inclusion guard
 #ifndef __HELPER_MEMCHK_GPU_CUH__
@@ -76,4 +80,4 @@ void cudaGetFftMemSize(size_t nt,
                        size_t *memsize,
                        cufftResult &cufft_res);
 
-#endif
+#endif  // __HELPER_MEMCHK_GPU_CUH__

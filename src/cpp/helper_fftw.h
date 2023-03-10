@@ -1,4 +1,8 @@
-// Maintainer: enrico-lattuada
+// Copyright (c) 2023-2023 University of Vienna, Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino.
+// Part of FastDDM, released under the GNU GPL-3.0 License.
+
+// Author: Enrico Lattuada
+// Maintainer: Enrico Lattuada
 
 // inclusion guard
 #ifndef __HELPER_FFTW_H__
@@ -36,4 +40,4 @@ fftw_plan fft_create_plan(vector<double> &input,
                           size_t nt,
                           size_t N);
 
-#endif
+#endif  // __HELPER_FFTW_H__

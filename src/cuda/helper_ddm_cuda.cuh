@@ -1,4 +1,8 @@
-// Maintainer: enrico-lattuada
+// Copyright (c) 2023-2023 University of Vienna, Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino.
+// Part of FastDDM, released under the GNU GPL-3.0 License.
+
+// Author: Enrico Lattuada
+// Maintainer: Enrico Lattuada
 
 // inclusion guard
 #ifndef __HELPER_DDM_CUDA_CUH__
@@ -228,4 +232,4 @@ __global__ void linear_combination_kernel(double2 *c,
                                           double2 B,
                                           unsigned int N);
 
-#endif
+#endif  // __HELPER_DDM_CUDA_CUH__
