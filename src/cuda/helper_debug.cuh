@@ -1,4 +1,8 @@
-// Maintainer: enrico-lattuada
+// Copyright (c) 2023-2023 University of Vienna, Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino.
+// Part of FastDDM, released under the GNU GPL-3.0 License.
+
+// Author: Enrico Lattuada
+// Maintainer: Enrico Lattuada
 
 // inclusion guard
 #ifndef __HELPER_DEBUG_CUH__
@@ -99,4 +103,4 @@ inline void __cufftSilentSafeCall(cufftResult err, const char *file, const int l
     }
 }
 
-#endif
+#endif  // __HELPER_DEBUG_CUH__

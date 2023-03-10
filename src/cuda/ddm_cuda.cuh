@@ -1,4 +1,8 @@
-// Maintainer: enrico-lattuada
+// Copyright (c) 2023-2023 University of Vienna, Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino.
+// Part of FastDDM, released under the GNU GPL-3.0 License.
+
+// Author: Enrico Lattuada
+// Maintainer: Enrico Lattuada
 
 // inclusion guard
 #ifndef __DDM_CUDA_CUH__
@@ -96,4 +100,4 @@ void structure_function_fft(double *h_in,
                             unsigned long long pitch_t,
                             unsigned long long pitch_nt);
 
-#endif
+#endif  // __DDM_CUDA_CUH__

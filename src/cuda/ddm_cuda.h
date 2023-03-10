@@ -1,4 +1,8 @@
-// Maintainer: enrico-lattuada
+// Copyright (c) 2023-2023 University of Vienna, Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino.
+// Part of FastDDM, released under the GNU GPL-3.0 License.
+
+// Author: Enrico Lattuada
+// Maintainer: Enrico Lattuada
 
 // inclusion guard
 #ifndef __DDM_CUDA_H__
@@ -57,4 +61,4 @@ void set_device(int gpu_id);
  */
 void export_ddm_cuda(py::module &m);
 
-#endif
+#endif  // __DDM_CUDA_H__
