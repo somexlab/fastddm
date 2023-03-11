@@ -192,9 +192,6 @@ def fit_multik(
     if return_model_results:
         model_results = [None] * len(data.k)
 
-    # get init params
-    init_params = model.make_params()
-
     # perform fit in ref
     result = model.fit(data.data[ref], x=data.tau, weights=weights, **fitargs)
     for p in model.param_names:
