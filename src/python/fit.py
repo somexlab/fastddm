@@ -5,10 +5,12 @@
 
 """A collection of lmfit Models and helper/wrapper functions."""
 
-from typing import Any, Optional, Union
+from typing import Any, Optional, Union, Dict, List, Tuple
 
 import lmfit as lm
 import numpy as np
+
+from .azimuthalaverage import AzimuthalAverage
 
 
 def _simple_exp(
@@ -137,3 +139,110 @@ def fit(
         print(result.fit_report())
 
     return result
+
+
+def fit_multik(
+    data: AzimuthalAverage,
+    model: lm.Model,
+    ref: int,
+    weights: Optional[np.ndarray] = None,
+    return_model_results : Optional[bool] = False,
+    **fitargs: Any,
+) -> Tuple[Dict[str, np.ndarray], Optional[List[lm.model.ModelResult]]]:
+    """A wrapper for fitting a given model to given data for multiple k vectors.
+
+    The initial parameters estimated for `ref` index should be set or passed to the function
+    (via `params` or as keyword arguments). It is highly recommended to pass the `weights`
+    argument for very noisy data. All keyword arguments in `fitargs` will directly be passed
+    to the lm.Model.fit method. See
+    https://lmfit.github.io/lmfit-py/model.html#lmfit.model.Model.fit
+    for more information.
+
+    The function starts the fitting process from the `ref` index and proceeds towards
+    smaller and larger indices using the fit parameters obtained from the previous
+    iteration.
+
+    Parameters
+    ----------
+    data : AzimuthalAverage
+        The azimuthal average object to be fitted.
+    model : lm.Model
+        The model to be used for the fit.
+    ref : int
+        The index of the reference k vector (where the initial fit parameters are estimated).
+    weights : np.ndarray, optional
+        Weights to use for the calculation of the fit residual [i.e., weights*(data-fit)].
+        Default is None; must have the same size as data.tau.
+    return_model_results : bool, optional
+        If True, the function also returns the complete list of ModelResults obtained for each
+        k vector. Default is False.
+
+    Returns
+    -------
+    Tuple[Dict[str, np.ndarray], Optional[List[lm.model.ModelResult]]]
+        The fit parameters obtained as a dictionary of string keys and numpy arrays values.
+        If `return_model_results` is True, the result is a tuple whose second value is
+        the complete list of ModelResults obtained. 
+    """
+
+    # initialize outputs
+    results = {p : np.zeros(len(data.k)) for p in model.param_names}
+
+    model_results = None
+    if return_model_results:
+        model_results = [None] * len(data.k)
+
+    # get init params
+    init_params = model.make_params()
+
+    # perform fit in ref
+    result = model.fit(data.data[ref], x=data.tau, weights=weights, **fitargs)
+    for p in model.param_names:
+        results[p][ref] = result.params[p].value
+    if return_model_results:
+        model_results[ref] = result
+
+    # perform fit towards small k vectors
+    idx = ref
+    # update parameters
+    model_params = model.make_params()
+    for p in model.param_names:
+        model_params[p].value = results[p][ref]
+    while idx > 0:
+        # update index
+        idx -= 1
+        # fit
+        if np.isnan(data.var[idx]):
+            results[p][idx] = np.nan
+        else:
+            result = model.fit(data.data[idx], x=data.tau, params=model_params, weights=weights, **fitargs)
+            # update results and model_params
+            for p in model.param_names:
+                model_params[p].value = results[p][idx] = result.params[p].value
+            if return_model_results:
+                model_results[idx] = result
+
+    # perform fit towards large k vectors
+    idx = ref + 1
+    # update parameters
+    model_params = model.make_params()
+    for p in model.param_names:
+        model_params[p].value = results[p][ref]
+    while idx < len(data.k):
+        # fit 
+        if np.isnan(data.var[idx]):
+            results[p][idx] = np.nan
+        else:
+            result = model.fit(data.data[idx], x=data.tau, params=model_params, weights=weights, **fitargs)
+            # update results and model_params
+            for p in model.param_names:
+                model_params[p].value = results[p][idx] = result.params[p].value
+            if return_model_results:
+                model_results[idx] = result
+        # update index
+        idx += 1
+
+    if return_model_results:
+        return results, model_results
+    else:
+        return results
