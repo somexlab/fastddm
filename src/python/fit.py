@@ -180,13 +180,15 @@ def fit_multik(
     Returns
     -------
     Tuple[Dict[str, np.ndarray], Optional[List[lm.model.ModelResult]]]
-        The fit parameters obtained as a dictionary of string keys and numpy arrays values.
-        If `return_model_results` is True, the result is a tuple whose second value is
-        the complete list of ModelResults obtained. 
+        The fit parameters obtained and the success boolean value as a dictionary of
+        string keys and numpy arrays values. If `return_model_results` is True,
+        the result is a tuple whose second value is the complete list of
+        ModelResults obtained. 
     """
 
     # initialize outputs
     results = {p : np.zeros(len(data.k)) for p in model.param_names}
+    results['success'] = np.zeros(len(data.k), dtype=False)
 
     model_results = None
     if return_model_results:
@@ -196,6 +198,7 @@ def fit_multik(
     result = model.fit(data.data[ref], x=data.tau, weights=weights, **fitargs)
     for p in model.param_names:
         results[p][ref] = result.params[p].value
+    results['success'][ref] = result.success
     if return_model_results:
         model_results[ref] = result
 
@@ -216,13 +219,13 @@ def fit_multik(
             # update results and model_params
             for p in model.param_names:
                 model_params[p].value = results[p][idx] = result.params[p].value
+            results['success'][idx] = result.success
             if return_model_results:
                 model_results[idx] = result
 
     # perform fit towards large k vectors
     idx = ref + 1
     # update parameters
-    model_params = model.make_params()
     for p in model.param_names:
         model_params[p].value = results[p][ref]
     while idx < len(data.k):
@@ -234,6 +237,7 @@ def fit_multik(
             # update results and model_params
             for p in model.param_names:
                 model_params[p].value = results[p][idx] = result.params[p].value
+            results['success'][idx] = result.success
             if return_model_results:
                 model_results[idx] = result
         # update index
