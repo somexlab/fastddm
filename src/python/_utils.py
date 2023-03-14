@@ -52,9 +52,9 @@ def tiff2numpy(
         data = tif.asarray(key=seq)
 
         if tif.pages.is_multipage:
-            if len(data.shape) == 4:
+            if len(data.shape) == 4:  # here we have a multipage tiff _with_ color channels
                 data = np.transpose(data, axes=(3, 0, 1, 2))
-        elif len(data.shape) == 3:
+        elif len(data.shape) == 3:  # here we only have a single image _with_ color channels
             data = np.transpose(data, axes=(2, 0, 1))
 
     if color_seq is not None and len(data.shape) >= 3:
