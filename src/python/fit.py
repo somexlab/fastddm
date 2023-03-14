@@ -147,18 +147,17 @@ def fit_multik(
     model: lm.Model,
     ref: int,
     ref_params: Optional[lm.Parameters] = None,
-    weights: Optional[np.ndarray] = None,
     return_model_results : Optional[bool] = False,
     **fitargs: Any,
 ) -> Tuple[Dict[str, np.ndarray], Optional[List[lm.model.ModelResult]]]:
     """A wrapper for fitting a given model to given data for multiple k vectors.
 
     The initial parameters estimated for `ref` index should be set in the model or passed
-    to the function (via `ref_params` or as keyword arguments). It is highly recommended
-    to pass the `weights` argument for very noisy data. All keyword arguments in `fitargs`
+    to the function (via `ref_params` or as keyword arguments). All keyword arguments in `fitargs`
     will directly be passed to the lm.Model.fit method. See
     https://lmfit.github.io/lmfit-py/model.html#lmfit.model.Model.fit
-    for more information.
+    for more information. It is highly recommended to pass the `weights` argument for
+    very noisy data (must have the same size of `data.tau`). 
 
     The function starts the fitting process from the `ref` index and proceeds towards
     lower and higher indices using the fit parameters obtained from the previous
@@ -180,9 +179,6 @@ def fit_multik(
         The index of the reference k vector (where the initial fit parameters are estimated).
     ref_params : lmfit.Parameters, optional
         Parameters to use in fit in ref. Default is None.
-    weights : np.ndarray, optional
-        Weights to use for the calculation of the fit residual [i.e., weights*(data-fit)].
-        Default is None; must have the same size as data.tau.
     return_model_results : bool, optional
         If True, the function also returns the complete list of ModelResults obtained for each
         k vector. Default is False.
@@ -224,7 +220,7 @@ def fit_multik(
         model_results = [None] * len(data.k)
 
     # perform fit in ref
-    result = model.fit(data.data[ref], params=model_params, weights=weights, **fitargs)
+    result = model.fit(data.data[ref], params=model_params, **fitargs)
     for p in model.param_names:
         results[p][ref] = result.params[p].value
     results['success'][ref] = result.success
@@ -240,7 +236,7 @@ def fit_multik(
         if np.isnan(data.var[idx]):
             results[p][idx] = np.nan
         else:
-            result = model.fit(data.data[idx], params=model_params, weights=weights, **fitargs)
+            result = model.fit(data.data[idx], params=model_params, **fitargs)
             # update results and model_params
             for p in model.param_names:
                 model_params[p].value = results[p][idx] = result.params[p].value
@@ -257,7 +253,7 @@ def fit_multik(
         if np.isnan(data.var[idx]):
             results[p][idx] = np.nan
         else:
-            result = model.fit(data.data[idx], params=model_params, weights=weights, **fitargs)
+            result = model.fit(data.data[idx], params=model_params, **fitargs)
             # update results and model_params
             for p in model.param_names:
                 model_params[p].value = results[p][idx] = result.params[p].value
