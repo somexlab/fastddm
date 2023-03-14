@@ -120,6 +120,36 @@ def images2numpy(
     return img_seq
 
 
+def _read_nd2(src: str, seq: Optional[Sequence[int]] = None) -> np.ndarray:
+    """Read an ND2 file with an optional specific (sub)sequence of images.
+
+    Parameters
+    ----------
+    src : str
+        Path to ND2 file.
+    seq : Optional[Sequence[int]], optional
+        A (sub)sequence of images to be selected from the movie, e.g. list(range(1, 200)), by default None
+
+    Returns
+    -------
+    np.ndarray
+        The image sequence as numpy array.
+    """
+
+    mov = ND2Reader(src)
+    length, dim_y, dim_x = mov.shape  # what about color channels? 
+    length = len(seq) if seq is not None else length
+    dtype = mov[0].dtype  # access dtype of first frame
+    imgs = np.zeros((length, dim_y, dim_x), dtype=dtype)
+
+    selected = seq if seq is not None else range(length)
+    for i, idx in enumerate(selected):
+        frame = mov.get_frame(idx)
+        imgs[i] = frame.data
+
+    return imgs
+
+
 def read_images(
     src: Union[str, List[str]],
     seq: Optional[Sequence[int]] = None,
@@ -155,10 +185,8 @@ def read_images(
 
     elif isinstance(src, str):
         if src.endswith(".nd2"):
-            if seq is None:
-                return np.array(ND2Reader(src))
-            else:
-                return np.array(ND2Reader(src)[seq])
+            return _read_nd2(src, seq=seq)
+        
         else:
             return tiff2numpy(src, seq=seq, color_seq=color_seq)
 
