@@ -232,13 +232,10 @@ def fit_multik(
         model_results[ref] = result
 
     # perform fit towards small k vectors
-    idx = ref
     # update parameters
     for p in model.param_names:
         model_params[p].value = results[p][ref]
-    while idx > 0:
-        # update index
-        idx -= 1
+    for idx in reversed(range(ref)):
         # fit
         if np.isnan(data.var[idx]):
             results[p][idx] = np.nan
@@ -252,11 +249,10 @@ def fit_multik(
                 model_results[idx] = result
 
     # perform fit towards large k vectors
-    idx = ref + 1
     # update parameters
     for p in model.param_names:
         model_params[p].value = results[p][ref]
-    while idx < len(data.k):
+    for idx in range(ref+1,len(data.k)):
         # fit 
         if np.isnan(data.var[idx]):
             results[p][idx] = np.nan
@@ -268,8 +264,6 @@ def fit_multik(
             results['success'][idx] = result.success
             if return_model_results:
                 model_results[idx] = result
-        # update index
-        idx += 1
 
     if return_model_results:
         return results, model_results
