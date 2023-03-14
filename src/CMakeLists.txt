@@ -98,6 +98,15 @@ configure_file(python/__init__.py
 configure_file(python/_fftopt.py
                ${FASTDDM_OUTPUT_DIR}/_fftopt.py)
 
+configure_file(python/imagestructurefunction.py
+               ${FASTDDM_OUTPUT_DIR}/imagestructurefunction.py)
+
+configure_file(python/azimuthalaverage.py
+               ${FASTDDM_OUTPUT_DIR}/azimuthalaverage.py)
+
+configure_file(python/_ddm.py
+               ${FASTDDM_OUTPUT_DIR}/_ddm.py)
+
 if(ENABLE_CPP)
     configure_file(python/_ddm_cpp.py
                    ${FASTDDM_OUTPUT_DIR}/_ddm_cpp.py)
