@@ -10,8 +10,7 @@ from typing import Any, Optional, Union, Dict, List, Tuple
 import lmfit as lm
 import numpy as np
 
-#from .azimuthalaverage import AzimuthalAverage
-from . import AzimuthalAverage
+from .azimuthalaverage import AzimuthalAverage
 
 
 def _simple_exp(
