@@ -32,6 +32,8 @@ if(ENABLE_CUDA)
          cuda/ddm_cuda.cc
          cuda/helper_memchk_gpu.cc
     )
+
+    set_source_files_properties(${_fddm_cu_sources} PROPERTIES LANGUAGE CUDA)
 endif(ENABLE_CUDA)
 
 if(ENABLE_CPP)
@@ -39,24 +41,17 @@ if(ENABLE_CPP)
     include_directories( ${PROJECT_SOURCE_DIR}/lib/fftw-3.3.10/api )
     include_directories( ${PROJECT_SOURCE_DIR}/lib/pybind11/include )
 
-    # Add _fddm library
-    add_library(_fddm STATIC ${_fddm_sources})
-    if(WIN32)
-        target_link_libraries(_fddm ${PYTHON_LIBRARIES} fftw3)
-    else(WIN32)
-        #target_link_libraries(_fddm ${PYTHON_LIBRARIES} fftw3 m)
-        target_link_libraries(_fddm fftw3 m)
-    endif(WIN32)
-    set_target_properties(_fddm PROPERTIES POSITION_INDEPENDENT_CODE ON)
+    # Add _core library
+    pybind11_add_module(_core SHARED python/bindings.cc ${_fddm_sources} ${_fddm_cu_sources})
 
-    # Add core python module
-    pybind11_add_module(_core SHARED python/bindings.cc ${_fddm_sources})
-    target_link_libraries(_core PRIVATE _fddm)
     if(WIN32)
+        target_link_libraries(_core PUBLIC ${PYTHON_LIBRARIES} fftw3)
         set_target_properties(_core PROPERTIES
                                     RUNTIME_OUTPUT_DIRECTORY_RELEASE ${FASTDDM_OUTPUT_DIR}
                             )
     else(WIN32)
+        #target_link_libraries(_core PUBLIC ${PYTHON_LIBRARIES} fftw3 m)
+        target_link_libraries(_core PUBLIC fftw3 m)
         set_target_properties(_core PROPERTIES
                                     SUFFIX ".so"
                                     LIBRARY_OUTPUT_DIRECTORY ${FASTDDM_OUTPUT_DIR}
@@ -65,30 +60,21 @@ if(ENABLE_CPP)
 endif(ENABLE_CPP)
 
 if(ENABLE_CUDA)
-    target_compile_definitions(_core PUBLIC ENABLE_CUDA)
     include_directories(${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
+    include(CUDAsetup.cmake)
 
-    # Add _fddm_cuda library
-    include(select_compute_arch.cmake)
-    add_library(_fddm_cuda STATIC ${_fddm_cu_sources})
+    target_compile_definitions(_core PUBLIC ENABLE_CUDA)
+
     if(${CMAKE_VERSION} VERSION_LESS "3.18.0")
-        CUDA_SELECT_NVCC_ARCH_FLAGS(ARCH_FLAGS Auto)
-        message(STATUS "Generating code for the following CUDA architectures: ${ARCH_FLAGS_readable}")
-        set_target_properties(_fddm_cuda PROPERTIES
-                                    POSITION_INDEPENDENT_CODE ON
-                            )
-        target_compile_options(_fddm_cuda PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:${ARCH_FLAGS}>)
+        target_compile_options(_core PUBLIC $<$<COMPILE_LANGUAGE:CUDA>:-arch=sm_${_cuda_min_arch})
     else()
-        CUDA_SELECT_NVCC_ARCH(ARCHS Auto)
-        message(STATUS "Generating code for the following CUDA architectures: ${ARCHS_readable}")
-        set_target_properties(_fddm_cuda PROPERTIES
-                                    POSITION_INDEPENDENT_CODE ON
-                                    CUDA_ARCHITECTURES ${ARCHS}
+        set_target_properties(_core PROPERTIES
+                                    CUDA_ARCHITECTURES ${_cuda_min_arch}
                             )
     endif()
 
     # Add core_cuda python module
-    target_link_libraries(_core PRIVATE _fddm_cuda cufft nvidia-ml)
+    target_link_libraries(_core PUBLIC cufft nvidia-ml)
 endif(ENABLE_CUDA)
 
 # Copy the files required to install the library with python's setuptools
