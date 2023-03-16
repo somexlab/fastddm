@@ -7,3 +7,22 @@
 """
 
 import struct
+from os import path
+from typing import BinaryIO
+from .imagestructurefunction import ImageStructureFunction
+from pims.base_frames import FramesSequenceND, Frame
+import numpy as np
+
+
+format_byte_len = {
+    'B' : 1,    # unsigned char
+    'H' : 2,    # unsigned short
+    'I' : 4,    # unsigned int
+    'Q' : 8,    # unsigned long long
+    'f' : 4,    # float
+    'd' : 8,    # double
+}
+
+
+class DdmSFReader(FramesSequenceND):
+    
