@@ -5,10 +5,12 @@
 
 """A collection of lmfit Models and helper/wrapper functions."""
 
-from typing import Any, Optional, Union
+from typing import Any, Optional, Union, Dict, List, Tuple
 
 import lmfit as lm
 import numpy as np
+
+from .azimuthalaverage import AzimuthalAverage
 
 
 def _simple_exp(
@@ -137,3 +139,128 @@ def fit(
         print(result.fit_report())
 
     return result
+
+
+def fit_multik(
+    data: AzimuthalAverage,
+    model: lm.Model,
+    ref: int,
+    ref_params: Optional[lm.Parameters] = None,
+    return_model_results : Optional[bool] = False,
+    **fitargs: Any,
+) -> Tuple[Dict[str, np.ndarray], Optional[List[lm.model.ModelResult]]]:
+    """A wrapper for fitting a given model to given data for multiple k vectors.
+
+    The initial parameters estimated for `ref` index should be set in the model or passed
+    to the function (via `ref_params` or as keyword arguments). All keyword arguments in `fitargs`
+    will directly be passed to the lm.Model.fit method. See
+    https://lmfit.github.io/lmfit-py/model.html#lmfit.model.Model.fit
+    for more information. It is highly recommended to pass the `weights` argument for
+    very noisy data (must have the same size of `data.tau`). 
+
+    The function starts the fitting process from the `ref` index and proceeds towards
+    lower and higher indices using the fit parameters obtained from the previous
+    iteration.
+
+    Note: If `params` is None, the values for all parameters relative to `ref` are expected
+    to be provided as keyword arguments. If `params` is given, and a keyword argument for a
+    parameter value is also given, the keyword argument will be used. If neither `params`
+    nor keyword arguments are given, the values set in the model will be used.
+
+    Parameters
+    ----------
+    data : AzimuthalAverage
+        The azimuthal average object to be fitted.
+    model : lm.Model
+        The model to be used for the fit. It must have one and one only independent variable
+        (i.e., the time delay), the name is not important.
+    ref : int
+        The index of the reference k vector (where the initial fit parameters are estimated).
+    ref_params : lmfit.Parameters, optional
+        Parameters to use in fit in ref. Default is None.
+    return_model_results : bool, optional
+        If True, the function also returns the complete list of ModelResults obtained for each
+        k vector. Default is False.
+
+    Returns
+    -------
+    Tuple[Dict[str, np.ndarray], Optional[List[lm.model.ModelResult]]]
+        The fit parameters obtained and the success boolean value as a dictionary of
+        string keys and numpy arrays values. If `return_model_results` is True,
+        the result is a tuple whose second value is the complete list of
+        ModelResults obtained. 
+    """
+    # initialize model parameters
+    model_params = model.make_params()
+
+    # we require the models to have one and one only independent variable
+    indep_var = model.independent_vars[0]
+    fitargs[indep_var] = data.tau   # mapping tau to independent variable name
+
+    # initialize parameters
+    # check ref_params
+    if ref_params is not None:
+        model_params.update(ref_params)
+    # check **fitargs
+    for p in model.param_names:
+        if p in fitargs:
+            # update parameter initial value
+            model_params[p].value = fitargs[p]
+            # delete the value so that it does not override
+            # the one used during the iterations
+            del fitargs[p]
+
+    # initialize outputs
+    results = {p : np.zeros(len(data.k)) for p in model.param_names}
+    results['success'] = np.zeros(len(data.k), dtype=bool)
+
+    model_results = None
+    if return_model_results:
+        model_results = [None] * len(data.k)
+
+    # perform fit in ref
+    result = model.fit(data.data[ref], params=model_params, **fitargs)
+    for p in model.param_names:
+        results[p][ref] = result.params[p].value
+    results['success'][ref] = result.success
+    if return_model_results:
+        model_results[ref] = result
+
+    # perform fit towards small k vectors
+    # update parameters
+    for p in model.param_names:
+        model_params[p].value = results[p][ref]
+    for idx in reversed(range(ref)):
+        # fit
+        if np.isnan(data.var[idx]):
+            results[p][idx] = np.nan
+        else:
+            result = model.fit(data.data[idx], params=model_params, **fitargs)
+            # update results and model_params
+            for p in model.param_names:
+                model_params[p].value = results[p][idx] = result.params[p].value
+            results['success'][idx] = result.success
+            if return_model_results:
+                model_results[idx] = result
+
+    # perform fit towards large k vectors
+    # update parameters
+    for p in model.param_names:
+        model_params[p].value = results[p][ref]
+    for idx in range(ref+1,len(data.k)):
+        # fit 
+        if np.isnan(data.var[idx]):
+            results[p][idx] = np.nan
+        else:
+            result = model.fit(data.data[idx], params=model_params, **fitargs)
+            # update results and model_params
+            for p in model.param_names:
+                model_params[p].value = results[p][idx] = result.params[p].value
+            results['success'][idx] = result.success
+            if return_model_results:
+                model_results[idx] = result
+
+    if return_model_results:
+        return results, model_results
+    else:
+        return results
