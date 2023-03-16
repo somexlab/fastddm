@@ -77,7 +77,11 @@ class DdmSFWriter:
         """
         Nt, Ny, Nx = image_structure_function.shape
         Nextra = 2  # power spectrum + var
-        dtype = 0   # WE DON'T HAVE FOR THE MOMENT A SINGLE PRECISION OPTION, SO WE FIX DOUBLE FOR NOW
+        dtype = 0   # at the moment we only have double precision 
+        if image_structure_function.data.dtype == 'float64':
+            dtype = 0
+        elif image_structure_function.data.dtype == 'float32':
+            dtype = 1
         self.write_header(Nt, Ny, Nx, Nextra, dtype)
         self.write_data(image_structure_function)
 
