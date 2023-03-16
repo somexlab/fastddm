@@ -172,7 +172,7 @@ class DdmSFWriter:
             self._fh.write(struct.pack('d', val))
         data_offset = HEADER_BYTE_LEN
         extra_offset = data_offset + format_byte_len['d'] * Nt * Ny * Nx
-        
+
         # write kx
         for kx in image_structure_function.kx:
             self._fh.write(struct.pack('d', kx))
@@ -197,17 +197,17 @@ class DdmSFWriter:
         delta_t_offset = pixel_size_offset + format_byte_len['d']
 
         # write offsets
-        # data offset
-        self._fh.write(struct.pack('Q', data_offset))
         # extra offset
         self._fh.write(struct.pack('Q', extra_offset))
-        # kx offset
-        self._fh.write(struct.pack('Q', kx_offset))
-        # ky offset
-        self._fh.write(struct.pack('Q', ky_offset))
-        # tau offset
-        self._fh.write(struct.pack('Q', tau_offset))
-        # pixel size offset
-        self._fh.write(struct.pack('Q', pixel_size_offset))
         # delta t offset
         self._fh.write(struct.pack('Q', delta_t_offset))
+        # pixel size offset
+        self._fh.write(struct.pack('Q', pixel_size_offset))
+        # tau offset
+        self._fh.write(struct.pack('Q', tau_offset))
+        # ky offset
+        self._fh.write(struct.pack('Q', ky_offset))
+        # kx offset
+        self._fh.write(struct.pack('Q', kx_offset))
+        # data offset
+        self._fh.write(struct.pack('Q', data_offset))
