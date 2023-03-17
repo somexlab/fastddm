@@ -10,7 +10,6 @@ import struct
 from os import path
 from typing import BinaryIO, Tuple, Optional
 from .imagestructurefunction import ImageStructureFunction
-from pims.base_frames import FramesSequenceND, Frame
 import numpy as np
 
 
@@ -23,25 +22,18 @@ format_byte_len = {
     'd' : 8,    # double
 }
 
-dtype2format = {
-    0 : 'd',
-    1 : 'f',
-}
-
 format2numpy = {
     'd' : np.float64,
     'f' : np.float32,
 }
 
 
-class DdmSFReader(FramesSequenceND):
-    """PIMS wrapper for the fastddm image structure function
+class DdmSFReader:
+    """Wrapper for the fastddm image structure function
     binary file parser. Use this class to process your .sf.ddm files.
     """
 
     def __init__(self, file : str):
-        super(DdmSFReader, self).__init__()
-
         if not file.endswith('.sf.ddm'):
             raise ValueError("Invalid file name extension. Expected .sf.ddm extension.")
         self.filename = file
@@ -65,9 +57,8 @@ class DdmSFReader(FramesSequenceND):
         if self._fh is not None:
             self._fh.close()
 
-    def get_slice(self, index : int) -> Frame:
-        """Creates a Frame object and returns the
-        image structure function slice at the selected index.
+    def get_slice(self, index : int) -> np.ndarray:
+        """Returns the image structure function slice at the selected index.
 
         Parameters
         ----------
@@ -76,36 +67,34 @@ class DdmSFReader(FramesSequenceND):
 
         Returns
         -------
-        Frame
-            The image structure function Frame.
+        np.ndarray
+            The image structure function slice.
         """
 
         if index in range(self.metadata['Nt']):
-            return Frame(self._parser._read_frame(index), frame_no=index)
+            return self._parser._read_frame(index)
         else:
-            return Frame([], frame_no=None)
+            return None
 
-    def get_power_spec(self) -> Frame:
-        """Creates a Frame object and returns the
-        power spectrum.
-
-        Returns
-        -------
-        Frame
-            The power spectrum Frame.
-        """
-        return Frame(self._parser._read_frame(self.metadata['Nt']))
-
-    def get_var(self) -> Frame:
-        """Creates a Frame object and returns the
-        variance.
+    def get_power_spec(self) -> np.ndarray:
+        """Returns the power spectrum.
 
         Returns
         -------
-        Frame
-            The variance Frame.
+        np.ndarray
+            The power spectrum.
         """
-        return Frame(self._parser._read_frame(self.metadata['Nt'] + 1))
+        return self._parser._read_frame(self.metadata['Nt'])
+
+    def get_var(self) -> np.ndarray:
+        """Returns the variance.
+
+        Returns
+        -------
+        np.ndarray
+            The variance.
+        """
+        return self._parser._read_frame(self.metadata['Nt'] + 1)
 
     def get_kx(self) -> np.ndarray:
         """Creates a numpy array with kx values.
@@ -140,9 +129,9 @@ class DdmSFReader(FramesSequenceND):
     def get_image_structure_function(self) -> ImageStructureFunction:
         return ImageStructureFunction(
             self._parser._read_data(),
-            self.get_kx,
-            self.get_ky,
-            self.get_tau,
+            self.get_kx(),
+            self.get_ky(),
+            self.get_tau(),
             self.metadata['pixel_size'],
             self.metadata['delta_t']
             )
@@ -156,13 +145,14 @@ class SFParser:
 
     def __init__(self, fh):
         self._fh = fh
-        self.metadata = None
+        self.metadata = {}
+
+        # parse metadata
+        self._read_byteorder_from_file()
+        self._parse_metadata()
 
         # check if the file version is supported
         self.supported = self._check_version_supported()
-
-        # parse metadata
-        self._parse_metadata()
 
     def _check_version_supported(self) -> bool:
         """Checks if the fastddm image structure function file version
@@ -182,16 +172,16 @@ class SFParser:
                   "This might lead to unexpected behavior.")
 
         return supported
-    
+
     def _read_value(self, pos : int, format : chr, whence : Optional[int] = 0):
         self._fh.seek(pos, whence)
         Nbytes = format_byte_len[format]
         data = self._fh.read(Nbytes)
         if self.metadata['byteorder'] == 'big':
-            return struct.unpack(f'>{format}', data)
+            return struct.unpack(f'>{format}', data)[0]
         else:
-            return struct.unpack(f'<{format}', data)
-        
+            return struct.unpack(f'<{format}', data)[0]
+
     def _read_array(self, pos : int, length : int) -> np.ndarray:
         # initialize array
         out = np.empty(length, dtype=self.get_dtype_from_metadata())
@@ -200,11 +190,11 @@ class SFParser:
         self._fh.seek(pos)
         Nbytes = format_byte_len[self.metadata['dtype']]
         if self.metadata['byteorder'] == 'big':
-            fmt = f'>{format}'
+            fmt = f'>{self.metadata["dtype"]}'
         else:
-            fmt = f'<{format}'
+            fmt = f'<{self.metadata["dtype"]}'
         for i in range(length):
-            out[i] = struct.unpack(fmt, self._fh.read(Nbytes))
+            out[i], = struct.unpack(fmt, self._fh.read(Nbytes))
 
         return out
 
@@ -216,7 +206,7 @@ class SFParser:
         offset = index * Ny * Nx
         offset *= format_byte_len[self.metadata['dtype']]
         offset += self.metadata['data_offset']
-        
+
         # initialize array
         out = np.empty(Nx*Ny, dtype=self.get_dtype_from_metadata())
 
@@ -224,14 +214,14 @@ class SFParser:
         self._fh.seek(offset)
         Nbytes = format_byte_len[self.metadata['dtype']]
         if self.metadata['byteorder'] == 'big':
-            fmt = f'>{format}'
+            fmt = f'>{self.metadata["dtype"]}'
         else:
-            fmt = f'<{format}'
+            fmt = f'<{self.metadata["dtype"]}'
         for i in range(Nx * Ny):
-            out[i] = struct.unpack(fmt, self._fh.read(Nbytes))
-        
+            out[i], = struct.unpack(fmt, self._fh.read(Nbytes))
+
         return out.reshape((Ny, Nx))
-    
+
     def _read_data(self) -> np.ndarray:
         Nt = self.metadata['Nt'] + self.metadata['Nextra']
         Ny = self.metadata['Ny']
@@ -246,12 +236,12 @@ class SFParser:
         self._fh.seek(offset)
         Nbytes = format_byte_len[self.metadata['dtype']]
         if self.metadata['byteorder'] == 'big':
-            fmt = f'>{format}'
+            fmt = f'>{self.metadata["dtype"]}'
         else:
-            fmt = f'<{format}'
+            fmt = f'<{self.metadata["dtype"]}'
         for i in range(Nt * Ny * Nx):
-            out[i] = struct.unpack(fmt, self._fh.read(Nbytes))
-        
+            out[i], = struct.unpack(fmt, self._fh.read(Nbytes))
+
         return out.reshape((Nt, Ny, Nx))
 
 
@@ -270,10 +260,7 @@ class SFParser:
 
         return major_version, minor_version
     
-    def _parse_metadata(self) -> None:
-        """Reads metadata and creates dictionary.
-        """
-        metadata = {}
+    def _read_byteorder_from_file(self) -> None:
         self._fh.seek(0)
 
         # endianness is at bytes 0-1, encoded as utf-8
@@ -281,44 +268,49 @@ class SFParser:
         # 'MM' : big-endian
         endianness = self._fh.read(2).decode("utf-8")
         if endianness == 'II':
-            metadata['byteorder'] = 'little'
+            self.metadata['byteorder'] = 'little'
         elif endianness == 'MM':
-            metadata['byteorder'] = 'big'
+            self.metadata['byteorder'] = 'big'
         else:
             raise ValueError(f"Unsupported endianness {endianness} identifier.")
+
+    def _parse_metadata(self) -> None:
+        """Reads metadata and creates dictionary.
+        """
+        self._fh.seek(2)
         
         # length of image structure function data array
         # is at bytes 6-9, packed as unsigned int (I)
-        metadata['Nt'] = self._read_value(6, 'I')
+        self.metadata['Nt'] = self._read_value(6, 'I')
 
         # height of image structure function data array
         # is at bytes 10-13, packed as unsigned int (I)
-        metadata['Ny'] = self._read_value(10, 'I')
+        self.metadata['Ny'] = self._read_value(10, 'I')
 
         # width of image structure function data array
         # is at bytes 14-17, packed as unsigned int (I)
-        metadata['Nx'] = self._read_value(14, 'I')
+        self.metadata['Nx'] = self._read_value(14, 'I')
 
         # number of extra slices in image structure function data array
         # (i.e., variance and power spectrum)
         # is at bytes 18-21, packed as unsigned int (I)
-        metadata['Nextra'] = self._read_value(18, 'I')
+        self.metadata['Nextra'] = self._read_value(18, 'I')
 
         # dtype identifier
-        # is at byte 22, packed as unsigned char
-        metadata['dtype'] = self._read_value(22, 'B')
+        # is at byte 22, packed as char
+        self.metadata['dtype'] = self._fh.read(1).decode("utf-8")
 
         # data byte offset
-        metadata['data_offset'] = self._read_value(-format_byte_len['Q'], 'Q', 2)
+        self.metadata['data_offset'] = self._read_value(-format_byte_len['Q'], 'Q', 2)
 
         # kx byte offset
-        metadata['kx_offset'] = self._read_value(-2 * format_byte_len['Q'], 'Q', 2)
+        self.metadata['kx_offset'] = self._read_value(-2 * format_byte_len['Q'], 'Q', 2)
 
         # ky byte offset
-        metadata['ky_offset'] = self._read_value(-3 * format_byte_len['Q'], 'Q', 2)
+        self.metadata['ky_offset'] = self._read_value(-3 * format_byte_len['Q'], 'Q', 2)
 
         # tau byte offset
-        metadata['tau_offset'] = self._read_value(-4 * format_byte_len['Q'], 'Q', 2)
+        self.metadata['tau_offset'] = self._read_value(-4 * format_byte_len['Q'], 'Q', 2)
 
         # pixel size byte offset
         pixel_size_offset = self._read_value(-5 * format_byte_len['Q'], 'Q', 2)
@@ -327,15 +319,14 @@ class SFParser:
         delta_t_offset = self._read_value(-6 * format_byte_len['Q'], 'Q', 2)
 
         # extra byte offset
-        metadata['extra_offset'] = self._read_value(-7 * format_byte_len['Q'], 'Q', 2)
+        self.metadata['extra_offset'] = self._read_value(-7 * format_byte_len['Q'], 'Q', 2)
 
         # pixel_size
-        metadata['pixel_size'] = self._read_value(pixel_size_offset, dtype2format[metadata['dtype']], 0)
+        self.metadata['pixel_size'] = self._read_value(pixel_size_offset, self.metadata['dtype'], 0)
 
         # delta_t
-        metadata['delta_t'] = self._read_value(delta_t_offset, dtype2format[metadata['dtype']], 0)
+        self.metadata['delta_t'] = self._read_value(delta_t_offset, self.metadata['dtype'], 0)
 
-        self.metadata = metadata
 
     def get_dtype_from_metadata(self) -> np.dtype:
         return format2numpy[self.metadata['dtype']]

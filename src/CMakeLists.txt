@@ -115,6 +115,12 @@ configure_file(python/_ddm_python.py
 configure_file(python/_io.py
                ${FASTDDM_OUTPUT_DIR}/_io.py)
 
+configure_file(python/_ddmsfreader.py
+               ${FASTDDM_OUTPUT_DIR}/_ddmsfreader.py)
+
+configure_file(python/_ddmsfwriter.py
+               ${FASTDDM_OUTPUT_DIR}/_ddmsfwriter.py)
+
 configure_file(python/lags.py
                ${FASTDDM_OUTPUT_DIR}/lags.py)
 

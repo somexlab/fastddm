@@ -77,11 +77,11 @@ class DdmSFWriter:
         """
         Nt, Ny, Nx = image_structure_function.shape
         Nextra = 2  # power spectrum + var
-        dtype = 0   # at the moment we only have double precision 
+        dtype = 'd' # at the moment we only have double precision 
         if image_structure_function.data.dtype == 'float64':
-            dtype = 0
+            dtype = 'd'
         elif image_structure_function.data.dtype == 'float32':
-            dtype = 1
+            dtype = 'f'
         self._write_header(Nt, Ny, Nx, Nextra, dtype)
         self._write_data(image_structure_function)
 
@@ -91,7 +91,7 @@ class DdmSFWriter:
         Ny : int,
         Nx : int,
         Nextra : int,
-        dtype : int
+        dtype : chr
         ) -> None:
         """Write image structure function file header
 
@@ -105,10 +105,10 @@ class DdmSFWriter:
             Width of the image structure function array.
         Nextra : int
             Number of extra data slices packed (i.e., variance and power spectrum).
-        dtype : int
+        dtype : chr
             Data type identifier. Possible values are:
-            0 : float64
-            1 : float32
+            'd' : float64
+            'f' : float32
         """
         offset = 0
         # write system endianness
@@ -150,8 +150,8 @@ class DdmSFWriter:
         offset += format_byte_len['I']
 
         # write dtype identifier
-        # unsigned char, byte 22
-        self._fh.write(struct.pack('B', dtype))
+        # char, byte 22
+        self._fh.write(dtype.encode("utf-8"))
         offset += format_byte_len['B']
 
         # add empty bytes up to 63 for future use (if needed)
