@@ -1,9 +1,14 @@
-# `fastddm` :rocket:
+# `FastDDM` :rocket:
 
-## About
-Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+**FastDDM** is a Python package for the analysis of microscopy image sequences using Differential Dynamic Microscopy on CPU and GPU.
+The features implemented are targeted at the experimental soft matter research community dealing with inert and active/biological samples.
+
 ## Dependencies
-All necessary dependencies will be installed automatically. However, if you also want to use the `fastddm.fit` module, you have to install `lmfit` (e.g. with `pip install lmfit`).
+All necessary dependencies will be installed automatically. However, if you also want to use the `fastddm.fit` module, you have to manually install `lmfit` (e.g. with `pip install lmfit`).
+
+## Resources
+Links to readthedocs pages...
+
 ## Installation
 To install `fastddm` from source, first clone this repository locally (`git clone https://github.com/somexlab/fastddm.git`). It is recommended to use it in a virtual environment of your choice, e.g. `conda` (to create a new virtual environment with conda, do `conda create -n fastddm python=3.10` to create a virtual environment `fastddm`, using python 3.10.* as the interpreter.)
 
@@ -38,6 +43,10 @@ True
 ```
 ## Usage examples
 Check the examples folder for jupyter notebooks!
+
+## Contributing to FastDDM
+Contributions are welcome via [pull requests](https://github.com/somexlab/fastddm/pulls).
+Please, report bugs and suggest features via the [issue tracker](https://github.com/somexlab/fastddm/issues).
 
 ## Citing FastDDM
 Please, cite this publication in every work that uses FastDDM:
