@@ -89,11 +89,15 @@ def tiff2numpy(
         transpose_mapper = tuple(Order[dim].value for dim in input_order)
         data = np.transpose(data, axes=transpose_mapper)  # unify output
 
-        if "C" in input_order and color_seq is not None:
-            data = data[color_seq, ...]  # slice color channels
+        if "C" in input_order:
+            if color_seq is not None:
+                data = data[color_seq, ...]  # slice color channels
 
-        if seq is not None:
-            data = data[:, seq, ...]  # slice time dimension
+            if seq is not None:
+                data = data[:, seq, ...]  # slice time dimension
+
+        elif seq is not None:
+            data = data[seq, ...]
 
         return data
 
