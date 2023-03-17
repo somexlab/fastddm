@@ -82,10 +82,10 @@ class DdmSFWriter:
             dtype = 0
         elif image_structure_function.data.dtype == 'float32':
             dtype = 1
-        self.write_header(Nt, Ny, Nx, Nextra, dtype)
-        self.write_data(image_structure_function)
+        self._write_header(Nt, Ny, Nx, Nextra, dtype)
+        self._write_data(image_structure_function)
 
-    def write_header(
+    def _write_header(
         self,
         Nt : int,
         Ny : int,
@@ -157,7 +157,7 @@ class DdmSFWriter:
         # add empty bytes up to 63 for future use (if needed)
         self._fh.write(bytearray(HEADER_BYTE_LEN - offset))
 
-    def write_data(
+    def _write_data(
         self,
         image_structure_function : ImageStructureFunction
         ) -> None:
