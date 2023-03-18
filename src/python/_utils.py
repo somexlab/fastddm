@@ -254,10 +254,31 @@ def read_images(
         raise RuntimeError(f"Failed to open {src}.")
 
 
+def _read_tiff_metadata(src: str) -> Metadata:
+    """Reads the raw metadata of the first page of a tiff file and returns it as a dictionary.
+
+    Parameters
+    ----------
+    src : str
+        Path to TIFF file.
+
+    Returns
+    -------
+    Metadata
+        Raw metadata of first tiff page.
+    """
+    metadata = {}
+    with tifffile.TiffFile(src) as tif:
+        for tag in tif.pages[0].tags:
+            metadata[tag.name] = tag.value
+
+    return metadata
+
+
 def read_metadata(src: str) -> Metadata:
     """Reads an images metadata and returns it as a dictionary.
 
-    Currently only supports .nd2 files.
+    Currently only supports .nd2 files and raw metadata for tiff files.
 
     Parameters
     ----------
@@ -279,7 +300,8 @@ def read_metadata(src: str) -> Metadata:
         For non-supported image file types.
     """
     type_reader: Dict[str, Callable[[str], Metadata]] = {
-        ".nd2": lambda s: ND2Reader(s).metadata
+        ".nd2": lambda s: ND2Reader(s).metadata,
+        ".tif": lambda s: _read_tiff_metadata(s),
     }
     supported_types = type_reader.keys()  # for readability
 
