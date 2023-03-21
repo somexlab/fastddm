@@ -183,6 +183,7 @@ class SFParser:
             return struct.unpack(f'<{format}', data)[0]
 
     def _read_array(self, offset : int, count : int) -> np.ndarray:
+        self._fh.seek(0)
         # format dtype
         if self.metadata['byteorder'] == 'big':
             dtype = f'>{self.metadata["dtype"]}'
@@ -193,6 +194,7 @@ class SFParser:
 
 
     def _read_frame(self, index : int) -> np.ndarray:
+        self._fh.seek(0)
         # format dtype
         if self.metadata['byteorder'] == 'big':
             dtype = f'>{self.metadata["dtype"]}'
@@ -210,6 +212,7 @@ class SFParser:
         return np.fromfile(self._fh, dtype, Ny*Nx, offset=offset).reshape((Ny, Nx))
 
     def _read_data(self) -> np.ndarray:
+        self._fh.seek(0)
         # format dtype
         if self.metadata['byteorder'] == 'big':
             dtype = f'>{self.metadata["dtype"]}'
