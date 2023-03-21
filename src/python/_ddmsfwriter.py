@@ -77,7 +77,7 @@ class DdmSFWriter:
         """
         Nt, Ny, Nx = image_structure_function.shape
         Nextra = 2  # power spectrum + var
-        dtype = 'd' # at the moment we only have double precision 
+        dtype = 'd' # at the moment we only have double precision
         if image_structure_function.data.dtype == 'float64':
             dtype = 'd'
         elif image_structure_function.data.dtype == 'float32':
@@ -170,26 +170,23 @@ class DdmSFWriter:
         """
         # FOR THE MOMENT WE ONLY HAVE DOUBLE (FLOAT64) VALUES
         Nt, Ny, Nx = image_structure_function.shape
+        Nextra = len(image_structure_function._data) - len(image_structure_function)
 
         # write data
-        for val in image_structure_function._data.flat:
-            self._fh.write(struct.pack('d', val))
+        image_structure_function._data.tofile(self._fh)
         data_offset = HEADER_BYTE_LEN
         extra_offset = data_offset + format_byte_len['d'] * Nt * Ny * Nx
 
         # write kx
-        for kx in image_structure_function.kx:
-            self._fh.write(struct.pack('d', kx))
-        kx_offset = extra_offset + format_byte_len['d'] * 2 * Ny * Nx
+        image_structure_function.kx.tofile(self._fh)
+        kx_offset = extra_offset + format_byte_len['d'] * Nextra * Ny * Nx
 
         # write ky
-        for ky in image_structure_function.ky:
-            self._fh.write(struct.pack('d', ky))
+        image_structure_function.ky.tofile(self._fh)
         ky_offset = kx_offset + format_byte_len['d'] * Nx
 
         # write tau
-        for tau in image_structure_function.tau:
-            self._fh.write(struct.pack('d', tau))
+        image_structure_function.tau.tofile(self._fh)
         tau_offset = ky_offset + format_byte_len['d'] * Ny
 
         # write pixel size

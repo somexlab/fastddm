@@ -173,8 +173,8 @@ class SFParser:
 
         return supported
 
-    def _read_value(self, pos : int, format : chr, whence : Optional[int] = 0):
-        self._fh.seek(pos, whence)
+    def _read_value(self, offset : int, format : chr, whence : Optional[int] = 0):
+        self._fh.seek(offset, whence)
         Nbytes = format_byte_len[format]
         data = self._fh.read(Nbytes)
         if self.metadata['byteorder'] == 'big':
@@ -182,24 +182,23 @@ class SFParser:
         else:
             return struct.unpack(f'<{format}', data)[0]
 
-    def _read_array(self, pos : int, length : int) -> np.ndarray:
-        # initialize array
-        out = np.empty(length, dtype=self.get_dtype_from_metadata())
-
-        # read values into array
-        self._fh.seek(pos)
-        Nbytes = format_byte_len[self.metadata['dtype']]
+    def _read_array(self, offset : int, count : int) -> np.ndarray:
+        # format dtype
         if self.metadata['byteorder'] == 'big':
-            fmt = f'>{self.metadata["dtype"]}'
+            dtype = f'>{self.metadata["dtype"]}'
         else:
-            fmt = f'<{self.metadata["dtype"]}'
-        for i in range(length):
-            out[i], = struct.unpack(fmt, self._fh.read(Nbytes))
-
-        return out
+            dtype = f'<{self.metadata["dtype"]}'
+        # read from file
+        return np.fromfile(self._fh, dtype, count, offset=offset)
 
 
     def _read_frame(self, index : int) -> np.ndarray:
+        # format dtype
+        if self.metadata['byteorder'] == 'big':
+            dtype = f'>{self.metadata["dtype"]}'
+        else:
+            dtype = f'<{self.metadata["dtype"]}'
+        # get size
         Ny = self.metadata['Ny']
         Nx = self.metadata['Nx']
         # compute offset
@@ -207,42 +206,24 @@ class SFParser:
         offset *= format_byte_len[self.metadata['dtype']]
         offset += self.metadata['data_offset']
 
-        # initialize array
-        out = np.empty(Nx*Ny, dtype=self.get_dtype_from_metadata())
-
-        # read values into array
-        self._fh.seek(offset)
-        Nbytes = format_byte_len[self.metadata['dtype']]
-        if self.metadata['byteorder'] == 'big':
-            fmt = f'>{self.metadata["dtype"]}'
-        else:
-            fmt = f'<{self.metadata["dtype"]}'
-        for i in range(Nx * Ny):
-            out[i], = struct.unpack(fmt, self._fh.read(Nbytes))
-
-        return out.reshape((Ny, Nx))
+        # read from file
+        return np.fromfile(self._fh, dtype, Ny*Nx, offset=offset).reshape((Ny, Nx))
 
     def _read_data(self) -> np.ndarray:
+        # format dtype
+        if self.metadata['byteorder'] == 'big':
+            dtype = f'>{self.metadata["dtype"]}'
+        else:
+            dtype = f'<{self.metadata["dtype"]}'
+        # get size
         Nt = self.metadata['Nt'] + self.metadata['Nextra']
         Ny = self.metadata['Ny']
         Nx = self.metadata['Nx']
-
+        # get offset
         offset = self.metadata['data_offset']
 
-        # initialize array
-        out = np.empty(Nt * Ny * Nx, dtype=self.get_dtype_from_metadata())
-
-        # read values into array
-        self._fh.seek(offset)
-        Nbytes = format_byte_len[self.metadata['dtype']]
-        if self.metadata['byteorder'] == 'big':
-            fmt = f'>{self.metadata["dtype"]}'
-        else:
-            fmt = f'<{self.metadata["dtype"]}'
-        for i in range(Nt * Ny * Nx):
-            out[i], = struct.unpack(fmt, self._fh.read(Nbytes))
-
-        return out.reshape((Nt, Ny, Nx))
+        # read from file
+        return np.fromfile(self._fh, dtype, Nt*Ny*Nx, offset=offset).reshape((Nt, Ny, Nx))
 
 
     def get_version(self) -> Tuple[int, int]:
