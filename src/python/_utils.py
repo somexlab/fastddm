@@ -7,29 +7,40 @@
 
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Sequence, Union
+from enum import Enum
+import warnings
 
 import numpy as np
 import skimage.io as io
 import tifffile
 from nd2reader import ND2Reader
 
-# custom types
+# custom types & constants
 Metadata = Dict[str, Any]
+OUTPUT_ORDER = "CTYX"
 
 
 def tiff2numpy(
-    path: str,
+    src: str,
     seq: Optional[Sequence[int]] = None,
     color_seq: Optional[Sequence[int]] = None,
+    input_order: Optional[str] = None,
 ) -> np.ndarray:
     """Read a TIFF file (or a sequence inside a multipage TIFF) and return it as a numpy array.
 
-    If the tiff file contains a color channel, the axis order is assumed to be (T,Y,X,C) while
-    reading the file; it will be reshaped into (C,T,Y,X) before it is returned.
+    The tiff file is assumed to be of the shape (T,Y,X). If `color_seq` is given, the order
+    (C,T,Y,X) is assumed, otherwise the option `input_order` needs to be specified. If `input_order`
+    is given, the full tiff file is read into memory, the axes ordered accordingly, and then `seq`
+    and `color_seq` applied (if specified).
+
+    If a non-tiff file is given, it is opened with skimage.io.imread using only default parameters.
+
+    It will be reshaped into (T,Y,X) (or (C,T,Y,X) if color channels are present) before it is
+    returned.
 
     Parameters
     ----------
-    path : str
+    src : str
         The path to the TIFF file.
     seq : Sequence[int], optional
         A sequence, e.g. `range(5, 10)`, to describe a specific range within
@@ -37,28 +48,70 @@ def tiff2numpy(
     color_seq : Sequence[int], optional
         A sequence, e.g. `range(2)`, to describe a specific color sequence to be selected, by
         default None
+    input_order : str, optional
+        The order of input dimensions. Currently only supports up to 4 dimensions, "CTYX", be default None
 
     Returns
     -------
     np.ndarray
         The array containing the image information.
-        Coordinate convention is (Z,Y,X) (or (T,Y,X))
-        If color images are imported, convention is (C,Z,Y,X).
+        Coordinate convention is (T,Y,X) (or (C,T,Y,X)).
     """
-    if not path.endswith(".tif"):  # read anything but tif files with io.imread
-        return io.imread(path)
+    if not src.endswith(".tif"):  # read anything but tif files with io.imread
+        warnings.warn(
+            "Non-tiff file, returning array opened with default settings only."
+        )
+        return io.imread(src)
 
-    with tifffile.TiffFile(path) as tif:
-        data = tif.asarray(key=seq)
+    if input_order is not None:  # read whole array first
+        # read whole array first
+        data = tifffile.imread(src)
 
-        if tif.pages.is_multipage:
-            if len(data.shape) == 4:
-                data = np.transpose(data, axes=(3, 0, 1, 2))
-        elif len(data.shape) == 3:
-            data = np.transpose(data, axes=(2, 0, 1))
+        # input sanity check
+        if len(input_order) != len(data.shape):
+            raise RuntimeError(
+                f"Given input dimensions '{input_order}' and loaded data shape "
+                f"{data.shape} mismatch:"
+            )
 
-    if color_seq is not None and len(data.shape) >= 3:
-        data = data[color_seq, ...]
+        if not all([dim in OUTPUT_ORDER for dim in list(input_order)]):
+            raise RuntimeError(
+                f"Unrecognized dimension in '{input_order}'. Only allowed values"
+                f" are '{OUTPUT_ORDER}'."
+            )
+
+        # enum to match the actual number of dimensions
+        Order = Enum(
+            "axes",
+            [dim for dim in list(OUTPUT_ORDER) if dim in input_order],
+            start=0,
+        )
+        transpose_mapper = tuple(Order[dim].value for dim in input_order)
+        data = np.transpose(data, axes=transpose_mapper)  # unify output
+
+        if "C" in input_order:
+            if color_seq is not None:
+                data = data[color_seq, ...]  # slice color channels
+
+            if seq is not None:
+                data = data[:, seq, ...]  # slice time dimension
+
+        elif seq is not None:
+            data = data[seq, ...]
+
+        return data
+
+    if color_seq is not None:
+        data = tifffile.imread(src, key=color_seq)  # here we already assume CTYX order
+
+        if seq is not None:
+            data = data[:, seq, ...]
+
+    elif seq is not None:
+        data = tifffile.imread(src, key=seq)  # here we assume TYX order
+
+    else:
+        data = tifffile.imread(src)
 
     return data
 
@@ -120,10 +173,41 @@ def images2numpy(
     return img_seq
 
 
+def _read_nd2(src: str, seq: Optional[Sequence[int]] = None) -> np.ndarray:
+    """Read an ND2 file with an optional specific (sub)sequence of images.
+
+    Parameters
+    ----------
+    src : str
+        Path to ND2 file.
+    seq : Optional[Sequence[int]], optional
+        A (sub)sequence of images to be selected from the movie, e.g. list(range(1, 200)), by default None
+
+    Returns
+    -------
+    np.ndarray
+        The image sequence as numpy array.
+    """
+
+    mov = ND2Reader(src)
+    length, dim_y, dim_x = mov.shape  # what about color channels?
+    length = len(seq) if seq is not None else length
+    dtype = mov[0].dtype  # access dtype of first frame
+    imgs = np.zeros((length, dim_y, dim_x), dtype=dtype)
+
+    selected = seq if seq is not None else range(length)
+    for i, idx in enumerate(selected):
+        frame = mov.get_frame(idx)
+        imgs[i] = frame.data
+
+    return imgs
+
+
 def read_images(
     src: Union[str, List[str]],
     seq: Optional[Sequence[int]] = None,
     color_seq: Optional[Sequence[int]] = None,
+    input_order: Optional[str] = None,
 ) -> np.ndarray:
     """Read a single image file or a list of image files.
 
@@ -140,6 +224,10 @@ def read_images(
     color_seq : Sequence[int], optional
         A sequence, e.g. `range(2)`, to describe a specific color sequence to be selected, by
         default None
+    input_order : str, optional
+        The order of input dimensions. Currently only supports up to 4 dimensions "CTYX", only used
+        for TIFF files, be default None
+
     Returns
     -------
     np.ndarray
@@ -155,21 +243,42 @@ def read_images(
 
     elif isinstance(src, str):
         if src.endswith(".nd2"):
-            if seq is None:
-                return np.array(ND2Reader(src))
-            else:
-                return np.array(ND2Reader(src)[seq])
+            return _read_nd2(src, seq=seq)
+
         else:
-            return tiff2numpy(src, seq=seq, color_seq=color_seq)
+            return tiff2numpy(
+                src, seq=seq, color_seq=color_seq, input_order=input_order
+            )
 
     else:
         raise RuntimeError(f"Failed to open {src}.")
 
 
+def _read_tiff_metadata(src: str) -> Metadata:
+    """Reads the raw metadata of the first page of a tiff file and returns it as a dictionary.
+
+    Parameters
+    ----------
+    src : str
+        Path to TIFF file.
+
+    Returns
+    -------
+    Metadata
+        Raw metadata of first tiff page.
+    """
+    metadata = {}
+    with tifffile.TiffFile(src) as tif:
+        for tag in tif.pages[0].tags:
+            metadata[tag.name] = tag.value
+
+    return metadata
+
+
 def read_metadata(src: str) -> Metadata:
     """Reads an images metadata and returns it as a dictionary.
 
-    Currently only supports .nd2 files.
+    Currently only supports .nd2 files and raw metadata for tiff files.
 
     Parameters
     ----------
@@ -191,7 +300,8 @@ def read_metadata(src: str) -> Metadata:
         For non-supported image file types.
     """
     type_reader: Dict[str, Callable[[str], Metadata]] = {
-        ".nd2": lambda s: ND2Reader(s).metadata
+        ".nd2": lambda s: ND2Reader(s).metadata,
+        ".tif": lambda s: _read_tiff_metadata(s),
     }
     supported_types = type_reader.keys()  # for readability
 
