@@ -10,6 +10,7 @@ from dataclasses import dataclass
 import os
 from sys import byteorder
 import struct
+import itertools
 import numpy as np
 from scipy.interpolate import interp1d
 
@@ -208,15 +209,73 @@ def azimuthal_average(
     AzimuthalAverage
         The azimuthal average.
     """
-    return _azimuthal_average(
-        data=img_str_func._data,
-        tau=img_str_func.tau,
-        kx=img_str_func.kx,
-        ky=img_str_func.ky,
-        bins=bins,
-        range=range,
-        mask=mask,
-        weights=weights)
+    # read actual image structure function shape
+    dim_t, dim_y, dim_x = img_str_func._data.shape
+
+    # compute the k modulus
+    X, Y = np.meshgrid(img_str_func.kx, img_str_func.ky)
+    k_modulus = np.sqrt(X ** 2 + Y ** 2)
+
+    # check range
+    if range is None:
+        k_min = np.min(k_modulus)
+        k_max = np.max(k_modulus)
+    else:
+        k_min, k_max = range
+
+    # check mask
+    if mask is None:
+        mask = np.full((dim_y, dim_x), True)
+
+    # compute bin edges and initialize k
+    if isinstance(bins, int):
+        bin_edges = np.linspace(k_min, k_max, bins)
+    else:   # bins is an iterable
+        bin_edges = [k_min]
+        for bin_width in bins:
+            bin_edges.append(bin_edges[-1] + bin_width)
+        bins = len(bins) + 1
+    k = np.zeros(bins, dtype=np.float64)
+
+    # initialize k values
+    k[0] = bin_edges[0]
+    k[1:] = 0.5 * (bin_edges[:-1] + bin_edges[1:])
+
+    # initialize azimuthal average
+    az_avg = np.full((bins, dim_t), fill_value=np.nan, dtype=np.float64)
+    den = np.zeros(bins)
+
+    # loop over k vectors on half-plane
+    for (i, j), k_val in np.ndenumerate(k_modulus[:, :(dim_x // 2 + 1)]):
+        # count 1 if mid column (kx == 0) or
+        # when dim_x is odd and we are considering the first column
+        if (j == dim_x // 2) or (dim_x % 2 == 1 and j == 0):
+            fact = 1.0
+        else:
+            fact = 2.0
+        # check mask
+        if mask[i, j]:
+            # get current bin
+            idx = np.searchsorted(bin_edges, k_val)
+            if idx < bins:
+                if np.isnan(az_avg[idx, 0]):
+                    az_avg[idx] = np.zeros(dim_t)
+                    k[idx] = 0.0
+                if weights is None:
+                    az_avg[idx] += fact * img_str_func._data[:, i, j]
+                    k[idx] += fact * k_val
+                    den[idx] += fact
+                else:
+                    az_avg[idx] += fact * img_str_func._data[:, i, j] * weights[i, j]
+                    k[idx] += fact * k_val * weights[i, j]
+                    den[idx] += fact * weights[i, j]
+
+    for i, d in enumerate(den):
+        if d > 0:
+            az_avg[i] /= d
+            k[i] /= d
+
+    return AzimuthalAverage(az_avg, k, img_str_func.tau, bin_edges)
 
 
 def _azimuthal_average(
@@ -279,7 +338,6 @@ def _azimuthal_average(
     ValueError
         If tau, kx, and ky are not compatible with shape of data.
     """
-
     # check input arguments
     if tau is None:
         raise ValueError("`tau` must be given for non-`ImageStructureFunction` data input.")
@@ -317,43 +375,44 @@ def _azimuthal_average(
     # compute bin edges and initialize k
     if isinstance(bins, int):
         bin_edges = np.linspace(k_min, k_max, bins)
-        k = np.zeros(bins, dtype=np.float64)
     else:   # bins is an iterable
         bin_edges = [k_min]
         for bin_width in bins:
             bin_edges.append(bin_edges[-1] + bin_width)
-        k = np.zeros(len(bins), dtype=np.float64)
         bins = len(bins) + 1
+    k = np.zeros(bins, dtype=np.float64)
+
+    # initialize k values
+    k[0] = bin_edges[0]
+    k[1:] = 0.5 * (bin_edges[:-1] + bin_edges[1:])
 
     # initialize azimuthal average
     az_avg = np.full((bins, dim_t), fill_value=np.nan, dtype=np.float64)
+    den = np.zeros(bins)
 
-    # loop over bins
-    for i, curr_bin_edge in enumerate(bin_edges):
-        if i > 0:
-            e_inf = bin_edges[i-1]
-            e_sup = curr_bin_edge
-            curr_px = (k_modulus > e_inf) & (k_modulus <= e_sup) & mask
-        else:
-            curr_px = (k_modulus == curr_bin_edge) & mask
+    # loop over k vectors on half-plane
+    for (i, j), k_val in np.ndenumerate(k_modulus):
+        # check mask
+        if mask[i, j]:
+            # get current bin
+            idx = np.searchsorted(bin_edges, k_val)
+            if idx < bins:
+                if np.isnan(az_avg[idx, 0]):
+                    az_avg[idx] = np.zeros(dim_t)
+                    k[idx] = 0.0
+                if weights is None:
+                    az_avg[idx] += data[:, i, j]
+                    k[idx] += k_val
+                    den[idx] += 1
+                else:
+                    az_avg[idx] += data[:, i, j] * weights[i, j]
+                    k[idx] += k_val * weights[i, j]
+                    den[idx] += weights[i, j]
 
-        if np.all(np.logical_not(curr_px)):
-            if i > 0:
-                e_inf = bin_edges[i-1]
-                e_sup = curr_bin_edge
-                k[i] = (e_inf + e_sup) / 2.
-            else:
-                k[0] = curr_bin_edge
-        else:
-            if weights is not None:
-                num = (k_modulus[curr_px] * weights[curr_px]).mean()
-                den = weights[curr_px].mean()
-                k[i] = num / den
-                w_avg = (data[:, curr_px] * weights[curr_px]).mean(axis=-1)
-                az_avg[i] = w_avg / den
-            else:
-                k[i] = k_modulus[curr_px].mean()
-                az_avg[i] = data[:, curr_px].mean(axis=-1)
+    for i, d in enumerate(den):
+        if d > 0:
+            az_avg[i] /= d
+            k[i] /= d
 
     return AzimuthalAverage(az_avg, k, tau.astype(np.float64), bin_edges)
 
