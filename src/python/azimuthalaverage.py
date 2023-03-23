@@ -8,10 +8,10 @@
 from typing import Tuple, Optional, Union, Iterable, BinaryIO
 from dataclasses import dataclass
 import os
-import numpy as np
-from scipy.interpolate import interp1d
 from sys import byteorder
 import struct
+import numpy as np
+from scipy.interpolate import interp1d
 
 from .imagestructurefunction import ImageStructureFunction
 from ._io_common import calculate_format_size, npdtype2format, Writer, Reader, Parser
@@ -217,6 +217,7 @@ def azimuthal_average(
         range=range,
         mask=mask,
         weights=weights)
+
 
 def _azimuthal_average(
     data : np.ndarray,
@@ -606,7 +607,7 @@ class AAReader(Reader):
         Nk = self._metadata['Nk']
         if k_index < 0 or k_index >= Nk:
             raise IndexError(f'Index out of range. Choose an index between 0 and {Nk-1}.')
-        
+
         offset = self._metadata['data_offset']
         Nt = self._metadata['Nt']
         Nextra = self._metadata['Nextra']
