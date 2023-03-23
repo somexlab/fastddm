@@ -115,6 +115,9 @@ configure_file(python/_ddm_python.py
 configure_file(python/_io.py
                ${FASTDDM_OUTPUT_DIR}/_io.py)
 
+configure_file(python/_io_common.py
+               ${FASTDDM_OUTPUT_DIR}/_io_common.py)
+
 configure_file(python/lags.py
                ${FASTDDM_OUTPUT_DIR}/lags.py)
 

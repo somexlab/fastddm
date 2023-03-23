@@ -5,15 +5,16 @@
 
 """Azimuthal average data class and methods."""
 
-from typing import Tuple, Optional, Union, Iterable
+from typing import Tuple, Optional, Union, Iterable, BinaryIO
 from dataclasses import dataclass
-import pickle
 import os
 import numpy as np
 from scipy.interpolate import interp1d
+from sys import byteorder
+import struct
 
 from .imagestructurefunction import ImageStructureFunction
-from ._io import _store_data
+from ._io_common import calculate_format_size, npdtype2format, Writer, Reader, Parser
 
 
 @dataclass
@@ -110,27 +111,22 @@ class AzimuthalAverage:
 
     def save(
         self,
-        fname : str = "analysis_blob",
-        *,
-        protocol : int = pickle.HIGHEST_PROTOCOL
+        fname : str = "analysis_blob"
         ) -> None:
         """Save AzimuthalAverage to binary file.
-        The binary file is in fact a python pickle file.
 
         Parameters
         ----------
         fname : str, optional
             The full file name, by default "analysis_blob".
-        protocol : int, optional
-            pickle binary serialization protocol, by default
-            pickle.HIGHEST_PROTOCOL.
         """
         # check name
         dir, name = os.path.split(fname)
         name = name if name.endswith(".aa.ddm") else f"{name}.aa.ddm"
 
         # save to file
-        _store_data(self, fname=os.path.join(dir, name), protocol=protocol)
+        with AAWriter(file=os.path.join(dir, name)) as f:
+            f.write_obj(self)
 
     def resample(
         self,
@@ -359,6 +355,308 @@ def _azimuthal_average(
                 az_avg[i] = data[:, curr_px].mean(axis=-1)
 
     return AzimuthalAverage(az_avg, k, tau.astype(np.float64), bin_edges)
+
+
+class AAWriter(Writer):
+    """FastDDM azimuthal average writer class.
+    Inherits from `Writer`. It adds the following unique methods:
+
+    Methods
+    -------
+    write_obj(obj) : None
+        Write AzimuthalAverage object to binary file.
+    """
+    def write_obj(
+        self,
+        obj : AzimuthalAverage
+        ) -> None:
+        """Write AzimuthalAverage object to binary file.
+
+        Parameters
+        ----------
+        obj : AzimuthalAverage
+            AzimuthalAverage object.
+        """
+        # get data dtype
+        dtype = npdtype2format(obj.data.dtype.name)
+        # get data shape
+        Nk, Nt = obj.shape
+        # assign Nextra = 2
+        # we have power_spectrum + variance
+        Nextra = obj._data.shape[-1] - Nt
+
+        # write file header
+        self._write_header(Nk, Nt, Nextra, dtype)
+
+        # write data
+        self._write_data(obj)
+
+    def _write_header(
+        self,
+        Nk : int,
+        Nt : int,
+        Nextra : int,
+        dtype : str
+        ) -> None:
+        """Write image structure function file header.
+
+        In version 0.1, the header is structured as follows:
+        * bytes 0-1: endianness (`LL` = 'little'; `BB` = 'big'), 'utf-8' encoding
+        * bytes 2-3: file identifier (22), `H` (unsigned short)
+        * bytes 4-5: file version as (major_version, minor_version), `BB` (unsigned char)
+        * byte 6: dtype (`d` = float64; `f` = float32), 'utf-8' encoding
+        * bytes 7-14: data height, `Q` (unsigned long long)
+        * bytes 15-22: data width, `Q` (unsigned long long)
+        * bytes 23-30: extra slices, `Q` (unsigned long long)
+
+        Parameters
+        ----------
+        Nk : int
+            Height.
+        Nt : int
+            Width.
+        Nextra : int
+            Number of extra slices.
+        dtype : str
+            Data dtype.
+        """
+        curr_byte_len = 0
+        # system endianness
+        if byteorder == 'little':
+            self._fh.write('LL'.encode('utf-8'))
+        else:
+            self._fh.write('BB'.encode('utf-8'))
+        curr_byte_len += 2
+
+        # file identifier
+        self._fh.write(struct.pack('H', 22))
+        curr_byte_len += calculate_format_size('H')
+
+        # file version
+        self._fh.write(struct.pack('BB', *(self.version)))
+        curr_byte_len += 2 * calculate_format_size('B')
+
+        # dtype
+        self._fh.write(dtype.encode('utf-8'))
+        curr_byte_len += 1
+
+        # height
+        self._fh.write(struct.pack('Q', Nk))
+        curr_byte_len += calculate_format_size('Q')
+
+        # width
+        self._fh.write(struct.pack('Q', Nt))
+        curr_byte_len += calculate_format_size('Q')
+
+        # extra slices
+        self._fh.write(struct.pack('Q', Nextra))
+        curr_byte_len += calculate_format_size('Q')
+
+        # add empty bytes up to HEAD_BYTE_LEN for future use (if needed)
+        self._fh.write(bytearray(self.head_byte_len - curr_byte_len))
+
+    def _write_data(
+        self,
+        obj : AzimuthalAverage
+        ) -> None:
+        """Write azimuthal average data.
+
+        In version 0.1, the data is stored in 'C' order and `dtype` format as follows:
+        * from `data_offset`: _data
+        * from `k_offset`: `k` array
+        * from `tau_offset`: `tau` array
+        * from `bin_edges_offset`: `bin_edges` array
+
+        From the end of the file,
+        the byte offsets are stored in `Q` (unsigned long long) format in this order:
+        * `data_offset`
+        * `k_offset`
+        * `tau_offset`
+        * `bin_edges_offset`
+
+        Parameters
+        ----------
+        obj : AzimuthalAverage
+            The azimuthal average object.
+        """
+        # get data format
+        fmt = npdtype2format(obj.data.dtype.name)
+
+        # get data shape
+        Nk, Nt = obj._data.shape
+
+        # write _data
+        obj._data.tofile(self._fh)
+        data_offset = self.head_byte_len
+
+        # write kx, ky, and tau
+        obj.k.tofile(self._fh)
+        obj.tau.tofile(self._fh)
+        obj.bin_edges.tofile(self._fh)
+        k_offset = data_offset + Nk * Nt * calculate_format_size(fmt)
+        tau_offset = k_offset + Nk * calculate_format_size(fmt)
+        bin_edges_offset = tau_offset + Nt * calculate_format_size(fmt)
+
+        # write byte offsets
+        self._fh.write(struct.pack('Q', bin_edges_offset))
+        self._fh.write(struct.pack('Q', tau_offset))
+        self._fh.write(struct.pack('Q', k_offset))
+        self._fh.write(struct.pack('Q', data_offset))
+
+
+class AAReader(Reader):
+    """FastDDM azimuthal average reader class.
+    Inherits from `Reader`. It adds the following unique parameters and methods:
+
+    Methods
+    -------
+    load(obj) : AzimuthalAverage
+        Load the azimuthal average.
+    get_k() : np.ndarray
+        Read k array.
+    get_tau() : np.ndarray
+        Read tau array.
+    get_bin_edges() : np.ndarray
+        Read bin_edges array.
+    get_k_slice(k_index) : np.ndarray
+        Read k slice from data.
+    """
+    def __init__(self, file : str):
+        super().__init__(file)
+        self._parser = AAParser(self._fh)
+        self._metadata = self._parser.read_metadata()
+
+    def load(self) -> AzimuthalAverage:
+        """Load azimuthal average from file.
+
+        Returns
+        -------
+        AzimuthalAverage
+            The AzimuthalAverage object.
+        """
+        Nk = self._metadata['Nk']
+        Nt = self._metadata['Nt']
+        Nextra = self._metadata['Nextra']
+
+        return AzimuthalAverage(
+            self._parser.read_array(self._metadata['data_offset'], (Nk, Nt + Nextra)),
+            self.get_k(),
+            self.get_tau(),
+            self.get_bin_edges()
+            )
+
+    def get_k(self) -> np.ndarray:
+        """Read k array from file.
+
+        Returns
+        -------
+        np.ndarray
+            The k array.
+        """
+        offset = self._metadata['k_offset']
+        Nk = self._metadata['Nk']
+
+        return self._parser.read_array(offset, Nk)
+
+    def get_tau(self) -> np.ndarray:
+        """Read tau array from file.
+
+        Returns
+        -------
+        np.ndarray
+            The tau array.
+        """
+        offset = self._metadata['tau_offset']
+        Nt = self._metadata['Nt']
+
+        return self._parser.read_array(offset, Nt)
+
+    def get_bin_edges(self) -> np.ndarray:
+        """Read bin edges array from file.
+
+        Returns
+        -------
+        np.ndarray
+            The bin edges array.
+        """
+        offset = self._metadata['bin_edges_offset']
+        Nk = self._metadata['Nk']
+
+        return self._parser.read_array(offset, Nk)
+
+    def get_k_slice(self, k_index : int) -> np.ndarray:
+        """Read a slice at k from data.
+
+        Parameters
+        ----------
+        k_index : int
+            The k index
+
+        Returns
+        -------
+        np.ndarray
+            The data at k vs tau.
+
+        Raises
+        ------
+        IndexError
+            If k_index is out of range.
+        """
+        # check index is in range
+        Nk = self._metadata['Nk']
+        if k_index < 0 or k_index >= Nk:
+            raise IndexError(f'Index out of range. Choose an index between 0 and {Nk-1}.')
+        
+        offset = self._metadata['data_offset']
+        Nt = self._metadata['Nt']
+        Nextra = self._metadata['Nextra']
+        offset += k_index * (Nt + Nextra) * calculate_format_size(self._parser.dtype)
+
+        return self._parser.read_array(offset, Nt)
+
+
+class AAParser(Parser):
+    """Azimuthal average file parser class.
+    Inherits from `Parser`. It adds the following unique methods:
+
+    Methods
+    -------
+    read_metadata : dict
+        Returns a dictionary containing the file metadata.
+    """
+    def __init__(self, fh : BinaryIO):
+        super().__init__(fh)
+        # check file identifier
+        file_id = self._read_id()
+        if file_id != 22:
+            err_str = f'File identifier {file_id} not compatible with'
+            err_str += ' azimuthal average file (22).'
+            err_str += ' Input file might be wrong or corrupted.'
+            raise RuntimeError(err_str)
+
+    def read_metadata(self) -> dict:
+        """Read metadata from the binary file.
+
+        Returns
+        -------
+        dict
+            The metadata dictionary.
+        """
+        metadata = {}
+
+        # shape starts at byte 7
+        # it comprises 4 values (Nt, Ny, Nx, Nextra), written as unsigned long long ('Q')
+        metadata['Nk'] = self.read_value(7, 'Q')
+        metadata['Nt'] = self.read_value(0, 'Q', whence=1)
+        metadata['Nextra'] = self.read_value(0, 'Q', whence=1)
+
+        # byte offsets start from end of file, written as unsigned long long ('Q')
+        metadata['data_offset'] = self.read_value(-calculate_format_size('Q'), 'Q', 2)
+        metadata['k_offset'] = self.read_value(-2 * calculate_format_size('Q'), 'Q', 1)
+        metadata['tau_offset'] = self.read_value(-2 * calculate_format_size('Q'), 'Q', 1)
+        metadata['bin_edges_offset'] = self.read_value(-2 * calculate_format_size('Q'), 'Q', 1)
+
+        return metadata
 
 
 def melt(
