@@ -233,7 +233,8 @@ def fit_multik(
     for idx in reversed(range(ref)):
         # fit
         if np.isnan(data.var[idx]):
-            results[p][idx] = np.nan
+            for p in model.param_names:
+                results[p][idx] = np.nan
         else:
             result = model.fit(data.data[idx], params=model_params, **fitargs)
             # update results and model_params
@@ -250,7 +251,8 @@ def fit_multik(
     for idx in range(ref+1,len(data.k)):
         # fit 
         if np.isnan(data.var[idx]):
-            results[p][idx] = np.nan
+            for p in model.param_names:
+                results[p][idx] = np.nan
         else:
             result = model.fit(data.data[idx], params=model_params, **fitargs)
             # update results and model_params
