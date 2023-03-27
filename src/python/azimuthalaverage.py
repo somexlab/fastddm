@@ -10,7 +10,6 @@ from dataclasses import dataclass
 import os
 from sys import byteorder
 import struct
-import itertools
 import numpy as np
 from scipy.interpolate import interp1d
 
@@ -27,6 +26,9 @@ class AzimuthalAverage:
     _data : np.ndarray
         The packed data (azimuthal average of image structure function, power
         spectrum, and variance).
+    _err : np.ndarray
+        The packed uncertainties (uncertainty of the azimuthal average, power
+        spectrum, and variance).
     k : np.ndarray
         The array of reference wavevector values in the bins.
     tau : np.ndarray
@@ -38,12 +40,21 @@ class AzimuthalAverage:
     ----------
     data : np.ndarray
         The azimuthal average of the 2D image structure function.
-    power_spec: np.ndarray
+    err : np.ndarray
+        The uncertainty (standard deviation) in the azimuthal average of the
+        2D image structure function.
+    power_spec : np.ndarray
         The azimuthal average of the average 2D power spectrum of the input
         images.
     var : np.ndarray
         The azimuthal average of the 2D variance (over time) of the
         Fourier transformed images.
+    power_spec_err : np.ndarray
+        The uncertainty in the azimuthal average of the average 2D power
+        spectrum of the input images.
+    var_err : np.ndarray
+        The uncertainty in the azimuthal average of the 2D variance
+        (over time) of the Fourier transformed images.
     k : np.ndarray
         The array of reference wavevector values in the bins.
     tau : np.ndarray
@@ -60,6 +71,7 @@ class AzimuthalAverage:
     """
 
     _data : np.ndarray
+    _err : np.ndarray
     k : np.ndarray
     tau : np.ndarray
     bin_edges : np.ndarray
@@ -74,6 +86,18 @@ class AzimuthalAverage:
             The azimuthal average data.
         """
         return self._data[:, :-2]
+
+    @property
+    def err(self) -> np.ndarray:
+        """The uncertainty (standard deviation) in the azimuthal average
+        of the 2D image structure function.
+
+        Returns
+        -------
+        np.ndarray
+            The uncertainty.
+        """
+        return self._err[:, :-2]
 
     @property
     def power_spec(self) -> np.ndarray:
@@ -98,6 +122,30 @@ class AzimuthalAverage:
             The azimuthal average of the variance.
         """
         return self._data[:, -1]
+
+    @property
+    def power_spec_err(self) -> np.ndarray:
+        """The uncertainty in the azimuthal average of the average
+        2D power spectrum of the input images.
+
+        Returns
+        -------
+        np.ndarray
+            The uncertainty in the azimuthal average of the power spectrum.
+        """
+        return self._err[:, -2]
+
+    @property
+    def var_err(self) -> np.ndarray:
+        """The uncertainty in the azimuthal average of the
+        2D variance (over time) of the Fourier transformed input images.
+
+        Returns
+        -------
+        np.ndarray
+            The uncertainty in the azimuthal average of the variance.
+        """
+        return self._err[:, -1]
 
     @property
     def shape(self) -> Tuple[int, int]:
@@ -146,7 +194,8 @@ class AzimuthalAverage:
             The resampled azimuthal average.
         """
         # initialize data
-        _data = np.zeros((len(self.k),len(tau) + 2))
+        _data = np.zeros((len(self.k), len(tau) + 2))
+        _err = np.zeros((len(self.k), len(tau) +2))
 
         _tau = np.log(tau)
 
@@ -155,6 +204,7 @@ class AzimuthalAverage:
             # check for nan
             if np.isnan(self.data[i, 0]):
                 _data[i, :-2] = np.full(len(tau), np.nan)
+                _err[i, :-2] = np.full(len(tau), np.nan)
             else:
                 # interpolate points in loglog scale
                 f = interp1d(
@@ -165,11 +215,22 @@ class AzimuthalAverage:
                     )
                 _data[i, :-2] = np.exp(f(_tau))
 
-        # append power_spec and var
-        _data[:,-2] = self.power_spec
-        _data[:,-1] = self.var
+                # interpolate uncertainties in loglog scale
+                f = interp1d(
+                    x=np.log(self.tau),
+                    y=np.log(self.err[i]),
+                    kind='quadratic',
+                    fill_value='extrapolate'
+                    )
+                _err[i, :-2] = np.exp(f(_tau))
 
-        return AzimuthalAverage(_data, self.k, tau, self.bin_edges)
+        # append power_spec and var
+        _data[:, -2] = self.power_spec
+        _data[:, -1] = self.var
+        _err[:, -2] = self.power_spec_err
+        _err[:, -1] = self.var_err
+
+        return AzimuthalAverage(_data, _err, self.k, tau, self.bin_edges)
 
 
 def azimuthal_average(
@@ -180,6 +241,27 @@ def azimuthal_average(
     weights : Optional[np.ndarray] = None
     ) -> AzimuthalAverage:
     """Compute the azimuthal average of the image structure function.
+
+    For every (not masked out) :math:`k` wavevector in the :math:`i`-th bin,
+    the average is calculated as
+
+    .. math:
+
+        \\bar{x}_i = \\frac{\\sum_k w_k x_k}{\\sum_k w_k} ,
+    
+    where :math:`w_k` is the weight given to the wavevector :math:`k`.
+    The uncertainty is calculated as the square root of the variance for
+    weighed measures
+
+    .. math:
+
+        \\text{Var}(x_i) = \\left( \\frac{\\sum_k w_k x_k^2}{\\sum_k w_k} - \\bar{x}_i^2 \\right) \\frac{N_i}{N_i - 1} ,
+    
+    where
+
+    .. math:
+
+        N_i = \\frac{(\\sum_k w_k)^2}{\\sum_k w_k^2} .
 
     Parameters
     ----------
@@ -241,9 +323,12 @@ def azimuthal_average(
     k[0] = bin_edges[0]
     k[1:] = 0.5 * (bin_edges[:-1] + bin_edges[1:])
 
-    # initialize azimuthal average
+    # initialize azimuthal average, error, and helper arrays
     az_avg = np.full((bins, dim_t), fill_value=np.nan, dtype=np.float64)
-    den = np.zeros(bins)
+    err = np.full((bins, dim_t), fill_value=np.nan, dtype=np.float64)
+    wk = np.zeros(bins)
+    wk2 = np.zeros(bins)
+    tmp = np.zeros(dim_t, dtype=np.float64)
 
     # loop over k vectors on half-plane
     for (i, j), k_val in np.ndenumerate(k_modulus[:, :(dim_x // 2 + 1)]):
@@ -260,22 +345,30 @@ def azimuthal_average(
             if idx < bins:
                 if np.isnan(az_avg[idx, 0]):
                     az_avg[idx] = np.zeros(dim_t)
+                    err[idx] = np.zeros(dim_t)
                     k[idx] = 0.0
+                tmp = fact * img_str_func._data[:, i, j]
                 if weights is None:
-                    az_avg[idx] += fact * img_str_func._data[:, i, j]
+                    az_avg[idx] += tmp
+                    err[idx] += tmp * img_str_func._data[:, i, j]
                     k[idx] += fact * k_val
-                    den[idx] += fact
+                    wk[idx] += fact
+                    wk2[idx] += fact
                 else:
-                    az_avg[idx] += fact * img_str_func._data[:, i, j] * weights[i, j]
+                    tmp *= weights[i, j]
+                    az_avg[idx] += tmp
+                    err[idx] += tmp * img_str_func._data[:, i, j]
                     k[idx] += fact * k_val * weights[i, j]
-                    den[idx] += fact * weights[i, j]
+                    wk[idx] += fact * weights[i, j]
+                    wk2[idx] += fact * weights[i, j]**2
 
-    for i, d in enumerate(den):
+    for i, d in enumerate(wk):
         if d > 0:
             az_avg[i] /= d
+            err[i] = np.sqrt((err[i] / d - az_avg[i]**2) / (1 - wk2[i] / d**2))
             k[i] /= d
 
-    return AzimuthalAverage(az_avg, k, img_str_func.tau, bin_edges)
+    return AzimuthalAverage(az_avg, err, k, img_str_func.tau, bin_edges)
 
 
 def _azimuthal_average(
@@ -289,6 +382,27 @@ def _azimuthal_average(
     weights : Optional[np.ndarray] = None
     ) -> AzimuthalAverage:
     """Compute the azimuthal average of the image structure function.
+
+    For every (not masked out) :math:`k` wavevector in the :math:`i`-th bin,
+    the average is calculated as
+
+    .. math:
+
+        \\bar{x}_i = \\frac{\\sum_k w_k x_k}{\\sum_k w_k} ,
+    
+    where :math:`w_k` is the weight given to the wavevector :math:`k`.
+    The uncertainty is calculated as the square root of the variance for
+    weighed measures
+
+    .. math:
+
+        \\text{Var}(x_i) = \\left( \\frac{\\sum_k w_k x_k^2}{\\sum_k w_k} - \\bar{x}_i^2 \\right) \\frac{N_i}{N_i - 1} ,
+    
+    where
+
+    .. math:
+
+        N_i = \\frac{(\\sum_k w_k)^2}{\\sum_k w_k^2} .
 
     Parameters
     ----------
@@ -388,7 +502,10 @@ def _azimuthal_average(
 
     # initialize azimuthal average
     az_avg = np.full((bins, dim_t), fill_value=np.nan, dtype=np.float64)
-    den = np.zeros(bins)
+    err = np.full((bins, dim_t), fill_value=np.nan, dtype=np.float64)
+    wk = np.zeros(bins)
+    wk2 = np.zeros(bins)
+    tmp = np.zeros(dim_t, dtype=np.float64)
 
     # loop over k vectors on half-plane
     for (i, j), k_val in np.ndenumerate(k_modulus):
@@ -399,22 +516,30 @@ def _azimuthal_average(
             if idx < bins:
                 if np.isnan(az_avg[idx, 0]):
                     az_avg[idx] = np.zeros(dim_t)
+                    err[idx] = np.zeros(dim_t)
                     k[idx] = 0.0
+                tmp = data[:, i, j]
                 if weights is None:
-                    az_avg[idx] += data[:, i, j]
+                    az_avg[idx] += tmp
+                    err[idx] += tmp * data[:, i, j]
                     k[idx] += k_val
-                    den[idx] += 1
+                    wk[idx] += 1
+                    wk2[idx] += 1
                 else:
-                    az_avg[idx] += data[:, i, j] * weights[i, j]
+                    tmp *= weights[i, j]
+                    az_avg[idx] += tmp
+                    err[idx] += tmp * data[:, i, j]
                     k[idx] += k_val * weights[i, j]
-                    den[idx] += weights[i, j]
+                    wk[idx] += weights[i, j]
+                    wk2[idx] += weights[i, j]**2
 
-    for i, d in enumerate(den):
+    for i, d in enumerate(wk):
         if d > 0:
             az_avg[i] /= d
+            err[i] = np.sqrt((err[i] / d - az_avg[i]**2) / (1 - wk2[i] / d**2))
             k[i] /= d
 
-    return AzimuthalAverage(az_avg, k, tau.astype(np.float64), bin_edges)
+    return AzimuthalAverage(az_avg, err, k, tau.astype(np.float64), bin_edges)
 
 
 class AAWriter(Writer):
@@ -523,6 +648,7 @@ class AAWriter(Writer):
 
         In version 0.1, the data is stored in 'C' order and `dtype` format as follows:
         * from `data_offset`: _data
+        * from `err_offset`: _err
         * from `k_offset`: `k` array
         * from `tau_offset`: `tau` array
         * from `bin_edges_offset`: `bin_edges` array
@@ -530,6 +656,7 @@ class AAWriter(Writer):
         From the end of the file,
         the byte offsets are stored in `Q` (unsigned long long) format in this order:
         * `data_offset`
+        * `err_offset`
         * `k_offset`
         * `tau_offset`
         * `bin_edges_offset`
@@ -549,11 +676,15 @@ class AAWriter(Writer):
         obj._data.tofile(self._fh)
         data_offset = self.head_byte_len
 
+        # write _err
+        obj._err.tofile(self._fh)
+        err_offset = data_offset + Nk * Nt * calculate_format_size(fmt)
+
         # write kx, ky, and tau
         obj.k.tofile(self._fh)
         obj.tau.tofile(self._fh)
         obj.bin_edges.tofile(self._fh)
-        k_offset = data_offset + Nk * Nt * calculate_format_size(fmt)
+        k_offset = err_offset + Nk * Nt * calculate_format_size(fmt)
         tau_offset = k_offset + Nk * calculate_format_size(fmt)
         bin_edges_offset = tau_offset + Nt * calculate_format_size(fmt)
 
@@ -561,6 +692,7 @@ class AAWriter(Writer):
         self._fh.write(struct.pack('Q', bin_edges_offset))
         self._fh.write(struct.pack('Q', tau_offset))
         self._fh.write(struct.pack('Q', k_offset))
+        self._fh.write(struct.pack('Q', err_offset))
         self._fh.write(struct.pack('Q', data_offset))
 
 
@@ -580,6 +712,8 @@ class AAReader(Reader):
         Read bin_edges array.
     get_k_slice(k_index) : np.ndarray
         Read k slice from data.
+    get_k_slice_err(k_index) : np.ndarray
+        Read k slice uncertainty from data.
     """
     def __init__(self, file : str):
         super().__init__(file)
@@ -600,6 +734,7 @@ class AAReader(Reader):
 
         return AzimuthalAverage(
             self._parser.read_array(self._metadata['data_offset'], (Nk, Nt + Nextra)),
+            self._parser.read_array(self._metadata['err_offset'], (Nk, Nt + Nextra)),
             self.get_k(),
             self.get_tau(),
             self.get_bin_edges()
@@ -673,6 +808,36 @@ class AAReader(Reader):
         offset += k_index * (Nt + Nextra) * calculate_format_size(self._parser.dtype)
 
         return self._parser.read_array(offset, Nt)
+    
+    def get_k_slice_err(self, k_index : int) -> np.ndarray:
+        """Read a slice of uncertainty at k from data.
+
+        Parameters
+        ----------
+        k_index : int
+            The k index
+
+        Returns
+        -------
+        np.ndarray
+            The uncertainty of data at k vs tau.
+
+        Raises
+        ------
+        IndexError
+            If k_index is out of range.
+        """
+        # check index is in range
+        Nk = self._metadata['Nk']
+        if k_index < 0 or k_index >= Nk:
+            raise IndexError(f'Index out of range. Choose an index between 0 and {Nk-1}.')
+
+        offset = self._metadata['err_offset']
+        Nt = self._metadata['Nt']
+        Nextra = self._metadata['Nextra']
+        offset += k_index * (Nt + Nextra) * calculate_format_size(self._parser.dtype)
+
+        return self._parser.read_array(offset, Nt)
 
 
 class AAParser(Parser):
@@ -712,6 +877,7 @@ class AAParser(Parser):
 
         # byte offsets start from end of file, written as unsigned long long ('Q')
         metadata['data_offset'] = self.read_value(-calculate_format_size('Q'), 'Q', 2)
+        metadata['err_offset'] = self.read_value(-2 * calculate_format_size('Q'), 'Q', 1)
         metadata['k_offset'] = self.read_value(-2 * calculate_format_size('Q'), 'Q', 1)
         metadata['tau_offset'] = self.read_value(-2 * calculate_format_size('Q'), 'Q', 1)
         metadata['bin_edges_offset'] = self.read_value(-2 * calculate_format_size('Q'), 'Q', 1)
@@ -750,6 +916,7 @@ def melt(
     idx = np.argmin(np.abs(fast.tau - slow.tau[Nt // 2])) + 1
     tau = np.append(fast.tau[:idx], slow.tau[Nt // 2 + 1:])
     data = np.zeros((len(fast.k), len(tau) + 2))
+    err = np.zeros((len(fast.k), len(tau) + 2))
 
     t = np.log(slow.tau[:Nt])
 
@@ -768,10 +935,13 @@ def melt(
 
             # scale fast on slow
             data[i, :-2] = np.append(fast.data[i, :idx] * alpha, slow.data[i, Nt // 2 + 1:])
+            err[i, :-2] = np.append(fast.err[i, :idx] * alpha, slow.err[i, Nt // 2 + 1:])
+
             # copy power spectrum and variance from slow
             data[i, -2:] = slow._data[i, -2:]
+            err[i, -2:] = slow._err[i, -2:]
 
-    return AzimuthalAverage(data, fast.k, tau, fast.bin_edges)
+    return AzimuthalAverage(data, err, fast.k, tau, fast.bin_edges)
 
 
 def mergesort(
@@ -798,15 +968,19 @@ def mergesort(
 
     # create new data
     dim_k, dim_tau = az_avg1.shape
-    data = np.zeros_like(az_avg1, shape=(dim_k, len(tau) + 2))
+    data = np.zeros_like(az_avg1.data, shape=(dim_k, len(tau) + 2))
+    err = np.zeros_like(az_avg1.err, shape=(dim_k, len(tau) + 2))
 
     # populate data
     data[:, :-2] = np.append(az_avg1.data, az_avg2.data, axis=1)[:,sortidx]
+    err[:, :-2] = np.append(az_avg1.err, az_avg2.err, axis=1)[:,sortidx]
 
     # copy power spectrum and variance from input with longer tau
     if az_avg1.tau[-1] > az_avg2.tau[-1]:
         data[:,-2:] = az_avg1._data[:,-2:]
+        err[:,-2:] = az_avg1._err[:,-2:]
     else:
         data[:,-2:] = az_avg2._data[:,-2:]
+        err[:,-2:] = az_avg2._err[:,-2:]
 
-    return AzimuthalAverage(data, az_avg1.k, tau[sortidx], az_avg1.bin_edges)
+    return AzimuthalAverage(data, err, az_avg1.k, tau[sortidx], az_avg1.bin_edges)
