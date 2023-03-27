@@ -323,50 +323,59 @@ def azimuthal_average(
     k[0] = bin_edges[0]
     k[1:] = 0.5 * (bin_edges[:-1] + bin_edges[1:])
 
+    # pre-compute weights
+    idx = np.full((dim_y, dim_x // 2 + 1), fill_value=np.nan, dtype=int)
+    wk = np.zeros((dim_y, dim_x // 2 + 1), dtype=np.float64)
+    sum_wk = np.zeros(bins)
+    sum_wk2 = np.zeros(bins)
+
+    # loop over k-vectors in half-plane
+    for (i, j), k_val in np.ndenumerate(k_modulus[:, :(dim_x // 2 + 1)]):
+        if mask[i, j]:
+            # get current bin
+            curr_idx = np.searchsorted(bin_edges, k_val) 
+            if curr_idx < bins:
+                idx[i, j] = curr_idx
+                # count 1 if mid column (kx==0) or if first column and dim_x is odd
+                # count 2 otherwise
+                fact = 1 if ((j == dim_x // 2) or (dim_x % 2 == 1 and j == 0)) else 2
+                # update weights
+                if weights is None:
+                    wk[i, j] = fact
+                    # if `weights` not given, sum_wk2 = sum_wk
+                    # assign outside loop
+                else:
+                    wk[i, j] = fact * weights[i, j]
+                    sum_wk2[curr_idx] += wk[i, j] * weights[i, j]
+                sum_wk[curr_idx] += wk[i, j]
+    if weights is None:
+        sum_wk2 = sum_wk
+
     # initialize azimuthal average, error, and helper arrays
     az_avg = np.full((bins, dim_t), fill_value=np.nan, dtype=np.float64)
     err = np.full((bins, dim_t), fill_value=np.nan, dtype=np.float64)
-    wk = np.zeros(bins)
-    wk2 = np.zeros(bins)
     tmp = np.zeros(dim_t, dtype=np.float64)
 
-    # loop over k vectors on half-plane
-    for (i, j), k_val in np.ndenumerate(k_modulus[:, :(dim_x // 2 + 1)]):
-        # count 1 if mid column (kx == 0) or
-        # when dim_x is odd and we are considering the first column
-        if (j == dim_x // 2) or (dim_x % 2 == 1 and j == 0):
-            fact = 1.0
-        else:
-            fact = 2.0
-        # check mask
-        if mask[i, j]:
-            # get current bin
-            idx = np.searchsorted(bin_edges, k_val)
-            if idx < bins:
-                if np.isnan(az_avg[idx, 0]):
-                    az_avg[idx] = np.zeros(dim_t)
-                    err[idx] = np.zeros(dim_t)
-                    k[idx] = 0.0
-                tmp = fact * img_str_func._data[:, i, j]
-                if weights is None:
-                    az_avg[idx] += tmp
-                    err[idx] += tmp * img_str_func._data[:, i, j]
-                    k[idx] += fact * k_val
-                    wk[idx] += fact
-                    wk2[idx] += fact
-                else:
-                    tmp *= weights[i, j]
-                    az_avg[idx] += tmp
-                    err[idx] += tmp * img_str_func._data[:, i, j]
-                    k[idx] += fact * k_val * weights[i, j]
-                    wk[idx] += fact * weights[i, j]
-                    wk2[idx] += fact * weights[i, j]**2
+    # loop again over k vectors on half-plane
+    for (i, j), curr_idx in np.ndenumerate(idx):
+        # add contribution only if curr_idx was found in range
+        # and if the weight is larger than 0
+        if not np.isnan(curr_idx) and wk[i, j]:
+            # initialize to zero if not done before
+            if np.isnan(az_avg[curr_idx, 0]):
+                az_avg[curr_idx] = np.zeros(dim_t)
+                err[curr_idx] = np.zeros(dim_t)
+                k[curr_idx] = 0.0
+            k[curr_idx] += k_modulus[i, j] * wk[i, j] / sum_wk[curr_idx]
+            tmp = img_str_func._data[:, i, j] * (wk[i, j] / sum_wk[curr_idx])
+            az_avg[curr_idx] += tmp
+            err[curr_idx] += tmp * img_str_func._data[:, i, j]
 
-    for i, d in enumerate(wk):
-        if d > 0:
-            az_avg[i] /= d
-            err[i] = np.sqrt((err[i] / d - az_avg[i]**2) / (1 - wk2[i] / d**2))
-            k[i] /= d
+    # finalize uncertainty
+    err -= az_avg**2
+    with np.errstate(divide='ignore', invalid='ignore'):
+        err *= 1/(1 - (sum_wk2 / sum_wk**2).reshape(bins, 1))
+    np.sqrt(err, out=err)
 
     return AzimuthalAverage(az_avg, err, k, img_str_func.tau, bin_edges)
 
