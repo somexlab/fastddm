@@ -965,7 +965,7 @@ class AAParser(Parser):
         metadata['Nk'] = self.read_value(7, 'Q')
         metadata['Nt'] = self.read_value(0, 'Q', whence=1)
         metadata['Nextra'] = self.read_value(0, 'Q', whence=1)
-        if self.get_version() > (0, 1):
+        if version > (0, 1):
             metadata['is_err'] = bool(self.read_value(0, 'B', whence=1))
         else:
             metadata['is_err'] = False
