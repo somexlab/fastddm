@@ -957,6 +957,7 @@ class AAParser(Parser):
             The metadata dictionary.
         """
         metadata = {}
+        version = self.get_version()
 
         # shape starts at byte 7
         # it comprises 4 values (Nt, Ny, Nx, Nextra), written as unsigned long long ('Q')
@@ -970,14 +971,14 @@ class AAParser(Parser):
             metadata['is_err'] = False
 
         # byte offsets start from end of file, written as unsigned long long ('Q')
-        metadata['data_offset'] = self.read_value(-calculate_format_size('Q'), 'Q', 2)
-        if self.get_version() > (0, 1):
-            metadata['err_offset'] = self.read_value(-2 * calculate_format_size('Q'), 'Q', 1)
+        metadata['data_offset'] = self.read_value(-calculate_format_size('Q'), 'Q', whence=2)
+        if version > (0, 1):
+            metadata['err_offset'] = self.read_value(-2 * calculate_format_size('Q'), 'Q', whence=1)
         else:
             metadata['err_offset'] = 0
-        metadata['k_offset'] = self.read_value(-2 * calculate_format_size('Q'), 'Q', 1)
-        metadata['tau_offset'] = self.read_value(-2 * calculate_format_size('Q'), 'Q', 1)
-        metadata['bin_edges_offset'] = self.read_value(-2 * calculate_format_size('Q'), 'Q', 1)
+        metadata['k_offset'] = self.read_value(-2 * calculate_format_size('Q'), 'Q', whence=1)
+        metadata['tau_offset'] = self.read_value(-2 * calculate_format_size('Q'), 'Q', whence=1)
+        metadata['bin_edges_offset'] = self.read_value(-2 * calculate_format_size('Q'), 'Q', whence=1)
 
         return metadata
 

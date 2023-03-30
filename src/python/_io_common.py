@@ -302,6 +302,8 @@ class Parser:
         Any
             Read value.
         """
+        print(f'offset={offset}')
+        print(f'whence={whence}')
         self._fh.seek(offset, whence)
         data = self._fh.read(calculate_format_size(fmt))
         return struct.unpack(self._full_fmt(fmt), data)[0]
@@ -327,7 +329,7 @@ class Parser:
         dtype = self._full_fmt(self.dtype)
 
         return np.fromfile(self._fh, dtype, count, offset=offset).reshape(shape)
-    
+
 
     def _read_id(self) -> int:
         """Read file identifier from header.
