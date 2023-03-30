@@ -13,7 +13,7 @@ import numpy as np
 import tifffile
 
 
-VERSION = (0, 1)
+VERSION = (0, 2)
 HEAD_BYTE_LEN = 64
 
 def calculate_format_size(fmt : str) -> int:
@@ -200,7 +200,7 @@ class Parser:
         Reads a ndarray from the file.
     """
 
-    supported_file_versions = {(0, 1) : True}
+    supported_file_versions = {(0, 1) : True, (0, 2) : True}
 
     def __init__(self, fh : BinaryIO):
         self._fh = fh

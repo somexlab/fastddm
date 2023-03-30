@@ -705,7 +705,7 @@ class AAWriter(Writer):
         curr_byte_len += calculate_format_size('Q')
 
         # is error
-        self._fh.write(struct.pack('B', is_err))
+        self._fh.write(struct.pack('B', 1 if is_err else 0))
         curr_byte_len += calculate_format_size('B')
 
         # add empty bytes up to HEAD_BYTE_LEN for future use (if needed)
@@ -741,24 +741,27 @@ class AAWriter(Writer):
         fmt = npdtype2format(obj.data.dtype.name)
 
         # get data shape
-        Nk, Nt = obj._data.shape
+        Nt = len(obj.tau)
+        Nk, dim_t = obj._data.shape
+        Nextra = dim_t - Nt
 
         # write _data
         obj._data.tofile(self._fh)
         data_offset = self.head_byte_len
 
         # write _err
+        err_offset = data_offset + Nk * (Nt + Nextra) * calculate_format_size(fmt)
         if obj._err is not None:
             obj._err.tofile(self._fh)
-            err_offset = data_offset + Nk * Nt * calculate_format_size(fmt)
-        else:
-            err_offset = data_offset
 
         # write kx, ky, and tau
         obj.k.tofile(self._fh)
         obj.tau.tofile(self._fh)
         obj.bin_edges.tofile(self._fh)
-        k_offset = err_offset + Nk * Nt * calculate_format_size(fmt)
+        if obj._err is not None:
+            k_offset = err_offset + Nk * (Nt + Nextra) * calculate_format_size(fmt)
+        else:
+            k_offset = err_offset
         tau_offset = k_offset + Nk * calculate_format_size(fmt)
         bin_edges_offset = tau_offset + Nt * calculate_format_size(fmt)
 
@@ -961,11 +964,17 @@ class AAParser(Parser):
         metadata['Nk'] = self.read_value(7, 'Q')
         metadata['Nt'] = self.read_value(0, 'Q', whence=1)
         metadata['Nextra'] = self.read_value(0, 'Q', whence=1)
-        metadata['is_err'] = self.read_value(0, 'B', whence=1)
+        if self.get_version() > (0, 1):
+            metadata['is_err'] = bool(self.read_value(0, 'B', whence=1))
+        else:
+            metadata['is_err'] = False
 
         # byte offsets start from end of file, written as unsigned long long ('Q')
         metadata['data_offset'] = self.read_value(-calculate_format_size('Q'), 'Q', 2)
-        metadata['err_offset'] = self.read_value(-2 * calculate_format_size('Q'), 'Q', 1)
+        if self.get_version() > (0, 1):
+            metadata['err_offset'] = self.read_value(-2 * calculate_format_size('Q'), 'Q', 1)
+        else:
+            metadata['err_offset'] = 0
         metadata['k_offset'] = self.read_value(-2 * calculate_format_size('Q'), 'Q', 1)
         metadata['tau_offset'] = self.read_value(-2 * calculate_format_size('Q'), 'Q', 1)
         metadata['bin_edges_offset'] = self.read_value(-2 * calculate_format_size('Q'), 'Q', 1)
