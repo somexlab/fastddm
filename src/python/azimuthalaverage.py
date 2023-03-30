@@ -754,7 +754,7 @@ class AAWriter(Writer):
         if obj._err is not None:
             obj._err.tofile(self._fh)
 
-        # write k and tau
+        # write k, tau, and bin_edges
         obj.k.tofile(self._fh)
         obj.tau.tofile(self._fh)
         obj.bin_edges.tofile(self._fh)
