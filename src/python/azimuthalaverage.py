@@ -649,7 +649,7 @@ class AAWriter(Writer):
         ) -> None:
         """Write image structure function file header.
 
-        In version 0.1, the header is structured as follows:
+        In version 0.2, the header is structured as follows:
         * bytes 0-1: endianness (`LL` = 'little'; `BB` = 'big'), 'utf-8' encoding
         * bytes 2-3: file identifier (22), `H` (unsigned short)
         * bytes 4-5: file version as (major_version, minor_version), `BB` (unsigned char)
@@ -754,7 +754,7 @@ class AAWriter(Writer):
         if obj._err is not None:
             obj._err.tofile(self._fh)
 
-        # write kx, ky, and tau
+        # write k and tau
         obj.k.tofile(self._fh)
         obj.tau.tofile(self._fh)
         obj.bin_edges.tofile(self._fh)
