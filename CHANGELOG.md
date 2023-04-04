@@ -5,17 +5,35 @@ Change Log
 v0.x
 ----
 
-### v0.1.3 (YYYY-MM-DD)
+### v0.1.3 (2023-04-04)
 
-[comment]: <> (*Added*)
+*Added*
+
+* Reader function for raw image metadata (supports `.tif` and `.nd2`)
+* basic pytest routines
+* `chunkify` function for time analysis (for non-stationary processes)
+* variance in python backend
+* uncertainty in azimuthal average (selectable via flag in `azimuthal_average` function)
+* fit function to fit a model for multiple k/q values at once
+* copyright information
+* script to generate fit models for the intermediate scattering function and image structure function
+* formatted (custom) binary file outputs (and readers/parsers) for the `ImageStructureFunction` and the `AzimuthalAverage` classes
+
 
 *Changed*
 
 * Now `save` method in `ImageStructureFunction` and `AzimuthalAverage` allow the usage of the filename without the argument keyword.
 * `read_images` and related functions allow for the selection of color channels when reading image files.
 * Improved speed in cuda fft2 step.
+* moved from static to dynamic library compilation 
+* sped up the azimuthal average computation 
 
-[comment]: <> (*Fixed*)
+*Fixed* 
+
+* fixed a bug in azimuthal average `resample` method
+* fixed scaling issue in python backend fft mode
+* fixed bug in variance calculation in cuda backend
+* computing lag=0 in ddm python backend was causing an error due to faulty array slicing, this was fixed. 
 
 [comment]: <> (*Deprecated*)
 
