@@ -26,6 +26,7 @@ dependencies = [
     'matplotlib',
     'scikit-image',
     'tifffile',
-    'nd2reader'
+    'nd2reader',
+    'pandas'
 ]
 dynamic = [ "license", "version" ]
