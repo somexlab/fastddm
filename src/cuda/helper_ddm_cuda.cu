@@ -1,4 +1,8 @@
-// Maintainer: enrico-lattuada
+// Copyright (c) 2023-2023 University of Vienna, Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino.
+// Part of FastDDM, released under the GNU GPL-3.0 License.
+
+// Author: Enrico Lattuada
+// Maintainer: Enrico Lattuada
 
 /*! \file helper_ddm_cuda.cu
     \brief Definition of helper functions for Differential Dynamic Microscopy on the GPU
@@ -591,8 +595,10 @@ __global__ void average_complex_kernel(double2 *d_in,
         {
             // Fetch final intermediate sum from 2nd warp
             if (blockDim.x >= 64)
+            {
                 tmp_sum_r += sdata2[tid + 32].x;
-            tmp_sum_i += sdata2[tid + 32].y;
+                tmp_sum_i += sdata2[tid + 32].y;
+            }
             // Reduce final warp using shuffle
             for (int offset = tile32.size() / 2; offset > 0; offset /= 2)
             {

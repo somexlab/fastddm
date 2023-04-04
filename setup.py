@@ -154,7 +154,7 @@ class CMakeBuild(build_ext):
 setup(
     name = "fastddm",
     use_scm_version = {
-        "fallback_version": "0.1.2",
+        "fallback_version": "0.1.3",
     },
     packages = find_packages(),
     url = 'https://github.com/somexlab/fastddm',
@@ -168,4 +168,13 @@ setup(
         'install_lib': InstallCMakeLibs,
         },
     zip_safe = False,
+    classifiers = [
+        "Development Status :: 4 - Beta",
+        "Environment :: Console",
+        "Intended Audience :: Science/Research",
+        "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+        "Operating System :: OS Independent",
+        "Programming Language :: C++",
+        "Topic :: Scientific/Engineering :: Physics"
+        ],
 )

@@ -1,4 +1,8 @@
-// Maintainer: enrico-lattuada
+// Copyright (c) 2023-2023 University of Vienna, Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino.
+// Part of FastDDM, released under the GNU GPL-3.0 License.
+
+// Author: Enrico Lattuada
+// Maintainer: Enrico Lattuada
 
 // inclusion guard
 #ifndef __DDM_CUDA_CUH__
@@ -25,6 +29,7 @@ using namespace std;
     \param ny           number of fft nodes in y direction
     \param num_fft2     number of fft2 chunks
     \param buff_pitch   pitch of buffer device array
+    \param pitch_nx     pitch of output fft2 array (for complex values)
  */
 template <typename T>
 void compute_fft2(const T *h_in,
@@ -35,7 +40,8 @@ void compute_fft2(const T *h_in,
                   unsigned long long nx,
                   unsigned long long ny,
                   unsigned long long num_fft2,
-                  unsigned long long buff_pitch);
+                  unsigned long long buff_pitch,
+                  unsigned long long pitch_nx);
 
 /*! \brief Compute image structure function using differences on the GPU
     \param h_in         input array of Fourier transformed images
@@ -94,4 +100,4 @@ void structure_function_fft(double *h_in,
                             unsigned long long pitch_t,
                             unsigned long long pitch_nt);
 
-#endif
+#endif  // __DDM_CUDA_CUH__

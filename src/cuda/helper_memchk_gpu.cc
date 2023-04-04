@@ -1,4 +1,8 @@
-// Maintainer: enrico-lattuada
+// Copyright (c) 2023-2023 University of Vienna, Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino.
+// Part of FastDDM, released under the GNU GPL-3.0 License.
+
+// Author: Enrico Lattuada
+// Maintainer: Enrico Lattuada
 
 /*! \file helper_memchk_gpu.cc
     \brief Definition of C++ helper functions for memory check and optimization for GPU routines
@@ -78,7 +82,7 @@ void chk_host_mem_diff(unsigned long long nx,
 
     - To store the fft2, we need
         (nx / 2 + 1) * ny * length * 16 bytes
-    
+
     To store both, we need
         (nx / 2 + 1) * ny * max(length, #lags + 2) * 16 bytes
      */
@@ -185,6 +189,7 @@ unsigned long long get_device_pitch(unsigned long long N,
 unsigned long long get_device_fft2_mem(unsigned long long nx,
                                        unsigned long long ny,
                                        unsigned long long batch,
+                                       unsigned long long pitch,
                                        cufftResult &cufft_res)
 {
     // The following line should be changed to move to workstations with multiple GPUs
@@ -192,6 +197,7 @@ unsigned long long get_device_fft2_mem(unsigned long long nx,
     cudaGetFft2MemSize(nx,
                        ny,
                        batch,
+                       pitch,
                        memsize,
                        cufft_res);
 
@@ -228,6 +234,7 @@ unsigned long long get_device_fft_mem(unsigned long long nt,
     to perform the calculations.
  */
 void optimize_fft2(unsigned long long &pitch_buff,
+                   unsigned long long &pitch_nx,
                    unsigned long long &num_fft2,
                    bool is_input_double,
                    unsigned long long pixel_Nbytes,
@@ -247,11 +254,16 @@ void optimize_fft2(unsigned long long &pitch_buff,
     //  - for the cufft2 internal buffer:
     //      {programmatically determined...}
 
+    unsigned long long _nx = nx / 2ULL + 1ULL;
+
     // memory required
     unsigned long long mem_req = 0ULL;
 
     // get device pitch for buffer array (only if input is not double)
     pitch_buff = is_input_double ? 0ULL : get_device_pitch(width, pixel_Nbytes);
+
+    // get device pitch for fft2 output complex array
+    pitch_nx = get_device_pitch(_nx, 2 * sizeof(double));
 
     // start with worst case scenario:
     // we need to perform as many fft2 loops as the number of images
@@ -268,7 +280,7 @@ void optimize_fft2(unsigned long long &pitch_buff,
 
         // estimate cufft2 internal buffer size
         cufftResult res;
-        unsigned long long mem_fft2 = get_device_fft2_mem(nx, ny, fft2_batch_len, res);
+        unsigned long long mem_fft2 = get_device_fft2_mem(nx, ny, fft2_batch_len, pitch_nx, res);
         if (res == CUFFT_SUCCESS)
         {
             // add internal buffer memory required for cufft2
@@ -278,7 +290,7 @@ void optimize_fft2(unsigned long long &pitch_buff,
             mem_req += is_input_double ? 0ULL : pitch_buff * height * fft2_batch_len * (unsigned long long)pixel_Nbytes;
 
             // add memory required for workspace
-            mem_req += (nx / 2ULL + 1ULL) * ny * fft2_batch_len * 16ULL;
+            mem_req += pitch_nx * ny * fft2_batch_len * 16ULL;
 
             // check memory
             if (free_mem > mem_req)
@@ -618,6 +630,7 @@ void chk_device_mem_diff(unsigned long long width,
                          unsigned long long &num_chunks,
                          unsigned long long &num_fullshift,
                          unsigned long long &pitch_buff,
+                         unsigned long long &pitch_nx,
                          unsigned long long &pitch_q,
                          unsigned long long &pitch_t,
                          unsigned long long &pitch_fs)
@@ -631,6 +644,7 @@ void chk_device_mem_diff(unsigned long long width,
 
     // evaluate parameters for fft2
     optimize_fft2(pitch_buff,
+                  pitch_nx,
                   num_fft2,
                   is_input_double,
                   pixel_Nbytes,
@@ -690,6 +704,7 @@ void chk_device_mem_fft(unsigned long long width,
                         unsigned long long &num_chunks,
                         unsigned long long &num_fullshift,
                         unsigned long long &pitch_buff,
+                        unsigned long long &pitch_nx,
                         unsigned long long &pitch_q,
                         unsigned long long &pitch_t,
                         unsigned long long &pitch_nt,
@@ -704,6 +719,7 @@ void chk_device_mem_fft(unsigned long long width,
 
     // evaluate parameters for fft2
     optimize_fft2(pitch_buff,
+                  pitch_nx,
                   num_fft2,
                   is_input_double,
                   pixel_Nbytes,

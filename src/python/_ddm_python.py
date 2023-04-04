@@ -1,3 +1,8 @@
+# Copyright (c) 2023-2023 University of Vienna, Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino.
+# Part of FastDDM, released under the GNU GPL-3.0 License.
+# Author: Fabian Krautgasser
+# Maintainer: Fabian Krautgasser
+
 """The collection of python functions to perform Differential Dynamic Microscopy."""
 
 from typing import Optional, Tuple, Callable, Dict
@@ -229,10 +234,14 @@ def _diff_image_structure_function(
     if lag >= length:
         raise RuntimeError("Time delay cannot be longer than the timeseries itself!")
 
-    cropped_conj = rfft2[:-lag].conj()
-    shifted = rfft2[lag:]
-    shifted_abs_square = rfft2_square_mod[lag:]
-    cropped_abs_square = rfft2_square_mod[:-lag]
+    # use slice objects to handle cropping of arrays better
+    crop = slice(None, -lag) if lag != 0 else slice(None, None)
+    shift = slice(lag, None) 
+    
+    cropped_conj = rfft2[crop].conj()
+    shifted = rfft2[shift]
+    shifted_abs_square = rfft2_square_mod[shift]
+    cropped_abs_square = rfft2_square_mod[crop]
 
     sum_of_parts = (
         shifted_abs_square + cropped_abs_square - 2 * (cropped_conj * shifted).real
@@ -243,7 +252,8 @@ def _diff_image_structure_function(
 
 
 def image_structure_function(
-    square_modulus: np.ndarray,
+    sq_mod_cumsum: np.ndarray,
+    sq_mod_cumsum_rev: np.ndarray,
     autocorrelation: np.ndarray,
     lag: int,
     shape: Optional[Tuple[int, ...]] = None,
@@ -260,8 +270,12 @@ def image_structure_function(
 
     Parameters
     ----------
-    square_modulus : np.ndarray
-        The square modulus of the spatial FFT of an image timeseries, e.g. np.abs(rfft2(imgs))**2.
+    sq_mod_cumsum : np.ndarray
+        The cumulative sum of the square modulus of the spatial FFT of an image time series, e.g.
+        np.cumsum(np.abs(rfft2(imgs))**2, axis=0).
+    sq_mod_cumsum_rev : np.ndarray
+        The cumulative sum of the reversed square modulus of the spatial FFT of an image time
+        series, e.g. np.cumsum(np.abs(rfft2(imgs)[::-1])**2, axis=0).
     autocorrelation : np.ndarray
         The autocorrelation function of the spatial FFT of an image timeseries.
     lag : int
@@ -280,25 +294,15 @@ def image_structure_function(
     RuntimeError
         If the given lag time is longer than the timeseries.
     """
-    length, *_ = square_modulus.shape
+    length, *_ = sq_mod_cumsum.shape
 
     if lag >= length:
         raise RuntimeError("Time lag cannot be longer than the timeseries itself!")
 
-    # handling slicing with zeroth index
-    if lag == 0:
-        shifted_abs_square = square_modulus
-        cropped_abs_square = square_modulus
-
-    else:
-        shifted_abs_square = square_modulus[lag:]
-        cropped_abs_square = square_modulus[:-lag]
-
     autocorrelation = autocorrelation[lag].real
 
-    sum_of_parts = (
-        np.sum(shifted_abs_square + cropped_abs_square, axis=0) - 2 * autocorrelation
-    )
+    offset = lag + 1
+    sum_of_parts = sq_mod_cumsum[-offset] + sq_mod_cumsum_rev[-offset] - 2 * autocorrelation
     sum_of_parts /= length - lag  # normalization
 
     return reconstruct_full_spectrum(sum_of_parts, shape=shape)  # full plane
@@ -360,7 +364,7 @@ def _py_image_structure_function(
     if nx is None or ny is None:
         _, ny, nx = images.shape
     length = len(lags)
-    dqt = np.zeros((length, ny, nx))
+    dqt = np.zeros((length + 2, ny, nx))  # +2 for (avg) power spectrum & variance 
     output_shape = (ny, nx)
 
     # spatial fft & square modulus
@@ -369,15 +373,22 @@ def _py_image_structure_function(
 
     if mode == "diff":
         # just needs argument setup
-        args = [rfft2, square_mod]
+        args = (rfft2, square_mod)
 
     else:
         # autocorrelation for fft mode
         autocorr = autocorrelation(rfft2, workers=workers)
-        args = [square_mod, autocorr]
+        cumsum = np.cumsum(square_mod, axis=0)
+        cumsum_rev = np.cumsum(square_mod[::-1], axis=0)
+        
+        args = (cumsum, cumsum_rev, autocorr)
 
     for i, lag in enumerate(lags):
         dqt[i] = calc_dqt(*args, lag, shape=output_shape)
+
+    # add the power spectrum and the variance as the last two entries in the dqt array
+    dqt[-2] = reconstruct_full_spectrum(square_mod.mean(axis=0), shape=output_shape)
+    dqt[-1] = reconstruct_full_spectrum(rfft2.var(axis=0), shape=output_shape)
 
     return dqt
 

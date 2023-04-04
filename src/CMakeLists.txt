@@ -1,3 +1,16 @@
+# translate CMake true/false to python
+if(ENABLE_CPP)
+    SET(IS_CPP_ENABLED True)
+else()
+    SET(IS_CPP_ENABLED False)
+endif()
+
+if(ENABLE_CUDA)
+    SET(IS_CUDA_ENABLED True)
+else()
+    SET(IS_CUDA_ENABLED False)
+endif()
+
 if(ENABLE_CPP)
     SET(_fddm_sources
         cpp/ddm.cc
@@ -7,13 +20,20 @@ if(ENABLE_CPP)
 endif(ENABLE_CPP)
 
 if(ENABLE_CUDA)
-    SET(_fddm_lib_cu_SOURCES
+    SET(_fddm_cu_sources
         cuda/ddm_cuda.cu
         cuda/helper_cufft.cu
         cuda/helper_ddm_cuda.cu
         cuda/helper_prefix_sum.cu
         cuda/helper_memchk_gpu.cu
     )
+
+    list(APPEND _fddm_sources
+         cuda/ddm_cuda.cc
+         cuda/helper_memchk_gpu.cc
+    )
+
+    set_source_files_properties(${_fddm_cu_sources} PROPERTIES LANGUAGE CUDA)
 endif(ENABLE_CUDA)
 
 if(ENABLE_CPP)
@@ -21,24 +41,17 @@ if(ENABLE_CPP)
     include_directories( ${PROJECT_SOURCE_DIR}/lib/fftw-3.3.10/api )
     include_directories( ${PROJECT_SOURCE_DIR}/lib/pybind11/include )
 
-    # Add _fddm library
-    add_library(_fddm STATIC ${_fddm_sources})
-    if(WIN32)
-        target_link_libraries(_fddm ${PYTHON_LIBRARIES} fftw3)
-    else(WIN32)
-        #target_link_libraries(_fddm ${PYTHON_LIBRARIES} fftw3 m)
-        target_link_libraries(_fddm fftw3 m)
-    endif(WIN32)
-    set_target_properties(_fddm PROPERTIES POSITION_INDEPENDENT_CODE ON)
+    # Add _core library
+    pybind11_add_module(_core SHARED python/bindings.cc ${_fddm_sources} ${_fddm_cu_sources})
 
-    # Add core python module
-    pybind11_add_module(_core SHARED python/bindings.cc)
-    target_link_libraries(_core PRIVATE _fddm)
     if(WIN32)
+        target_link_libraries(_core PUBLIC ${PYTHON_LIBRARIES} fftw3)
         set_target_properties(_core PROPERTIES
                                     RUNTIME_OUTPUT_DIRECTORY_RELEASE ${FASTDDM_OUTPUT_DIR}
                             )
     else(WIN32)
+        #target_link_libraries(_core PUBLIC ${PYTHON_LIBRARIES} fftw3 m)
+        target_link_libraries(_core PUBLIC fftw3 m)
         set_target_properties(_core PROPERTIES
                                     SUFFIX ".so"
                                     LIBRARY_OUTPUT_DIRECTORY ${FASTDDM_OUTPUT_DIR}
@@ -48,33 +61,20 @@ endif(ENABLE_CPP)
 
 if(ENABLE_CUDA)
     include_directories(${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
+    include(CUDAsetup.cmake)
 
-    # Add _fddm_cuda library
-    include(select_compute_arch.cmake)
-    add_library(_fddm_cuda STATIC ${_fddm_lib_cu_SOURCES})
+    target_compile_definitions(_core PUBLIC ENABLE_CUDA)
+
     if(${CMAKE_VERSION} VERSION_LESS "3.18.0")
-        CUDA_SELECT_NVCC_ARCH_FLAGS(ARCH_FLAGS Auto)
-        message(STATUS "Generating code for the following CUDA architectures: ${ARCH_FLAGS_readable}")
-        set_target_properties(_fddm_cuda PROPERTIES
-                                    POSITION_INDEPENDENT_CODE ON
-                            )
-        target_compile_options(_fddm_cuda PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:${ARCH_FLAGS}>)
+        target_compile_options(_core PUBLIC $<$<COMPILE_LANGUAGE:CUDA>:-arch=sm_${_cuda_min_arch})
     else()
-        CUDA_SELECT_NVCC_ARCH(ARCHS Auto)
-        message(STATUS "Generating code for the following CUDA architectures: ${ARCHS_readable}")
-        set_target_properties(_fddm_cuda PROPERTIES
-                                    POSITION_INDEPENDENT_CODE ON
-                                    CUDA_ARCHITECTURES ${ARCHS}
+        set_target_properties(_core PROPERTIES
+                                    CUDA_ARCHITECTURES ${_cuda_min_arch}
                             )
     endif()
 
     # Add core_cuda python module
-    pybind11_add_module(_core_cuda SHARED cuda/ddm_cuda.cc cuda/helper_memchk_gpu.cc python/bindings_cuda.cc)
-    target_link_libraries(_core_cuda PRIVATE _fddm_cuda cufft nvidia-ml)
-    set_target_properties(_core_cuda PROPERTIES
-                                SUFFIX ".so"
-                                LIBRARY_OUTPUT_DIRECTORY ${FASTDDM_OUTPUT_DIR}
-                        )
+    target_link_libraries(_core PUBLIC cufft nvidia-ml)
 endif(ENABLE_CUDA)
 
 # Copy the files required to install the library with python's setuptools
@@ -83,6 +83,15 @@ configure_file(python/__init__.py
 
 configure_file(python/_fftopt.py
                ${FASTDDM_OUTPUT_DIR}/_fftopt.py)
+
+configure_file(python/imagestructurefunction.py
+               ${FASTDDM_OUTPUT_DIR}/imagestructurefunction.py)
+
+configure_file(python/azimuthalaverage.py
+               ${FASTDDM_OUTPUT_DIR}/azimuthalaverage.py)
+
+configure_file(python/_ddm.py
+               ${FASTDDM_OUTPUT_DIR}/_ddm.py)
 
 if(ENABLE_CPP)
     configure_file(python/_ddm_cpp.py
@@ -106,6 +115,9 @@ configure_file(python/_ddm_python.py
 configure_file(python/_io.py
                ${FASTDDM_OUTPUT_DIR}/_io.py)
 
+configure_file(python/_io_common.py
+               ${FASTDDM_OUTPUT_DIR}/_io_common.py)
+
 configure_file(python/lags.py
                ${FASTDDM_OUTPUT_DIR}/lags.py)
 
@@ -126,5 +138,8 @@ configure_file(python/make_install_setup.py
 
 configure_file(python/fit.py
                ${FASTDDM_OUTPUT_DIR}/fit.py)
+
+configure_file(extras/generate_fit_models.py
+               ${FASTDDM_OUTPUT_DIR}/extras/generate_fit_models.py)
 
 install(CODE "execute_process(COMMAND ${PYTHON_EXECUTABLE} -m pip install ${FASTDDM_OUTPUT_DIR})")

@@ -1,4 +1,8 @@
-// Maintainer: enrico-lattuada
+// Copyright (c) 2023-2023 University of Vienna, Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino.
+// Part of FastDDM, released under the GNU GPL-3.0 License.
+
+// Author: Enrico Lattuada
+// Maintainer: Enrico Lattuada
 
 /*! \file helper_memchk_gpu.cu
     \brief Definition of CUDA helper functions for memory check and optimization for GPU routines
@@ -94,12 +98,14 @@ void cudaGetDevicePitch1B(size_t N,
 void cudaGetFft2MemSize(size_t nx,
                         size_t ny,
                         size_t batch,
+                        size_t pitch,
                         size_t *memsize,
                         cufftResult &cufft_res)
 {
     fft2_get_mem_size(nx,
                       ny,
                       batch,
+                      pitch,
                       memsize,
                       cufft_res);
 }
