@@ -9,6 +9,7 @@ from typing import Any, Optional, Union, Dict, List, Tuple
 
 import lmfit as lm
 import numpy as np
+import pandas as pd
 
 from .azimuthalaverage import AzimuthalAverage
 
@@ -148,7 +149,7 @@ def fit_multik(
     ref_params: Optional[lm.Parameters] = None,
     return_model_results : Optional[bool] = False,
     **fitargs: Any,
-) -> Tuple[Dict[str, np.ndarray], Optional[List[lm.model.ModelResult]]]:
+) -> Tuple[pd.DataFrame, Optional[List[lm.model.ModelResult]]]:
     """A wrapper for fitting a given model to given data for multiple k vectors.
 
     The initial parameters estimated for `ref` index should be set in the model or passed
@@ -184,11 +185,10 @@ def fit_multik(
 
     Returns
     -------
-    Tuple[Dict[str, np.ndarray], Optional[List[lm.model.ModelResult]]]
-        The fit parameters obtained and the success boolean value as a dictionary of
-        string keys and numpy arrays values. If `return_model_results` is True,
-        the result is a tuple whose second value is the complete list of
-        ModelResults obtained. 
+    Tuple[pd.DataFrame, Optional[List[lm.model.ModelResult]]]
+        The fit parameters obtained and the success boolean value as a pandas DataFrame. If
+        `return_model_results` is True, the result is a tuple whose second value is the complete 
+        list of `lmfit.ModelResult`s obtained. 
     """
     # initialize model parameters
     model_params = model.make_params()
@@ -223,7 +223,7 @@ def fit_multik(
     for p in model.param_names:
         results[p][ref] = result.params[p].value
     results['success'][ref] = result.success
-    if return_model_results:
+    if model_results is not None:
         model_results[ref] = result
 
     # perform fit towards small k vectors
@@ -241,7 +241,7 @@ def fit_multik(
             for p in model.param_names:
                 model_params[p].value = results[p][idx] = result.params[p].value
             results['success'][idx] = result.success
-            if return_model_results:
+            if model_results is not None:
                 model_results[idx] = result
 
     # perform fit towards large k vectors
@@ -259,10 +259,10 @@ def fit_multik(
             for p in model.param_names:
                 model_params[p].value = results[p][idx] = result.params[p].value
             results['success'][idx] = result.success
-            if return_model_results:
+            if model_results is not None:
                 model_results[idx] = result
 
     if return_model_results:
-        return results, model_results
+        return pd.DataFrame(results), model_results
     else:
-        return results
+        return pd.DataFrame(results), None
