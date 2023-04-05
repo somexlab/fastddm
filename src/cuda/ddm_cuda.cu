@@ -470,7 +470,7 @@ void make_shift(double *h_in,
 
         // ***Copy values from device to host (make contiguous on memory)
         // Get output offset
-        unsigned long long ooffset = chunk * chunk_size * nx * ny;
+        unsigned long long ooffset = chunk * chunk_size * _nx * ny;
         gpuErrchk(cudaMemcpy2D(h_in + ooffset,
                                _nx * sizeof(double),
                                d_workspace2,
