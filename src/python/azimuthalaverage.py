@@ -804,22 +804,34 @@ class AAReader(Reader):
         -------
         AzimuthalAverage
             The AzimuthalAverage object.
+        
+        Raises
+        ------
+        IOError
+            If file version not supported.
         """
+        # check version supported
+        if not self._parser.supported:
+            version = self._parser.get_version()
+            raise IOError(f'File version {version} not supported.')
+
+        # get data shape
         Nk = self._metadata['Nk']
         Nt = self._metadata['Nt']
         Nextra = self._metadata['Nextra']
+        shape = (Nk, Nt + Nextra)
 
         if self._metadata['is_err']:
             return AzimuthalAverage(
-                self._parser.read_array(self._metadata['data_offset'], (Nk, Nt + Nextra)),
-                self._parser.read_array(self._metadata['err_offset'], (Nk, Nt + Nextra)),
+                self._parser.read_array(self._metadata['data_offset'], shape),
+                self._parser.read_array(self._metadata['err_offset'], shape),
                 self.get_k(),
                 self.get_tau(),
                 self.get_bin_edges()
                 )
         else:
             return AzimuthalAverage(
-                self._parser.read_array(self._metadata['data_offset'], (Nk, Nt + Nextra)),
+                self._parser.read_array(self._metadata['data_offset'], shape),
                 None,
                 self.get_k(),
                 self.get_tau(),

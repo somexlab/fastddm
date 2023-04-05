@@ -5,7 +5,7 @@
 
 """Image structure function data class."""
 
-from typing import Sequence, Tuple, BinaryIO
+from typing import Sequence, Tuple, BinaryIO, Optional
 from dataclasses import dataclass
 import os
 from sys import byteorder
@@ -431,9 +431,12 @@ class SFWriter(Writer):
         # assign Nextra = 2
         # we have power_spectrum + variance
         Nextra = len(obj._data) - len(obj)
+        # get full width and height
+        width = obj.width
+        height = obj.height
 
         # write file header
-        self._write_header(Nt, Ny, Nx, Nextra, dtype)
+        self._write_header(Nt, Ny, Nx, Nextra, width, height, dtype)
 
         # write data
         self._write_data(obj)
@@ -444,11 +447,13 @@ class SFWriter(Writer):
         Ny : int,
         Nx : int,
         Nextra : int,
+        width : int,
+        height : int,
         dtype : str
         ) -> None:
         """Write image structure function file header.
 
-        In version 0.1, the header is structured as follows:
+        In version 0.3, the header is structured as follows:
         * bytes 0-1: endianness (`LL` = 'little'; `BB` = 'big'), 'utf-8' encoding
         * bytes 2-3: file identifier (73), `H` (unsigned short)
         * bytes 4-5: file version as (major_version, minor_version), `BB` (unsigned char)
@@ -457,6 +462,8 @@ class SFWriter(Writer):
         * bytes 15-22: data height, `Q` (unsigned long long)
         * bytes 23-30: data width, `Q` (unsigned long long)
         * bytes 31-38: extra slices, `Q` (unsigned long long)
+        * bytes 39-46: full width, `Q` (unsigned long long)
+        * bytes 47-54: full height, `Q` (unsigned long long)
 
         Parameters
         ----------
@@ -468,6 +475,10 @@ class SFWriter(Writer):
             Width
         Nextra : int
             Number of extra slices.
+        width : int
+            Full width.
+        height : int
+            Full height.
         dtype : str
             Data dtype.
         """
@@ -505,6 +516,14 @@ class SFWriter(Writer):
 
         # extra slices
         self._fh.write(struct.pack('Q', Nextra))
+        curr_byte_len += calculate_format_size('Q')
+
+        # full width
+        self._fh.write(struct.pack('Q', width))
+        curr_byte_len += calculate_format_size('Q')
+
+        # full height
+        self._fh.write(struct.pack('Q', height))
         curr_byte_len += calculate_format_size('Q')
 
         # add empty bytes up to HEAD_BYTE_LEN for future use (if needed)
@@ -584,17 +603,17 @@ class SFReader(Reader):
     -------
     load() : ImageStructureFunction
         Load the image structure function.
-    get_kx() : np.ndarray
+    get_kx(full) : np.ndarray
         Read kx array.
-    get_ky() : np.ndarray
+    get_ky(full) : np.ndarray
         Read ky array.
     get_tau() : np.ndarray
         Read tau array.
-    get_frame(index) : np.ndarray
+    get_frame(index, full) : np.ndarray
         Read a data slice.
-    get_power_spec() : np.ndarray
+    get_power_spec(full) : np.ndarray
         Read power spectrum.
-    get_var() : np.ndarray
+    get_var(full) : np.ndarray
         Read variance.
     """
     def __init__(self, file : str):
@@ -609,23 +628,40 @@ class SFReader(Reader):
         -------
         ImageStructureFunction
             The ImageStructureFunction object.
+
+        Raises
+        ------
+        IOError
+            If file version not supported.
         """
+        # check version supported
+        if not self._parser.supported:
+            version = self._parser.get_version()
+            raise IOError(f'File version {version} not supported.')
+
+        # get data shape
         Nt = self._metadata['Nt']
         Nextra = self._metadata['Nextra']
         Ny = self._metadata['Ny']
         Nx = self._metadata['Nx']
+        shape = (Nt + Nextra, Ny, Nx)
 
         return ImageStructureFunction(
-            self._parser.read_array(self._metadata['data_offset'], (Nt + Nextra, Ny, Nx)),
-            self.get_kx(),
-            self.get_ky(),
+            self._parser.read_array(self._metadata['data_offset'], shape),
+            self.get_kx(False),
+            self.get_ky(False),
             self.get_tau(),
             self._metadata['pixel_size'],
             self._metadata['delta_t']
             )
 
-    def get_kx(self) -> np.ndarray:
+    def get_kx(self, full: Optional[bool] = True) -> np.ndarray:
         """Read kx array from file.
+
+        Parameters
+        ----------
+        full : Optional[bool]
+            If True, return the full (symmetric) kx array. Default is True.
 
         Returns
         -------
@@ -635,10 +671,30 @@ class SFReader(Reader):
         offset = self._metadata['kx_offset']
         Nx = self._metadata['Nx']
 
-        return self._parser.read_array(offset, Nx)
+        kx = self._parser.read_array(offset, Nx)
 
-    def get_ky(self) -> np.ndarray:
+        if full:
+            out = np.zeros_like(kx, shape=self._metadata['width'])
+            # copy first part
+            out[:Nx] = kx
+            # copy other half
+            if self._metadata['width'] % 2 == 0:
+                out[Nx:] = -np.flip(kx[1:-1])
+            else:
+                out[Nx:] = -np.flip(kx[1:])
+            return np.fft.fftshift(out)
+        else:
+            return kx
+
+    def get_ky(self, full: Optional[bool] = True) -> np.ndarray:
         """Read ky array from file.
+
+        Parameters
+        ----------
+        full : Optional[bool]
+            If True, return the full (symmetric) ky array. Default is True.
+            This flag has in fact no effect on the output since y is already
+            full.
 
         Returns
         -------
@@ -663,13 +719,16 @@ class SFReader(Reader):
 
         return self._parser.read_array(offset, Nt)
 
-    def get_frame(self, index : int) -> np.ndarray:
+    def get_frame(self, index : int, full : Optional[bool] = True) -> np.ndarray:
         """Read data slice array from file.
 
         Parameters
         ----------
         index : int
             The frame index.
+        full : Optional[bool]
+            If True, return the full (symmetric) 2D image structure function.
+            Default is True.
 
         Returns
         -------
@@ -691,10 +750,20 @@ class SFReader(Reader):
         offset = self._metadata['data_offset']
         offset += index * Nx * Ny * calculate_format_size(self._parser.dtype)
 
-        return self._parser.read_array(offset, (Ny, Nx))
+        if full:
+            shape = (self._metadata['height'], self._metadata['width'])
+            return _reconstruct_full_spectrum(self._parser.read_array(offset, (Ny, Nx)), shape)
+        else:
+            return self._parser.read_array(offset, (Ny, Nx))
 
-    def get_power_spec(self) -> np.ndarray:
+    def get_power_spec(self, full : Optional[bool] = True) -> np.ndarray:
         """Read power spectrum array from file.
+
+        Parameters
+        ----------
+        full : Optional[bool]
+            If True, return the full (symmetric) power spectrum.
+            Default is True.
 
         Returns
         -------
@@ -704,11 +773,21 @@ class SFReader(Reader):
         offset = self._metadata['extra_offset']
         Nx = self._metadata['Nx']
         Ny = self._metadata['Ny']
-        
-        return self._parser.read_array(offset, (Ny, Nx))
 
-    def get_var(self) -> np.ndarray:
+        if full:
+            shape = (self._metadata['height'], self._metadata['width'])
+            return _reconstruct_full_spectrum(self._parser.read_array(offset, (Ny, Nx)), shape)
+        else:
+            return self._parser.read_array(offset, (Ny, Nx))
+
+    def get_var(self, full : Optional[bool] = True) -> np.ndarray:
         """Read variance array from file.
+
+        Parameters
+        ----------
+        full : Optional[bool]
+            If True, return the full (symmetric) variance.
+            Default is True.
 
         Returns
         -------
@@ -719,8 +798,12 @@ class SFReader(Reader):
         Nx = self._metadata['Nx']
         Ny = self._metadata['Ny']
         offset += Nx * Ny * calculate_format_size(self._parser.dtype)
-        
-        return self._parser.read_array(offset, (Ny, Nx))
+
+        if full:
+            shape = (self._metadata['height'], self._metadata['width'])
+            return _reconstruct_full_spectrum(self._parser.read_array(offset, (Ny, Nx)), shape)
+        else:
+            return self._parser.read_array(offset, (Ny, Nx))
 
 
 class SFParser(Parser):
@@ -753,20 +836,25 @@ class SFParser(Parser):
         metadata = {}
 
         # shape starts at byte 7
-        # it comprises 4 values (Nt, Ny, Nx, Nextra), written as unsigned long long ('Q')
+        # it comprises 4 values (Nt, Ny, Nx, Nextra), written as
+        # unsigned long long ('Q')
         metadata['Nt'] = self.read_value(7, 'Q')
         metadata['Ny'] = self.read_value(0, 'Q', whence=1)
         metadata['Nx'] = self.read_value(0, 'Q', whence=1)
         metadata['Nextra'] = self.read_value(0, 'Q', whence=1)
+        metadata['width'] = self.read_value(0, 'Q', whence=1)
+        metadata['height'] = self.read_value(0, 'Q', whence=1)
 
-        # byte offsets start from end of file, written as unsigned long long ('Q')
-        metadata['data_offset'] = self.read_value(-calculate_format_size('Q'), 'Q', 2)
-        metadata['kx_offset'] = self.read_value(-2 * calculate_format_size('Q'), 'Q', 1)
-        metadata['ky_offset'] = self.read_value(-2 * calculate_format_size('Q'), 'Q', 1)
-        metadata['tau_offset'] = self.read_value(-2 * calculate_format_size('Q'), 'Q', 1)
-        pixel_size_offset = self.read_value(-2 * calculate_format_size('Q'), 'Q', 1)
-        delta_t_offset = self.read_value(-2 * calculate_format_size('Q'), 'Q', 1)
-        metadata['extra_offset'] = self.read_value(-2 * calculate_format_size('Q'), 'Q', 1)
+        # byte offsets start from end of file, written as
+        # unsigned long long ('Q')
+        Q_size = calculate_format_size('Q')
+        metadata['data_offset'] = self.read_value(-Q_size, 'Q', 2)
+        metadata['kx_offset'] = self.read_value(-2 * Q_size, 'Q', 1)
+        metadata['ky_offset'] = self.read_value(-2 * Q_size, 'Q', 1)
+        metadata['tau_offset'] = self.read_value(-2 * Q_size, 'Q', 1)
+        pixel_size_offset = self.read_value(-2 * Q_size, 'Q', 1)
+        delta_t_offset = self.read_value(-2 * Q_size, 'Q', 1)
+        metadata['extra_offset'] = self.read_value(-2 * Q_size, 'Q', 1)
 
         # read pixel_size and delta_t
         metadata['pixel_size'] = self.read_value(pixel_size_offset, self.dtype)
