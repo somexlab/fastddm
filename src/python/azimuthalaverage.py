@@ -251,12 +251,12 @@ class AzimuthalAverage:
 
 
 def azimuthal_average(
-    img_str_func : ImageStructureFunction,
-    bins : Optional[Union[int,Iterable[float]]] = 10,
-    range : Optional[Tuple[float, float]] = None,
-    mask : Optional[np.ndarray] = None,
-    weights : Optional[np.ndarray] = None,
-    eval_err : Optional[bool] = True
+    img_str_func: ImageStructureFunction,
+    bins: Optional[Union[int, Iterable[float]]] = 10,
+    range: Optional[Tuple[float, float]] = None,
+    mask: Optional[np.ndarray] = None,
+    weights: Optional[np.ndarray] = None,
+    eval_err: Optional[bool] = True
     ) -> AzimuthalAverage:
     """Compute the azimuthal average of the image structure function.
 
@@ -266,7 +266,7 @@ def azimuthal_average(
     .. math:
 
         \\bar{x}_i = \\frac{\\sum_k w_k x_k}{\\sum_k w_k} ,
-    
+
     where :math:`w_k` is the weight given to the wavevector :math:`k`.
     The uncertainty is calculated as the square root of the variance for
     weighed measures
@@ -274,7 +274,7 @@ def azimuthal_average(
     .. math:
 
         \\text{Var}(x_i) = \\left( \\frac{\\sum_k w_k x_k^2}{\\sum_k w_k} - \\bar{x}_i^2 \\right) \\frac{N_i}{N_i - 1} ,
-    
+
     where
 
     .. math:
@@ -314,6 +314,7 @@ def azimuthal_average(
     """
     # read actual image structure function shape
     dim_t, dim_y, dim_x = img_str_func._data.shape
+    is_even = img_str_func.width % 2 == 0
 
     # compute the k modulus
     X, Y = np.meshgrid(img_str_func.kx, img_str_func.ky)
@@ -348,20 +349,20 @@ def azimuthal_average(
     k[1:] = 0.5 * (bin_edges[:-1] + bin_edges[1:])
 
     # pre-compute weights
-    idx = np.full((dim_y, dim_x // 2 + 1), fill_value=-1, dtype=np.int64)
-    wk = np.zeros((dim_y, dim_x // 2 + 1), dtype=np.float64)
+    idx = np.full((dim_y, dim_x), fill_value=-1, dtype=np.int64)
+    wk = np.zeros((dim_y, dim_x), dtype=np.float64)
     sum_wk = np.zeros(bins)
     if eval_err:
         sum_wk2 = np.zeros(bins)
 
     # loop over k-vectors in half-plane
-    for (i, j), k_val in np.ndenumerate(k_modulus[:, :(dim_x // 2 + 1)]):
+    for (i, j), k_val in np.ndenumerate(k_modulus):
         if mask[i, j] and k_val <= bin_edges[-1]:
             # get current bin
             idx[i, j] = np.searchsorted(bin_edges, k_val) 
-            # count 1 if mid column (kx==0) or if first column and dim_x is odd
+            # count 1 if 0th column (kx==0) or if last column and width is even
             # count 2 otherwise
-            fact = 1 if ((j == dim_x // 2) or (dim_x % 2 == 1 and j == 0)) else 2
+            fact = 1 if ((j == 0) or (is_even and j == dim_x - 1)) else 2
             # update weights
             if weights is None:
                 wk[i, j] = fact
