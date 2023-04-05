@@ -311,7 +311,8 @@ class ImageStructureFunction:
         if len(fnames) != len(seq):
             raise RuntimeError('Number of elements in fnames differs from one in seq.')
 
-        _save_as_tiff(data=self.data[seq], labels=fnames)
+        for i, f in zip(seq, fnames):
+            _save_as_tiff(data=self.full_slice(i), labels=[f])
 
     def full_shape(self) -> Tuple[int, int, int]:
         """The shape of the full (symmetric) 2D image structure function.
