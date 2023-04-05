@@ -8,13 +8,14 @@
 from typing import Optional, Tuple
 import numpy as np
 
+
 def central_cross_mask(
-    shape : Tuple[int,int],
-    kx : Optional[np.ndarray] = None,
-    ky : Optional[np.ndarray] = None
+    shape: Tuple[int, int],
+    kx: Optional[np.ndarray] = None,
+    ky: Optional[np.ndarray] = None
 ) -> np.ndarray:
     """Evaluate mask to remove central cross from azimuthal average.
-    If `kx` and `ky` are not given, the half-plane representation for the 2D
+    If `kx` or `ky` are not given, the half-plane representation for the 2D
     image structure function is assumed (0th column and row at `shape[0] // 2`
     are masked out).
 
