@@ -116,6 +116,6 @@ def ddm(
     else:
         args = [img_seq, lags, dim_x_padded, dim_y_padded]
 
-    kx = 2 * np.pi * np.fft.fftshift(np.fft.fftfreq(dim_x_padded))
+    kx = 2 * np.pi * np.fft.fftfreq(dim_x_padded)[:(dim_x_padded // 2 + 1)]
     ky = 2 * np.pi * np.fft.fftshift(np.fft.fftfreq(dim_y_padded))
-    return ImageStructureFunction(ddm_func(*args, **kwargs), kx, ky, lags.astype(np.float64))
+    return ImageStructureFunction(ddm_func(*args, **kwargs), kx, ky, dim_x_padded, dim_y_padded, lags.astype(np.float64))

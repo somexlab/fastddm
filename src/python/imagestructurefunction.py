@@ -24,11 +24,15 @@ class ImageStructureFunction:
     _data : np.ndarray
         The packed data (2D image structure function, power spectrum,
         and variance).
-    kx : np.ndarray
+    _kx : np.ndarray
         The array of wavevector values over x.
-    ky : np.ndarray
+    _ky : np.ndarray
         The array of wavevector values over y.
-    tau : np.ndarray
+    _width : int
+        The width of the full (symmetric) 2D image structure function.
+    _height : int
+        The height of the full (symmetric) 2D image structure function.
+    _tau : np.ndarray
         The array of time delays.
     _pixel_size : float, optional
         The effective pixel size. Default is 1.
@@ -47,6 +51,10 @@ class ImageStructureFunction:
         The array of wavevector values over x.
     ky : np.ndarray
         The array of wavevector values over y.
+    width : int
+        The width of the full (symmetric) 2D image structure function.
+    height : int
+        The height of the full (symmetric) 2D image structure function.
     tau : np.ndarray
         The array of time delays.
     pixel_size : float
@@ -65,14 +73,29 @@ class ImageStructureFunction:
         Save ImageStructureFunction to binary file.
     save_as_tiff(seq, fnames) : None
         Save ImageStructureFunction frames as tiff images.
+    full_shape() : Tuple[int, int, int]
+        The shape of the full (symmetric) 2D image structure function.
+    full_slice(idx) : np.ndarray
+        Get the full (symmetric) 2D image structure function at specific index.
+    full_power_spec() : np.ndarray
+        Get the full (symmetric) average 2D power spectrum of the input images.
+    full_var() : np.ndarray
+        Get the full (symmetric) 2D variance (over time) of the Fourier
+        transformed images.
+    full_kx() : np.ndarray
+        Get the full array of wavevector values over x.
+    full_ky() : np.ndarray
+        Get the full array of wavevector values over y.
     """
 
-    _data : np.ndarray
-    kx : np.ndarray
-    ky : np.ndarray
-    tau : np.ndarray
-    _pixel_size : float = 1.0
-    _delta_t : float = 1.0
+    _data: np.ndarray
+    _kx: np.ndarray
+    _ky: np.ndarray
+    _width: int
+    _height: int
+    _tau: np.ndarray
+    _pixel_size: float = 1.0
+    _delta_t: float = 1.0
 
     @property
     def data(self) -> np.ndarray:
@@ -84,6 +107,61 @@ class ImageStructureFunction:
             The 2D image structure function.
         """
         return self._data[:-2]
+
+    @property
+    def kx(self) -> np.ndarray:
+        """The array of wave vector values over x.
+
+        Returns
+        -------
+        np.ndarray
+            The array of kx.
+        """
+        return self._kx
+
+    @property
+    def ky(self) -> np.ndarray:
+        """The array of wave vector values over y.
+
+        Returns
+        -------
+        np.ndarray
+            The array of ky.
+        """
+        return self._ky
+
+    @property
+    def width(self) -> int:
+        """The width of the full (symmetric) 2D image structure function.
+
+        Returns
+        -------
+        int
+            The full width.
+        """
+        return self._width
+
+    @property
+    def height(self) -> int:
+        """The height of the full (symmetric) 2D image structure function.
+
+        Returns
+        -------
+        int
+            The full height.
+        """
+        return self._height
+
+    @property
+    def tau(self) -> np.ndarray:
+        """The array of time delays.
+
+        Returns
+        -------
+        np.ndarray
+            The array of tau.
+        """
+        return self._tau
 
     @property
     def power_spec(self) -> np.ndarray:
@@ -151,8 +229,8 @@ class ImageStructureFunction:
         pixel_size : float
             The effective pixel size.
         """
-        self.kx *= self._pixel_size / pixel_size
-        self.ky *= self._pixel_size / pixel_size
+        self._kx *= self._pixel_size / pixel_size
+        self._ky *= self._pixel_size / pixel_size
         self._pixel_size = pixel_size
 
     @delta_t.setter
@@ -166,7 +244,7 @@ class ImageStructureFunction:
         delta_t : float
             The time delay.
         """
-        self.tau *= delta_t / self._delta_t
+        self._tau *= delta_t / self._delta_t
         self._delta_t = delta_t
 
     def __len__(self):
@@ -234,6 +312,96 @@ class ImageStructureFunction:
             raise RuntimeError('Number of elements in fnames differs from one in seq.')
 
         _save_as_tiff(data=self.data[seq], labels=fnames)
+
+    def full_shape(self) -> Tuple[int, int, int]:
+        """The shape of the full (symmetric) 2D image structure function.
+
+        Returns
+        -------
+        Tuple[int, int, int]
+            The full shape.
+        """
+        dim_t, dim_y = self.shape[:-1]
+        dim_x = self._width
+        return dim_t, dim_y, dim_x
+
+    def full_slice(self, idx : int) -> np.ndarray:
+        """Get the full (symmetric) 2D image structure function at index `idx`.
+
+        Parameters
+        ----------
+        idx : int
+            The slice index.
+
+        Returns
+        -------
+        np.ndarray
+            The full 2D image structure function slice.
+
+        Raises
+        ------
+        IndexError
+            If `idx` out of bounds.
+        """
+        if idx >= 0 and idx < len(self.data):
+            shape = (self.height, self.width)
+            return _reconstruct_full_spectrum(self.data[idx], shape)
+        else:
+            raise IndexError(f'Index out of range. Choose an index between 0 and {len(self.data)}.')
+
+    def full_power_spec(self) -> np.ndarray:
+        """Get the full (symmetric) average 2D power spectrum of the input images.
+
+        Returns
+        -------
+        np.ndarray
+            The full 2D power spectrum.
+        """
+        shape = (self.height, self.width)
+        return _reconstruct_full_spectrum(self.data[-2], shape)
+
+    def full_var(self) -> np.ndarray:
+        """Get the full (symmetric) 2D variance (over time) of the Fourier
+        transformed images.
+
+        Returns
+        -------
+        np.ndarray
+            The full 2D variance.
+        """
+        shape = (self.height, self.width)
+        return _reconstruct_full_spectrum(self.data[-1], shape)
+
+    def full_kx(self) -> np.ndarray:
+        """Get the full array of wavevector values over x.
+
+        Returns
+        -------
+        np.ndarray
+            The full kx array.
+        """
+        # initialize output and set dim
+        full_kx = np.zeros_like(self.kx, shape=(self.width))
+        dim_x = len(self.kx)
+        # copy first part
+        full_kx[:dim_x] = self.kx
+        # copy other half
+        if self.width % 2 == 0:
+            full_kx[dim_x:] = -np.flip(self.kx[1:-1])
+        else:
+            full_kx[dim_x:] = -np.flip(self.kx[1:])
+
+        return np.fft.fftshift(full_kx)
+
+    def full_ky(self) -> np.ndarray:
+        """Get the full array of wavevector values over y.
+
+        Returns
+        -------
+        np.ndarray
+            The full ky array.
+        """
+        return self.ky
 
 
 class SFWriter(Writer):
@@ -605,3 +773,64 @@ class SFParser(Parser):
         metadata['delta_t'] = self.read_value(delta_t_offset, self.dtype)
 
         return metadata
+
+
+def _reconstruct_full_spectrum(
+    halfplane: np.ndarray,
+    shape: Tuple[int, int]
+) -> np.ndarray:
+    """Reconstruct the full (symmetric) 2D image structure function from the
+    half plane representation.
+
+    We keep half plane to save memory while computing. The result is the same as
+    one would get by doing all calculations using scipy.fft.fft2 (or similar)
+    and fftshift. The input is assumed to have the same format of the output of
+    scipy.fft.rfft (or similar). The final `shape` must be given in order to
+    correctly reconstruct the full representation.
+
+    Parameters
+    ----------
+    halfplane : np.ndarray
+        The half-plane array.
+    shape : Tuple[int, ...]
+        The shape of the full spectrum.
+
+    Returns
+    -------
+    np.ndarray
+        The full-plane 2D spectrum.
+    """
+
+    # setup of dtype and dimensions
+    dtype = halfplane.dtype
+    height, width = shape
+    dim_y, dim_x = halfplane.shape
+
+    # create full
+    spectrum = np.zeros(shape, dtype=dtype)
+
+    # copy half plane
+    spectrum[:, :dim_x] = halfplane
+
+    # other half is flipped
+    # in particlar:
+    # - if x is even, the flip is done on the columns from index 1 to index
+    #       `dim_x`-1 (excl.), and from 1 to `dim_x` (excl.) otherwise
+    # - if y is even, the flip is done on the rows from index 1 on, and from
+    #       0 on otherwise. In the first case, the first row is copied in
+    #       reversed order consistent with previous x-range condition
+
+    # compute start and end indices
+    x_s = 1
+    x_e = dim_x - 1 if width % 2 == 0 else dim_x
+    y_s = 1 if height % 2 == 0 else 0
+    y_e = height
+
+    spectrum[y_s:y_e, dim_x:] = np.flip(spectrum[y_s:y_e, x_s:x_e])
+
+    if height % 2 == 0:
+        spectrum[0, dim_x:] = np.flip(spectrum[0, x_s:x_e])
+
+    spectrum = np.fft.fftshift(spectrum, axes=-1)
+
+    return spectrum
