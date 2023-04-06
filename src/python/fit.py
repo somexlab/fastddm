@@ -5,7 +5,7 @@
 
 """A collection of lmfit Models and helper/wrapper functions."""
 
-from typing import Any, Optional, Union, Dict, List, Tuple
+from typing import Any, Optional, Union, Dict, List, Tuple, Sequence
 
 import lmfit as lm
 import numpy as np
@@ -149,6 +149,7 @@ def fit_multik(
     ref_params: Optional[lm.Parameters] = None,
     return_model_results: Optional[bool] = False,
     use_err: Optional[bool] = False,
+    fixed_params: Optional[Dict[str, Sequence[float]]] = None,
     **fitargs: Any,
 ) -> Tuple[pd.DataFrame, Optional[List[lm.model.ModelResult]]]:
     """A wrapper for fitting a given model to given data for multiple `k`
@@ -192,6 +193,10 @@ def fit_multik(
     use_err : bool, optional
         If True, the error estimates in the `AzimuthalAverage` (`err`) is used
         in place of `weights`.
+    fixed_params : Dict[str, Sequence[float]], optional
+        Dictionary of `{parameter_name: values_array}` pairs of parameter
+        values to fix during fitting. The `values_array` length must be equal
+        to `len(data.k)`. Default is None.
 
     Returns
     -------
@@ -220,6 +225,12 @@ def fit_multik(
             # delete the value so that it does not override
             # the one used during the iterations
             del fitargs[p]
+
+    # fix parameters in ref
+    if fixed_params is not None:
+        for p in fixed_params.keys():
+            model_params[p].vary = False
+            model_params[p].value = fixed_params[p][ref]
 
     # initialize outputs
     results = {p: np.zeros(len(data.k)) for p in model.param_names}
@@ -251,6 +262,11 @@ def fit_multik(
             # is use_err, set weights using error
             if use_err and data.err is not None:
                 fitargs['weights'] = 1.0 / data.err[idx]
+            # if fixed_params is given, fix the parameters
+            if fixed_params is not None:
+                for p in fixed_params.keys():
+                    model_params[p].value = fixed_params[p][idx]
+            # do fit
             result = model.fit(data.data[idx], params=model_params, **fitargs)
             # update results and model_params
             for p in model.param_names:
@@ -273,6 +289,11 @@ def fit_multik(
             # is use_err, set weights using error
             if use_err and data.err is not None:
                 fitargs['weights'] = 1.0 / data.err[idx]
+            # if fixed_params is given, fix the parameters
+            if fixed_params is not None:
+                for p in fixed_params.keys():
+                    model_params[p].value = fixed_params[p][idx]
+            # do fit
             result = model.fit(data.data[idx], params=model_params, **fitargs)
             # update results and model_params
             for p in model.param_names:
