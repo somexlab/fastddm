@@ -11,12 +11,20 @@
 // *** headers ***
 #include "helper_fftw.h"
 
+#ifndef SINGLE_PRECISION
+fftw_plan (*Fftw_Plan_Many_Dft_r2c)(int, const int *, int, double *, const int *, int, int, fftw_complex *, const int *, int, int, unsigned int) = &fftw_plan_many_dft_r2c;
+fftw_plan (*Fftw_Plan_Many_Dft)(int, const int *, int, fftw_complex *, const int *, int, int, fftw_complex *, const int *, int, int, int, unsigned int) = &fftw_plan_many_dft;
+#else
+fftwf_plan (*Fftw_Plan_Many_Dft_r2c)(int, const int *, int, float *, const int *, int, int, fftwf_complex *, const int *, int, int, unsigned int) = &fftwf_plan_many_dft_r2c;
+fftwf_plan (*Fftw_Plan_Many_Dft)(int, const int *, int, fftwf_complex *, const int *, int, int, fftwf_complex *, const int *, int, int, int, unsigned int) = &fftwf_plan_many_dft;
+#endif
+
 // *** code ***
 
 /*
     Create the fftw plan for the fft2 of input.
  */
-fftw_plan fft2_create_plan(double *input,
+FFTW_PLAN fft2_create_plan(Scalar *input,
                            size_t nx,
                            size_t ny,
                            size_t nt)
@@ -34,14 +42,14 @@ fftw_plan fft2_create_plan(double *input,
     unsigned int flags = FFTW_ESTIMATE;       // bitwise OR ('|') of zero or more planner flags (see http://www.fftw.org/fftw3.pdf)
 
     // Create the fft2 plan
-    fftw_plan plan = fftw_plan_many_dft_r2c(rank,
+    FFTW_PLAN plan = Fftw_Plan_Many_Dft_r2c(rank,
                                             n,
                                             howmany,
                                             input,
                                             inembed,
                                             istride,
                                             idist,
-                                            (fftw_complex *)input,
+                                            (FFTW_COMPLEX *)input,
                                             onembed,
                                             ostride,
                                             odist,
@@ -52,7 +60,7 @@ fftw_plan fft2_create_plan(double *input,
 /*
     Create the fftw plan for the fft of input.
  */
-fftw_plan fft_create_plan(vector<double> &input,
+FFTW_PLAN fft_create_plan(vector<Scalar> &input,
                           size_t nt,
                           size_t N)
 {
@@ -69,14 +77,14 @@ fftw_plan fft_create_plan(vector<double> &input,
     unsigned int flags = FFTW_ESTIMATE; // bitwise OR ('|') of zero or more planner flags (see http://www.fftw.org/fftw3.pdf)
 
     // Create the fft2 plan
-    fftw_plan plan = fftw_plan_many_dft(rank,
+    FFTW_PLAN plan = Fftw_Plan_Many_Dft(rank,
                                         n,
                                         howmany,
-                                        (fftw_complex *)input.data(),
+                                        (FFTW_COMPLEX *)input.data(),
                                         inembed,
                                         istride,
                                         idist,
-                                        (fftw_complex *)input.data(),
+                                        (FFTW_COMPLEX *)input.data(),
                                         onembed,
                                         ostride,
                                         odist,

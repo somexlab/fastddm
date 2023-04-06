@@ -18,6 +18,16 @@
 #include <chrono>
 using namespace std::chrono;
 
+#ifndef SINGLE_PRECISION
+void (*Fftw_Execute)(fftw_plan) = &fftw_execute;
+void (*Fftw_Destroy_Plan)(fftw_plan) = &fftw_destroy_plan;
+void (*Fftw_Cleanup)() = &fftw_cleanup;
+#else
+void (*Fftw_Execute)(fftwf_plan) = &fftwf_execute;
+void (*Fftw_Destroy_Plan)(fftwf_plan) = &fftwf_destroy_plan;
+void (*Fftw_Cleanup)() = &fftwf_cleanup;
+#endif
+
 // *** code ***
 
 /*!
@@ -25,7 +35,7 @@ using namespace std::chrono;
     using differences of Fourier transformed images.
  */
 template <typename T>
-py::array_t<double> ddm_diff(py::array_t<T, py::array::c_style> img_seq,
+py::array_t<Scalar> ddm_diff(py::array_t<T, py::array::c_style> img_seq,
                              vector<unsigned int> lags,
                              unsigned long long nx,
                              unsigned long long ny)
@@ -40,15 +50,15 @@ py::array_t<double> ddm_diff(py::array_t<T, py::array::c_style> img_seq,
     /*
     - We need to make sure that the fft2 r2c fits in the array,
       so the size of one fft2 output is ny*(nx//2 + 1) complex
-      double [the input needs to be twice as large]
+      Scalar [the input needs to be twice as large]
      */
     unsigned long long _nx = nx / 2 + 1;
     unsigned long long dim_t = max(length, (unsigned long long)(lags.size() + 2));
-    py::array_t<double> out = py::array_t<double>(2 * _nx * ny * dim_t);
+    py::array_t<Scalar> out = py::array_t<Scalar>(2 * _nx * ny * dim_t);
     auto p_out = out.mutable_data();
 
     // ***Create the fft2 plan
-    fftw_plan fft2_plan = fft2_create_plan(p_out,
+    FFTW_PLAN fft2_plan = fft2_create_plan(p_out,
                                            nx,
                                            ny,
                                            length);
@@ -65,19 +75,19 @@ py::array_t<double> ddm_diff(py::array_t<T, py::array::c_style> img_seq,
     }
 
     // ***Execute fft2 plan
-    fftw_execute(fft2_plan);
+    Fftw_execute(fft2_plan);
 
     // ***Normalize fft2
     // use sqrt(num_pixels) for Parseval theorem
-    double norm_fact = sqrt((double)(nx * ny));
+    Scalar norm_fact = sqrt((double)(nx * ny));
     for (unsigned long long ii = 0; ii < 2 * _nx * ny * length; ii++)
     {
         p_out[ii] /= norm_fact;
     }
 
     // ***Cleanup fft2 plan
-    fftw_destroy_plan(fft2_plan);
-    fftw_cleanup();
+    Fftw_destroy_plan(fft2_plan);
+    Fftw_cleanup();
 
     // ***Compute the image structure function
     // initialize helper vector
@@ -151,7 +161,7 @@ py::array_t<double> ddm_diff(py::array_t<T, py::array::c_style> img_seq,
     tmp.shrink_to_fit();
 
     // the full size of the image structure function is
-    // nx * ny * #(lags)
+    // nx * ny * [#(lags) + 2]
     out.resize({(unsigned long long)(lags.size() + 2), ny, _nx});
 
     // release pointer to output array
@@ -173,7 +183,7 @@ py::array_t<double> ddm_diff(py::array_t<T, py::array::c_style> img_seq,
     circular correlation.
  */
 template <typename T>
-py::array_t<double> ddm_fft(py::array_t<T, py::array::c_style> img_seq,
+py::array_t<Scalar> ddm_fft(py::array_t<T, py::array::c_style> img_seq,
                             vector<unsigned int> lags,
                             unsigned long long nx,
                             unsigned long long ny,
@@ -190,17 +200,17 @@ py::array_t<double> ddm_fft(py::array_t<T, py::array::c_style> img_seq,
     /*
     - We need to make sure that the fft2 r2c fits in the array,
       so the size of one fft2 output is ny*(nx//2 + 1) complex
-      doubles [the input needs to be twice as large]
+      Scalar [the input needs to be twice as large]
     - workspace will contain complex values, so we need 2* the size
       (allocated after fft2 part)
      */
     unsigned long long _nx = nx / 2 + 1;
     unsigned long long dim_t = max(length, (unsigned long long)(lags.size() + 2));
-    py::array_t<double> out = py::array_t<double>(2 * _nx * ny * dim_t);
+    py::array_t<Scalar> out = py::array_t<Scalar>(2 * _nx * ny * dim_t);
     auto p_out = out.mutable_data();
 
     // ***Create the fft2 plan
-    fftw_plan fft2_plan = fft2_create_plan(p_out,
+    FFTW_PLAN fft2_plan = fft2_create_plan(p_out,
                                            nx,
                                            ny,
                                            length);
@@ -217,25 +227,25 @@ py::array_t<double> ddm_fft(py::array_t<T, py::array::c_style> img_seq,
     }
 
     // ***Execute fft2 plan
-    fftw_execute(fft2_plan);
+    Fftw_execute(fft2_plan);
 
     // ***Normalize fft2
     // use sqrt(num_pixels) for Parseval theorem
-    double norm_fact = sqrt((double)(nx * ny));
+    Scalar norm_fact = sqrt((double)(nx * ny));
     for (unsigned long long ii = 0; ii < 2 * _nx * ny * length; ii++)
     {
         p_out[ii] /= norm_fact;
     }
 
     // ***Cleanup fft2 plan
-    fftw_destroy_plan(fft2_plan);
-    fftw_cleanup();
+    Fftw_destroy_plan(fft2_plan);
+    Fftw_cleanup();
 
     // ***Allocate workspace
-    vector<double> workspace(2 * chunk_size * nt);
+    vector<Scalar> workspace(2 * chunk_size * nt);
 
     // ***Create the fft plan
-    fftw_plan fft_plan = fft_create_plan(workspace,
+    FFTW_PLAN fft_plan = fft_create_plan(workspace,
                                          nt,
                                          chunk_size);
 
@@ -243,7 +253,7 @@ py::array_t<double> ddm_fft(py::array_t<T, py::array::c_style> img_seq,
     // initialize helper vector used in average part
     vector<double> tmp(chunk_size);
     // initialize helper vector used in square modulus of average Fourier transform
-    vector<double> tmpAvg(chunk_size);
+    vector<Scalar> tmpAvg(chunk_size);
     for (unsigned long long i = 0; i < (_nx * ny - 1) / chunk_size + 1; i++)
     {
         // Step1: correlation part
@@ -264,7 +274,7 @@ py::array_t<double> ddm_fft(py::array_t<T, py::array::c_style> img_seq,
         }
 
         // compute the fft
-        fftw_execute(fft_plan);
+        Fftw_execute(fft_plan);
 
         // compute power spectrum of fft
         for (unsigned long long j = 0; j < chunk_size * nt; j++)
@@ -276,11 +286,11 @@ py::array_t<double> ddm_fft(py::array_t<T, py::array::c_style> img_seq,
         // copy value in 0
         for (unsigned long long q = 0; q < chunk_size; q++)
         {
-            tmpAvg[q] = workspace[2 * q * nt] / (double)(length * length);
+            tmpAvg[q] = workspace[2 * q * nt] / (Scalar)(length * length);
         }
 
         // compute ifft
-        fftw_execute(fft_plan);
+        Fftw_execute(fft_plan);
 
         // Step2: average part
         unsigned long long idx = 0;
@@ -317,7 +327,7 @@ py::array_t<double> ddm_fft(py::array_t<T, py::array::c_style> img_seq,
             {
                 p_out[2 * (idx * _nx * ny + i * chunk_size + q)] = workspace[2 * (q * nt + lags[idx])];
             }
-            p_out[2 * (lags.size() * _nx * ny + i * chunk_size + q)] = 0.5 * tmp[q] / (double)length;
+            p_out[2 * (lags.size() * _nx * ny + i * chunk_size + q)] = 0.5 * tmp[q] / (Scalar)length;
             p_out[2 * ((lags.size() + 1) * _nx * ny + i * chunk_size + q)] = p_out[2 * (lags.size() * _nx * ny + i * chunk_size + q)] - tmpAvg[q];
         }
     }
@@ -329,8 +339,8 @@ py::array_t<double> ddm_fft(py::array_t<T, py::array::c_style> img_seq,
                      lags.size() + 2);
 
     // Cleanup before finish
-    fftw_destroy_plan(fft_plan);
-    fftw_cleanup();
+    Fftw_destroy_plan(fft_plan);
+    Fftw_cleanup();
     workspace.clear();
     workspace.shrink_to_fit();
     tmp.clear();

@@ -18,6 +18,16 @@
 
 using namespace std;
 
+#ifndef SINGLE_PRECISION
+typedef double Scalar;
+typedef fftw_plan FFTW_PLAN;
+typedef fftw_complex FFTW_COMPLEX;
+#else
+typedef float Scalar;
+typedef fftwf_plan FFTW_PLAN;
+typedef fftwf_complex FFTW_COMPLEX;
+#endif
+
 // *** code ***
 
 /*! \brief Create fftw plan for the real to complex fft2
@@ -26,7 +36,7 @@ using namespace std;
     \param ny       number of fft nodes in y direction
     \param nt       number of elements (in t direction)
  */
-fftw_plan fft2_create_plan(double *input,
+FFTW_PLAN fft2_create_plan(Scalar *input,
                            size_t nx,
                            size_t ny,
                            size_t nt);
@@ -36,8 +46,8 @@ fftw_plan fft2_create_plan(double *input,
     \param nt       number of fft nodes in t direction
     \param N        number of elements
  */
-fftw_plan fft_create_plan(vector<double> &input,
+FFTW_PLAN fft_create_plan(vector<Scalar> &input,
                           size_t nt,
                           size_t N);
 
-#endif  // __HELPER_FFTW_H__
+#endif // __HELPER_FFTW_H__

@@ -21,7 +21,7 @@
     is at (k*stride + start)-th position in dest
  */
 void copy_vec_with_stride(vector<double> &src,
-                          double *dest,
+                          Scalar *dest,
                           unsigned long long start,
                           unsigned long long stride)
 {
@@ -38,7 +38,7 @@ void copy_vec_with_stride(vector<double> &src,
     Keep only real part of vector and copy symmetric part.
     Make element contiguous in memory.
  */
-void make_shifted_isf(double *vec,
+void make_shifted_isf(Scalar *vec,
                       unsigned long long nx,
                       unsigned long long ny,
                       unsigned long long nt)
