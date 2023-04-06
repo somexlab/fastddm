@@ -161,6 +161,8 @@ def fit_multik(
     https://lmfit.github.io/lmfit-py/model.html#lmfit.model.Model.fit
     for more information. It is highly recommended to pass the `weights`
     argument for very noisy data (must have the same size of `data.tau`).
+    Alternatively, one can pass True to the `use_err` flag and provide a `data`
+    input containing `err` values.
 
     The function starts the fitting process from the `ref` index and proceeds
     towards lower and higher indices using the fit parameters obtained from the
@@ -220,8 +222,9 @@ def fit_multik(
             del fitargs[p]
 
     # initialize outputs
-    results = {p : np.zeros(len(data.k)) for p in model.param_names}
+    results = {p: np.zeros(len(data.k)) for p in model.param_names}
     results['success'] = np.zeros(len(data.k), dtype=bool)
+    results['k'] = data.k
 
     model_results = None
     if return_model_results:
@@ -262,7 +265,7 @@ def fit_multik(
     for p in model.param_names:
         model_params[p].value = results[p][ref]
     for idx in range(ref + 1, len(data.k)):
-        # fit 
+        # fit
         if np.isnan(data.var[idx]):
             for p in model.param_names:
                 results[p][idx] = np.nan
@@ -279,7 +282,4 @@ def fit_multik(
             if model_results is not None:
                 model_results[idx] = result
 
-    if return_model_results:
-        return pd.DataFrame(results), model_results
-    else:
-        return pd.DataFrame(results), None
+    return pd.DataFrame(results), model_results
