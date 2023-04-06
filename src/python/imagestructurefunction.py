@@ -192,7 +192,7 @@ class ImageStructureFunction:
         Returns
         -------
         Tuple[int, int, int]
-            The shape of the data. 
+            The shape of the data.
         """
         return self.data.shape
 
@@ -346,7 +346,7 @@ class ImageStructureFunction:
         """
         if idx >= 0 and idx < len(self.data):
             shape = (self.height, self.width)
-            return _reconstruct_full_spectrum(self.data[idx], shape)
+            return _reconstruct_full_spectrum(self._data[idx], shape)
         else:
             raise IndexError(f'Index out of range. Choose an index between 0 and {len(self.data)}.')
 
@@ -359,7 +359,7 @@ class ImageStructureFunction:
             The full 2D power spectrum.
         """
         shape = (self.height, self.width)
-        return _reconstruct_full_spectrum(self.data[-2], shape)
+        return _reconstruct_full_spectrum(self._data[-2], shape)
 
     def full_var(self) -> np.ndarray:
         """Get the full (symmetric) 2D variance (over time) of the Fourier
@@ -371,7 +371,7 @@ class ImageStructureFunction:
             The full 2D variance.
         """
         shape = (self.height, self.width)
-        return _reconstruct_full_spectrum(self.data[-1], shape)
+        return _reconstruct_full_spectrum(self._data[-1], shape)
 
     def full_kx(self) -> np.ndarray:
         """Get the full array of wavevector values over x.
