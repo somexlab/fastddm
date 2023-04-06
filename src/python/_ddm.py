@@ -46,7 +46,7 @@ def ddm(
     core: str = "py",
     mode: str = "fft",
     **kwargs,
-    ) -> ImageStructureFunction:
+) -> ImageStructureFunction:
     """Perform Differential Dynamic Microscopy analysis on given image sequence.
     Returns the full image structure function.
 
