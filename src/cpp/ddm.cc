@@ -140,11 +140,11 @@ py::array_t<double> ddm_diff(py::array_t<T, py::array::c_style> img_seq,
                              2 * (_nx * ny));
     }
 
-    // Convert raw output to full and shifted image structure function
-    make_full_shifted_isf(p_out,
-                          nx,
-                          ny,
-                          lags.size() + 2);
+    // Convert raw output to shifted image structure function
+    make_shifted_isf(p_out,
+                     nx,
+                     ny,
+                     lags.size() + 2);
 
     // Cleanup before finish
     tmp.clear();
@@ -152,7 +152,7 @@ py::array_t<double> ddm_diff(py::array_t<T, py::array::c_style> img_seq,
 
     // the full size of the image structure function is
     // nx * ny * #(lags)
-    out.resize({(unsigned long long)(lags.size() + 2), ny, nx});
+    out.resize({(unsigned long long)(lags.size() + 2), ny, _nx});
 
     // release pointer to output array
     p_out = NULL;
@@ -322,11 +322,11 @@ py::array_t<double> ddm_fft(py::array_t<T, py::array::c_style> img_seq,
         }
     }
 
-    // Convert raw output to full and shifted image structure function
-    make_full_shifted_isf(p_out,
-                          nx,
-                          ny,
-                          lags.size() + 2);
+    // Convert raw output to shifted image structure function
+    make_shifted_isf(p_out,
+                     nx,
+                     ny,
+                     lags.size() + 2);
 
     // Cleanup before finish
     fftw_destroy_plan(fft_plan);
@@ -340,7 +340,7 @@ py::array_t<double> ddm_fft(py::array_t<T, py::array::c_style> img_seq,
 
     // the full size of the image structure function is
     // nx * ny * #(lags)
-    out.resize({(unsigned long long)(lags.size() + 2), ny, nx});
+    out.resize({(unsigned long long)(lags.size() + 2), ny, _nx});
 
     // release pointer to output array
     p_out = NULL;

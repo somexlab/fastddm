@@ -202,7 +202,6 @@ def _diff_image_structure_function(
     rfft2: np.ndarray,
     rfft2_square_mod: np.ndarray,
     lag: int,
-    shape: Optional[Tuple[int, int]],
 ) -> np.ndarray:
     """Calculate the image structure function the 'diff' way.
 
@@ -216,18 +215,16 @@ def _diff_image_structure_function(
         Square modulus of the above input.
     lag : int
         The lag time in number of frames.
-    shape : Optional[Tuple[int, int]]
-        The output shape of the full image structure function; needs to be presented for non-square input images.
 
     Returns
     -------
     np.ndarray
-        _description_
+        The half plane image structure function. 
 
     Raises
     ------
     RuntimeError
-        _description_
+        If array of lags is longer than image series.
     """
     length, *_ = rfft2.shape
 
@@ -248,7 +245,7 @@ def _diff_image_structure_function(
     )
     dqt = np.mean(sum_of_parts, axis=0)
 
-    return reconstruct_full_spectrum(dqt, shape=shape)
+    return dqt
 
 
 def image_structure_function(
@@ -256,7 +253,6 @@ def image_structure_function(
     sq_mod_cumsum_rev: np.ndarray,
     autocorrelation: np.ndarray,
     lag: int,
-    shape: Optional[Tuple[int, ...]] = None,
 ) -> np.ndarray:
     """Calculate the image structure function.
 
@@ -280,14 +276,11 @@ def image_structure_function(
         The autocorrelation function of the spatial FFT of an image timeseries.
     lag : int
         The delay time in frame units, must be 0 <= lag <= len(square_modulus)
-    shape : Optional[Tuple[int, ...]]
-        The output shape of the full image structure function; needs to be presented for non-square
-        input images.
 
     Returns
     -------
     np.ndarray
-        The full-plane structure function.
+        The half-plane image structure function.
 
     Raises
     ------
@@ -305,7 +298,7 @@ def image_structure_function(
     sum_of_parts = sq_mod_cumsum[-offset] + sq_mod_cumsum_rev[-offset] - 2 * autocorrelation
     sum_of_parts /= length - lag  # normalization
 
-    return reconstruct_full_spectrum(sum_of_parts, shape=shape)  # full plane
+    return sum_of_parts  # half plane
 
 
 def _py_image_structure_function(
@@ -338,7 +331,7 @@ def _py_image_structure_function(
     Returns
     -------
     np.ndarray
-        The full image structure function for all given lag times.
+        The half-plane image structure function for all given lag times.
 
     Raises
     ------
@@ -364,9 +357,8 @@ def _py_image_structure_function(
     if nx is None or ny is None:
         _, ny, nx = images.shape
     length = len(lags)
-    dqt = np.zeros((length + 2, ny, nx))  # +2 for (avg) power spectrum & variance 
-    output_shape = (ny, nx)
-
+    dqt = np.zeros((length + 2, ny, nx//2 + 1))  # +2 for (avg) power spectrum & variance 
+ 
     # spatial fft & square modulus
     rfft2 = normalized_rfft2(images, nx, ny, workers=workers)
     square_mod = np.abs(rfft2) ** 2
@@ -384,13 +376,13 @@ def _py_image_structure_function(
         args = (cumsum, cumsum_rev, autocorr)
 
     for i, lag in enumerate(lags):
-        dqt[i] = calc_dqt(*args, lag, shape=output_shape)
+        dqt[i] = calc_dqt(*args, lag)
 
     # add the power spectrum and the variance as the last two entries in the dqt array
-    dqt[-2] = reconstruct_full_spectrum(square_mod.mean(axis=0), shape=output_shape)
-    dqt[-1] = reconstruct_full_spectrum(rfft2.var(axis=0), shape=output_shape)
+    dqt[-2] = square_mod.mean(axis=0)
+    dqt[-1] = rfft2.var(axis=0)
 
-    return dqt
+    return scifft.fftshift(dqt, axes=-2)  # only shift in y
 
 
 # convenience #####################################################################################
@@ -430,63 +422,3 @@ def normalized_rfft2(
     norm = np.sqrt(nx * ny)
     return rfft2 / norm
 
-
-def run(
-    images: np.ndarray,
-    lags: np.ndarray,
-    keep_full_structure: bool = True,
-    workers: int = 2,
-) -> Tuple[np.ndarray, np.ndarray, Optional[np.ndarray]]:
-    """Run the Differential Dynamic Microscopy analysis on a sequence of images.
-
-    Parameters
-    ----------
-    images : np.ndarray
-        The sequence of images.
-    lags : np.ndarray
-        An array of lag-times.
-    keep_full_structure : bool, optional
-        Keep and return the full image structure function, by default True
-    workers : int, optional
-        The number of threads to be passed to scipy.fft, by default 2
-
-    Returns
-    -------
-    Tuple[np.ndarray, np.ndarray, Optional[np.ndarray]]
-        The square modulus of the normalized rfft2 data, the azimuthal average of the image
-        structure function for all given lag times, and optionally the full plane image structure
-        function for all given lag times as well. The latter is None if `keep_full_structure` is
-        False.
-    """
-    *_, y, x = images.shape
-    length = len(lags)
-    bigside = max(y, x)  # get bigger side
-    averages = np.zeros((length, bigside // 2))
-
-    # setup of arrays
-    if keep_full_structure:  # image structure function D(q, dt)
-        dqt = np.zeros((length, y, x))  # image dimensions, length of lags
-    else:
-        dqt = None
-
-    # spatial ffts of the images, square modulus and autocorrelation
-    rfft2 = normalized_rfft2(images, workers=workers)
-    square_mod = np.abs(rfft2) ** 2
-    autocorr = autocorrelation(rfft2, workers=workers)
-
-    # setup of spatial frequencies & grid
-    kx = scifft.fftfreq(x)
-    ky = scifft.fftfreq(y)
-    spatial_freq = scifft.fftshift(
-        spatial_frequency_grid(kx, ky)
-    )  # equiv of old distance array
-
-    # iterate over all lags:
-    for i, lag in enumerate(lags):
-        sf = image_structure_function(square_mod, autocorr, lag, shape=images.shape)
-        if dqt is not None:
-            dqt[i] = sf
-
-        averages[i] = azimuthal_average(sf, dist=spatial_freq)
-
-    return square_mod, averages, dqt

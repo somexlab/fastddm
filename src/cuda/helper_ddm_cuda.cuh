@@ -89,29 +89,6 @@ __global__ void structure_function_diff_kernel(double2 *d_in,
                                                unsigned long long Nq,
                                                unsigned long long pitch);
 
-/*! \brief Make full power spectrum (copy symmetric part)
-    \param d_in     input array
-    \param ipitch   pitch of input array
-    \param d_out    output array
-    \param opitch   pitch of output array
-    \param nxh      number of r2c fft elements over x
-    \param nx       number of fft nodes over x
-    \param ny       number of fft nodes over y
-    \param N        number of 2d matrices
-    \param NblocksX Number of blocks of tiles over x
-    \param NblocksY Number of blocks of tiles over y
-*/
-__global__ void make_full_powspec_kernel(double2 *d_in,
-                                         unsigned long long ipitch,
-                                         double *d_out,
-                                         unsigned long long opitch,
-                                         unsigned long long nxh,
-                                         unsigned long long nx,
-                                         unsigned long long ny,
-                                         unsigned long long N,
-                                         unsigned long long NblocksX,
-                                         unsigned long long NblocksY);
-
 /*! \brief Shift power spectrum
     \param d_in     input array
     \param ipitch   pitch of input array
@@ -123,7 +100,7 @@ __global__ void make_full_powspec_kernel(double2 *d_in,
     \param NblocksX Number of blocks of tiles over x
     \param NblocksY Number of blocks of tiles over y
 */
-__global__ void shift_powspec_kernel(double *d_in,
+__global__ void shift_powspec_kernel(double2 *d_in,
                                      unsigned long long ipitch,
                                      double *d_out,
                                      unsigned long long opitch,
