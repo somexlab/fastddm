@@ -23,7 +23,7 @@ def sector_average_weight(
     image structure function is assumed and
 
     `kx = 2.0 * np.pi * np.fft.fftfreq(full_shape[1])[:shape[1]]`
-    `kx = 2.0 * np.pi * np.fft.fftshift(np.fft.fftfreq(full_shape[0]))`
+    `ky = 2.0 * np.pi * np.fft.fftshift(np.fft.fftfreq(full_shape[0]))`
 
     with `shape[1] = full_shape[1] // 2 + 1)`, are used.
 
