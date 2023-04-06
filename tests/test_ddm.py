@@ -13,7 +13,7 @@ impath = Path("tests/test-imgs/confocal/")
 imgs = fddm.read_images([p for p in sorted(impath.glob("*.tif"))][:20])
 lags = np.arange(1, 10)
 
-CORES = list(fddm._backend.keys())
+CORES = list(fddm._ddm._backend.keys())
 
 
 @pytest.fixture
@@ -23,8 +23,16 @@ def ddm_baseline():
 
 def test_ddm_cpp_fft(regtest, ddm_baseline):
 
+    # recreate full spectrum to check against regression file
+    full_shape = ddm_baseline.full_shape()
+    full = np.zeros((full_shape[0]+2, *full_shape[1:]))
+    for i in range(full_shape[0]):
+        full[i] = ddm_baseline.full_slice(i)
+    full[-2] = ddm_baseline.full_power_spec()
+    full[-1] = ddm_baseline.full_var()
+
     with np.printoptions(threshold=np.inf):  # type: ignore
-        print(ddm_baseline._data, file=regtest)
+        print(full, file=regtest)
 
 
 def test_ddm_cpp_diff(ddm_baseline):
