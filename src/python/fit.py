@@ -228,9 +228,9 @@ def fit_multik(
 
     # fix parameters in ref
     if fixed_params is not None:
-        for p in fixed_params.keys():
+        for p, pval in fixed_params.items():
             model_params[p].vary = False
-            model_params[p].value = fixed_params[p][ref]
+            model_params[p].value = pval[ref]
 
     # initialize outputs
     results = {p: np.zeros(len(data.k)) for p in model.param_names}
@@ -264,8 +264,8 @@ def fit_multik(
                 fitargs['weights'] = 1.0 / data.err[idx]
             # if fixed_params is given, fix the parameters
             if fixed_params is not None:
-                for p in fixed_params.keys():
-                    model_params[p].value = fixed_params[p][idx]
+                for p, pval in fixed_params.items():
+                    model_params[p].value = pval[idx]
             # do fit
             result = model.fit(data.data[idx], params=model_params, **fitargs)
             # update results and model_params
@@ -291,8 +291,8 @@ def fit_multik(
                 fitargs['weights'] = 1.0 / data.err[idx]
             # if fixed_params is given, fix the parameters
             if fixed_params is not None:
-                for p in fixed_params.keys():
-                    model_params[p].value = fixed_params[p][idx]
+                for p, pval in fixed_params.items():
+                    model_params[p].value = pval[idx]
             # do fit
             result = model.fit(data.data[idx], params=model_params, **fitargs)
             # update results and model_params
