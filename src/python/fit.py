@@ -192,7 +192,8 @@ def fit_multik(
         obtained for each `k` vector. Default is False.
     use_err : bool, optional
         If True, the error estimates in the `AzimuthalAverage` (`err`) is used
-        in place of `weights`.
+        in place of `weights`. If the `AzimuthalAverage` has no computed `err`s,
+        the default `weights` are used.
     fixed_params : Dict[str, Sequence[float]], optional
         Dictionary of `{parameter_name: values_array}` pairs of parameter
         values to fix during fitting. The `values_array` length must be equal

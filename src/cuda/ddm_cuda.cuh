@@ -62,20 +62,20 @@ void structure_function_diff(double *h_in,
                              unsigned long long pitch_q,
                              unsigned long long pitch_t);
 
-/*! \brief Convert to full and fftshifted image structure function on the GPU
+/*! \brief Convert to fftshifted image structure function on the GPU
     \param h_in             input array after structure function calculation
     \param Nlags            number of lags analyzed
     \param nx               number of fft nodes in x direction
     \param ny               number of fft nodes in y direction
-    \param num_fullshift    number of full and shift chunks
-    \param pitch_fs         pitch of device array for full and shift operations
+    \param num_shift        number of shift chunks
+    \param pitch_fs         pitch of device array for shift operations
  */
-void make_full_shift(double *h_in,
-                     unsigned long long Nlags,
-                     unsigned long long nx,
-                     unsigned long long ny,
-                     unsigned long long num_fullshift,
-                     unsigned long long pitch_fs);
+void make_shift(double *h_in,
+                unsigned long long Nlags,
+                unsigned long long nx,
+                unsigned long long ny,
+                unsigned long long num_shift,
+                unsigned long long pitch_fs);
 
 /*! \brief Compute image structure function using the WK theorem on the GPU
     \param h_in         input array of Fourier transformed images
@@ -100,4 +100,4 @@ void structure_function_fft(double *h_in,
                             unsigned long long pitch_t,
                             unsigned long long pitch_nt);
 
-#endif  // __DDM_CUDA_CUH__
+#endif // __DDM_CUDA_CUH__

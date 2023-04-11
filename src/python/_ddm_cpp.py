@@ -31,7 +31,7 @@ def ddm_diff_cpp(img_seq: np.ndarray, lags: List[int], nx: int, ny: int):
     Returns
     -------
     np.ndarray
-        Image structure function.
+        The half-plane image structure function.
 
     Raises
     ------
@@ -77,7 +77,7 @@ def ddm_fft_cpp(img_seq: np.ndarray, lags: List[int], nx: int, ny: int, nt: int)
     Returns
     -------
     np.ndarray
-        Image structure function.
+        The half-plane image structure function.
 
     Raises
     ------

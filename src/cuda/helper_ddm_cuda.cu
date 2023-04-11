@@ -221,18 +221,17 @@ __global__ void structure_function_diff_kernel(double2 *d_in,
 }
 
 /*!
-    Make full power spectrum (copy symmetric part)
+    Shift power spectrum
 */
-__global__ void make_full_powspec_kernel(double2 *d_in,
-                                         unsigned long long ipitch,
-                                         double *d_out,
-                                         unsigned long long opitch,
-                                         unsigned long long nxh,
-                                         unsigned long long nx,
-                                         unsigned long long ny,
-                                         unsigned long long N,
-                                         unsigned long long NblocksX,
-                                         unsigned long long NblocksY)
+__global__ void shift_powspec_kernel(double2 *d_in,
+                                     unsigned long long ipitch,
+                                     double *d_out,
+                                     unsigned long long opitch,
+                                     unsigned long long nx,
+                                     unsigned long long ny,
+                                     unsigned long long N,
+                                     unsigned long long NblocksX,
+                                     unsigned long long NblocksY)
 {
     __shared__ double2 tile[TILE_DIM][TILE_DIM + 1];
 
@@ -248,67 +247,6 @@ __global__ void make_full_powspec_kernel(double2 *d_in,
             unsigned long long i;
             for (i = 0; i < TILE_DIM; i += BLOCK_ROWS)
             {
-                if (i_x < nxh && (i_y + i) < ny * N)
-                {
-                    tile[threadIdx.y + i][threadIdx.x] = d_in[(i_y + i) * ipitch + i_x];
-                }
-            }
-            __syncthreads();
-
-            unsigned long long curr_y;
-            for (i = 0; i < TILE_DIM; i += BLOCK_ROWS)
-            {
-                if (i_x < nxh && (i_y + i) < ny * N)
-                {
-                    // copy real part (left side)
-                    d_out[(i_y + i) * opitch + i_x] = tile[threadIdx.y + i][threadIdx.x].x;
-
-                    // make symmetric part (right side)
-                    if (i_x > 0)
-                    {
-                        curr_y = (i_y + i) % ny;
-                        if (curr_y > 0)
-                        {
-                            d_out[(i_y + i + ny - 2 * curr_y) * opitch + nx - i_x] = tile[threadIdx.y + i][threadIdx.x].x;
-                        }
-                        else
-                        {
-                            d_out[(i_y + i) * opitch + nx - i_x] = tile[threadIdx.y + i][threadIdx.x].x;
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-/*!
-    Shift power spectrum
-*/
-__global__ void shift_powspec_kernel(double *d_in,
-                                     unsigned long long ipitch,
-                                     double *d_out,
-                                     unsigned long long opitch,
-                                     unsigned long long nx,
-                                     unsigned long long ny,
-                                     unsigned long long N,
-                                     unsigned long long NblocksX,
-                                     unsigned long long NblocksY)
-{
-    __shared__ double tile[TILE_DIM][TILE_DIM + 1];
-
-    for (unsigned long long blockIDX = blockIdx.x; blockIDX < NblocksX; blockIDX += gridDim.x)
-    {
-        for (unsigned long long blockIDY = blockIdx.y; blockIDY < NblocksY; blockIDY += gridDim.y)
-        {
-            unsigned long long i_x = blockIDX * TILE_DIM + threadIdx.x;
-            unsigned long long i_y = blockIDY * TILE_DIM + threadIdx.y; // threadIdx.y goes from 0 to 7
-
-            // load matrix portion into tile
-            // every thread loads 4 elements into tile
-            unsigned long long i;
-            for (i = 0; i < TILE_DIM; i += BLOCK_ROWS)
-            {
                 if (i_x < nx && (i_y + i) < ny * N)
                 {
                     tile[threadIdx.y + i][threadIdx.x] = d_in[(i_y + i) * ipitch + i_x];
@@ -317,15 +255,14 @@ __global__ void shift_powspec_kernel(double *d_in,
             __syncthreads();
 
             unsigned long long curr_y;
-            unsigned long long shift_x, shift_y;
+            unsigned long long shift_y;
             for (i = 0; i < TILE_DIM; i += BLOCK_ROWS)
             {
                 if (i_x < nx && (i_y + i) < ny * N)
                 {
                     curr_y = (i_y + i) % ny;
-                    shift_x = (i_x + nx / 2) % nx;
                     shift_y = (curr_y + ny / 2) % ny;
-                    d_out[(i_y + i + shift_y - curr_y) * opitch + shift_x] = tile[threadIdx.y + i][threadIdx.x];
+                    d_out[(i_y + i + shift_y - curr_y) * opitch + i_x] = tile[threadIdx.y + i][threadIdx.x].x;
                 }
             }
         }
