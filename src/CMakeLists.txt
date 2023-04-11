@@ -139,6 +139,9 @@ configure_file(python/make_install_setup.py
 configure_file(python/fit.py
                ${FASTDDM_OUTPUT_DIR}/fit.py)
 
+configure_file(python/fit_models.py
+               ${FASTDDM_OUTPUT_DIR}/fit_models.py)
+
 configure_file(extras/generate_fit_models.py
                ${FASTDDM_OUTPUT_DIR}/extras/generate_fit_models.py)
 
