@@ -142,7 +142,4 @@ configure_file(python/fit.py
 configure_file(python/fit_models.py
                ${FASTDDM_OUTPUT_DIR}/fit_models.py)
 
-configure_file(extras/generate_fit_models.py
-               ${FASTDDM_OUTPUT_DIR}/extras/generate_fit_models.py)
-
 install(CODE "execute_process(COMMAND ${PYTHON_EXECUTABLE} -m pip install ${FASTDDM_OUTPUT_DIR})")
