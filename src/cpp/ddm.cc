@@ -75,7 +75,7 @@ py::array_t<Scalar> ddm_diff(py::array_t<T, py::array::c_style> img_seq,
     }
 
     // ***Execute fft2 plan
-    Fftw_execute(fft2_plan);
+    Fftw_Execute(fft2_plan);
 
     // ***Normalize fft2
     // use sqrt(num_pixels) for Parseval theorem
@@ -86,8 +86,8 @@ py::array_t<Scalar> ddm_diff(py::array_t<T, py::array::c_style> img_seq,
     }
 
     // ***Cleanup fft2 plan
-    Fftw_destroy_plan(fft2_plan);
-    Fftw_cleanup();
+    Fftw_Destroy_Plan(fft2_plan);
+    Fftw_Cleanup();
 
     // ***Compute the image structure function
     // initialize helper vector
@@ -227,7 +227,7 @@ py::array_t<Scalar> ddm_fft(py::array_t<T, py::array::c_style> img_seq,
     }
 
     // ***Execute fft2 plan
-    Fftw_execute(fft2_plan);
+    Fftw_Execute(fft2_plan);
 
     // ***Normalize fft2
     // use sqrt(num_pixels) for Parseval theorem
@@ -238,8 +238,8 @@ py::array_t<Scalar> ddm_fft(py::array_t<T, py::array::c_style> img_seq,
     }
 
     // ***Cleanup fft2 plan
-    Fftw_destroy_plan(fft2_plan);
-    Fftw_cleanup();
+    Fftw_Destroy_Plan(fft2_plan);
+    Fftw_Cleanup();
 
     // ***Allocate workspace
     vector<Scalar> workspace(2 * chunk_size * nt);
@@ -274,7 +274,7 @@ py::array_t<Scalar> ddm_fft(py::array_t<T, py::array::c_style> img_seq,
         }
 
         // compute the fft
-        Fftw_execute(fft_plan);
+        Fftw_Execute(fft_plan);
 
         // compute power spectrum of fft
         for (unsigned long long j = 0; j < chunk_size * nt; j++)
@@ -290,7 +290,7 @@ py::array_t<Scalar> ddm_fft(py::array_t<T, py::array::c_style> img_seq,
         }
 
         // compute ifft
-        Fftw_execute(fft_plan);
+        Fftw_Execute(fft_plan);
 
         // Step2: average part
         unsigned long long idx = 0;
@@ -339,8 +339,8 @@ py::array_t<Scalar> ddm_fft(py::array_t<T, py::array::c_style> img_seq,
                      lags.size() + 2);
 
     // Cleanup before finish
-    Fftw_destroy_plan(fft_plan);
-    Fftw_cleanup();
+    Fftw_Destroy_Plan(fft_plan);
+    Fftw_Cleanup();
     workspace.clear();
     workspace.shrink_to_fit();
     tmp.clear();
