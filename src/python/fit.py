@@ -147,48 +147,60 @@ def fit_multik(
     model: lm.Model,
     ref: int,
     ref_params: Optional[lm.Parameters] = None,
-    return_model_results : Optional[bool] = False,
+    return_model_results: Optional[bool] = False,
+    use_err: Optional[bool] = False,
     **fitargs: Any,
 ) -> Tuple[pd.DataFrame, Optional[List[lm.model.ModelResult]]]:
-    """A wrapper for fitting a given model to given data for multiple k vectors.
+    """A wrapper for fitting a given model to given data for multiple `k`
+    vectors.
 
-    The initial parameters estimated for `ref` index should be set in the model or passed
-    to the function (via `ref_params` or as keyword arguments). All keyword arguments in `fitargs`
-    will directly be passed to the lm.Model.fit method. See
+    The initial parameters estimated for `ref` index should be set in the model
+    or passed to the function (via `ref_params` or as keyword arguments). All
+    keyword arguments in `fitargs` will directly be passed to the
+    `lm.Model.fit` method. See
     https://lmfit.github.io/lmfit-py/model.html#lmfit.model.Model.fit
-    for more information. It is highly recommended to pass the `weights` argument for
-    very noisy data (must have the same size of `data.tau`). 
+    for more information. It is highly recommended to pass the `weights`
+    argument for very noisy data (must have the same size of `data.tau`).
+    Alternatively, one can pass True to the `use_err` flag and provide a `data`
+    input containing `err` values.
 
-    The function starts the fitting process from the `ref` index and proceeds towards
-    lower and higher indices using the fit parameters obtained from the previous
-    iteration.
+    The function starts the fitting process from the `ref` index and proceeds
+    towards lower and higher indices using the fit parameters obtained from the
+    previous iteration.
 
-    Note: If `params` is None, the values for all parameters relative to `ref` are expected
-    to be provided as keyword arguments. If `params` is given, and a keyword argument for a
-    parameter value is also given, the keyword argument will be used. If neither `params`
-    nor keyword arguments are given, the values set in the model will be used.
+    Note: If `params` is None, the values for all parameters relative to `ref`
+    are expected to be provided as keyword arguments. If `params` is given, and
+    a keyword argument for a parameter value is also given, the keyword
+    argument will be used. If neither `params` nor keyword arguments are given,
+    the values set in the model will be used.
 
     Parameters
     ----------
     data : AzimuthalAverage
         The azimuthal average object to be fitted.
     model : lm.Model
-        The model to be used for the fit. It must have one and one only independent variable
-        (i.e., the time delay), the name is not important.
+        The model to be used for the fit. It must have one and one only
+        independent variable (i.e., the time delay), the name is not important.
     ref : int
-        The index of the reference k vector (where the initial fit parameters are estimated).
+        The index of the reference k vector (where the initial fit parameters
+        are estimated).
     ref_params : lmfit.Parameters, optional
         Parameters to use in fit in ref. Default is None.
     return_model_results : bool, optional
-        If True, the function also returns the complete list of ModelResults obtained for each
-        k vector. Default is False.
+        If True, the function also returns the complete list of ModelResults
+        obtained for each `k` vector. Default is False.
+    use_err : bool, optional
+        If True, the error estimates in the `AzimuthalAverage` (`err`) is used
+        in place of `weights`. If the `AzimuthalAverage` has no computed `err`s,
+        the default `weights` are used.
 
     Returns
     -------
     Tuple[pd.DataFrame, Optional[List[lm.model.ModelResult]]]
-        The fit parameters obtained and the success boolean value as a pandas DataFrame. If
-        `return_model_results` is True, the result is a tuple whose second value is the complete 
-        list of `lmfit.ModelResult`s obtained. 
+        The fit parameters obtained and the success boolean value as a pandas
+        DataFrame. If `return_model_results` is True, the result is a tuple
+        whose second value is the complete list of `lmfit.ModelResult`s
+        obtained.
     """
     # initialize model parameters
     model_params = model.make_params()
@@ -211,8 +223,9 @@ def fit_multik(
             del fitargs[p]
 
     # initialize outputs
-    results = {p : np.zeros(len(data.k)) for p in model.param_names}
+    results = {p: np.zeros(len(data.k)) for p in model.param_names}
     results['success'] = np.zeros(len(data.k), dtype=bool)
+    results['k'] = data.k
 
     model_results = None
     if return_model_results:
@@ -236,10 +249,14 @@ def fit_multik(
             for p in model.param_names:
                 results[p][idx] = np.nan
         else:
+            # is use_err, set weights using error
+            if use_err and data.err is not None:
+                fitargs['weights'] = 1.0 / data.err[idx]
             result = model.fit(data.data[idx], params=model_params, **fitargs)
             # update results and model_params
             for p in model.param_names:
-                model_params[p].value = results[p][idx] = result.params[p].value
+                results[p][idx] = result.params[p].value
+                model_params[p].value = result.params[p].value
             results['success'][idx] = result.success
             if model_results is not None:
                 model_results[idx] = result
@@ -248,21 +265,22 @@ def fit_multik(
     # update parameters
     for p in model.param_names:
         model_params[p].value = results[p][ref]
-    for idx in range(ref+1,len(data.k)):
-        # fit 
+    for idx in range(ref + 1, len(data.k)):
+        # fit
         if np.isnan(data.var[idx]):
             for p in model.param_names:
                 results[p][idx] = np.nan
         else:
+            # is use_err, set weights using error
+            if use_err and data.err is not None:
+                fitargs['weights'] = 1.0 / data.err[idx]
             result = model.fit(data.data[idx], params=model_params, **fitargs)
             # update results and model_params
             for p in model.param_names:
-                model_params[p].value = results[p][idx] = result.params[p].value
+                results[p][idx] = result.params[p].value
+                model_params[p].value = result.params[p].value
             results['success'][idx] = result.success
             if model_results is not None:
                 model_results[idx] = result
 
-    if return_model_results:
-        return pd.DataFrame(results), model_results
-    else:
-        return pd.DataFrame(results), None
+    return pd.DataFrame(results), model_results
