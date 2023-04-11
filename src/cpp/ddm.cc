@@ -160,8 +160,8 @@ py::array_t<Scalar> ddm_diff(py::array_t<T, py::array::c_style> img_seq,
     tmp.clear();
     tmp.shrink_to_fit();
 
-    // the full size of the image structure function is
-    // nx * ny * [#(lags) + 2]
+    // the size of the half-plane image structure function is
+    // (nx / 2 + 1) * ny * [#(lags) + 2]
     out.resize({(unsigned long long)(lags.size() + 2), ny, _nx});
 
     // release pointer to output array
@@ -348,8 +348,8 @@ py::array_t<Scalar> ddm_fft(py::array_t<T, py::array::c_style> img_seq,
     tmpAvg.clear();
     tmpAvg.shrink_to_fit();
 
-    // the full size of the image structure function is
-    // nx * ny * #(lags)
+    // the size of the half-plane image structure function is
+    // (nx / 2 + 1) * ny * [#(lags) + 2]
     out.resize({(unsigned long long)(lags.size() + 2), ny, _nx});
 
     // release pointer to output array
