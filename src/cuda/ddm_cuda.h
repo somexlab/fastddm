@@ -23,6 +23,12 @@
 namespace py = pybind11;
 using namespace std;
 
+#ifndef SINGLE_PRECISION
+typedef double Scalar;
+#else
+typedef float Scalar;
+#endif
+
 // *** code ***
 
 /*! \brief Compute image structure function in diff mode using differences on the GPU
@@ -32,7 +38,7 @@ using namespace std;
     \param ny           number of fft nodes in y direction
  */
 template <typename T>
-py::array_t<double> ddm_diff_cuda(py::array_t<T, py::array::c_style> img_seq,
+py::array_t<Scalar> ddm_diff_cuda(py::array_t<T, py::array::c_style> img_seq,
                                   vector<unsigned int> lags,
                                   unsigned long long nx,
                                   unsigned long long ny);
@@ -45,7 +51,7 @@ py::array_t<double> ddm_diff_cuda(py::array_t<T, py::array::c_style> img_seq,
     \param nt           number of fft nodes in t direction
  */
 template <typename T>
-py::array_t<double> ddm_fft_cuda(py::array_t<T, py::array::c_style> img_seq,
+py::array_t<Scalar> ddm_fft_cuda(py::array_t<T, py::array::c_style> img_seq,
                                  vector<unsigned int> lags,
                                  unsigned long long nx,
                                  unsigned long long ny,
@@ -61,4 +67,4 @@ void set_device(int gpu_id);
  */
 void export_ddm_cuda(py::module &m);
 
-#endif  // __DDM_CUDA_H__
+#endif // __DDM_CUDA_H__

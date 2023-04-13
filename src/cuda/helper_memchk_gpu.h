@@ -20,6 +20,12 @@
 
 using namespace std;
 
+#ifndef SINGLE_PRECISION
+typedef double Scalar;
+#else
+typedef float Scalar;
+#endif
+
 // *** code ***
 
 /*! \brief Get free host memory (in bytes)
@@ -89,7 +95,7 @@ unsigned long long get_device_fft_mem(unsigned long long nt,
     \param pitch_buff       Pitch of buffer device array
     \param pitch_nx         Pitch of fft2 complex output array
     \param num_fft2         Number of fft2 batches
-    \param is_input_double  True if pixel value is double
+    \param is_input_Scalar  True if pixel value is Scalar
     \param pixel_Nbytes     Number of bytes per pixel
     \param width            Width of the image
     \param height           Height of the image
@@ -101,7 +107,7 @@ unsigned long long get_device_fft_mem(unsigned long long nt,
 void optimize_fft2(unsigned long long &pitch_buff,
                    unsigned long long &pitch_nx,
                    unsigned long long &num_fft2,
-                   bool is_input_double,
+                   bool is_input_Scalar,
                    unsigned long long pixel_Nbytes,
                    unsigned long long width,
                    unsigned long long height,

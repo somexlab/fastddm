@@ -77,6 +77,80 @@ __global__ void scale_array_kernel(double2 *a,
 }
 
 /*!
+    Convert 2D array in place from double2 to float2
+ */
+__global__ void double2float_inplace_kernel(double2 *a,
+                                            float2 *b,
+                                            unsigned long long pitch,
+                                            unsigned long long length,
+                                            unsigned long long N)
+{
+    // Handle to thread block group
+    cg::thread_block cta = cg::this_thread_block();
+    extern __shared__ float2 tmp2[];
+
+    for (unsigned long long row = blockIdx.x; row < N; row += gridDim.x)
+    {
+        // copy values to shared memory
+        unsigned long long tid = threadIdx.x;
+        while (tid < length)
+        {
+            tmp2[tid] = make_float2(a[row * pitch + tid].x, a[row * pitch + tid].y);
+            tid += blockDim.x;
+        }
+
+        // synchronize threads
+        cg::sync(cta);
+
+        // copy values back to array
+        tid = threadIdx.x;
+        while (tid < length)
+        {
+            b[row * pitch * 2 + tid] = tmp2[tid];
+            tid += blockDim.x;
+        }
+    }
+}
+
+/*!
+    Convert 2D array from double to float
+*/
+__global__ void double2float_kernel(double *a,
+                                    unsigned long long ipitch,
+                                    float *b,
+                                    unsigned long long opitch,
+                                    unsigned long long length,
+                                    unsigned long long N)
+{
+    for (unsigned long long row = blockIdx.x; row < N; row += gridDim.x)
+    {
+        for (unsigned long long tid = threadIdx.x; tid < length; tid += blockDim.x)
+        {
+            b[row * opitch + tid] = (float)a[row * ipitch + tid];
+        }
+    }
+}
+
+/*!
+    Convert 2D array from float to double
+*/
+__global__ void float2double_kernel(float *a,
+                                    unsigned long long ipitch,
+                                    double *b,
+                                    unsigned long long opitch,
+                                    unsigned long long length,
+                                    unsigned long long N)
+{
+    for (unsigned long long row = blockIdx.x; row < N; row += gridDim.x)
+    {
+        for (unsigned long long tid = threadIdx.x; tid < length; tid += blockDim.x)
+        {
+            b[row * opitch + tid] = (double)a[row * ipitch + tid];
+        }
+    }
+}
+
+/*!
     Transpose complex matrix with pitch
  */
 __global__ void transpose_complex_matrix_kernel(double2 *matIn,
@@ -223,9 +297,9 @@ __global__ void structure_function_diff_kernel(double2 *d_in,
 /*!
     Shift power spectrum
 */
-__global__ void shift_powspec_kernel(double2 *d_in,
+__global__ void shift_powspec_kernel(Scalar2 *d_in,
                                      unsigned long long ipitch,
-                                     double *d_out,
+                                     Scalar *d_out,
                                      unsigned long long opitch,
                                      unsigned long long nx,
                                      unsigned long long ny,
@@ -233,7 +307,7 @@ __global__ void shift_powspec_kernel(double2 *d_in,
                                      unsigned long long NblocksX,
                                      unsigned long long NblocksY)
 {
-    __shared__ double2 tile[TILE_DIM][TILE_DIM + 1];
+    __shared__ Scalar2 tile[TILE_DIM][TILE_DIM + 1];
 
     for (unsigned long long blockIDX = blockIdx.x; blockIDX < NblocksX; blockIDX += gridDim.x)
     {
