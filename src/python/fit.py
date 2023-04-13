@@ -207,8 +207,14 @@ def fit_multik(
         whose second value is the complete list of `lmfit.ModelResult`s
         obtained.
     """
+    from copy import deepcopy
+
     # initialize model parameters
     model_params = model.make_params()
+
+    # create deep copies of passed parameters:
+    ref_params = deepcopy(ref_params) if ref_params is not None else None
+    fixed_params = deepcopy(fixed_params) if fixed_params is not None else None
 
     # we require the models to have one and one only independent variable
     indep_var = model.independent_vars[0]
