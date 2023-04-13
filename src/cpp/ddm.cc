@@ -297,26 +297,8 @@ py::array_t<Scalar> ddm_fft(py::array_t<T, py::array::c_style> img_seq,
             tmp[q] = 0.0;
         }
 
-        if (i == 0)
-        {
-            for (int ii = 0; ii < nt; ii++)
-            {
-                cout << workspace[2 * ii] << endl;
-            }
-            cout << endl;
-        }
-
         // compute ifft
         Fftw_Execute(fft_plan);
-
-        if (i == 0)
-        {
-            for (int ii = 0; ii < nt; ii++)
-            {
-                cout << workspace[2 * ii] << endl;
-            }
-            cout << endl;
-        }
 
         // Step2: average part
         unsigned long long idx = 0;
