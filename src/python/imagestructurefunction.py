@@ -651,6 +651,8 @@ class SFReader(Reader):
             self._parser.read_array(self._metadata['data_offset'], shape),
             self.get_kx(False),
             self.get_ky(False),
+            self._metadata["width"],
+            self._metadata["height"],
             self.get_tau(),
             self._metadata['pixel_size'],
             self._metadata['delta_t']
