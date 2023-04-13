@@ -331,11 +331,12 @@ def azimuthal_average(
 
     # compute bin edges and initialize k
     if isinstance(bins, int):
-        bin_edges = np.linspace(k_min, k_max, bins)
+        bin_edges = np.linspace(k_min, k_max, bins, dtype=DTYPE)
     else:  # bins is an iterable
         bin_edges = [k_min]
         for bin_width in bins:
             bin_edges.append(bin_edges[-1] + bin_width)
+        bin_edges = np.array(bin_edges, dtype=DTYPE)
         bins = len(bins) + 1
     k = np.zeros(bins, dtype=DTYPE)
 
@@ -346,9 +347,9 @@ def azimuthal_average(
     # pre-compute weights
     idx = np.full((dim_y, dim_x), fill_value=-1, dtype=np.int64)
     wk = np.zeros((dim_y, dim_x), dtype=DTYPE)
-    sum_wk = np.zeros(bins)
+    sum_wk = np.zeros(bins, dtype=DTYPE)
     if eval_err:
-        sum_wk2 = np.zeros(bins)
+        sum_wk2 = np.zeros(bins, dtype=DTYPE)
 
     # loop over k-vectors in half-plane
     for (i, j), k_val in np.ndenumerate(k_modulus):
@@ -379,7 +380,7 @@ def azimuthal_average(
         if curr_idx > -1 and wk[i, j]:
             # initialize to zero if not done before
             if np.isnan(az_avg[curr_idx, 0]):
-                az_avg[curr_idx] = np.zeros(dim_t)
+                az_avg[curr_idx] = np.zeros(dim_t, dtype=DTYPE)
                 k[curr_idx] = 0.0
             k[curr_idx] += k_modulus[i, j] * wk[i, j] / sum_wk[curr_idx]
             az_avg[curr_idx] += img_str_func._data[:, i, j] * (
@@ -399,10 +400,11 @@ def azimuthal_average(
             if curr_idx > -1 and wk[i, j]:
                 # initialize to zero if not done before
                 if np.isnan(err[curr_idx, 0]):
-                    err[curr_idx] = np.zeros(dim_t)
-                err[curr_idx] += (wk[i, j] * corr_fact[curr_idx]) * (
-                    img_str_func._data[:, i, j] - az_avg[curr_idx]
-                ) ** 2
+                    err[curr_idx] = np.zeros(dim_t, dtype=DTYPE)
+                if not np.isinf(corr_fact[curr_idx]):
+                    err[curr_idx] += (wk[i, j] * corr_fact[curr_idx]) * (
+                        img_str_func._data[:, i, j] - az_avg[curr_idx]
+                    ) ** 2
         np.sqrt(err, out=err)
     else:
         err = None
@@ -536,11 +538,12 @@ def _azimuthal_average(
 
     # compute bin edges and initialize k
     if isinstance(bins, int):
-        bin_edges = np.linspace(k_min, k_max, bins)
+        bin_edges = np.linspace(k_min, k_max, bins, dtype=DTYPE)
     else:  # bins is an iterable
         bin_edges = [k_min]
         for bin_width in bins:
             bin_edges.append(bin_edges[-1] + bin_width)
+        bin_edges = np.array(bin_edges, dtype=DTYPE)
         bins = len(bins) + 1
     k = np.zeros(bins, dtype=DTYPE)
 
@@ -551,9 +554,9 @@ def _azimuthal_average(
     # pre-compute weights
     idx = np.full((dim_y, dim_x), fill_value=-1, dtype=np.int64)
     wk = np.ones((dim_y, dim_x), dtype=DTYPE)
-    sum_wk = np.zeros(bins)
+    sum_wk = np.zeros(bins, dtype=DTYPE)
     if eval_err:
-        sum_wk2 = np.zeros(bins)
+        sum_wk2 = np.zeros(bins, dtype=DTYPE)
 
     # loop over k-vectors in half-plane
     for (i, j), k_val in np.ndenumerate(k_modulus):
@@ -578,7 +581,7 @@ def _azimuthal_average(
         if curr_idx > -1 and wk[i, j]:
             # initialize to zero if not done before
             if np.isnan(az_avg[curr_idx, 0]):
-                az_avg[curr_idx] = np.zeros(dim_t)
+                az_avg[curr_idx] = np.zeros(dim_t, dtype=DTYPE)
                 k[curr_idx] = 0.0
             k[curr_idx] += k_modulus[i, j] * wk[i, j] / sum_wk[curr_idx]
             az_avg[curr_idx] += data[:, i, j] * (wk[i, j] / sum_wk[curr_idx])
@@ -596,10 +599,11 @@ def _azimuthal_average(
             if curr_idx > -1 and wk[i, j]:
                 # initialize to zero if not done before
                 if np.isnan(err[curr_idx, 0]):
-                    err[curr_idx] = np.zeros(dim_t)
-                err[curr_idx] += (wk[i, j] * corr_fact[curr_idx]) * (
-                    data[:, i, j] - az_avg[curr_idx]
-                ) ** 2
+                    err[curr_idx] = np.zeros(dim_t, dtype=DTYPE)
+                if not np.isinf(corr_fact[curr_idx]):
+                    err[curr_idx] += (wk[i, j] * corr_fact[curr_idx]) * (
+                        data[:, i, j] - az_avg[curr_idx]
+                    ) ** 2
         np.sqrt(err, out=err)
     else:
         err = None
