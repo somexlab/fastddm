@@ -3,6 +3,8 @@
 # Author: Enrico Lattuada
 # Maintainer: Enrico Lattuada
 
+"""The collection of C++ functions to perform Differential Dynamic Microscopy."""
+
 from typing import List
 import itertools
 import math
@@ -10,7 +12,7 @@ import psutil
 import numpy as np
 
 from ._core import ddm_diff, ddm_fft
-from . import IS_SINGLE_PRECISION
+from ._config import IS_SINGLE_PRECISION
 
 SCALAR_SIZE = 4 if IS_SINGLE_PRECISION else 8
 

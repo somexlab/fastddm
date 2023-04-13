@@ -3,22 +3,17 @@
 # Author: Enrico Lattuada
 # Maintainer: Enrico Lattuada
 
+"""The collection of CUDA functions to perform Differential Dynamic Microscopy."""
+
 from typing import List, Optional
 import numpy as np
 
-# from ._memchk import get_free_mem
-# from ._gpumemchk import get_free_gpu_mem
-# from .core import chk_host_mem_direct, chk_host_mem_fft
-# from .core import get_device_pitch, get_device_fft2_mem, get_device_fft_mem
 from ._core import set_device
 from ._core import ddm_diff_cuda, ddm_fft_cuda
 
+
 def ddm_diff_gpu(
-    img_seq: np.ndarray,
-    lags: List[int],
-    nx: int,
-    ny: int,
-    gpu_id: Optional[int] = 0
+    img_seq: np.ndarray, lags: List[int], nx: int, ny: int, gpu_id: Optional[int] = 0
 ) -> np.ndarray:
     """Differential Dynamic Microscopy, diff mode on GPU
 
@@ -56,13 +51,14 @@ def ddm_diff_gpu(
     # analyze
     return ddm_diff_cuda(img_seq, lags, nx, ny)
 
+
 def ddm_fft_gpu(
     img_seq: np.ndarray,
     lags: List[int],
     nx: int,
     ny: int,
     nt: int,
-    gpu_id: Optional[int] = 0
+    gpu_id: Optional[int] = 0,
 ) -> np.ndarray:
     """Differential Dynamic Microscopy, fft mode on GPU.
 

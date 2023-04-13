@@ -3,7 +3,6 @@
 # Authors: Enrico Lattuada and Fabian Krautgasser
 # Maintainers: Enrico Lattuada and Fabian Krautgasser
 
-
 # automatically retrieve version
 from pkg_resources import get_distribution, DistributionNotFound
 try:
@@ -12,10 +11,7 @@ except DistributionNotFound:
     # package is not installed
     pass
 
-IS_CPP_ENABLED = ${IS_CPP_ENABLED}              # configured by CMake
-IS_CUDA_ENABLED = ${IS_CUDA_ENABLED}            # configured by CMake
-IS_SINGLE_PRECISION = ${IS_SINGLE_PRECISION}    # configured by CMake
-
+from ._config import *
 from ._ddm import ddm
 from .azimuthalaverage import azimuthal_average
 from ._io import load

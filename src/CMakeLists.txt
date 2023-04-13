@@ -103,6 +103,9 @@ endif(ENABLE_CUDA)
 configure_file(python/__init__.py
     ${FASTDDM_OUTPUT_DIR}/__init__.py)
 
+configure_file(python/_config.py
+    ${FASTDDM_OUTPUT_DIR}/_config.py)
+
 configure_file(python/_fftopt.py
     ${FASTDDM_OUTPUT_DIR}/_fftopt.py)
 

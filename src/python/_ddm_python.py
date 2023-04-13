@@ -10,6 +10,8 @@ from typing import Optional, Tuple, Callable, Dict
 import numpy as np
 import scipy.fft as scifft
 
+from ._config import DTYPE
+
 
 # computational stuff #############################################################################
 def autocorrelation(spatial_fft: np.ndarray, *, workers: int = 2) -> np.ndarray:
@@ -129,16 +131,18 @@ def azimuthal_average(
             radii = np.cumsum(radii)
 
     if mask is None:
-        mask = np.full((y,x),True)
+        mask = np.full((y, x), True)
 
     if weights is None:
-        weights = np.ones((y,x))
+        weights = np.ones((y, x))
 
-    azimuthal_average = np.zeros_like(radii, dtype=np.float64)
+    azimuthal_average = np.zeros_like(radii, dtype=DTYPE)
 
     for i, r in enumerate(radii):
         curr_pixels = (dist >= r - halfbin) & (dist <= r + halfbin) & mask
-        azimuthal_average[i] = (image[curr_pixels]*weights[curr_pixels]).mean()/weights[curr_pixels].mean()
+        azimuthal_average[i] = (
+            image[curr_pixels] * weights[curr_pixels]
+        ).mean() / weights[curr_pixels].mean()
 
     return azimuthal_average
 
@@ -219,7 +223,7 @@ def _diff_image_structure_function(
     Returns
     -------
     np.ndarray
-        The half plane image structure function. 
+        The half plane image structure function.
 
     Raises
     ------
@@ -233,8 +237,8 @@ def _diff_image_structure_function(
 
     # use slice objects to handle cropping of arrays better
     crop = slice(None, -lag) if lag != 0 else slice(None, None)
-    shift = slice(lag, None) 
-    
+    shift = slice(lag, None)
+
     cropped_conj = rfft2[crop].conj()
     shifted = rfft2[shift]
     shifted_abs_square = rfft2_square_mod[shift]
@@ -295,7 +299,9 @@ def image_structure_function(
     autocorrelation = autocorrelation[lag].real
 
     offset = lag + 1
-    sum_of_parts = sq_mod_cumsum[-offset] + sq_mod_cumsum_rev[-offset] - 2 * autocorrelation
+    sum_of_parts = (
+        sq_mod_cumsum[-offset] + sq_mod_cumsum_rev[-offset] - 2 * autocorrelation
+    )
     sum_of_parts /= length - lag  # normalization
 
     return sum_of_parts  # half plane
@@ -357,8 +363,11 @@ def _py_image_structure_function(
     if nx is None or ny is None:
         _, ny, nx = images.shape
     length = len(lags)
-    dqt = np.zeros((length + 2, ny, nx//2 + 1))  # +2 for (avg) power spectrum & variance 
- 
+    dqt = np.zeros(
+        (length + 2, ny, nx // 2 + 1),
+        dtype=DTYPE,
+    )  # +2 for (avg) power spectrum & variance
+
     # spatial fft & square modulus
     rfft2 = normalized_rfft2(images, nx, ny, workers=workers)
     square_mod = np.abs(rfft2) ** 2
@@ -372,7 +381,7 @@ def _py_image_structure_function(
         autocorr = autocorrelation(rfft2, workers=workers)
         cumsum = np.cumsum(square_mod, axis=0)
         cumsum_rev = np.cumsum(square_mod[::-1], axis=0)
-        
+
         args = (cumsum, cumsum_rev, autocorr)
 
     for i, lag in enumerate(lags):
@@ -418,7 +427,6 @@ def normalized_rfft2(
     if nx is None or ny is None:
         *_, ny, nx = images.shape
 
-    rfft2 = scifft.rfft2(images, s=(ny, nx), workers=workers)
+    rfft2 = scifft.rfft2(images.astype(DTYPE), s=(ny, nx), workers=workers)
     norm = np.sqrt(nx * ny)
     return rfft2 / norm
-
