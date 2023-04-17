@@ -23,6 +23,12 @@
 namespace py = pybind11;
 using namespace std;
 
+#ifndef SINGLE_PRECISION
+typedef double Scalar;
+#else
+typedef float Scalar;
+#endif
+
 // *** code ***
 
 /*! \brief Compute image structure function in diff mode
@@ -32,7 +38,7 @@ using namespace std;
     \param ny       number of fft nodes in y direction
  */
 template <typename T>
-py::array_t<double> ddm_diff(py::array_t<T, py::array::c_style> img_seq,
+py::array_t<Scalar> ddm_diff(py::array_t<T, py::array::c_style> img_seq,
                              vector<unsigned int> lags,
                              unsigned long long nx,
                              unsigned long long ny);
@@ -46,7 +52,7 @@ py::array_t<double> ddm_diff(py::array_t<T, py::array::c_style> img_seq,
     \param chunk_size   number of fft's in the chunk
  */
 template <typename T>
-py::array_t<double> ddm_fft(py::array_t<T, py::array::c_style> img_seq,
+py::array_t<Scalar> ddm_fft(py::array_t<T, py::array::c_style> img_seq,
                             vector<unsigned int> lags,
                             unsigned long long nx,
                             unsigned long long ny,
@@ -58,4 +64,4 @@ py::array_t<double> ddm_fft(py::array_t<T, py::array::c_style> img_seq,
  */
 void export_ddm(py::module &m);
 
-#endif  // __DDM_H__
+#endif // __DDM_H__
