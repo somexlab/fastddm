@@ -2,7 +2,37 @@
 Change Log
 ==========
 
-v0.x
+v0.2
+----
+
+### v0.2.0 (2023-04-20)
+
+*Added*
+
+* `ImageStructureFunction` provides methods to retrieve the full plane representation from half-plane.
+* `SINGLE_PRECISION` option at install time.
+* Errors evaluated in `AzimuthalAverage` can be used in `fit_multik`
+* In `fit_multik`, the user can now fix q-dependent parameter values via `fixed_params`.
+* In `fit_multik`, the user can now fix q-dependent parameters range via `fixed_params_min` and `fixed_params_max`.
+* Results from `fit_multik` also include the `k` parameter for convenience.
+
+*Changed*
+
+* Now `ImageStructureFunction` data and err are stored using half-plane representation.
+* Fit models are not saved to file due to incompatibilities with `dill` package.
+* Updated pytest.
+
+*Fixed* 
+
+* Passed parameters in `fit_multik` are not changed by the function.
+
+[comment]: <> (*Deprecated*)
+
+*Removed*
+
+* Removed unused functions and modules.
+
+v0.1
 ----
 
 ### v0.1.3 (2023-04-04)
