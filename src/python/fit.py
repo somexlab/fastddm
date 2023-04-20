@@ -48,7 +48,6 @@ def _simple_structure_function_parameter_helper(
     xdata: np.ndarray,
     ydata: np.ndarray,
 ) -> lm.Parameters:
-
     # first estimate B from the constant offset of a 2nd-degree polynomial fit of the first values
     n = 5
     poly = np.polynomial.Polynomial.fit(xdata[:n], ydata[:n], deg=2)
@@ -150,6 +149,8 @@ def fit_multik(
     return_model_results: Optional[bool] = False,
     use_err: Optional[bool] = False,
     fixed_params: Optional[Dict[str, Sequence[float]]] = None,
+    fixed_params_min: Optional[Dict[str, Sequence[float]]] = None,
+    fixed_params_max: Optional[Dict[str, Sequence[float]]] = None,
     **fitargs: Any,
 ) -> Tuple[pd.DataFrame, Optional[List[lm.model.ModelResult]]]:
     """A wrapper for fitting a given model to given data for multiple `k`
@@ -198,6 +199,14 @@ def fit_multik(
         Dictionary of `{parameter_name: values_array}` pairs of parameter
         values to fix during fitting. The `values_array` length must be equal
         to `len(data.k)`. Default is None.
+    fixed_params_min : Dict[str, Sequence[float]], optional
+        Dictionary of `{parameter_name: values_array}` pairs of parameter bounded min
+        values to fix during fitting. The `values_array` length must be equal
+        to `len(data.k)`. Default is None.
+    fixed_params_max : Dict[str, Sequence[float]], optional
+        Dictionary of `{parameter_name: values_array}` pairs of parameter bounded max
+        values to fix during fitting. The `values_array` length must be equal
+        to `len(data.k)`. Default is None.
 
     Returns
     -------
@@ -215,10 +224,16 @@ def fit_multik(
     # create deep copies of passed parameters:
     ref_params = deepcopy(ref_params) if ref_params is not None else None
     fixed_params = deepcopy(fixed_params) if fixed_params is not None else None
+    fixed_params_min = (
+        deepcopy(fixed_params_min) if fixed_params_min is not None else None
+    )
+    fixed_params_max = (
+        deepcopy(fixed_params_max) if fixed_params_max is not None else None
+    )
 
     # we require the models to have one and one only independent variable
     indep_var = model.independent_vars[0]
-    fitargs[indep_var] = data.tau   # mapping tau to independent variable name
+    fitargs[indep_var] = data.tau  # mapping tau to independent variable name
 
     # initialize parameters
     # check ref_params
@@ -238,11 +253,17 @@ def fit_multik(
         for p, pval in fixed_params.items():
             model_params[p].vary = False
             model_params[p].value = pval[ref]
+    if fixed_params_min is not None:
+        for p, pval in fixed_params_min.items():
+            model_params[p].min = pval[ref]
+    if fixed_params_max is not None:
+        for p, pval in fixed_params_max.items():
+            model_params[p].max = pval[ref]
 
     # initialize outputs
     results = {p: np.zeros(len(data.k)) for p in model.param_names}
-    results['success'] = np.zeros(len(data.k), dtype=bool)
-    results['k'] = data.k
+    results["success"] = np.zeros(len(data.k), dtype=bool)
+    results["k"] = data.k
 
     model_results = None
     if return_model_results:
@@ -252,62 +273,53 @@ def fit_multik(
     result = model.fit(data.data[ref], params=model_params, **fitargs)
     for p in model.param_names:
         results[p][ref] = result.params[p].value
-    results['success'][ref] = result.success
+    results["success"][ref] = result.success
     if model_results is not None:
         model_results[ref] = result
 
+    def _fit(indexrange):
+        # access nonlocal variables
+        nonlocal data, ref, use_err, fixed_params, fixed_params_max, fixed_params_min, fitargs
+        nonlocal model_params, model, results, model_results
+
+        # update parameters
+        for p in model.param_names:
+            model_params[p].value = results[p][ref]
+
+        # perform fit in indexrange
+        for idx in indexrange:
+            # fit
+            if np.isnan(data.var[idx]):
+                for p in model.param_names:
+                    results[p][idx] = np.nan
+            else:
+                # is use_err, set weights using error
+                if use_err and data.err is not None:
+                    fitargs["weights"] = 1.0 / data.err[idx]
+                # if fixed_params_* is given, fix the parameters
+                if fixed_params is not None:
+                    for p, pval in fixed_params.items():
+                        model_params[p].value = pval[idx]
+                if fixed_params_min is not None:
+                    for p, pval in fixed_params_min.items():
+                        model_params[p].min = pval[idx]
+                if fixed_params_max is not None:
+                    for p, pval in fixed_params_max.items():
+                        model_params[p].max = pval[idx]
+                # do fit
+                result = model.fit(data.data[idx], params=model_params, **fitargs)
+                # update results and model_params
+                for p in model.param_names:
+                    results[p][idx] = result.params[p].value
+                    model_params[p].value = result.params[p].value
+                results["success"][idx] = result.success
+                if model_results is not None:
+                    model_results[idx] = result
+
     # perform fit towards small k vectors
-    # update parameters
-    for p in model.param_names:
-        model_params[p].value = results[p][ref]
-    for idx in reversed(range(ref)):
-        # fit
-        if np.isnan(data.var[idx]):
-            for p in model.param_names:
-                results[p][idx] = np.nan
-        else:
-            # is use_err, set weights using error
-            if use_err and data.err is not None:
-                fitargs['weights'] = 1.0 / data.err[idx]
-            # if fixed_params is given, fix the parameters
-            if fixed_params is not None:
-                for p, pval in fixed_params.items():
-                    model_params[p].value = pval[idx]
-            # do fit
-            result = model.fit(data.data[idx], params=model_params, **fitargs)
-            # update results and model_params
-            for p in model.param_names:
-                results[p][idx] = result.params[p].value
-                model_params[p].value = result.params[p].value
-            results['success'][idx] = result.success
-            if model_results is not None:
-                model_results[idx] = result
+    _fit(reversed(range(ref)))
 
     # perform fit towards large k vectors
-    # update parameters
-    for p in model.param_names:
-        model_params[p].value = results[p][ref]
-    for idx in range(ref + 1, len(data.k)):
-        # fit
-        if np.isnan(data.var[idx]):
-            for p in model.param_names:
-                results[p][idx] = np.nan
-        else:
-            # is use_err, set weights using error
-            if use_err and data.err is not None:
-                fitargs['weights'] = 1.0 / data.err[idx]
-            # if fixed_params is given, fix the parameters
-            if fixed_params is not None:
-                for p, pval in fixed_params.items():
-                    model_params[p].value = pval[idx]
-            # do fit
-            result = model.fit(data.data[idx], params=model_params, **fitargs)
-            # update results and model_params
-            for p in model.param_names:
-                results[p][idx] = result.params[p].value
-                model_params[p].value = result.params[p].value
-            results['success'][idx] = result.success
-            if model_results is not None:
-                model_results[idx] = result
+    _fit(range(ref + 1, len(data.k)))
 
     return pd.DataFrame(results), model_results
