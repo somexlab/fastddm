@@ -242,10 +242,10 @@ py::array_t<Scalar> ddm_fft(py::array_t<T, py::array::c_style> img_seq,
     Fftw_Cleanup();
 
     // ***Allocate workspace
-    vector<Scalar> workspace(2 * chunk_size * nt);
+    vector<double> workspace(2 * chunk_size * nt);
 
     // ***Create the fft plan
-    FFTW_PLAN fft_plan = fft_create_plan(workspace,
+    fftw_plan fft_plan = fft_create_plan(workspace,
                                          nt,
                                          chunk_size);
 
@@ -253,9 +253,9 @@ py::array_t<Scalar> ddm_fft(py::array_t<T, py::array::c_style> img_seq,
     // initialize helper vector used in average part
     vector<double> tmp(chunk_size);
     // initialize helper vector used in square modulus of average Fourier transform
-    vector<Scalar> tmpAvg(chunk_size);
+    vector<double> tmpAvg(chunk_size);
     // normalize fft before actually computing it
-    norm_fact = sqrt((double)(nt));
+    double norm_fact_2 = sqrt((double)(nt));
     for (unsigned long long i = 0; i < (_nx * ny - 1) / chunk_size + 1; i++)
     {
         // Step1: correlation part
@@ -264,8 +264,8 @@ py::array_t<Scalar> ddm_fft(py::array_t<T, py::array::c_style> img_seq,
         {
             for (unsigned long long t = 0; t < length; t++)
             {
-                workspace[2 * (q * nt + t)] = p_out[2 * (t * _nx * ny + i * chunk_size + q)] / norm_fact;         // real
-                workspace[2 * (q * nt + t) + 1] = p_out[2 * (t * _nx * ny + i * chunk_size + q) + 1] / norm_fact; // imag
+                workspace[2 * (q * nt + t)] = p_out[2 * (t * _nx * ny + i * chunk_size + q)] / norm_fact_2;         // real
+                workspace[2 * (q * nt + t) + 1] = p_out[2 * (t * _nx * ny + i * chunk_size + q) + 1] / norm_fact_2; // imag
             }
             // set other values to 0
             for (unsigned long long t = length; t < nt; t++)
@@ -276,7 +276,7 @@ py::array_t<Scalar> ddm_fft(py::array_t<T, py::array::c_style> img_seq,
         }
 
         // compute the fft
-        Fftw_Execute(fft_plan);
+        fftw_execute(fft_plan);
 
         // compute power spectrum of fft
         for (unsigned long long j = 0; j < chunk_size * nt; j++)
@@ -292,13 +292,13 @@ py::array_t<Scalar> ddm_fft(py::array_t<T, py::array::c_style> img_seq,
         {
             // compute average
             // Take into account pre-normalization of the fft and actual normalization factor
-            tmpAvg[q] = workspace[2 * q * nt] * (Scalar)nt / (Scalar)(length * length);
+            tmpAvg[q] = workspace[2 * q * nt] * (double)nt / (double)(length * length);
             // Initialize tmp to zero
             tmp[q] = 0.0;
         }
 
         // compute ifft
-        Fftw_Execute(fft_plan);
+        fftw_execute(fft_plan);
 
         // Step2: average part
         unsigned long long idx = 0;
@@ -335,7 +335,7 @@ py::array_t<Scalar> ddm_fft(py::array_t<T, py::array::c_style> img_seq,
             {
                 p_out[2 * (idx * _nx * ny + i * chunk_size + q)] = workspace[2 * (q * nt + lags[idx])];
             }
-            p_out[2 * (lags.size() * _nx * ny + i * chunk_size + q)] = 0.5 * tmp[q] / (Scalar)length;
+            p_out[2 * (lags.size() * _nx * ny + i * chunk_size + q)] = 0.5 * tmp[q] / (double)length;
             p_out[2 * ((lags.size() + 1) * _nx * ny + i * chunk_size + q)] = p_out[2 * (lags.size() * _nx * ny + i * chunk_size + q)] - tmpAvg[q];
         }
     }
@@ -347,8 +347,8 @@ py::array_t<Scalar> ddm_fft(py::array_t<T, py::array::c_style> img_seq,
                      lags.size() + 2);
 
     // Cleanup before finish
-    Fftw_Destroy_Plan(fft_plan);
-    Fftw_Cleanup();
+    fftw_destroy_plan(fft_plan);
+    fftw_cleanup();
     workspace.clear();
     workspace.shrink_to_fit();
     tmp.clear();

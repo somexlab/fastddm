@@ -13,10 +13,8 @@
 
 #ifndef SINGLE_PRECISION
 fftw_plan (*Fftw_Plan_Many_Dft_r2c)(int, const int *, int, double *, const int *, int, int, fftw_complex *, const int *, int, int, unsigned int) = &fftw_plan_many_dft_r2c;
-fftw_plan (*Fftw_Plan_Many_Dft)(int, const int *, int, fftw_complex *, const int *, int, int, fftw_complex *, const int *, int, int, int, unsigned int) = &fftw_plan_many_dft;
 #else
 fftwf_plan (*Fftw_Plan_Many_Dft_r2c)(int, const int *, int, float *, const int *, int, int, fftwf_complex *, const int *, int, int, unsigned int) = &fftwf_plan_many_dft_r2c;
-fftwf_plan (*Fftw_Plan_Many_Dft)(int, const int *, int, fftwf_complex *, const int *, int, int, fftwf_complex *, const int *, int, int, int, unsigned int) = &fftwf_plan_many_dft;
 #endif
 
 // *** code ***
@@ -60,7 +58,7 @@ FFTW_PLAN fft2_create_plan(Scalar *input,
 /*
     Create the fftw plan for the fft of input.
  */
-FFTW_PLAN fft_create_plan(vector<Scalar> &input,
+fftw_plan fft_create_plan(vector<double> &input,
                           size_t nt,
                           size_t N)
 {
@@ -77,14 +75,14 @@ FFTW_PLAN fft_create_plan(vector<Scalar> &input,
     unsigned int flags = FFTW_ESTIMATE; // bitwise OR ('|') of zero or more planner flags (see http://www.fftw.org/fftw3.pdf)
 
     // Create the fft2 plan
-    FFTW_PLAN plan = Fftw_Plan_Many_Dft(rank,
+    fftw_plan plan = fftw_plan_many_dft(rank,
                                         n,
                                         howmany,
-                                        (FFTW_COMPLEX *)input.data(),
+                                        (fftw_complex *)input.data(),
                                         inembed,
                                         istride,
                                         idist,
-                                        (FFTW_COMPLEX *)input.data(),
+                                        (fftw_complex *)input.data(),
                                         onembed,
                                         ostride,
                                         odist,

@@ -54,12 +54,12 @@ if(ENABLE_CPP)
         target_compile_definitions(_core PUBLIC SINGLE_PRECISION)
 
         if(WIN32)
-            target_link_libraries(_core PUBLIC ${PYTHON_LIBRARIES} fftw3f)
+            target_link_libraries(_core PUBLIC ${PYTHON_LIBRARIES} fftw3 fftw3f)
             set_target_properties(_core PROPERTIES
                 RUNTIME_OUTPUT_DIRECTORY_RELEASE ${FASTDDM_OUTPUT_DIR}
             )
         else(WIN32)
-            target_link_libraries(_core PUBLIC fftw3f m)
+            target_link_libraries(_core PUBLIC fftw3 fftw3f m)
             set_target_properties(_core PROPERTIES
                 SUFFIX ".so"
                 LIBRARY_OUTPUT_DIRECTORY ${FASTDDM_OUTPUT_DIR}
@@ -165,6 +165,6 @@ configure_file(python/fit.py
     ${FASTDDM_OUTPUT_DIR}/fit.py)
 
 configure_file(python/fit_models.py
-               ${FASTDDM_OUTPUT_DIR}/fit_models.py)
+    ${FASTDDM_OUTPUT_DIR}/fit_models.py)
 
 install(CODE "execute_process(COMMAND ${PYTHON_EXECUTABLE} -m pip install ${FASTDDM_OUTPUT_DIR})")
