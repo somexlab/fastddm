@@ -5,7 +5,7 @@
 
 """Differential dynamic microscopy interface with backends."""
 
-from typing import Dict, Callable, Iterable
+from typing import Dict, Callable, Iterable, Optional
 from functools import partial
 import numpy as np
 
@@ -47,6 +47,7 @@ def ddm(
     *,
     core: str = "py",
     mode: str = "fft",
+    window: Optional[np.ndarray] = None,
     **kwargs,
 ) -> ImageStructureFunction:
     """Perform Differential Dynamic Microscopy analysis on given image sequence.
@@ -64,6 +65,8 @@ def ddm(
     mode : str, optional
         The mode of calculating the autocorrelation, choose between "diff"
         and "fft". Default is "fft".
+    window : np.ndarray, optional
+        A 2D array containing the window function to be applied to the images.
 
     Returns
     -------
@@ -76,6 +79,8 @@ def ddm(
         If a value for `core` other than "py", "cpp", and "cuda" are given.
     RuntimeError
         If a value for `mode` other than "diff" and "fft" are given.
+    RuntimeError
+        If `window` and `img_seq` shapes are not compatible.
     """
 
     # renaming for convenience
@@ -100,6 +105,13 @@ def ddm(
     # read actual image dimensions
     dim_t, dim_y, dim_x = img_seq.shape
 
+    # sanity check on window
+    if window is not None:
+        if window.shape != (dim_y, dim_x):
+            raise RuntimeError(
+                f"Window with shape {window.shape} incompatible with image shape {(dim_y, dim_x)}."
+            )
+
     # dimensions after zero padding for efficiency and for normalization
     dim_x_padded = next_fast_len(dim_x, core)
     dim_y_padded = next_fast_len(dim_y, core)
@@ -109,14 +121,14 @@ def ddm(
 
     # setup arguments
     if core != "py":
-        args = [img_seq, lags, dim_x_padded, dim_y_padded]
+        args = [img_seq, lags, dim_x_padded, dim_y_padded, window]
 
         if mode == "fft":
             dim_t_padded = next_fast_len(2 * dim_t, core)
             args.append(dim_t_padded)
 
     else:
-        args = [img_seq, lags, dim_x_padded, dim_y_padded]
+        args = [img_seq, lags, dim_x_padded, dim_y_padded, window]
 
     kx = 2 * np.pi * np.fft.fftfreq(dim_x_padded)[: (dim_x_padded // 2 + 1)]
     ky = 2 * np.pi * np.fft.fftshift(np.fft.fftfreq(dim_y_padded))
