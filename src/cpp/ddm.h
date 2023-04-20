@@ -36,12 +36,14 @@ typedef float Scalar;
     \param lags     lags to be analyzed
     \param nx       number of fft nodes in x direction
     \param ny       number of fft nodes in y direction
+    \param window   numpy array containing the window function to be applied to the images
  */
 template <typename T>
 py::array_t<Scalar> ddm_diff(py::array_t<T, py::array::c_style> img_seq,
                              vector<unsigned int> lags,
                              unsigned long long nx,
-                             unsigned long long ny);
+                             unsigned long long ny,
+                             py::array_t<Scalar, py::array::c_style> window);
 
 /*! \brief Compute image structure function in fft mode using Wiener-Khinchin theorem
     \param img_seq      numpy array containing the image sequence
@@ -50,6 +52,7 @@ py::array_t<Scalar> ddm_diff(py::array_t<T, py::array::c_style> img_seq,
     \param ny           number of fft nodes in y direction
     \param nt           number of fft nodes in t direction
     \param chunk_size   number of fft's in the chunk
+    \param window       numpy array containing the window function to be applied to the images
  */
 template <typename T>
 py::array_t<Scalar> ddm_fft(py::array_t<T, py::array::c_style> img_seq,
@@ -57,7 +60,8 @@ py::array_t<Scalar> ddm_fft(py::array_t<T, py::array::c_style> img_seq,
                             unsigned long long nx,
                             unsigned long long ny,
                             unsigned long long nt,
-                            unsigned long long chunk_size);
+                            unsigned long long chunk_size,
+                            py::array_t<Scalar, py::array::c_style> window);
 
 /*! \brief Export ddm functions to python
     \param m    Module

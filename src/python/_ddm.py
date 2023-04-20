@@ -66,7 +66,7 @@ def ddm(
         The mode of calculating the autocorrelation, choose between "diff"
         and "fft". Default is "fft".
     window : np.ndarray, optional
-        A 2D array containing the window function to be applied to the images.
+        A 2D array containing the window function to be applied to the images. Default is None.
 
     Returns
     -------
@@ -121,11 +121,13 @@ def ddm(
 
     # setup arguments
     if core != "py":
-        args = [img_seq, lags, dim_x_padded, dim_y_padded, window]
+        args = [img_seq, lags, dim_x_padded, dim_y_padded]
 
         if mode == "fft":
             dim_t_padded = next_fast_len(2 * dim_t, core)
             args.append(dim_t_padded)
+
+        args.append(window)
 
     else:
         args = [img_seq, lags, dim_x_padded, dim_y_padded, window]

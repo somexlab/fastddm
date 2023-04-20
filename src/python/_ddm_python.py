@@ -177,7 +177,7 @@ def _py_image_structure_function(
     ny : int, optional
         The number of Fourier nodes in y direction (for normalization), by default None.
     window : np.ndarray, optional
-        A 2D array containing the window function to be applied to the images.
+        A 2D array containing the window function to be applied to the images. Default is None.
     mode : str, optional
         Calculate the autocorrelation function with Wiener-Khinchin theorem ('fft') or classically ('diff'), by default "fft"
     workers : int, optional
@@ -271,7 +271,7 @@ def normalized_rfft2(
     workers : int, optional
         The number of threads to be passed to scipy.fft, by default 2.
     window : np.ndarray, optional
-        A 2D array containing the window function to be applied to the images.
+        A 2D array containing the window function to be applied to the images. Default is None.
 
     Returns
     -------
