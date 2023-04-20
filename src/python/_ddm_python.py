@@ -35,12 +35,17 @@ def autocorrelation(spatial_fft: np.ndarray, *, workers: int = 2) -> np.ndarray:
         The (real) autocorrelation function with the same shape as the input array.
     """
     # fft in time with zero padding of input data
-    fft = scifft.fft(spatial_fft, n=len(spatial_fft) * 2, axis=0, workers=workers)
+    fft = scifft.fft(
+        spatial_fft.astype(np.complex128),
+        n=len(spatial_fft) * 2,
+        axis=0,
+        workers=workers,
+    )
     powerspec = np.abs(fft) ** 2
     ifft = scifft.ifft(powerspec, axis=0, workers=workers)
 
     # returning the real part, cropped to original input length
-    return ifft[: len(spatial_fft)].real
+    return ifft[: len(spatial_fft)].real.astype(DTYPE)
 
 
 def _diff_image_structure_function(
@@ -220,8 +225,10 @@ def _py_image_structure_function(
     else:
         # autocorrelation for fft mode
         autocorr = autocorrelation(rfft2, workers=workers)
-        cumsum = np.cumsum(square_mod, axis=0)
-        cumsum_rev = np.cumsum(square_mod[::-1], axis=0)
+        cumsum = np.cumsum(square_mod.astype(np.float64), axis=0).astype(DTYPE)
+        cumsum_rev = np.cumsum(square_mod[::-1].astype(np.float64), axis=0).astype(
+            DTYPE
+        )
 
         args = (cumsum, cumsum_rev, autocorr)
 
