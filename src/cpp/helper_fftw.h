@@ -46,7 +46,7 @@ FFTW_PLAN fft2_create_plan(Scalar *input,
     \param nt       number of fft nodes in t direction
     \param N        number of elements
  */
-FFTW_PLAN fft_create_plan(vector<Scalar> &input,
+fftw_plan fft_create_plan(vector<double> &input,
                           size_t nt,
                           size_t N);
 

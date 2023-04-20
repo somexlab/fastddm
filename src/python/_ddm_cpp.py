@@ -107,12 +107,12 @@ def ddm_fft_cpp(img_seq: np.ndarray, lags: List[int], nx: int, ny: int, nt: int)
         mem_req += SCALAR_SIZE * (
             2 * (nx // 2 + 1) * ny * max(len(img_seq), len(lags) + 2)
         )
-        #  workspace2 -- 2 * chunk_size * nt * (SCALAR_SIZE)bytes
-        mem_req += SCALAR_SIZE * (2 * chunk_size * nt)
-        #  tmp --------- chunk_size * 8bytes
+        #  workspace2 -- 2 * chunk_size * nt * 8 bytes
+        mem_req += 8 * (2 * chunk_size * nt)
+        #  tmp --------- chunk_size * 8 bytes
         mem_req += 8 * chunk_size
-        #  tmpAvg --------- chunk_size * (SCALAR_SIZE)bytes
-        mem_req += SCALAR_SIZE * chunk_size
+        #  tmpAvg --------- chunk_size * 8 bytes
+        mem_req += 8 * chunk_size
         # we require this space to be less than 90% of the available memory
         # to stay on the safe side
         if int(0.9 * mem) > mem_req:
