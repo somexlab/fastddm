@@ -16,6 +16,14 @@
 #include <cufft.h>
 #define CUFFTCOMPLEX cufftDoubleComplex
 
+#ifndef SINGLE_PRECISION
+typedef double Scalar;
+typedef double2 Scalar2;
+#else
+typedef float Scalar;
+typedef float2 Scalar2;
+#endif
+
 // *** code ***
 
 /*! \brief Convert array from T to double on device and prepare for fft2
@@ -53,6 +61,49 @@ __global__ void scale_array_kernel(double2 *a,
                                    double A,
                                    unsigned long long N);
 
+/*! \brief Convert 2D array in place from double2 to float2
+    \param a        input array
+    \param b        output array
+    \param pitch    pitch of input array
+    \param length   length of each subarray
+    \param N        number of subarrays
+ */
+__global__ void double2float_inplace_kernel(double2 *a,
+                                            float2 *b,
+                                            unsigned long long pitch,
+                                            unsigned long long length,
+                                            unsigned long long N);
+
+/*! \brief Convert 2D array from double to float
+    \param a        input array
+    \param ipitch   pitch of input array
+    \param b        output array
+    \param opitch   pitch of output array
+    \param length   length of each subarray
+    \param N        number of subarrays
+ */
+__global__ void double2float_kernel(double *a,
+                                    unsigned long long ipitch,
+                                    float *b,
+                                    unsigned long long opitch,
+                                    unsigned long long length,
+                                    unsigned long long N);
+
+/*! \brief Convert 2D array from float to double
+    \param a        input array
+    \param ipitch   pitch of input array
+    \param b        output array
+    \param opitch   pitch of output array
+    \param length   length of each subarray
+    \param N        number of subarrays
+ */
+__global__ void float2double_kernel(float *a,
+                                    unsigned long long ipitch,
+                                    double *b,
+                                    unsigned long long opitch,
+                                    unsigned long long length,
+                                    unsigned long long N);
+
 /*! \brief Transpose complex matrix with pitch
     \param matIn    Input matrix
     \param ipitch   Pitch of input matrix
@@ -89,29 +140,6 @@ __global__ void structure_function_diff_kernel(double2 *d_in,
                                                unsigned long long Nq,
                                                unsigned long long pitch);
 
-/*! \brief Make full power spectrum (copy symmetric part)
-    \param d_in     input array
-    \param ipitch   pitch of input array
-    \param d_out    output array
-    \param opitch   pitch of output array
-    \param nxh      number of r2c fft elements over x
-    \param nx       number of fft nodes over x
-    \param ny       number of fft nodes over y
-    \param N        number of 2d matrices
-    \param NblocksX Number of blocks of tiles over x
-    \param NblocksY Number of blocks of tiles over y
-*/
-__global__ void make_full_powspec_kernel(double2 *d_in,
-                                         unsigned long long ipitch,
-                                         double *d_out,
-                                         unsigned long long opitch,
-                                         unsigned long long nxh,
-                                         unsigned long long nx,
-                                         unsigned long long ny,
-                                         unsigned long long N,
-                                         unsigned long long NblocksX,
-                                         unsigned long long NblocksY);
-
 /*! \brief Shift power spectrum
     \param d_in     input array
     \param ipitch   pitch of input array
@@ -123,9 +151,9 @@ __global__ void make_full_powspec_kernel(double2 *d_in,
     \param NblocksX Number of blocks of tiles over x
     \param NblocksY Number of blocks of tiles over y
 */
-__global__ void shift_powspec_kernel(double *d_in,
+__global__ void shift_powspec_kernel(Scalar2 *d_in,
                                      unsigned long long ipitch,
-                                     double *d_out,
+                                     Scalar *d_out,
                                      unsigned long long opitch,
                                      unsigned long long nx,
                                      unsigned long long ny,
@@ -232,4 +260,4 @@ __global__ void linear_combination_kernel(double2 *c,
                                           double2 B,
                                           unsigned int N);
 
-#endif  // __HELPER_DDM_CUDA_CUH__
+#endif // __HELPER_DDM_CUDA_CUH__

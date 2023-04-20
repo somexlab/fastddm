@@ -4,6 +4,8 @@ cmake_policy(SET CMP0054 NEW)
 
 project(fastddm)
 
+option(SINGLE_PRECISION "Use single precision math" OFF)
+
 # The default behavior is to build with optimization
 set(CMAKE_BUILD_TYPE Release)
 
@@ -22,19 +24,37 @@ if(ENABLE_CPP)
     enable_language(CXX)
 
     # Build fftw3 as a shared lib
-    add_subdirectory(lib/fftw-3.3.10)
-    
+    add_subdirectory(lib/fftw-3.3.10 ${CMAKE_CURRENT_BINARY_DIR}/fftw3)
+
     if(WIN32)
         set_target_properties(fftw3 PROPERTIES
-                                RUNTIME_OUTPUT_DIRECTORY_RELEASE ${FASTDDM_OUTPUT_DIR}
-                            )
+            RUNTIME_OUTPUT_DIRECTORY_RELEASE ${FASTDDM_OUTPUT_DIR}
+        )
     else()
         set_target_properties(fftw3 PROPERTIES
-                                PREFIX ""
-                                SUFFIX ".so"
-                                LIBRARY_OUTPUT_DIRECTORY ${FASTDDM_OUTPUT_DIR}
-                        )
+            PREFIX ""
+            SUFFIX ".so"
+            LIBRARY_OUTPUT_DIRECTORY ${FASTDDM_OUTPUT_DIR}
+        )
     endif(WIN32)
+
+    if(SINGLE_PRECISION)
+        # Build fftw3f as a shared lib
+        set(ENABLE_FLOAT ON CACHE INTERNAL "")
+        add_subdirectory(lib/fftw-3.3.10 ${CMAKE_CURRENT_BINARY_DIR}/fftw3f)
+
+        if(WIN32)
+            set_target_properties(fftw3f PROPERTIES
+                RUNTIME_OUTPUT_DIRECTORY_RELEASE ${FASTDDM_OUTPUT_DIR}
+            )
+        else()
+            set_target_properties(fftw3f PROPERTIES
+                PREFIX ""
+                SUFFIX ".so"
+                LIBRARY_OUTPUT_DIRECTORY ${FASTDDM_OUTPUT_DIR}
+            )
+        endif(WIN32)
+    endif(SINGLE_PRECISION)
 
     # Build with python3 bindings
     find_package(PythonInterp 3 REQUIRED)

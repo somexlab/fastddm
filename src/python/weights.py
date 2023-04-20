@@ -8,31 +8,36 @@
 from typing import Optional, Tuple
 import numpy as np
 
+
 def sector_average_weight(
-    shape : Tuple[int,int],
-    kx : Optional[np.ndarray] = None,
-    ky : Optional[np.ndarray] = None,
-    theta_0 : Optional[float] = 0.0,
-    delta_theta : Optional[float] = 90.0,
-    rep : Optional[int] = 2,
-    kind : Optional[str] = 'uniform'
+    full_shape: Tuple[int, int],
+    kx: Optional[np.ndarray] = None,
+    ky: Optional[np.ndarray] = None,
+    theta_0: Optional[float] = 0.0,
+    delta_theta: Optional[float] = 90.0,
+    rep: Optional[int] = 2,
+    kind: Optional[str] = 'uniform'
 ) -> np.ndarray:
     """Evaluate weights for sector azimuthal average.
+    If `kx` or `ky` are not given, the half-plane representation for the 2D
+    image structure function is assumed and
+
+    `kx = 2.0 * np.pi * np.fft.fftfreq(full_shape[1])[:shape[1]]`
+    `ky = 2.0 * np.pi * np.fft.fftshift(np.fft.fftfreq(full_shape[0]))`
+
+    with `shape[1] = full_shape[1] // 2 + 1)`, are used.
 
     Parameters
     ----------
-    shape : (int, int)
-        Shape of the new array, e.g., (128, 256).
+    full_shape : (int, int)
+        Shape of the full 2D image structure function. This is needed in order
+        to correctly account for the spare column (Nyquist frequency). The
+        shape of the output will be (full_shape[0], full_shape[1] // 2 + 1),
+        as for the image structure function data.
     kx : np.ndarray, optional
-        The array of spatial frequencies along axis x. If kx is None,
-        the frequencies evaluated with
-        `2.0 * np.pi * np.fft.fftshift(np.fft.fftfreq(Nx))`
-        are used (`Nx = shape[1]`). Default is None.
+        The array of spatial frequencies along axis x. Default is None.
     ky : np.ndarray, optional
-        The array of spatial frequencies along axis y. If ky is None,
-        the frequencies evaluated with
-        `2.0 * np.pi * np.fft.fftshift(np.fft.fftfreq(Ny))`
-        are used (`Ny = shape[0]`). Default is None.
+        The array of spatial frequencies along axis y. Default is None.
     theta_0 : float, optional
         Reference main angle (in degrees). Default is 0.
     delta_theta : float, optional
@@ -53,12 +58,13 @@ def sector_average_weight(
     RuntimeError
         If a value for `kind` other than "uniform" and "gauss" is given.
     """
-
-    def gauss(x,mu,sigma):
+    # define gaussian function
+    def gauss(x, mu, sigma):
         A = 1 / (sigma * np.sqrt(2 * np.pi))
         _x = ((x - mu + np.pi) % (2 * np.pi) - np.pi) / sigma
         return A * np.exp(- 0.5 * _x ** 2)
 
+    # available sectors
     kinds = ['uniform', 'gauss']
     if kind not in kinds:
         raise RuntimeError(
@@ -66,17 +72,22 @@ def sector_average_weight(
             f"Only possible options are {kinds}."
         )
 
-    if kx is None:
-        kx = 2 * np.pi * np.fft.fftshift(np.fft.fftfreq(shape[1]))
+    # compute actual shape
+    shape = (full_shape[0], full_shape[1] // 2 + 1)
 
-    if ky is None:
+    # compute kx and ky if not given
+    if kx is None or ky is None:
+        kx = 2 * np.pi * np.fft.fftfreq(full_shape[1])[:shape[1]]
         ky = 2 * np.pi * np.fft.fftshift(np.fft.fftfreq(shape[0]))
 
+    # convert theta_0 and delta_theta
     theta_0 = (theta_0 % 360.0) * 2 * np.pi / 360
     delta_theta *= 2 * np.pi / 360
 
+    # get grid of kx, ky
     X, Y = np.meshgrid(kx, ky)
 
+    # compute weights
     weights = np.zeros(shape, dtype=np.float64)
     ang = np.angle(X + 1j * Y)
 

@@ -23,7 +23,7 @@
     using differences of Fourier transformed images on the GPU.
  */
 template <typename T>
-py::array_t<double> ddm_diff_cuda(py::array_t<T, py::array::c_style> img_seq,
+py::array_t<Scalar> ddm_diff_cuda(py::array_t<T, py::array::c_style> img_seq,
                                   vector<unsigned int> lags,
                                   unsigned long long nx,
                                   unsigned long long ny)
@@ -38,7 +38,7 @@ py::array_t<double> ddm_diff_cuda(py::array_t<T, py::array::c_style> img_seq,
     chk_host_mem_diff(nx, ny, length, lags.size());
 
     // Check device memory and optimize
-    unsigned long long num_fft2, num_chunks, num_fullshift;
+    unsigned long long num_fft2, num_chunks, num_shift;
     unsigned long long pitch_buff, pitch_nx, pitch_q, pitch_t, pitch_fs;
     chk_device_mem_diff(width,
                         height,
@@ -47,10 +47,10 @@ py::array_t<double> ddm_diff_cuda(py::array_t<T, py::array::c_style> img_seq,
                         ny,
                         length,
                         lags,
-                        std::is_same<T, double>::value,
+                        std::is_same<T, Scalar>::value,
                         num_fft2,
                         num_chunks,
-                        num_fullshift,
+                        num_shift,
                         pitch_buff,
                         pitch_nx,
                         pitch_q,
@@ -60,12 +60,12 @@ py::array_t<double> ddm_diff_cuda(py::array_t<T, py::array::c_style> img_seq,
     // ***Allocate workspace vector
     /*
     - We need to make sure that the fft2 r2c fits in the array,
-      so the size of one fft2 output is ny*(nx//2 + 1) complex
-      double [the input needs to be twice as large]
+      so the size of one fft2 output is [ny * (nx // 2 + 1)] complex
+      Scalar [the input needs to be twice as large]
      */
     unsigned long long _nx = nx / 2 + 1;
     unsigned long long dim_t = max(length, (unsigned long long)(lags.size() + 2));
-    py::array_t<double> out = py::array_t<double>(2 * _nx * ny * dim_t);
+    py::array_t<Scalar> out = py::array_t<Scalar>(2 * _nx * ny * dim_t);
     auto p_out = out.mutable_data();
 
     // ***Transfer data to GPU and compute fft2
@@ -90,19 +90,18 @@ py::array_t<double> ddm_diff_cuda(py::array_t<T, py::array::c_style> img_seq,
                             pitch_q,
                             pitch_t);
 
-    // ***Convert raw output to full and shifted image structure function
-    // Convert raw output to full and shifted image structure function
-    make_full_shift(p_out,
-                    lags.size() + 2,
-                    nx,
-                    ny,
-                    num_fullshift,
-                    pitch_fs);
+    // ***Convert raw output to shifted image structure function
+    make_shift(p_out,
+               lags.size() + 2,
+               nx,
+               ny,
+               num_shift,
+               pitch_fs);
 
     // ***Resize output
     // the full size of the image structure function is
     // nx * ny * #(lags)
-    out.resize({(unsigned long long)(lags.size() + 2), ny, nx});
+    out.resize({(unsigned long long)(lags.size() + 2), ny, _nx});
 
     // release pointer to output array
     p_out = NULL;
@@ -119,7 +118,7 @@ py::array_t<double> ddm_diff_cuda(py::array_t<T, py::array::c_style> img_seq,
     circular correlation.
  */
 template <typename T>
-py::array_t<double> ddm_fft_cuda(py::array_t<T, py::array::c_style> img_seq,
+py::array_t<Scalar> ddm_fft_cuda(py::array_t<T, py::array::c_style> img_seq,
                                  vector<unsigned int> lags,
                                  unsigned long long nx,
                                  unsigned long long ny,
@@ -135,7 +134,7 @@ py::array_t<double> ddm_fft_cuda(py::array_t<T, py::array::c_style> img_seq,
     chk_host_mem_fft(nx, ny, length, lags.size());
 
     // Check device memory and optimize
-    unsigned long long num_fft2, num_chunks, num_fullshift;
+    unsigned long long num_fft2, num_chunks, num_shift;
     unsigned long long pitch_buff, pitch_nx, pitch_q, pitch_t, pitch_nt, pitch_fs;
     chk_device_mem_fft(width,
                        height,
@@ -145,10 +144,10 @@ py::array_t<double> ddm_fft_cuda(py::array_t<T, py::array::c_style> img_seq,
                        nt,
                        length,
                        lags,
-                       std::is_same<T, double>::value,
+                       std::is_same<T, Scalar>::value,
                        num_fft2,
                        num_chunks,
-                       num_fullshift,
+                       num_shift,
                        pitch_buff,
                        pitch_nx,
                        pitch_q,
@@ -159,12 +158,12 @@ py::array_t<double> ddm_fft_cuda(py::array_t<T, py::array::c_style> img_seq,
     // ***Allocate workspace vector
     /*
     - We need to make sure that the fft2 r2c fits in the array,
-      so the size of one fft2 output is ny*(nx//2 + 1) complex
-      doubles [the input needs to be twice as large]
+      so the size of one fft2 output is [ny * (nx // 2 + 1)] complex
+      Scalar [the input needs to be twice as large]
      */
     unsigned long long _nx = nx / 2 + 1;
     unsigned long long dim_t = max(length, (unsigned long long)(lags.size() + 2));
-    py::array_t<double> out = py::array_t<double>(2 * _nx * ny * dim_t);
+    py::array_t<Scalar> out = py::array_t<Scalar>(2 * _nx * ny * dim_t);
     auto p_out = out.mutable_data();
 
     // ***Transfer data to GPU and compute fft2
@@ -191,18 +190,18 @@ py::array_t<double> ddm_fft_cuda(py::array_t<T, py::array::c_style> img_seq,
                            pitch_t,
                            pitch_nt);
 
-    // ***Convert raw output to full and shifted image structure function
-    make_full_shift(p_out,
-                    lags.size() + 2,
-                    nx,
-                    ny,
-                    num_fullshift,
-                    pitch_fs);
+    // ***Convert raw output to shifted image structure function
+    make_shift(p_out,
+               lags.size() + 2,
+               nx,
+               ny,
+               num_shift,
+               pitch_fs);
 
     // ***Resize output
     // the full size of the image structure function is
     // nx * ny * #(lags)
-    out.resize({(unsigned long long)(lags.size() + 2), ny, nx});
+    out.resize({(unsigned long long)(lags.size() + 2), ny, _nx});
 
     // release pointer to output array
     p_out = NULL;

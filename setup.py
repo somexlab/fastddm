@@ -7,33 +7,31 @@ import subprocess
 import multiprocessing
 
 from distutils.version import LooseVersion
-from urllib.parse import uses_fragment
 from setuptools import setup, find_packages, Extension
 from setuptools.command.build_ext import build_ext
 from setuptools.command.install_lib import install_lib
 
 
-def get_cmake_bool_flag(name, default_value = None):
+def get_cmake_bool_flag(name, default_value=None):
     """
     Get cmake boolean flag from environment variables.
     `default_value` input can be either None or a bool
     """
-    true_ = ('on', 'true', '1', 't')  # Add more entries if you want...
-    false_ = ('off', 'false', '0', 'f')  # Add more entries if you want...
+    true_ = ("on", "true", "1", "t")  # Add more entries if you want...
+    false_ = ("off", "false", "0", "f")  # Add more entries if you want...
     value = os.getenv(name, None)
     if value is None:
         if default_value is None:
-            raise ValueError(f'Variable `{name}` not set!')
+            raise ValueError(f"Variable `{name}` not set!")
         else:
             value = str(default_value)
     if value.lower() not in true_ + false_:
-        raise ValueError(f'Invalid value `{value}` for variable `{name}`')
+        raise ValueError(f"Invalid value `{value}` for variable `{name}`")
     return value.lower() in true_
 
 
 class CMakeExtension(Extension):
-
-    def __init__(self, name, sourcedir=''):
+    def __init__(self, name, sourcedir=""):
         Extension.__init__(self, name, sources=[])
         self.sourcedir = os.path.abspath(sourcedir)
 
@@ -74,59 +72,63 @@ class InstallCMakeLibs(install_lib):
 
 
 class CMakeBuild(build_ext):
-
     def run(self):
         try:
-            out = subprocess.check_output(['cmake', '--version'])
+            out = subprocess.check_output(["cmake", "--version"])
         except OSError:
-            raise RuntimeError("CMake must be installed to build the following extensions: " +
-                               ", ".join(e.name for e in self.extensions))
+            raise RuntimeError(
+                "CMake must be installed to build the following extensions: "
+                + ", ".join(e.name for e in self.extensions)
+            )
 
-        self.cmake_version = LooseVersion(re.search(r'version\s*([\d.]+)', out.decode()).group(1))
+        self.cmake_version = LooseVersion(
+            re.search(r"version\s*([\d.]+)", out.decode()).group(1)
+        )
 
         if platform.system() == "Windows":
-            if self.cmake_version < '3.1.0':
+            if self.cmake_version < "3.1.0":
                 raise RuntimeError("CMake >= 3.1.0 is required on Windows")
 
         for ext in self.extensions:
             self.build_extension(ext)
 
     def build_extension(self, ext):
-
         self.announce("Preparing the build environment", level=3)
 
         cmake_args = []
 
-        cfg = 'Debug' if self.debug else 'Release'
-        build_args = ['--config', cfg]
-        native_generator_args = ['--']
+        cfg = "Debug" if self.debug else "Release"
+        build_args = ["--config", cfg]
+        native_generator_args = ["--"]
 
         if platform.system() == "Windows":
-            if sys.maxsize > 2 ** 32:
-                cmake_args += ['-A', 'x64']
-            native_generator_args += ['/m']
+            if sys.maxsize > 2**32:
+                cmake_args += ["-A", "x64"]
+            native_generator_args += ["/m"]
         else:
-            cmake_args += ['-DCMAKE_BUILD_TYPE=' + cfg]
+            cmake_args += ["-DCMAKE_BUILD_TYPE=" + cfg]
 
         # Set optional CMake flags
         # C++
-        if get_cmake_bool_flag('ENABLE_CPP', False):
-            cmake_args += ['-DENABLE_CPP=ON']
+        if get_cmake_bool_flag("ENABLE_CPP", False):
+            cmake_args += ["-DENABLE_CPP=ON"]
         # CUDA
-        if get_cmake_bool_flag('ENABLE_CUDA', False):
-            if platform.system() in ['Windows', 'Linux']:
-                cmake_args += ['-DENABLE_CUDA=ON']
+        if get_cmake_bool_flag("ENABLE_CUDA", False):
+            if platform.system() in ["Windows", "Linux"]:
+                cmake_args += ["-DENABLE_CUDA=ON"]
             else:
-                raise RuntimeError('Cannot build with CUDA on MacOS.')
+                raise RuntimeError("Cannot build with CUDA on MacOS.")
             # if ENABLE_CPP is OFF, set it ON
-            if not get_cmake_bool_flag('ENABLE_CPP', False):
-                cmake_args += ['-DENABLE_CPP=ON']
+            if not get_cmake_bool_flag("ENABLE_CPP", False):
+                cmake_args += ["-DENABLE_CPP=ON"]
+        # single precision
+        if get_cmake_bool_flag("SINGLE_PRECISION", False):
+            cmake_args += ["-DSINGLE_PRECISION=ON"]
 
         # Set CMAKE_BUILD_PARALLEL_LEVEL to control the parallel build level across all generators.
         if "CMAKE_BUILD_PARALLEL_LEVEL" not in os.environ:
-
             try:
-                cpu_cores = int(os.getenv('SLURM_NTASKS'))
+                cpu_cores = int(os.getenv("SLURM_NTASKS"))
             except:
                 cpu_cores = int(multiprocessing.cpu_count() / 2)
 
@@ -143,38 +145,42 @@ class CMakeBuild(build_ext):
         self.distribution.lib_dir = os.path.join(self.build_temp, "src/python")
 
         self.announce("Configuring cmake project", level=3)
-        subprocess.check_call(['cmake', ext.sourcedir] + cmake_args, cwd=self.build_temp)
+        subprocess.check_call(
+            ["cmake", ext.sourcedir] + cmake_args, cwd=self.build_temp
+        )
 
         self.announce("Building the library", level=3)
-        subprocess.check_call(['cmake', '--build', '.'] + build_args, cwd=self.build_temp)
+        subprocess.check_call(
+            ["cmake", "--build", "."] + build_args, cwd=self.build_temp
+        )
 
         self.announce("Compilation done", level=3)
 
 
 setup(
-    name = "fastddm",
-    use_scm_version = {
-        "fallback_version": "0.1.3",
+    name="fastddm",
+    use_scm_version={
+        "fallback_version": "0.2.0",
     },
-    packages = find_packages(),
-    url = 'https://github.com/somexlab/fastddm',
-    long_description = open("./README.md", 'r').read(),
-    long_description_content_type = "text/markdown",
-    license = 'GNU GPL 3.0',
-    ext_modules = [CMakeExtension('fastddm')],
+    packages=find_packages(),
+    url="https://github.com/somexlab/fastddm",
+    long_description=open("./README.md", "r").read(),
+    long_description_content_type="text/markdown",
+    license="GNU GPL 3.0",
+    ext_modules=[CMakeExtension("fastddm")],
     # add custom build_ext command
-    cmdclass = {
-        'build_ext': CMakeBuild,
-        'install_lib': InstallCMakeLibs,
-        },
-    zip_safe = False,
-    classifiers = [
+    cmdclass={
+        "build_ext": CMakeBuild,
+        "install_lib": InstallCMakeLibs,
+    },
+    zip_safe=False,
+    classifiers=[
         "Development Status :: 4 - Beta",
         "Environment :: Console",
         "Intended Audience :: Science/Research",
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
         "Operating System :: OS Independent",
         "Programming Language :: C++",
-        "Topic :: Scientific/Engineering :: Physics"
-        ],
+        "Topic :: Scientific/Engineering :: Physics",
+    ],
 )

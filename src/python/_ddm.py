@@ -9,10 +9,10 @@ from typing import Dict, Callable, Iterable
 from functools import partial
 import numpy as np
 
-from fastddm import IS_CPP_ENABLED, IS_CUDA_ENABLED
-from fastddm.imagestructurefunction import ImageStructureFunction
-from fastddm._ddm_python import _py_image_structure_function
-from fastddm._fftopt import next_fast_len
+from ._config import IS_CPP_ENABLED, IS_CUDA_ENABLED, DTYPE
+from .imagestructurefunction import ImageStructureFunction
+from ._ddm_python import _py_image_structure_function
+from ._fftopt import next_fast_len
 
 ## setup of backend dictionary, initially only with py backend
 _backend: Dict[str, Dict[str, Callable]] = {
@@ -24,6 +24,7 @@ _backend: Dict[str, Dict[str, Callable]] = {
 
 if IS_CPP_ENABLED:
     from fastddm._ddm_cpp import ddm_diff_cpp, ddm_fft_cpp
+
     # enable cpp support in backends
     _backend["cpp"] = {
         "diff": ddm_diff_cpp,
@@ -32,6 +33,7 @@ if IS_CPP_ENABLED:
 
 if IS_CUDA_ENABLED:
     from fastddm._ddm_cuda import ddm_diff_gpu, ddm_fft_gpu
+
     # enable cuda support in backends
     _backend["cuda"] = {
         "diff": ddm_diff_gpu,
@@ -46,7 +48,7 @@ def ddm(
     core: str = "py",
     mode: str = "fft",
     **kwargs,
-    ) -> ImageStructureFunction:
+) -> ImageStructureFunction:
     """Perform Differential Dynamic Microscopy analysis on given image sequence.
     Returns the full image structure function.
 
@@ -116,6 +118,13 @@ def ddm(
     else:
         args = [img_seq, lags, dim_x_padded, dim_y_padded]
 
-    kx = 2 * np.pi * np.fft.fftshift(np.fft.fftfreq(dim_x_padded))
+    kx = 2 * np.pi * np.fft.fftfreq(dim_x_padded)[: (dim_x_padded // 2 + 1)]
     ky = 2 * np.pi * np.fft.fftshift(np.fft.fftfreq(dim_y_padded))
-    return ImageStructureFunction(ddm_func(*args, **kwargs), kx, ky, lags.astype(np.float64))
+    return ImageStructureFunction(
+        ddm_func(*args, **kwargs),
+        kx.astype(DTYPE),
+        ky.astype(DTYPE),
+        dim_x_padded,
+        dim_y_padded,
+        lags.astype(DTYPE),
+    )

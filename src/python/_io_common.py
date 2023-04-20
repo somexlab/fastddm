@@ -13,7 +13,7 @@ import numpy as np
 import tifffile
 
 
-VERSION = (0, 2)
+VERSION = (0, 3)
 HEAD_BYTE_LEN = 64
 
 def calculate_format_size(fmt : str) -> int:
@@ -200,7 +200,7 @@ class Parser:
         Reads a ndarray from the file.
     """
 
-    supported_file_versions = {(0, 1) : True, (0, 2) : True}
+    supported_file_versions = {(0, 1) : False, (0, 2) : False, (0, 3) : True}
 
     def __init__(self, fh : BinaryIO):
         self._fh = fh
@@ -226,7 +226,7 @@ class Parser:
                   "This might lead to unexpected behavior.")
 
         return supported
-    
+
 
     def _read_byteorder(self) -> str:
         """Read byte order flag from binary input file.

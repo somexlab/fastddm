@@ -5,14 +5,17 @@ Author: Fabian Krautgasser | fkrautgasser@posteo.org
 
 
 def test_init_import():
-    from fastddm import tiff2numpy, images2numpy, read_images  # noqa: F401
-    from fastddm import (  # noqa: F401
-        ImageStructureFunction,
-        AzimuthalAverage,
+    from fastddm import (  # noqa: F401,
+        tiff2numpy,
+        images2numpy,
+        read_images,
         ddm,
         azimuthal_average,
-        melt,
-        mergesort,
+        load,
+        lags,
+        mask,
+        weights,
+        window
     )
 
 
@@ -49,5 +52,12 @@ def test_utils_import():
     )
 
 
-def test_io_import():
-    from fastddm._io import _store_data, load, _save_as_tiff  # noqa: F401
+def test_io_common_import():
+    from fastddm._io_common import (  # noqa: F401
+        calculate_format_size,
+        npdtype2format,
+        Writer,
+        Reader,
+        Parser,
+        _save_as_tiff
+    )

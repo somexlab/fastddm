@@ -5,14 +5,21 @@
 
 """Image structure function data class."""
 
-from typing import Sequence, Tuple, BinaryIO
+from typing import Sequence, Tuple, BinaryIO, Optional
 from dataclasses import dataclass
 import os
 from sys import byteorder
 import struct
 import numpy as np
 
-from ._io_common import _save_as_tiff, calculate_format_size, npdtype2format, Writer, Reader, Parser
+from ._io_common import (
+    _save_as_tiff,
+    calculate_format_size,
+    npdtype2format,
+    Writer,
+    Reader,
+    Parser,
+)
 
 
 @dataclass
@@ -24,11 +31,15 @@ class ImageStructureFunction:
     _data : np.ndarray
         The packed data (2D image structure function, power spectrum,
         and variance).
-    kx : np.ndarray
+    _kx : np.ndarray
         The array of wavevector values over x.
-    ky : np.ndarray
+    _ky : np.ndarray
         The array of wavevector values over y.
-    tau : np.ndarray
+    _width : int
+        The width of the full (symmetric) 2D image structure function.
+    _height : int
+        The height of the full (symmetric) 2D image structure function.
+    _tau : np.ndarray
         The array of time delays.
     _pixel_size : float, optional
         The effective pixel size. Default is 1.
@@ -47,6 +58,10 @@ class ImageStructureFunction:
         The array of wavevector values over x.
     ky : np.ndarray
         The array of wavevector values over y.
+    width : int
+        The width of the full (symmetric) 2D image structure function.
+    height : int
+        The height of the full (symmetric) 2D image structure function.
     tau : np.ndarray
         The array of time delays.
     pixel_size : float
@@ -65,14 +80,29 @@ class ImageStructureFunction:
         Save ImageStructureFunction to binary file.
     save_as_tiff(seq, fnames) : None
         Save ImageStructureFunction frames as tiff images.
+    full_shape() : Tuple[int, int, int]
+        The shape of the full (symmetric) 2D image structure function.
+    full_slice(idx) : np.ndarray
+        Get the full (symmetric) 2D image structure function at specific index.
+    full_power_spec() : np.ndarray
+        Get the full (symmetric) average 2D power spectrum of the input images.
+    full_var() : np.ndarray
+        Get the full (symmetric) 2D variance (over time) of the Fourier
+        transformed images.
+    full_kx() : np.ndarray
+        Get the full array of wavevector values over x.
+    full_ky() : np.ndarray
+        Get the full array of wavevector values over y.
     """
 
-    _data : np.ndarray
-    kx : np.ndarray
-    ky : np.ndarray
-    tau : np.ndarray
-    _pixel_size : float = 1.0
-    _delta_t : float = 1.0
+    _data: np.ndarray
+    _kx: np.ndarray
+    _ky: np.ndarray
+    _width: int
+    _height: int
+    _tau: np.ndarray
+    _pixel_size: float = 1.0
+    _delta_t: float = 1.0
 
     @property
     def data(self) -> np.ndarray:
@@ -84,6 +114,61 @@ class ImageStructureFunction:
             The 2D image structure function.
         """
         return self._data[:-2]
+
+    @property
+    def kx(self) -> np.ndarray:
+        """The array of wave vector values over x.
+
+        Returns
+        -------
+        np.ndarray
+            The array of kx.
+        """
+        return self._kx
+
+    @property
+    def ky(self) -> np.ndarray:
+        """The array of wave vector values over y.
+
+        Returns
+        -------
+        np.ndarray
+            The array of ky.
+        """
+        return self._ky
+
+    @property
+    def width(self) -> int:
+        """The width of the full (symmetric) 2D image structure function.
+
+        Returns
+        -------
+        int
+            The full width.
+        """
+        return self._width
+
+    @property
+    def height(self) -> int:
+        """The height of the full (symmetric) 2D image structure function.
+
+        Returns
+        -------
+        int
+            The full height.
+        """
+        return self._height
+
+    @property
+    def tau(self) -> np.ndarray:
+        """The array of time delays.
+
+        Returns
+        -------
+        np.ndarray
+            The array of tau.
+        """
+        return self._tau
 
     @property
     def power_spec(self) -> np.ndarray:
@@ -114,7 +199,7 @@ class ImageStructureFunction:
         Returns
         -------
         Tuple[int, int, int]
-            The shape of the data. 
+            The shape of the data.
         """
         return self.data.shape
 
@@ -141,7 +226,7 @@ class ImageStructureFunction:
         return self._delta_t
 
     @pixel_size.setter
-    def pixel_size(self, pixel_size : float) -> None:
+    def pixel_size(self, pixel_size: float) -> None:
         """Set the image effective pixel size.
 
         This will propagate also on the values of kx and ky.
@@ -151,12 +236,12 @@ class ImageStructureFunction:
         pixel_size : float
             The effective pixel size.
         """
-        self.kx *= self._pixel_size / pixel_size
-        self.ky *= self._pixel_size / pixel_size
+        self._kx *= self._pixel_size / pixel_size
+        self._ky *= self._pixel_size / pixel_size
         self._pixel_size = pixel_size
 
     @delta_t.setter
-    def delta_t(self, delta_t : float) -> None:
+    def delta_t(self, delta_t: float) -> None:
         """Set the time delay between two consecutive frames.
 
         This will propagate also on the values of tau.
@@ -166,7 +251,7 @@ class ImageStructureFunction:
         delta_t : float
             The time delay.
         """
-        self.tau *= delta_t / self._delta_t
+        self._tau *= delta_t / self._delta_t
         self._delta_t = delta_t
 
     def __len__(self):
@@ -180,7 +265,7 @@ class ImageStructureFunction:
         """
         return len(self.data)
 
-    def set_frame_rate(self, frame_rate : float) -> None:
+    def set_frame_rate(self, frame_rate: float) -> None:
         """Set the acquisition frame rate.
 
         This will propagate also on the values of tau.
@@ -192,10 +277,7 @@ class ImageStructureFunction:
         """
         self.delta_t = 1 / frame_rate
 
-    def save(
-        self,
-        fname : str = "analysis_blob"
-        ) -> None:
+    def save(self, fname: str = "analysis_blob") -> None:
         """Save ImageStructureFunction to binary file.
 
         Parameters
@@ -211,11 +293,7 @@ class ImageStructureFunction:
         with SFWriter(file=os.path.join(dir, name)) as f:
             f.write_obj(self)
 
-    def save_as_tiff(
-        self,
-        seq : Sequence[int],
-        fnames : Sequence[str]
-        ) -> None:
+    def save_as_tiff(self, seq: Sequence[int], fnames: Sequence[str]) -> None:
         """Save ImageStructureFunction frames as images.
 
         Parameters
@@ -231,9 +309,102 @@ class ImageStructureFunction:
             If number of elements in fnames and seq are different.
         """
         if len(fnames) != len(seq):
-            raise RuntimeError('Number of elements in fnames differs from one in seq.')
+            raise RuntimeError("Number of elements in fnames differs from one in seq.")
 
-        _save_as_tiff(data=self.data[seq], labels=fnames)
+        for i, f in zip(seq, fnames):
+            _save_as_tiff(data=self.full_slice(i), labels=[f])
+
+    def full_shape(self) -> Tuple[int, int, int]:
+        """The shape of the full (symmetric) 2D image structure function.
+
+        Returns
+        -------
+        Tuple[int, int, int]
+            The full shape.
+        """
+        dim_t, dim_y = self.shape[:-1]
+        dim_x = self._width
+        return dim_t, dim_y, dim_x
+
+    def full_slice(self, idx: int) -> np.ndarray:
+        """Get the full (symmetric) 2D image structure function at index `idx`.
+
+        Parameters
+        ----------
+        idx : int
+            The slice index.
+
+        Returns
+        -------
+        np.ndarray
+            The full 2D image structure function slice.
+
+        Raises
+        ------
+        IndexError
+            If `idx` out of bounds.
+        """
+        if idx >= 0 and idx < len(self.data):
+            shape = (self.height, self.width)
+            return _reconstruct_full_spectrum(self._data[idx], shape)
+        else:
+            raise IndexError(
+                f"Index out of range. Choose an index between 0 and {len(self.data)}."
+            )
+
+    def full_power_spec(self) -> np.ndarray:
+        """Get the full (symmetric) average 2D power spectrum of the input images.
+
+        Returns
+        -------
+        np.ndarray
+            The full 2D power spectrum.
+        """
+        shape = (self.height, self.width)
+        return _reconstruct_full_spectrum(self._data[-2], shape)
+
+    def full_var(self) -> np.ndarray:
+        """Get the full (symmetric) 2D variance (over time) of the Fourier
+        transformed images.
+
+        Returns
+        -------
+        np.ndarray
+            The full 2D variance.
+        """
+        shape = (self.height, self.width)
+        return _reconstruct_full_spectrum(self._data[-1], shape)
+
+    def full_kx(self) -> np.ndarray:
+        """Get the full array of wavevector values over x.
+
+        Returns
+        -------
+        np.ndarray
+            The full kx array.
+        """
+        # initialize output and set dim
+        full_kx = np.zeros_like(self.kx, shape=(self.width))
+        dim_x = len(self.kx)
+        # copy first part
+        full_kx[:dim_x] = self.kx
+        # copy other half
+        if self.width % 2 == 0:
+            full_kx[dim_x:] = -np.flip(self.kx[1:-1])
+        else:
+            full_kx[dim_x:] = -np.flip(self.kx[1:])
+
+        return np.fft.fftshift(full_kx)
+
+    def full_ky(self) -> np.ndarray:
+        """Get the full array of wavevector values over y.
+
+        Returns
+        -------
+        np.ndarray
+            The full ky array.
+        """
+        return self.ky
 
 
 class SFWriter(Writer):
@@ -245,10 +416,8 @@ class SFWriter(Writer):
     write_obj(obj) : None
         Write ImageStructureFunction object to binary file.
     """
-    def write_obj(
-        self,
-        obj : ImageStructureFunction
-        ) -> None:
+
+    def write_obj(self, obj: ImageStructureFunction) -> None:
         """Write ImageStructureFunction object to binary file.
 
         Parameters
@@ -263,24 +432,29 @@ class SFWriter(Writer):
         # assign Nextra = 2
         # we have power_spectrum + variance
         Nextra = len(obj._data) - len(obj)
+        # get full width and height
+        width = obj.width
+        height = obj.height
 
         # write file header
-        self._write_header(Nt, Ny, Nx, Nextra, dtype)
+        self._write_header(Nt, Ny, Nx, Nextra, width, height, dtype)
 
         # write data
         self._write_data(obj)
 
     def _write_header(
         self,
-        Nt : int,
-        Ny : int,
-        Nx : int,
-        Nextra : int,
-        dtype : str
-        ) -> None:
+        Nt: int,
+        Ny: int,
+        Nx: int,
+        Nextra: int,
+        width: int,
+        height: int,
+        dtype: str,
+    ) -> None:
         """Write image structure function file header.
 
-        In version 0.1, the header is structured as follows:
+        In version 0.3, the header is structured as follows:
         * bytes 0-1: endianness (`LL` = 'little'; `BB` = 'big'), 'utf-8' encoding
         * bytes 2-3: file identifier (73), `H` (unsigned short)
         * bytes 4-5: file version as (major_version, minor_version), `BB` (unsigned char)
@@ -289,6 +463,8 @@ class SFWriter(Writer):
         * bytes 15-22: data height, `Q` (unsigned long long)
         * bytes 23-30: data width, `Q` (unsigned long long)
         * bytes 31-38: extra slices, `Q` (unsigned long long)
+        * bytes 39-46: full width, `Q` (unsigned long long)
+        * bytes 47-54: full height, `Q` (unsigned long long)
 
         Parameters
         ----------
@@ -300,52 +476,61 @@ class SFWriter(Writer):
             Width
         Nextra : int
             Number of extra slices.
+        width : int
+            Full width.
+        height : int
+            Full height.
         dtype : str
             Data dtype.
         """
         curr_byte_len = 0
         # system endianness
-        if byteorder == 'little':
-            self._fh.write('LL'.encode('utf-8'))
+        if byteorder == "little":
+            self._fh.write("LL".encode("utf-8"))
         else:
-            self._fh.write('BB'.encode('utf-8'))
+            self._fh.write("BB".encode("utf-8"))
         curr_byte_len += 2
 
         # file identifier
-        self._fh.write(struct.pack('H', 73))
-        curr_byte_len += calculate_format_size('H')
+        self._fh.write(struct.pack("H", 73))
+        curr_byte_len += calculate_format_size("H")
 
         # file version
-        self._fh.write(struct.pack('BB', *(self.version)))
-        curr_byte_len += 2 * calculate_format_size('B')
+        self._fh.write(struct.pack("BB", *(self.version)))
+        curr_byte_len += 2 * calculate_format_size("B")
 
         # dtype
-        self._fh.write(dtype.encode('utf-8'))
+        self._fh.write(dtype.encode("utf-8"))
         curr_byte_len += 1
 
         # length
-        self._fh.write(struct.pack('Q', Nt))
-        curr_byte_len += calculate_format_size('Q')
+        self._fh.write(struct.pack("Q", Nt))
+        curr_byte_len += calculate_format_size("Q")
 
         # height
-        self._fh.write(struct.pack('Q', Ny))
-        curr_byte_len += calculate_format_size('Q')
+        self._fh.write(struct.pack("Q", Ny))
+        curr_byte_len += calculate_format_size("Q")
 
         # width
-        self._fh.write(struct.pack('Q', Nx))
-        curr_byte_len += calculate_format_size('Q')
+        self._fh.write(struct.pack("Q", Nx))
+        curr_byte_len += calculate_format_size("Q")
 
         # extra slices
-        self._fh.write(struct.pack('Q', Nextra))
-        curr_byte_len += calculate_format_size('Q')
+        self._fh.write(struct.pack("Q", Nextra))
+        curr_byte_len += calculate_format_size("Q")
+
+        # full width
+        self._fh.write(struct.pack("Q", width))
+        curr_byte_len += calculate_format_size("Q")
+
+        # full height
+        self._fh.write(struct.pack("Q", height))
+        curr_byte_len += calculate_format_size("Q")
 
         # add empty bytes up to HEAD_BYTE_LEN for future use (if needed)
         self._fh.write(bytearray(self.head_byte_len - curr_byte_len))
 
-    def _write_data(
-        self,
-        obj : ImageStructureFunction
-        ) -> None:
+    def _write_data(self, obj: ImageStructureFunction) -> None:
         """Write image structure function data.
 
         In version 0.1, the data is stored in 'C' order and `dtype` format as follows:
@@ -399,13 +584,13 @@ class SFWriter(Writer):
         delta_t_offset = pixel_size_offset + calculate_format_size(fmt)
 
         # write byte offsets
-        self._fh.write(struct.pack('Q', extra_offset))
-        self._fh.write(struct.pack('Q', delta_t_offset))
-        self._fh.write(struct.pack('Q', pixel_size_offset))
-        self._fh.write(struct.pack('Q', tau_offset))
-        self._fh.write(struct.pack('Q', ky_offset))
-        self._fh.write(struct.pack('Q', kx_offset))
-        self._fh.write(struct.pack('Q', data_offset))
+        self._fh.write(struct.pack("Q", extra_offset))
+        self._fh.write(struct.pack("Q", delta_t_offset))
+        self._fh.write(struct.pack("Q", pixel_size_offset))
+        self._fh.write(struct.pack("Q", tau_offset))
+        self._fh.write(struct.pack("Q", ky_offset))
+        self._fh.write(struct.pack("Q", kx_offset))
+        self._fh.write(struct.pack("Q", data_offset))
 
 
 class SFReader(Reader):
@@ -416,20 +601,21 @@ class SFReader(Reader):
     -------
     load() : ImageStructureFunction
         Load the image structure function.
-    get_kx() : np.ndarray
+    get_kx(full) : np.ndarray
         Read kx array.
-    get_ky() : np.ndarray
+    get_ky(full) : np.ndarray
         Read ky array.
     get_tau() : np.ndarray
         Read tau array.
-    get_frame(index) : np.ndarray
+    get_frame(index, full) : np.ndarray
         Read a data slice.
-    get_power_spec() : np.ndarray
+    get_power_spec(full) : np.ndarray
         Read power spectrum.
-    get_var() : np.ndarray
+    get_var(full) : np.ndarray
         Read variance.
     """
-    def __init__(self, file : str):
+
+    def __init__(self, file: str):
         super().__init__(file)
         self._parser = SFParser(self._fh)
         self._metadata = self._parser.read_metadata()
@@ -441,44 +627,83 @@ class SFReader(Reader):
         -------
         ImageStructureFunction
             The ImageStructureFunction object.
+
+        Raises
+        ------
+        IOError
+            If file version not supported.
         """
-        Nt = self._metadata['Nt']
-        Nextra = self._metadata['Nextra']
-        Ny = self._metadata['Ny']
-        Nx = self._metadata['Nx']
+        # check version supported
+        if not self._parser.supported:
+            version = self._parser.get_version()
+            raise IOError(f"File version {version} not supported.")
+
+        # get data shape
+        Nt = self._metadata["Nt"]
+        Nextra = self._metadata["Nextra"]
+        Ny = self._metadata["Ny"]
+        Nx = self._metadata["Nx"]
+        shape = (Nt + Nextra, Ny, Nx)
 
         return ImageStructureFunction(
-            self._parser.read_array(self._metadata['data_offset'], (Nt + Nextra, Ny, Nx)),
-            self.get_kx(),
-            self.get_ky(),
+            self._parser.read_array(self._metadata["data_offset"], shape),
+            self.get_kx(False),
+            self.get_ky(False),
+            self._metadata["width"],
+            self._metadata["height"],
             self.get_tau(),
-            self._metadata['pixel_size'],
-            self._metadata['delta_t']
-            )
+            self._metadata["pixel_size"],
+            self._metadata["delta_t"],
+        )
 
-    def get_kx(self) -> np.ndarray:
+    def get_kx(self, full: Optional[bool] = True) -> np.ndarray:
         """Read kx array from file.
+
+        Parameters
+        ----------
+        full : Optional[bool]
+            If True, return the full (symmetric) kx array. Default is True.
 
         Returns
         -------
         np.ndarray
             The kx array.
         """
-        offset = self._metadata['kx_offset']
-        Nx = self._metadata['Nx']
+        offset = self._metadata["kx_offset"]
+        Nx = self._metadata["Nx"]
 
-        return self._parser.read_array(offset, Nx)
+        kx = self._parser.read_array(offset, Nx)
 
-    def get_ky(self) -> np.ndarray:
+        if full:
+            out = np.zeros_like(kx, shape=self._metadata["width"])
+            # copy first part
+            out[:Nx] = kx
+            # copy other half
+            if self._metadata["width"] % 2 == 0:
+                out[Nx:] = -np.flip(kx[1:-1])
+            else:
+                out[Nx:] = -np.flip(kx[1:])
+            return np.fft.fftshift(out)
+        else:
+            return kx
+
+    def get_ky(self, full: Optional[bool] = True) -> np.ndarray:
         """Read ky array from file.
+
+        Parameters
+        ----------
+        full : Optional[bool]
+            If True, return the full (symmetric) ky array. Default is True.
+            This flag has in fact no effect on the output since y is already
+            full.
 
         Returns
         -------
         np.ndarray
             The ky array.
         """
-        offset = self._metadata['ky_offset']
-        Ny = self._metadata['Ny']
+        offset = self._metadata["ky_offset"]
+        Ny = self._metadata["Ny"]
 
         return self._parser.read_array(offset, Ny)
 
@@ -490,18 +715,21 @@ class SFReader(Reader):
         np.ndarray
             The tau array.
         """
-        offset = self._metadata['tau_offset']
-        Nt = self._metadata['Nt']
+        offset = self._metadata["tau_offset"]
+        Nt = self._metadata["Nt"]
 
         return self._parser.read_array(offset, Nt)
 
-    def get_frame(self, index : int) -> np.ndarray:
+    def get_frame(self, index: int, full: Optional[bool] = True) -> np.ndarray:
         """Read data slice array from file.
 
         Parameters
         ----------
         index : int
             The frame index.
+        full : Optional[bool]
+            If True, return the full (symmetric) 2D image structure function.
+            Default is True.
 
         Returns
         -------
@@ -514,45 +742,77 @@ class SFReader(Reader):
             If index is out of range.
         """
         # check index is in range
-        Nt = self._metadata['Nt']
+        Nt = self._metadata["Nt"]
         if index < 0 or index >= Nt:
-            raise IndexError(f'Index out of range. Choose an index between 0 and {Nt-1}.')
+            raise IndexError(
+                f"Index out of range. Choose an index between 0 and {Nt-1}."
+            )
 
-        Nx = self._metadata['Nx']
-        Ny = self._metadata['Ny']
-        offset = self._metadata['data_offset']
+        Nx = self._metadata["Nx"]
+        Ny = self._metadata["Ny"]
+        offset = self._metadata["data_offset"]
         offset += index * Nx * Ny * calculate_format_size(self._parser.dtype)
 
-        return self._parser.read_array(offset, (Ny, Nx))
+        if full:
+            shape = (self._metadata["height"], self._metadata["width"])
+            return _reconstruct_full_spectrum(
+                self._parser.read_array(offset, (Ny, Nx)), shape
+            )
+        else:
+            return self._parser.read_array(offset, (Ny, Nx))
 
-    def get_power_spec(self) -> np.ndarray:
+    def get_power_spec(self, full: Optional[bool] = True) -> np.ndarray:
         """Read power spectrum array from file.
+
+        Parameters
+        ----------
+        full : Optional[bool]
+            If True, return the full (symmetric) power spectrum.
+            Default is True.
 
         Returns
         -------
         np.ndarray
             The power spectrum array.
         """
-        offset = self._metadata['extra_offset']
-        Nx = self._metadata['Nx']
-        Ny = self._metadata['Ny']
-        
-        return self._parser.read_array(offset, (Ny, Nx))
+        offset = self._metadata["extra_offset"]
+        Nx = self._metadata["Nx"]
+        Ny = self._metadata["Ny"]
 
-    def get_var(self) -> np.ndarray:
+        if full:
+            shape = (self._metadata["height"], self._metadata["width"])
+            return _reconstruct_full_spectrum(
+                self._parser.read_array(offset, (Ny, Nx)), shape
+            )
+        else:
+            return self._parser.read_array(offset, (Ny, Nx))
+
+    def get_var(self, full: Optional[bool] = True) -> np.ndarray:
         """Read variance array from file.
+
+        Parameters
+        ----------
+        full : Optional[bool]
+            If True, return the full (symmetric) variance.
+            Default is True.
 
         Returns
         -------
         np.ndarray
             The variance array.
         """
-        offset = self._metadata['extra_offset']
-        Nx = self._metadata['Nx']
-        Ny = self._metadata['Ny']
+        offset = self._metadata["extra_offset"]
+        Nx = self._metadata["Nx"]
+        Ny = self._metadata["Ny"]
         offset += Nx * Ny * calculate_format_size(self._parser.dtype)
-        
-        return self._parser.read_array(offset, (Ny, Nx))
+
+        if full:
+            shape = (self._metadata["height"], self._metadata["width"])
+            return _reconstruct_full_spectrum(
+                self._parser.read_array(offset, (Ny, Nx)), shape
+            )
+        else:
+            return self._parser.read_array(offset, (Ny, Nx))
 
 
 class SFParser(Parser):
@@ -564,14 +824,15 @@ class SFParser(Parser):
     read_metadata : dict
         Returns a dictionary containing the file metadata.
     """
-    def __init__(self, fh : BinaryIO):
+
+    def __init__(self, fh: BinaryIO):
         super().__init__(fh)
         # check file identifier
         file_id = self._read_id()
         if file_id != 73:
-            err_str = f'File identifier {file_id} not compatible with'
-            err_str += ' image structure function file (73).'
-            err_str += ' Input file might be wrong or corrupted.'
+            err_str = f"File identifier {file_id} not compatible with"
+            err_str += " image structure function file (73)."
+            err_str += " Input file might be wrong or corrupted."
             raise RuntimeError(err_str)
 
     def read_metadata(self) -> dict:
@@ -585,23 +846,88 @@ class SFParser(Parser):
         metadata = {}
 
         # shape starts at byte 7
-        # it comprises 4 values (Nt, Ny, Nx, Nextra), written as unsigned long long ('Q')
-        metadata['Nt'] = self.read_value(7, 'Q')
-        metadata['Ny'] = self.read_value(0, 'Q', whence=1)
-        metadata['Nx'] = self.read_value(0, 'Q', whence=1)
-        metadata['Nextra'] = self.read_value(0, 'Q', whence=1)
+        # it comprises 4 values (Nt, Ny, Nx, Nextra), written as
+        # unsigned long long ('Q')
+        metadata["Nt"] = self.read_value(7, "Q")
+        metadata["Ny"] = self.read_value(0, "Q", whence=1)
+        metadata["Nx"] = self.read_value(0, "Q", whence=1)
+        metadata["Nextra"] = self.read_value(0, "Q", whence=1)
+        metadata["width"] = self.read_value(0, "Q", whence=1)
+        metadata["height"] = self.read_value(0, "Q", whence=1)
 
-        # byte offsets start from end of file, written as unsigned long long ('Q')
-        metadata['data_offset'] = self.read_value(-calculate_format_size('Q'), 'Q', 2)
-        metadata['kx_offset'] = self.read_value(-2 * calculate_format_size('Q'), 'Q', 1)
-        metadata['ky_offset'] = self.read_value(-2 * calculate_format_size('Q'), 'Q', 1)
-        metadata['tau_offset'] = self.read_value(-2 * calculate_format_size('Q'), 'Q', 1)
-        pixel_size_offset = self.read_value(-2 * calculate_format_size('Q'), 'Q', 1)
-        delta_t_offset = self.read_value(-2 * calculate_format_size('Q'), 'Q', 1)
-        metadata['extra_offset'] = self.read_value(-2 * calculate_format_size('Q'), 'Q', 1)
+        # byte offsets start from end of file, written as
+        # unsigned long long ('Q')
+        Q_size = calculate_format_size("Q")
+        metadata["data_offset"] = self.read_value(-Q_size, "Q", 2)
+        metadata["kx_offset"] = self.read_value(-2 * Q_size, "Q", 1)
+        metadata["ky_offset"] = self.read_value(-2 * Q_size, "Q", 1)
+        metadata["tau_offset"] = self.read_value(-2 * Q_size, "Q", 1)
+        pixel_size_offset = self.read_value(-2 * Q_size, "Q", 1)
+        delta_t_offset = self.read_value(-2 * Q_size, "Q", 1)
+        metadata["extra_offset"] = self.read_value(-2 * Q_size, "Q", 1)
 
         # read pixel_size and delta_t
-        metadata['pixel_size'] = self.read_value(pixel_size_offset, self.dtype)
-        metadata['delta_t'] = self.read_value(delta_t_offset, self.dtype)
+        metadata["pixel_size"] = self.read_value(pixel_size_offset, self.dtype)
+        metadata["delta_t"] = self.read_value(delta_t_offset, self.dtype)
 
         return metadata
+
+
+def _reconstruct_full_spectrum(
+    halfplane: np.ndarray, shape: Tuple[int, int]
+) -> np.ndarray:
+    """Reconstruct the full (symmetric) 2D image structure function from the
+    half plane representation.
+
+    We keep half plane to save memory while computing. The result is the same as
+    one would get by doing all calculations using scipy.fft.fft2 (or similar)
+    and fftshift. The input is assumed to have the same format of the output of
+    scipy.fft.rfft (or similar). The final `shape` must be given in order to
+    correctly reconstruct the full representation.
+
+    Parameters
+    ----------
+    halfplane : np.ndarray
+        The half-plane array.
+    shape : Tuple[int, ...]
+        The shape of the full spectrum.
+
+    Returns
+    -------
+    np.ndarray
+        The full-plane 2D spectrum.
+    """
+
+    # setup of dtype and dimensions
+    dtype = halfplane.dtype
+    height, width = shape
+    dim_y, dim_x = halfplane.shape
+
+    # create full
+    spectrum = np.zeros(shape, dtype=dtype)
+
+    # copy half plane
+    spectrum[:, :dim_x] = halfplane
+
+    # other half is flipped
+    # in particlar:
+    # - if x is even, the flip is done on the columns from index 1 to index
+    #       `dim_x`-1 (excl.), and from 1 to `dim_x` (excl.) otherwise
+    # - if y is even, the flip is done on the rows from index 1 on, and from
+    #       0 on otherwise. In the first case, the first row is copied in
+    #       reversed order consistent with previous x-range condition
+
+    # compute start and end indices
+    x_s = 1
+    x_e = dim_x - 1 if width % 2 == 0 else dim_x
+    y_s = 1 if height % 2 == 0 else 0
+    y_e = height
+
+    spectrum[y_s:y_e, dim_x:] = np.flip(spectrum[y_s:y_e, x_s:x_e])
+
+    if height % 2 == 0:
+        spectrum[0, dim_x:] = np.flip(spectrum[0, x_s:x_e])
+
+    spectrum = np.fft.fftshift(spectrum, axes=-1)
+
+    return spectrum

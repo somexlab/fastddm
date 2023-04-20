@@ -33,6 +33,12 @@
 
 #define CUFFTCOMPLEX cufftDoubleComplex
 
+#ifndef SINGLE_PRECISION
+typedef double2 Scalar2;
+#else
+typedef float2 Scalar2;
+#endif
+
 // *** code ***
 const unsigned long long TILE_DIM = 32;  // leave this unchanged!! (tile dimension for matrix transpose)
 const unsigned long long BLOCK_ROWS = 8; // leave this unchanged!! (block rows for matrix transpose)
@@ -42,7 +48,7 @@ const unsigned long long BLOCK_ROWS = 8; // leave this unchanged!! (block rows f
  */
 template <typename T>
 void compute_fft2(const T *h_in,
-                  double *h_out,
+                  Scalar *h_out,
                   unsigned long long width,
                   unsigned long long height,
                   unsigned long long length,
@@ -100,6 +106,11 @@ void compute_fft2(const T *h_in,
     gpuErrchk(cudaOccupancyMaxPotentialBlockSize(&minGridSize, &blockSize_scale, scale_array_kernel, 0, 0));
     // Round up according to array size
     gridSize_scale = min((ny * batch + blockSize_scale - 1) / blockSize_scale, 32ULL * numSMs);
+
+#ifdef SINGLE_PRECISION
+    // in place conversion kernel
+    int smem_size = _nx * sizeof(float2);
+#endif
 
     // ***Batched fft2
     for (unsigned long long ii = 0; ii < num_fft2; ii++)
@@ -171,8 +182,19 @@ void compute_fft2(const T *h_in,
         gpuErrchk(cudaPeekAtLastError());
         gpuErrchk(cudaDeviceSynchronize());
 
+#ifdef SINGLE_PRECISION
+        // ***Convert workspace array in place from double2 to float2
+        // The array has the same pitch (in bytes), but the elements are contiguous in memory
+        // (within one row)
+        double2float_inplace_kernel<<<gridSize_scale, blockSize_scale, smem_size>>>((double2 *)d_workspace,
+                                                                                    (float2 *)d_workspace,
+                                                                                    pitch_nx,
+                                                                                    _nx,
+                                                                                    end - start);
+#endif
+
         // ***Copy values back to host
-        gpuErrchk(cudaMemcpy2D((double2 *)h_out + _nx * start, _nx * sizeof(double2), (double2 *)d_workspace, pitch_nx * sizeof(double2), _nx * sizeof(double2), end - start, cudaMemcpyDeviceToHost));
+        gpuErrchk(cudaMemcpy2D((Scalar2 *)h_out + _nx * start, _nx * sizeof(Scalar2), (Scalar2 *)d_workspace, pitch_nx * sizeof(double2), _nx * sizeof(Scalar2), end - start, cudaMemcpyDeviceToHost));
     }
 
     // ***Free memory
@@ -181,20 +203,20 @@ void compute_fft2(const T *h_in,
     cufftSafeCall(cufftDestroy(fft2_plan));
 }
 
-template void compute_fft2<u_int8_t>(const u_int8_t *h_in, double *h_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch, unsigned long long pitch_nx);
-template void compute_fft2<int16_t>(const int16_t *h_in, double *h_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch, unsigned long long pitch_nx);
-template void compute_fft2<u_int16_t>(const u_int16_t *h_in, double *h_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch, unsigned long long pitch_nx);
-template void compute_fft2<int32_t>(const int32_t *h_in, double *h_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch, unsigned long long pitch_nx);
-template void compute_fft2<u_int32_t>(const u_int32_t *h_in, double *h_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch, unsigned long long pitch_nx);
-template void compute_fft2<int64_t>(const int64_t *h_in, double *h_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch, unsigned long long pitch_nx);
-template void compute_fft2<u_int64_t>(const u_int64_t *h_in, double *h_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch, unsigned long long pitch_nx);
-template void compute_fft2<float>(const float *h_in, double *h_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch, unsigned long long pitch_nx);
-template void compute_fft2<double>(const double *h_in, double *h_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch, unsigned long long pitch_nx);
+template void compute_fft2<u_int8_t>(const u_int8_t *h_in, Scalar *h_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch, unsigned long long pitch_nx);
+template void compute_fft2<int16_t>(const int16_t *h_in, Scalar *h_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch, unsigned long long pitch_nx);
+template void compute_fft2<u_int16_t>(const u_int16_t *h_in, Scalar *h_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch, unsigned long long pitch_nx);
+template void compute_fft2<int32_t>(const int32_t *h_in, Scalar *h_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch, unsigned long long pitch_nx);
+template void compute_fft2<u_int32_t>(const u_int32_t *h_in, Scalar *h_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch, unsigned long long pitch_nx);
+template void compute_fft2<int64_t>(const int64_t *h_in, Scalar *h_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch, unsigned long long pitch_nx);
+template void compute_fft2<u_int64_t>(const u_int64_t *h_in, Scalar *h_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch, unsigned long long pitch_nx);
+template void compute_fft2<float>(const float *h_in, Scalar *h_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch, unsigned long long pitch_nx);
+template void compute_fft2<double>(const double *h_in, Scalar *h_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch, unsigned long long pitch_nx);
 
 /*!
     Compute image structure function using differences on the GPU
  */
-void structure_function_diff(double *h_in,
+void structure_function_diff(Scalar *h_in,
                              vector<unsigned int> lags,
                              unsigned long long length,
                              unsigned long long nx,
@@ -224,6 +246,19 @@ void structure_function_diff(double *h_in,
     gpuErrchk(cudaMalloc(&d_var, chunk_size * sizeof(double2)));
 
     // ***Compute optimal kernels execution parameters
+    int minGridSize; // The minimum grid size needed to achieve the
+                     // maximum occupancy for a full device launch
+    int numSMs;      // Number of streaming multiprocessors
+    gpuErrchk(cudaDeviceGetAttribute(&numSMs, cudaDevAttrMultiProcessorCount, device_id));
+
+    // float2double conversion kernel
+    int blockSize_f2d; // The launch configurator returned block size
+    int gridSize_f2d;  // The actual grid size needed, based on input size
+
+    gpuErrchk(cudaOccupancyMaxPotentialBlockSize(&minGridSize, &blockSize_f2d, float2double_kernel, 0, 0));
+    // Round up according to array size
+    gridSize_f2d = min((length + blockSize_f2d - 1) / blockSize_f2d, 32ULL * numSMs);
+
     // transpose_complex_matrix_kernel
     dim3 blockSize_tran(TILE_DIM, BLOCK_ROWS, 1);
     int maxGridSizeX, maxGridSizeY;
@@ -244,11 +279,6 @@ void structure_function_diff(double *h_in,
     int smemSize = (blockSize_corr <= 32) ? 2ULL * blockSize_corr * sizeof(double) : 1ULL * blockSize_corr * sizeof(double);
 
     // power spectrum and variance (reduction)
-    int minGridSize; // The minimum grid size needed to achieve the
-                     // maximum occupancy for a full device launch
-    int numSMs;      // Number of streaming multiprocessors
-    gpuErrchk(cudaDeviceGetAttribute(&numSMs, cudaDevAttrMultiProcessorCount, device_id));
-
     int blockSize_red = min(nextPowerOfTwo(length), 512ULL);
     int gridSize_red = min(chunk_size, (unsigned long long)maxGridSizeX);
     int smemSize2 = (blockSize_corr <= 32) ? 2ULL * blockSize_corr * sizeof(double2) : 1ULL * blockSize_corr * sizeof(double2);
@@ -277,15 +307,28 @@ void structure_function_diff(double *h_in,
         }
 
         // ***Copy values from host to device
-        // elements are complex doubles
+        // elements are complex Scalar
         // to speed up transfer, use pitch_q
-        gpuErrchk(cudaMemcpy2D(d_workspace2,
-                               2 * pitch_q * sizeof(double),
+        gpuErrchk(cudaMemcpy2D((Scalar *)d_workspace2,
+                               2 * pitch_q * sizeof(Scalar),
                                h_in + 2 * q_start,
-                               2 * _nx * ny * sizeof(double),
-                               2 * curr_chunk_size * sizeof(double),
+                               2 * _nx * ny * sizeof(Scalar),
+                               2 * curr_chunk_size * sizeof(Scalar),
                                length,
                                cudaMemcpyHostToDevice));
+
+#ifdef SINGLE_PRECISION
+        // ***Convert data from float to double
+        // Convert
+        float2double_kernel<<<gridSize_f2d, blockSize_f2d>>>((float *)d_workspace2,
+                                                             2 * pitch_q,
+                                                             d_workspace1,
+                                                             2 * pitch_q,
+                                                             2 * curr_chunk_size,
+                                                             length);
+        // Swap pointers
+        swap(d_workspace1, d_workspace2);
+#endif
 
         // ***Transpose array (d_workspace2 --> d_workspace1)
         transpose_complex_matrix_kernel<<<gridSize_tran1, blockSize_tran>>>((double2 *)d_workspace2,
@@ -366,26 +409,68 @@ void structure_function_diff(double *h_in,
         gpuErrchk(cudaPeekAtLastError());
         gpuErrchk(cudaDeviceSynchronize());
 
+#ifdef SINGLE_PRECISION
+        // ***Convert data from double to float
+        // Convert
+        double2float_kernel<<<gridSize_f2d, blockSize_f2d>>>(d_workspace1,
+                                                             2 * pitch_q,
+                                                             (float *)d_workspace2,
+                                                             2 * pitch_q,
+                                                             2 * curr_chunk_size,
+                                                             length);
+        // Swap pointers
+        swap(d_workspace1, d_workspace2);
+#endif
+
         // ***Copy values from device to host
-        // elements are treated as complex doubles
+        // elements are treated as complex Scalar
         // to speed up transfer, use pitch_q
         gpuErrchk(cudaMemcpy2D(h_in + 2 * q_start,
-                               2 * _nx * ny * sizeof(double),
-                               d_workspace1,
-                               2 * pitch_q * sizeof(double),
-                               2 * curr_chunk_size * sizeof(double),
+                               2 * _nx * ny * sizeof(Scalar),
+                               (Scalar *)d_workspace1,
+                               2 * pitch_q * sizeof(Scalar),
+                               2 * curr_chunk_size * sizeof(Scalar),
                                lags.size(),
                                cudaMemcpyDeviceToHost));
+
+#ifndef SINGLE_PRECISION
         // copy power spectrum
-        gpuErrchk(cudaMemcpy((double2 *)h_in + (unsigned long long)(lags.size()) * _nx * ny + q_start,
+        gpuErrchk(cudaMemcpy((Scalar2 *)h_in + (unsigned long long)(lags.size()) * _nx * ny + q_start,
                              d_power_spec,
-                             curr_chunk_size * sizeof(double2),
+                             curr_chunk_size * sizeof(Scalar2),
                              cudaMemcpyDeviceToHost));
         // copy variance
-        gpuErrchk(cudaMemcpy((double2 *)h_in + (unsigned long long)(lags.size() + 1) * _nx * ny + q_start,
+        gpuErrchk(cudaMemcpy((Scalar2 *)h_in + (unsigned long long)(lags.size() + 1) * _nx * ny + q_start,
                              d_var,
-                             curr_chunk_size * sizeof(double2),
+                             curr_chunk_size * sizeof(Scalar2),
                              cudaMemcpyDeviceToHost));
+#else
+        // ***Convert power spectrum and variance from double to float
+        double2float_kernel<<<gridSize_f2d, blockSize_f2d>>>((double *)d_power_spec,
+                                                             0,
+                                                             (float *)d_workspace1,
+                                                             0,
+                                                             2 * curr_chunk_size,
+                                                             1);
+
+        double2float_kernel<<<gridSize_f2d, blockSize_f2d>>>((double *)d_var,
+                                                             0,
+                                                             (float *)d_workspace2,
+                                                             0,
+                                                             2 * curr_chunk_size,
+                                                             1);
+
+        // copy power spectrum
+        gpuErrchk(cudaMemcpy((Scalar2 *)h_in + (unsigned long long)(lags.size()) * _nx * ny + q_start,
+                             (Scalar2 *)d_workspace1,
+                             curr_chunk_size * sizeof(Scalar2),
+                             cudaMemcpyDeviceToHost));
+        // copy variance
+        gpuErrchk(cudaMemcpy((Scalar2 *)h_in + (unsigned long long)(lags.size() + 1) * _nx * ny + q_start,
+                             (Scalar2 *)d_workspace2,
+                             curr_chunk_size * sizeof(Scalar2),
+                             cudaMemcpyDeviceToHost));
+#endif
     }
 
     // ***Free memory
@@ -396,47 +481,44 @@ void structure_function_diff(double *h_in,
     gpuErrchk(cudaFree(d_var));
 }
 
-/*! \brief Convert to full and fftshifted image structure function on the GPU
+/*! \brief Convert to fftshifted image structure function on the GPU
     \param h_in             input array after structure function calculation
     \param Nlags            number of lags analyzed
     \param nx               number of fft nodes in x direction
     \param ny               number of fft nodes in y direction
-    \param num_fullshift    number of full and shift chunks
-    \param pitch_fs         pitch of device array for full and shift operations
+    \param num_shift        number of shift chunks
+    \param pitch_fs         pitch of device array for shift operations
  */
-void make_full_shift(double *h_in,
-                     unsigned long long Nlags,
-                     unsigned long long nx,
-                     unsigned long long ny,
-                     unsigned long long num_fullshift,
-                     unsigned long long pitch_fs)
+void make_shift(Scalar *h_in,
+                unsigned long long Nlags,
+                unsigned long long nx,
+                unsigned long long ny,
+                unsigned long long num_shift,
+                unsigned long long pitch_fs)
 {
     int device_id;
     cudaGetDevice(&device_id);
 
-    unsigned long long _nx = nx / 2 + 1;                             // fft2 r2c number of complex elements over x
-    unsigned long long chunk_size = (Nlags - 1) / num_fullshift + 1; // number of lags in a chunk
+    unsigned long long _nx = nx / 2 + 1;                         // fft2 r2c number of complex elements over x
+    unsigned long long chunk_size = (Nlags - 1) / num_shift + 1; // number of lags in a chunk
 
     // ***Allocate space on device
     // workspaces
-    double *d_workspace1, *d_workspace2;
-    gpuErrchk(cudaMalloc(&d_workspace1, pitch_fs * ny * chunk_size * 2 * sizeof(double)));
-    gpuErrchk(cudaMalloc(&d_workspace2, pitch_fs * ny * chunk_size * 2 * sizeof(double)));
+    Scalar *d_workspace1, *d_workspace2;
+    gpuErrchk(cudaMalloc(&d_workspace1, pitch_fs * ny * chunk_size * 2 * sizeof(Scalar)));
+    gpuErrchk(cudaMalloc(&d_workspace2, pitch_fs * ny * chunk_size * sizeof(Scalar)));
 
     // ***Compute optimal kernels execution parameters
     dim3 blockSize_full(TILE_DIM, BLOCK_ROWS, 1);
     int maxGridSizeX, maxGridSizeY;
     gpuErrchk(cudaDeviceGetAttribute(&maxGridSizeX, cudaDevAttrMaxGridDimX, device_id));
     gpuErrchk(cudaDeviceGetAttribute(&maxGridSizeY, cudaDevAttrMaxGridDimY, device_id));
-    int gridSize_full_x = min((_nx + TILE_DIM - 1) / TILE_DIM, (unsigned long long)maxGridSizeX);
-    int gridSize_full_y = min((ny * chunk_size + TILE_DIM - 1) / TILE_DIM, (unsigned long long)maxGridSizeY);
-    dim3 gridSize_full(gridSize_full_x, gridSize_full_y, 1);
-    int gridSize_shift_x = min((nx + TILE_DIM - 1) / TILE_DIM, (unsigned long long)maxGridSizeX);
+    int gridSize_shift_x = min((_nx + TILE_DIM - 1) / TILE_DIM, (unsigned long long)maxGridSizeX);
     int gridSize_shift_y = min((ny * chunk_size + TILE_DIM - 1) / TILE_DIM, (unsigned long long)maxGridSizeY);
     dim3 gridSize_shift(gridSize_shift_x, gridSize_shift_y, 1);
 
     // ***Loop over chunks
-    for (unsigned long long chunk = 0; chunk < num_fullshift; chunk++)
+    for (unsigned long long chunk = 0; chunk < num_shift; chunk++)
     {
         // Get input offset
         unsigned long long ioffset = chunk * chunk_size * 2 * _nx * ny;
@@ -445,56 +527,40 @@ void make_full_shift(double *h_in,
 
         if (curr_chunk_size != chunk_size)
         {
-            gridSize_full_y = min((ny * curr_chunk_size + TILE_DIM - 1) / TILE_DIM, (unsigned long long)maxGridSizeY);
             gridSize_shift_y = min((ny * curr_chunk_size + TILE_DIM - 1) / TILE_DIM, (unsigned long long)maxGridSizeY);
-            gridSize_full.y = gridSize_full_y;
             gridSize_shift.y = gridSize_shift_y;
         }
 
         // ***Copy values from host to device
         gpuErrchk(cudaMemcpy2D(d_workspace1,
-                               pitch_fs * 2 * sizeof(double),
+                               pitch_fs * 2 * sizeof(Scalar),
                                h_in + ioffset,
-                               2 * _nx * sizeof(double),
-                               2 * _nx * sizeof(double),
+                               2 * _nx * sizeof(Scalar),
+                               2 * _nx * sizeof(Scalar),
                                curr_chunk_size * ny,
                                cudaMemcpyHostToDevice));
 
-        // ***Make full power spectrum (workspace1 --> workspace2)
-        make_full_powspec_kernel<<<gridSize_full, blockSize_full>>>((double2 *)d_workspace1,
-                                                                    pitch_fs,
-                                                                    d_workspace2,
-                                                                    2 * pitch_fs,
-                                                                    _nx,
-                                                                    nx,
-                                                                    ny,
-                                                                    curr_chunk_size,
-                                                                    (_nx + TILE_DIM - 1) / TILE_DIM,
-                                                                    (ny * curr_chunk_size + TILE_DIM - 1) / TILE_DIM);
-        gpuErrchk(cudaPeekAtLastError());
-        gpuErrchk(cudaDeviceSynchronize());
-
         // ***Shift power spectrum (workspace2 --> workspace1)
-        shift_powspec_kernel<<<gridSize_shift, blockSize_full>>>(d_workspace2,
-                                                                 2 * pitch_fs,
-                                                                 d_workspace1,
-                                                                 2 * pitch_fs,
-                                                                 nx,
+        shift_powspec_kernel<<<gridSize_shift, blockSize_full>>>((Scalar2 *)d_workspace1,
+                                                                 pitch_fs,
+                                                                 d_workspace2,
+                                                                 pitch_fs,
+                                                                 _nx,
                                                                  ny,
                                                                  curr_chunk_size,
-                                                                 (nx + TILE_DIM - 1) / TILE_DIM,
+                                                                 (_nx + TILE_DIM - 1) / TILE_DIM,
                                                                  (ny * curr_chunk_size + TILE_DIM - 1) / TILE_DIM);
         gpuErrchk(cudaPeekAtLastError());
         gpuErrchk(cudaDeviceSynchronize());
 
         // ***Copy values from device to host (make contiguous on memory)
         // Get output offset
-        unsigned long long ooffset = chunk * chunk_size * nx * ny;
+        unsigned long long ooffset = chunk * chunk_size * _nx * ny;
         gpuErrchk(cudaMemcpy2D(h_in + ooffset,
-                               nx * sizeof(double),
-                               d_workspace1,
-                               pitch_fs * 2 * sizeof(double),
-                               nx * sizeof(double),
+                               _nx * sizeof(Scalar),
+                               d_workspace2,
+                               pitch_fs * sizeof(Scalar),
+                               _nx * sizeof(Scalar),
                                curr_chunk_size * ny,
                                cudaMemcpyDeviceToHost));
     }
@@ -507,7 +573,7 @@ void make_full_shift(double *h_in,
 /*!
     Compute image structure function using the WK theorem on the GPU
  */
-void structure_function_fft(double *h_in,
+void structure_function_fft(Scalar *h_in,
                             vector<unsigned int> lags,
                             unsigned long long length,
                             unsigned long long nx,
@@ -550,6 +616,14 @@ void structure_function_fft(double *h_in,
                      // maximum occupancy for a full device launch
     int numSMs;      // Number of streaming multiprocessors
     gpuErrchk(cudaDeviceGetAttribute(&numSMs, cudaDevAttrMultiProcessorCount, device_id));
+
+    // float2double conversion kernel
+    int blockSize_f2d; // The launch configurator returned block size
+    int gridSize_f2d;  // The actual grid size needed, based on input size
+
+    gpuErrchk(cudaOccupancyMaxPotentialBlockSize(&minGridSize, &blockSize_f2d, float2double_kernel, 0, 0));
+    // Round up according to array size
+    gridSize_f2d = min((length + blockSize_f2d - 1) / blockSize_f2d, 32ULL * numSMs);
 
     // transpose_complex_matrix_kernel
     dim3 blockSize_tran(TILE_DIM, BLOCK_ROWS, 1);
@@ -628,15 +702,37 @@ void structure_function_fft(double *h_in,
 
         // ***Copy values from host buffer to device workspace2 with pitch_q
         unsigned long long offset = 2 * q_start;                     // host source array offset
-        unsigned long long spitch = 2 * (_nx * ny) * sizeof(double); // host source array pitch
-        unsigned long long dpitch = 2 * pitch_q * sizeof(double);    // device destination array pitch
-        gpuErrchk(cudaMemcpy2D(d_workspace2,
+        unsigned long long spitch = 2 * (_nx * ny) * sizeof(Scalar); // host source array pitch
+        unsigned long long dpitch = 2 * pitch_q * sizeof(Scalar);    // device destination array pitch
+#ifndef SINGLE_PRECISION
+        gpuErrchk(cudaMemcpy2D((Scalar *)d_workspace2,
                                dpitch,
                                h_in + offset,
                                spitch,
-                               2 * curr_chunk_size * sizeof(double),
+                               2 * curr_chunk_size * sizeof(Scalar),
                                length,
                                cudaMemcpyHostToDevice));
+#else
+        gpuErrchk(cudaMemcpy2D((Scalar *)d_workspace1,
+                               dpitch,
+                               h_in + offset,
+                               spitch,
+                               2 * curr_chunk_size * sizeof(Scalar),
+                               length,
+                               cudaMemcpyHostToDevice));
+
+        // ***Convert data from float to double
+        // Convert
+        float2double_kernel<<<gridSize_f2d, blockSize_f2d>>>((float *)d_workspace1,
+                                                             2 * pitch_q,
+                                                             d_workspace2,
+                                                             2 * pitch_q,
+                                                             2 * curr_chunk_size,
+                                                             length);
+
+        // Zero out again d_workspace1
+        gpuErrchk(cudaMemset2D(d_workspace1, 2 * pitch_nt * sizeof(double), 0.0, 2 * nt * sizeof(double), curr_chunk_size));
+#endif
 
         // ***Transpose complex matrix ({d_workspace2; pitch_q} --> {d_workspace1; pitch_nt})
         transpose_complex_matrix_kernel<<<gridSize_tran1, blockSize_tran>>>((double2 *)d_workspace2,
@@ -720,7 +816,7 @@ void structure_function_fft(double *h_in,
                                                                  d_power_spec,
                                                                  make_double2(1.0, 0.0),
                                                                  d_var,
-                                                                 make_double2(- 1.0 / (double)(length * length), 0.0),
+                                                                 make_double2(-1.0 / (double)(length * length), 0.0),
                                                                  curr_chunk_size);
 
         // +++ CUMULATIVE SUM PART +++
@@ -783,30 +879,85 @@ void structure_function_fft(double *h_in,
         gpuErrchk(cudaPeekAtLastError());
         gpuErrchk(cudaDeviceSynchronize());
 
+#ifndef SINGLE_PRECISION
         // ***Copy from device to host (d_workspace2 --> host)
-        // elements are treated as complex doubles
+        // elements are treated as complex Scalars
         // to speed up transfer, use pitch_q
         offset = 2 * q_start;                     // host destination array offset
-        spitch = 2 * pitch_q * sizeof(double);    // host source array pitch
-        dpitch = 2 * (_nx * ny) * sizeof(double); // device destination array pitch
+        spitch = 2 * pitch_q * sizeof(Scalar);    // host source array pitch
+        dpitch = 2 * (_nx * ny) * sizeof(Scalar); // device destination array pitch
         gpuErrchk(cudaMemcpy2D(h_in + offset,
                                dpitch,
-                               d_workspace2,
+                               (Scalar *)d_workspace2,
                                spitch,
-                               2 * curr_chunk_size * sizeof(double),
+                               2 * curr_chunk_size * sizeof(Scalar),
                                lags.size(),
                                cudaMemcpyDeviceToHost));
+#else
+        // ***Convert data from double to float
+        // Convert
+        double2float_kernel<<<gridSize_f2d, blockSize_f2d>>>(d_workspace2,
+                                                             2 * pitch_q,
+                                                             (float *)d_workspace1,
+                                                             2 * pitch_q,
+                                                             2 * curr_chunk_size,
+                                                             length);
+
+        // ***Copy from device to host (d_workspace1 --> host)
+        // elements are treated as complex Scalars
+        // to speed up transfer, use pitch_q
+        offset = 2 * q_start;                     // host destination array offset
+        spitch = 2 * pitch_q * sizeof(Scalar);    // host source array pitch
+        dpitch = 2 * (_nx * ny) * sizeof(Scalar); // device destination array pitch
+        gpuErrchk(cudaMemcpy2D(h_in + offset,
+                               dpitch,
+                               (Scalar *)d_workspace1,
+                               spitch,
+                               2 * curr_chunk_size * sizeof(Scalar),
+                               lags.size(),
+                               cudaMemcpyDeviceToHost));
+#endif
+
+#ifndef SINGLE_PRECISION
+        // copy power spectrum
+        gpuErrchk(cudaMemcpy((Scalar2 *)h_in + (unsigned long long)(lags.size()) * _nx * ny + q_start,
+                             d_power_spec,
+                             curr_chunk_size * sizeof(Scalar2),
+                             cudaMemcpyDeviceToHost));
+
+        // copy variance
+        gpuErrchk(cudaMemcpy((Scalar2 *)h_in + (unsigned long long)(lags.size() + 1) * _nx * ny + q_start,
+                             d_var,
+                             curr_chunk_size * sizeof(Scalar2),
+                             cudaMemcpyDeviceToHost));
+#else
+        // ***Convert power spectrum and variance from double to float
+        double2float_kernel<<<gridSize_f2d, blockSize_f2d>>>((double *)d_power_spec,
+                                                             0,
+                                                             (float *)d_workspace1,
+                                                             0,
+                                                             2 * curr_chunk_size,
+                                                             1);
+
+        double2float_kernel<<<gridSize_f2d, blockSize_f2d>>>((double *)d_var,
+                                                             0,
+                                                             (float *)d_workspace2,
+                                                             0,
+                                                             2 * curr_chunk_size,
+                                                             1);
 
         // copy power spectrum
-        gpuErrchk(cudaMemcpy((double2 *)h_in + (unsigned long long)(lags.size()) * _nx * ny + q_start,
-                             d_power_spec,
-                             curr_chunk_size * sizeof(double2),
+        gpuErrchk(cudaMemcpy((Scalar2 *)h_in + (unsigned long long)(lags.size()) * _nx * ny + q_start,
+                             (Scalar2 *)d_workspace1,
+                             curr_chunk_size * sizeof(Scalar2),
                              cudaMemcpyDeviceToHost));
+
         // copy variance
-        gpuErrchk(cudaMemcpy((double2 *)h_in + (unsigned long long)(lags.size() + 1) * _nx * ny + q_start,
-                             d_var,
-                             curr_chunk_size * sizeof(double2),
+        gpuErrchk(cudaMemcpy((Scalar2 *)h_in + (unsigned long long)(lags.size() + 1) * _nx * ny + q_start,
+                             (Scalar2 *)d_workspace2,
+                             curr_chunk_size * sizeof(Scalar2),
                              cudaMemcpyDeviceToHost));
+#endif
     }
 
     // ***Free memory
