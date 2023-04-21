@@ -52,7 +52,7 @@ def ddm_diff_cpp(
     """
     # if window not given, replace it with empty array
     if window is None:
-        window = np.empty(0, dtype=DTYPE)
+        window = np.array([], dtype=DTYPE)
 
     # get available memory
     mem = psutil.virtual_memory().available
@@ -68,7 +68,7 @@ def ddm_diff_cpp(
     if int(0.9 * mem) < mem_req:
         raise RuntimeError("Not enough memory")
 
-    return ddm_diff(img_seq, lags, nx, ny, window.astype(DTYPE))
+    return ddm_diff(img_seq, lags, nx, ny, window)
 
 
 def ddm_fft_cpp(
@@ -110,7 +110,7 @@ def ddm_fft_cpp(
     """
     # if window not given, replace it with empty array
     if window is None:
-        window = np.empty(0, dtype=DTYPE)
+        window = np.array([], dtype=DTYPE)
 
     # get available memory
     mem = psutil.virtual_memory().available
@@ -142,7 +142,7 @@ def ddm_fft_cpp(
         if idx == 0:
             raise RuntimeError("Not enough memory")
 
-    return ddm_fft(img_seq, lags, nx, ny, nt, chunk_size, window.astype(DTYPE))
+    return ddm_fft(img_seq, lags, nx, ny, nt, chunk_size, window)
 
 
 def primesfrom2to(n: int) -> List[int]:

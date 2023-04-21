@@ -54,13 +54,13 @@ def ddm_diff_gpu(
     """
     # if window not given, replace it with empty array
     if window is None:
-        window = np.empty(0, dtype=DTYPE)
+        window = np.array([], dtype=DTYPE)
 
     # set device
     set_device(gpu_id)
 
     # analyze
-    return ddm_diff_cuda(img_seq, lags, nx, ny, window.astype(DTYPE))
+    return ddm_diff_cuda(img_seq, lags, nx, ny, window)
 
 
 def ddm_fft_gpu(
@@ -108,10 +108,10 @@ def ddm_fft_gpu(
     """
     # if window not given, replace it with empty array
     if window is None:
-        window = np.empty(0, dtype=DTYPE)
+        window = np.array([], dtype=DTYPE)
 
     # set device
     set_device(gpu_id)
 
     # analyze
-    return ddm_fft_cuda(img_seq, lags, nx, ny, nt, window.astype(DTYPE))
+    return ddm_fft_cuda(img_seq, lags, nx, ny, nt, window)

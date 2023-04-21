@@ -127,10 +127,10 @@ def ddm(
             dim_t_padded = next_fast_len(2 * dim_t, core)
             args.append(dim_t_padded)
 
-        args.append(window)
+        args.append(window.astype(DTYPE))
 
     else:
-        args = [img_seq, lags, dim_x_padded, dim_y_padded, window]
+        args = [img_seq, lags, dim_x_padded, dim_y_padded, window.astype(DTYPE)]
 
     kx = 2 * np.pi * np.fft.fftfreq(dim_x_padded)[: (dim_x_padded // 2 + 1)]
     ky = 2 * np.pi * np.fft.fftshift(np.fft.fftfreq(dim_y_padded))
