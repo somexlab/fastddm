@@ -48,6 +48,7 @@ py::array_t<Scalar> ddm_diff(py::array_t<T, py::array::c_style> img_seq,
     auto p_img_seq = img_seq.data();                // get input data
 
     // ***Get window array
+    unsigned long long window_length = window.shape()[0]; // get length of window array
     auto p_window = window.data();
 
     // ***Allocate workspace vector
@@ -78,20 +79,8 @@ py::array_t<Scalar> ddm_diff(py::array_t<T, py::array::c_style> img_seq,
         }
     }
 
-    // ***Check if window function contains only 1s, if so, apply window
-    bool is_window = false;
-    unsigned long long idx = 0;
-    while (idx < height * width)
-    {
-        if (p_window[idx] != 1.0)
-        {
-            is_window = true;
-            break;
-        }
-        idx++;
-    }
-
-    if (is_window)
+    // ***Check if window function is not empty, if so, apply window
+    if (window_length > 0)
     {
         for (unsigned long long t = 0; t < length; t++)
         {
@@ -229,6 +218,7 @@ py::array_t<Scalar> ddm_fft(py::array_t<T, py::array::c_style> img_seq,
     auto p_img_seq = img_seq.data();                // get input data
 
     // ***Get window array
+    unsigned long long window_length = window.shape()[0]; // get length of window array
     auto p_window = window.data();
 
     // ***Allocate workspace vector
@@ -261,20 +251,8 @@ py::array_t<Scalar> ddm_fft(py::array_t<T, py::array::c_style> img_seq,
         }
     }
 
-    // ***Check if window function contains only 1s, if so, apply window
-    bool is_window = false;
-    unsigned long long idx = 0;
-    while (idx < height * width)
-    {
-        if (p_window[idx] != 1.0)
-        {
-            is_window = true;
-            break;
-        }
-        idx++;
-    }
-
-    if (is_window)
+    // ***Check if window function is not empty, if so, apply window
+    if (window_length > 0)
     {
         for (unsigned long long t = 0; t < length; t++)
         {

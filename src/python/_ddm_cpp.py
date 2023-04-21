@@ -50,9 +50,10 @@ def ddm_diff_cpp(
     RuntimeError
         If memory is not sufficient to perform the calculations.
     """
+    # if window not given, replace it with empty array
     if window is None:
         dim_t, dim_y, dim_x = img_seq.shape
-        window = np.ones((dim_y, dim_x), dtype=DTYPE)
+        window = np.empty(0, dtype=DTYPE)
 
     # get available memory
     mem = psutil.virtual_memory().available
@@ -108,9 +109,10 @@ def ddm_fft_cpp(
     RuntimeError
         If memory available is not sufficient for calculations.
     """
+    # if window not given, replace it with empty array
     if window is None:
         dim_t, dim_y, dim_x = img_seq.shape
-        window = np.ones((dim_y, dim_x), dtype=DTYPE)
+        window = np.empty(0, dtype=DTYPE)
 
     # get available memory
     mem = psutil.virtual_memory().available
