@@ -77,6 +77,30 @@ __global__ void scale_array_kernel(double2 *a,
 }
 
 /*!
+    Apply window function to image sequence
+ */
+__global__ void apply_window_kernel(double *d_in,
+                                    Scalar *window,
+                                    unsigned long long width,
+                                    unsigned long long height,
+                                    unsigned long long length,
+                                    unsigned long long ipitch,
+                                    unsigned long long idist,
+                                    unsigned long long wpitch)
+{
+    for (unsigned long long t = blockIdx.x; t < length; t += gridDim.x)
+    {
+        for (unsigned long long y = blockIdx.y; y < height; y += gridDim.y)
+        {
+            for (unsigned long long x = threadIdx.x; x < width; x += blockDim.x)
+            {
+                d_in[t * idist + y * ipitch + x] *= (double)window[y * wpitch + x];
+            }
+        }
+    }
+}
+
+/*!
     Convert 2D array in place from double2 to float2
  */
 __global__ void double2float_inplace_kernel(double2 *a,

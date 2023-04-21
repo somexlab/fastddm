@@ -26,13 +26,17 @@ template <typename T>
 py::array_t<Scalar> ddm_diff_cuda(py::array_t<T, py::array::c_style> img_seq,
                                   vector<unsigned int> lags,
                                   unsigned long long nx,
-                                  unsigned long long ny)
+                                  unsigned long long ny,
+                                  py::array_t<Scalar, py::array::c_style> window)
 {
     // ***Get input array and dimensions
     unsigned long long length = img_seq.shape()[0]; // get length of original input
     unsigned long long height = img_seq.shape()[1]; // get height of original input
     unsigned long long width = img_seq.shape()[2];  // get width of original input
     auto p_img_seq = img_seq.data();                // get input data
+
+    // ***Get window array
+    auto p_window = window.data();
 
     // Check host memory
     chk_host_mem_diff(nx, ny, length, lags.size());
@@ -71,6 +75,7 @@ py::array_t<Scalar> ddm_diff_cuda(py::array_t<T, py::array::c_style> img_seq,
     // ***Transfer data to GPU and compute fft2
     compute_fft2(p_img_seq,
                  p_out,
+                 p_window,
                  width,
                  height,
                  length,
@@ -122,13 +127,17 @@ py::array_t<Scalar> ddm_fft_cuda(py::array_t<T, py::array::c_style> img_seq,
                                  vector<unsigned int> lags,
                                  unsigned long long nx,
                                  unsigned long long ny,
-                                 unsigned long long nt)
+                                 unsigned long long nt,
+                                 py::array_t<Scalar, py::array::c_style> window)
 {
     // ***Get input array and dimensions
     unsigned long long length = img_seq.shape()[0]; // get length of original input
     unsigned long long height = img_seq.shape()[1]; // get height of original input
     unsigned long long width = img_seq.shape()[2];  // get width of original input
     auto p_img_seq = img_seq.data();                // get input data
+
+    // ***Get window array
+    auto p_window = window.data();
 
     // Check host memory
     chk_host_mem_fft(nx, ny, length, lags.size());
@@ -169,6 +178,7 @@ py::array_t<Scalar> ddm_fft_cuda(py::array_t<T, py::array::c_style> img_seq,
     // ***Transfer data to GPU and compute fft2
     compute_fft2(p_img_seq,
                  p_out,
+                 p_window,
                  width,
                  height,
                  length,

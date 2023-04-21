@@ -49,6 +49,7 @@ const unsigned long long BLOCK_ROWS = 8; // leave this unchanged!! (block rows f
 template <typename T>
 void compute_fft2(const T *h_in,
                   Scalar *h_out,
+                  const Scalar *h_window,
                   unsigned long long width,
                   unsigned long long height,
                   unsigned long long length,
@@ -78,6 +79,9 @@ void compute_fft2(const T *h_in,
     {
         gpuErrchk(cudaMalloc(&d_buff, buff_pitch * height * batch * sizeof(T)));
     }
+    // window
+    Scalar *d_window;
+    gpuErrchk(cudaMalloc(&d_window, 2 * pitch_nx * ny * sizeof(double)));
 
     // ***Create fft2 plan
     cufftHandle fft2_plan = fft2_create_plan(nx,
@@ -98,6 +102,11 @@ void compute_fft2(const T *h_in,
                         // maximum occupancy for a full device launch
     gpuErrchk(cudaOccupancyMaxPotentialBlockSize(&minGridSize, &blockSize_copy, copy_convert_kernel<T>, 0, 0));
     dim3 gridSize_copy(min(1ULL * maxGridSizeX, batch), min(1ULL * maxGridSizeY, height), 1);
+
+    // window kernel
+    int blockSize_win;
+    gpuErrchk(cudaOccupancyMaxPotentialBlockSize(&minGridSize, &blockSize_win, apply_window_kernel, 0, 0));
+    dim3 gridSize_win(min(1ULL * maxGridSizeX, batch), min(1ULL * maxGridSizeY, height), 1);
 
     // scale kernel
     int blockSize_scale; // The launch configurator returned block size
@@ -163,6 +172,21 @@ void compute_fft2(const T *h_in,
             gpuErrchk(cudaDeviceSynchronize());
         }
 
+        // ***Apply window function
+        // copy window function to device
+        gpuErrchk(cudaMemcpy2D(d_window, 2 * pitch_nx * sizeof(Scalar), h_window, width * sizeof(Scalar), width * sizeof(Scalar), height, cudaMemcpyHostToDevice));
+        // apply window
+        apply_window_kernel<<<gridSize_win, blockSize_win>>>(d_workspace,
+                                                             d_window,
+                                                             width,
+                                                             height,
+                                                             batch,
+                                                             2 * pitch_nx,
+                                                             2 * pitch_nx * ny,
+                                                             2 * pitch_nx);
+        gpuErrchk(cudaPeekAtLastError());
+        gpuErrchk(cudaDeviceSynchronize());
+
         // ***Execute fft2 plan
         cufftSafeCall(cufftExecD2Z(fft2_plan, d_workspace, (CUFFTCOMPLEX *)d_workspace));
         gpuErrchk(cudaPeekAtLastError());
@@ -203,15 +227,15 @@ void compute_fft2(const T *h_in,
     cufftSafeCall(cufftDestroy(fft2_plan));
 }
 
-template void compute_fft2<u_int8_t>(const u_int8_t *h_in, Scalar *h_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch, unsigned long long pitch_nx);
-template void compute_fft2<int16_t>(const int16_t *h_in, Scalar *h_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch, unsigned long long pitch_nx);
-template void compute_fft2<u_int16_t>(const u_int16_t *h_in, Scalar *h_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch, unsigned long long pitch_nx);
-template void compute_fft2<int32_t>(const int32_t *h_in, Scalar *h_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch, unsigned long long pitch_nx);
-template void compute_fft2<u_int32_t>(const u_int32_t *h_in, Scalar *h_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch, unsigned long long pitch_nx);
-template void compute_fft2<int64_t>(const int64_t *h_in, Scalar *h_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch, unsigned long long pitch_nx);
-template void compute_fft2<u_int64_t>(const u_int64_t *h_in, Scalar *h_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch, unsigned long long pitch_nx);
-template void compute_fft2<float>(const float *h_in, Scalar *h_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch, unsigned long long pitch_nx);
-template void compute_fft2<double>(const double *h_in, Scalar *h_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch, unsigned long long pitch_nx);
+template void compute_fft2<u_int8_t>(const u_int8_t *h_in, Scalar *h_out, const Scalar *h_window, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch, unsigned long long pitch_nx);
+template void compute_fft2<int16_t>(const int16_t *h_in, Scalar *h_out, const Scalar *h_window, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch, unsigned long long pitch_nx);
+template void compute_fft2<u_int16_t>(const u_int16_t *h_in, Scalar *h_out, const Scalar *h_window, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch, unsigned long long pitch_nx);
+template void compute_fft2<int32_t>(const int32_t *h_in, Scalar *h_out, const Scalar *h_window, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch, unsigned long long pitch_nx);
+template void compute_fft2<u_int32_t>(const u_int32_t *h_in, Scalar *h_out, const Scalar *h_window, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch, unsigned long long pitch_nx);
+template void compute_fft2<int64_t>(const int64_t *h_in, Scalar *h_out, const Scalar *h_window, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch, unsigned long long pitch_nx);
+template void compute_fft2<u_int64_t>(const u_int64_t *h_in, Scalar *h_out, const Scalar *h_window, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch, unsigned long long pitch_nx);
+template void compute_fft2<float>(const float *h_in, Scalar *h_out, const Scalar *h_window, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch, unsigned long long pitch_nx);
+template void compute_fft2<double>(const double *h_in, Scalar *h_out, const Scalar *h_window, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch, unsigned long long pitch_nx);
 
 /*!
     Compute image structure function using differences on the GPU

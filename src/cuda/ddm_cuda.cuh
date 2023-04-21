@@ -28,6 +28,7 @@ typedef float Scalar;
 /*! \brief Transfer images on GPU and compute fft2
     \param h_in         input array
     \param h_out        output array
+    \param h_window     window function
     \param width        width of input array
     \param height       height of input array
     \param length       number of elements in z direction
@@ -40,6 +41,7 @@ typedef float Scalar;
 template <typename T>
 void compute_fft2(const T *h_in,
                   Scalar *h_out,
+                  const Scalar *h_window,
                   unsigned long long width,
                   unsigned long long height,
                   unsigned long long length,

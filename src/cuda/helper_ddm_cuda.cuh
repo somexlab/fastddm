@@ -61,6 +61,25 @@ __global__ void scale_array_kernel(double2 *a,
                                    double A,
                                    unsigned long long N);
 
+/*! \brief Apply window function to image sequence
+    \param d_in     image sequence array
+    \param window   window array
+    \param width    Width of the input array
+    \param height   Height of the input array
+    \param length   Length of the input array
+    \param ipitch   Pitch of the input array
+    \param idist    Distance between 2 consecutive elements of the input 3D array
+    \param wpitch   Pitch of the window 2D array
+ */
+__global__ void apply_window_kernel(double *d_in,
+                                    Scalar *window,
+                                    unsigned long long width,
+                                    unsigned long long height,
+                                    unsigned long long length,
+                                    unsigned long long ipitch,
+                                    unsigned long long idist,
+                                    unsigned long long wpitch);
+
 /*! \brief Convert 2D array in place from double2 to float2
     \param a        input array
     \param b        output array

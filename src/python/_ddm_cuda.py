@@ -10,10 +10,16 @@ import numpy as np
 
 from ._core import set_device
 from ._core import ddm_diff_cuda, ddm_fft_cuda
+from ._config import DTYPE
 
 
 def ddm_diff_gpu(
-    img_seq: np.ndarray, lags: List[int], nx: int, ny: int, gpu_id: Optional[int] = 0
+    img_seq: np.ndarray,
+    lags: List[int],
+    nx: int,
+    ny: int,
+    window: Optional[np.ndarray] = None,
+    gpu_id: Optional[int] = 0,
 ) -> np.ndarray:
     """Differential Dynamic Microscopy, diff mode on GPU
 
@@ -30,6 +36,8 @@ def ddm_diff_gpu(
         (for very large transorms, this value must be even).
     ny : int
         Number of fft nodes in y direction.
+    window : np.ndarray, optional
+        A 2D array containing the window function to be applied to the images. Default is None.
     gpu_id : int, optional
         The ID of the device to be used. Default is 0.
 
@@ -44,12 +52,15 @@ def ddm_diff_gpu(
         If memory is not sufficient to perform the calculations
         or if device id is out of bounds.
     """
+    if window is None:
+        dim_t, dim_y, dim_x = img_seq.shape
+        window = np.ones((dim_y, dim_x), dtype=DTYPE)
 
     # set device
     set_device(gpu_id)
 
     # analyze
-    return ddm_diff_cuda(img_seq, lags, nx, ny)
+    return ddm_diff_cuda(img_seq, lags, nx, ny, window.astype(DTYPE))
 
 
 def ddm_fft_gpu(
@@ -58,6 +69,7 @@ def ddm_fft_gpu(
     nx: int,
     ny: int,
     nt: int,
+    window: Optional[np.ndarray] = None,
     gpu_id: Optional[int] = 0,
 ) -> np.ndarray:
     """Differential Dynamic Microscopy, fft mode on GPU.
@@ -79,6 +91,8 @@ def ddm_fft_gpu(
     nt : int
         Number of fft nodes in t direction
         (for very large transorms, this value must be even).
+    window : np.ndarray, optional
+        A 2D array containing the window function to be applied to the images. Default is None.
     gpu_id : int, optional
         The ID of the device to be used. Default is 0.
 
@@ -92,9 +106,12 @@ def ddm_fft_gpu(
     RuntimeError
         If memory is not sufficient to perform the calculations.
     """
+    if window is None:
+        dim_t, dim_y, dim_x = img_seq.shape
+        window = np.ones((dim_y, dim_x), dtype=DTYPE)
 
     # set device
     set_device(gpu_id)
 
     # analyze
-    return ddm_fft_cuda(img_seq, lags, nx, ny, nt)
+    return ddm_fft_cuda(img_seq, lags, nx, ny, nt, window.astype(DTYPE))

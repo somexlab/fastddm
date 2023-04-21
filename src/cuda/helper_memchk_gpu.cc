@@ -255,11 +255,13 @@ void optimize_fft2(unsigned long long &pitch_buff,
     // But data are transferred as Scalar (float/double)
     // To compute the fft2, we need
     //  - for the buffer (only if input is not Scalar):
-    //      pitch_nx * height * fft2_batch_len * pixel_Nbytes bytes
+    //      pitch_buff * height * fft2_batch_len * pixel_Nbytes bytes
     //  - for the workspace (complex double, 16 bytes):
     //      (nx / 2 + 1) * ny * fft2_batch_len * 16 bytes
     //  - for the cufft2 internal buffer:
     //      {programmatically determined...}
+    //  - for the window function (Scalar, SCALAR_SIZE bytes)
+    //      pitch_nx * height * 2 * (SCALAR_SIZE) bytes
 
     unsigned long long _nx = nx / 2ULL + 1ULL;
 
@@ -298,6 +300,9 @@ void optimize_fft2(unsigned long long &pitch_buff,
 
             // add memory required for workspace
             mem_req += pitch_nx * ny * fft2_batch_len * 16ULL;
+
+            // add memory required for window
+            mem_req += pitch_nx * ny * 2 * sizeof(Scalar);
 
             // check memory
             if (free_mem > mem_req)
