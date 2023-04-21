@@ -96,6 +96,7 @@ unsigned long long get_device_fft_mem(unsigned long long nt,
     \param pitch_nx         Pitch of fft2 complex output array
     \param num_fft2         Number of fft2 batches
     \param is_input_Scalar  True if pixel value is Scalar
+    \param is_window        True if window function is given
     \param pixel_Nbytes     Number of bytes per pixel
     \param width            Width of the image
     \param height           Height of the image
@@ -108,6 +109,7 @@ void optimize_fft2(unsigned long long &pitch_buff,
                    unsigned long long &pitch_nx,
                    unsigned long long &num_fft2,
                    bool is_input_Scalar,
+                   bool is_window,
                    unsigned long long pixel_Nbytes,
                    unsigned long long width,
                    unsigned long long height,
@@ -181,7 +183,8 @@ void optimize_fft(unsigned long long &pitch_q,
     \param ny               Number of fft nodes, y direction
     \param length           Number of frames
     \param lags             Vector of lags to analyze
-    \param is_input_double  True if pixel value is double
+    \param is_input_Scalar  True if pixel value is Scalar
+    \param is_window        True if window function is given
     \param num_fft2         Number of fft2 batches
     \param num_chunks       Number of q points chunks
     \param num_shift        Number of shift chunks
@@ -198,7 +201,8 @@ void chk_device_mem_diff(unsigned long long width,
                          unsigned long long ny,
                          unsigned long long length,
                          vector<unsigned int> lags,
-                         bool is_input_double,
+                         bool is_input_Scalar,
+                         bool is_window,
                          unsigned long long &num_fft2,
                          unsigned long long &num_chunks,
                          unsigned long long &num_shift,
@@ -217,7 +221,8 @@ void chk_device_mem_diff(unsigned long long width,
     \param nt               Number of fft nodes, t direction
     \param length           Number of frames
     \param lags             Vector of lags to analyze
-    \param is_input_double  True if pixel value is double
+    \param is_input_Scalar  True if pixel value is Scalar
+    \param is_window        True if window function is given
     \param num_fft2         Number of fft2 batches
     \param num_chunks       Number of q points chunks
     \param num_shift        Number of shift chunks
@@ -236,7 +241,8 @@ void chk_device_mem_fft(unsigned long long width,
                         unsigned long long nt,
                         unsigned long long length,
                         vector<unsigned int> lags,
-                        bool is_input_double,
+                        bool is_input_Scalar,
+                        bool is_window,
                         unsigned long long &num_fft2,
                         unsigned long long &num_chunks,
                         unsigned long long &num_shift,

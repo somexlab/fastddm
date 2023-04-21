@@ -52,9 +52,9 @@ def ddm_diff_gpu(
         If memory is not sufficient to perform the calculations
         or if device id is out of bounds.
     """
+    # if window not given, replace it with empty array
     if window is None:
-        dim_t, dim_y, dim_x = img_seq.shape
-        window = np.ones((dim_y, dim_x), dtype=DTYPE)
+        window = np.empty(0, dtype=DTYPE)
 
     # set device
     set_device(gpu_id)
@@ -106,9 +106,9 @@ def ddm_fft_gpu(
     RuntimeError
         If memory is not sufficient to perform the calculations.
     """
+    # if window not given, replace it with empty array
     if window is None:
-        dim_t, dim_y, dim_x = img_seq.shape
-        window = np.ones((dim_y, dim_x), dtype=DTYPE)
+        window = np.empty(0, dtype=DTYPE)
 
     # set device
     set_device(gpu_id)

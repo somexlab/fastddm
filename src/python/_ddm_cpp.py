@@ -52,7 +52,6 @@ def ddm_diff_cpp(
     """
     # if window not given, replace it with empty array
     if window is None:
-        dim_t, dim_y, dim_x = img_seq.shape
         window = np.empty(0, dtype=DTYPE)
 
     # get available memory
@@ -111,7 +110,6 @@ def ddm_fft_cpp(
     """
     # if window not given, replace it with empty array
     if window is None:
-        dim_t, dim_y, dim_x = img_seq.shape
         window = np.empty(0, dtype=DTYPE)
 
     # get available memory
