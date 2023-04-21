@@ -38,13 +38,18 @@ template <typename T>
 py::array_t<Scalar> ddm_diff(py::array_t<T, py::array::c_style> img_seq,
                              vector<unsigned int> lags,
                              unsigned long long nx,
-                             unsigned long long ny)
+                             unsigned long long ny,
+                             py::array_t<Scalar, py::array::c_style> window)
 {
     // ***Get input array and dimensions
     unsigned long long length = img_seq.shape()[0]; // get length of original input
     unsigned long long height = img_seq.shape()[1]; // get height of original input
     unsigned long long width = img_seq.shape()[2];  // get width of original input
     auto p_img_seq = img_seq.data();                // get input data
+
+    // ***Get window array
+    unsigned long long window_length = window.shape()[0]; // get length of window array
+    auto p_window = window.data();
 
     // ***Allocate workspace vector
     /*
@@ -71,6 +76,21 @@ py::array_t<Scalar> ddm_diff(py::array_t<T, py::array::c_style> img_seq,
             copy(p_img_seq + t * (height * width) + y * width,
                  p_img_seq + t * (height * width) + (y + 1) * width,
                  p_out + t * (2 * _nx * ny) + y * 2 * _nx);
+        }
+    }
+
+    // ***Check if window function is not empty, if so, apply window
+    if (window_length > 0)
+    {
+        for (unsigned long long t = 0; t < length; t++)
+        {
+            for (unsigned long long y = 0; y < height; y++)
+            {
+                for (unsigned long long x = 0; x < width; x++)
+                {
+                    p_out[t * (2 * _nx * ny) + y * 2 * _nx + x] *= p_window[y * width + x];
+                }
+            }
         }
     }
 
@@ -188,13 +208,18 @@ py::array_t<Scalar> ddm_fft(py::array_t<T, py::array::c_style> img_seq,
                             unsigned long long nx,
                             unsigned long long ny,
                             unsigned long long nt,
-                            unsigned long long chunk_size)
+                            unsigned long long chunk_size,
+                            py::array_t<Scalar, py::array::c_style> window)
 {
     // ***Get input array and dimensions
     unsigned long long length = img_seq.shape()[0]; // get length of original input
     unsigned long long height = img_seq.shape()[1]; // get height of original input
     unsigned long long width = img_seq.shape()[2];  // get width of original input
     auto p_img_seq = img_seq.data();                // get input data
+
+    // ***Get window array
+    unsigned long long window_length = window.shape()[0]; // get length of window array
+    auto p_window = window.data();
 
     // ***Allocate workspace vector
     /*
@@ -223,6 +248,21 @@ py::array_t<Scalar> ddm_fft(py::array_t<T, py::array::c_style> img_seq,
             copy(p_img_seq + t * (height * width) + y * width,
                  p_img_seq + t * (height * width) + (y + 1) * width,
                  p_out + t * (2 * _nx * ny) + y * 2 * _nx);
+        }
+    }
+
+    // ***Check if window function is not empty, if so, apply window
+    if (window_length > 0)
+    {
+        for (unsigned long long t = 0; t < length; t++)
+        {
+            for (unsigned long long y = 0; y < height; y++)
+            {
+                for (unsigned long long x = 0; x < width; x++)
+                {
+                    p_out[t * (2 * _nx * ny) + y * 2 * _nx + x] *= p_window[y * width + x];
+                }
+            }
         }
     }
 
