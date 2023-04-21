@@ -7,8 +7,10 @@ from typing import Tuple
 
 import numpy as np
 
+from ._config import DTYPE
 
-def blackman(shape : Tuple[int, ...]):
+
+def blackman(shape: Tuple[int, ...]):
     r"""Blackman window.
 
     In the 1D case, the equation for the periodic three-term exact Blackman
@@ -35,9 +37,9 @@ def blackman(shape : Tuple[int, ...]):
     numpy.ndarray
         A Blackman window.
     """
-    
+
     *rest, ydim, xdim = shape
-    
+
     a = [7938 / 18608, 9240 / 18608, 1430 / 18608]
     x = np.linspace(0, (xdim - 1) / xdim, num=xdim)
     y = np.linspace(0, (ydim - 1) / ydim, num=ydim)
@@ -50,7 +52,7 @@ def blackman(shape : Tuple[int, ...]):
 
     Wx, Wy = np.meshgrid(Wx, Wy)
 
-    return Wx * Wy
+    return (Wx * Wy).astype(DTYPE)
 
 
 def blackman_harris(shape: Tuple[int, ...]) -> np.ndarray:
@@ -95,4 +97,4 @@ def blackman_harris(shape: Tuple[int, ...]) -> np.ndarray:
 
     Wx, Wy = np.meshgrid(Wx, Wy)
 
-    return Wx * Wy
+    return (Wx * Wy).astype(DTYPE)
