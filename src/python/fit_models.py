@@ -15,10 +15,7 @@ from lmfit.model import Model
 
 # ** generic exponential model
 def _generic_exponential_isf(
-    x: Union[np.ndarray, float],
-    A: float,
-    Gamma: float,
-    beta: float
+    x: Union[np.ndarray, float], A: float, Gamma: float, beta: float
 ) -> Union[np.ndarray, float]:
     """A generic exponential function model for the intermediate scattering function
 
@@ -48,34 +45,34 @@ def _generic_exponential_isf(
     np.ndarray, float
         Generic exponential intermediate scattering function model.
     """
-    return A * np.exp(-(x * Gamma) ** beta)
+    return A * np.exp(-((x * Gamma) ** beta))
 
 
 generic_exponential_isf_model = Model(_generic_exponential_isf)
-generic_exponential_isf_model.set_param_hint('A', value=1.0, min=0.0, max=np.inf)
-generic_exponential_isf_model.set_param_hint('Gamma', value=1.0, min=0.0, max=np.inf)
-generic_exponential_isf_model.set_param_hint('beta', value=1.0, min=0.0, max=np.inf)
+generic_exponential_isf_model.set_param_hint("A", value=1.0, min=0.0, max=np.inf)
+generic_exponential_isf_model.set_param_hint("Gamma", value=1.0, min=0.0, max=np.inf)
+generic_exponential_isf_model.set_param_hint("beta", value=1.0, min=0.0, max=np.inf)
 
 
 # ** simple exponential model
 simple_exponential_isf_model = Model(_generic_exponential_isf)
-simple_exponential_isf_model.set_param_hint('A', value=1.0, min=0.0, max=np.inf)
-simple_exponential_isf_model.set_param_hint('Gamma', value=1.0, min=0.0, max=np.inf)
-simple_exponential_isf_model.set_param_hint('beta', value=1.0, vary=False)
+simple_exponential_isf_model.set_param_hint("A", value=1.0, min=0.0, max=np.inf)
+simple_exponential_isf_model.set_param_hint("Gamma", value=1.0, min=0.0, max=np.inf)
+simple_exponential_isf_model.set_param_hint("beta", value=1.0, vary=False)
 
 
 # ** stretched exponential model
 stretched_exponential_isf_model = Model(_generic_exponential_isf)
-stretched_exponential_isf_model.set_param_hint('A', value=1.0, min=0.0, max=np.inf)
-stretched_exponential_isf_model.set_param_hint('Gamma', value=1.0, min=0.0, max=np.inf)
-stretched_exponential_isf_model.set_param_hint('beta', value=1.0, min=0.0, max=1.0)
+stretched_exponential_isf_model.set_param_hint("A", value=1.0, min=0.0, max=np.inf)
+stretched_exponential_isf_model.set_param_hint("Gamma", value=1.0, min=0.0, max=np.inf)
+stretched_exponential_isf_model.set_param_hint("beta", value=1.0, min=0.0, max=1.0)
 
 
 # ** compressed exponential model
 compressed_exponential_isf_model = Model(_generic_exponential_isf)
-compressed_exponential_isf_model.set_param_hint('A', value=1.0, min=0.0, max=np.inf)
-compressed_exponential_isf_model.set_param_hint('Gamma', value=1.0, min=0.0, max=np.inf)
-compressed_exponential_isf_model.set_param_hint('beta', value=1.0, min=1.0, max=np.inf)
+compressed_exponential_isf_model.set_param_hint("A", value=1.0, min=0.0, max=np.inf)
+compressed_exponential_isf_model.set_param_hint("Gamma", value=1.0, min=0.0, max=np.inf)
+compressed_exponential_isf_model.set_param_hint("beta", value=1.0, min=1.0, max=np.inf)
 
 
 # ** double exponential model
@@ -86,7 +83,7 @@ def _double_exponential_isf(
     beta1: float,
     Gamma2: float,
     beta2: float,
-    alpha: float
+    alpha: float,
 ) -> Union[np.ndarray, float]:
     """A double exponential function model for the intermediate scattering function
 
@@ -118,24 +115,24 @@ def _double_exponential_isf(
     np.ndarray, float
         Double exponential intermediate scattering function model.
     """
-    return A * (alpha * np.exp(-(x * Gamma1) ** beta1) + (1 - alpha) * np.exp(-(x * Gamma2) ** beta2))
+    return A * (
+        alpha * np.exp(-((x * Gamma1) ** beta1))
+        + (1 - alpha) * np.exp(-((x * Gamma2) ** beta2))
+    )
 
 
 double_exponential_isf_model = Model(_double_exponential_isf)
-double_exponential_isf_model.set_param_hint('A', value=1.0, min=0.0, max=np.inf)
-double_exponential_isf_model.set_param_hint('Gamma1', value=1.0, min=0.0, max=np.inf)
-double_exponential_isf_model.set_param_hint('beta1', value=1.0, min=0.0, max=np.inf)
-double_exponential_isf_model.set_param_hint('Gamma2', value=1.0, min=0.0, max=np.inf)
-double_exponential_isf_model.set_param_hint('beta2', value=1.0, min=0.0, max=np.inf)
-double_exponential_isf_model.set_param_hint('alpha', value=1.0, min=0.0, max=1.0)
+double_exponential_isf_model.set_param_hint("A", value=1.0, min=0.0, max=np.inf)
+double_exponential_isf_model.set_param_hint("Gamma1", value=1.0, min=0.0, max=np.inf)
+double_exponential_isf_model.set_param_hint("beta1", value=1.0, min=0.0, max=np.inf)
+double_exponential_isf_model.set_param_hint("Gamma2", value=1.0, min=0.0, max=np.inf)
+double_exponential_isf_model.set_param_hint("beta2", value=1.0, min=0.0, max=np.inf)
+double_exponential_isf_model.set_param_hint("alpha", value=1.0, min=0.0, max=1.0)
 
 
 # ** flory-schulz distribution model
 def _flory_schulz_isf(
-    x: Union[np.ndarray, float],
-    A: float,
-    Gamma: float,
-    sigma: float
+    x: Union[np.ndarray, float], A: float, Gamma: float, sigma: float
 ) -> Union[np.ndarray, float]:
     """A Flory-Schulz function model for the intermediate scattering function
 
@@ -179,35 +176,34 @@ def _flory_schulz_isf(
 
 
 flory_schulz_isf_model = Model(_flory_schulz_isf)
-flory_schulz_isf_model.set_param_hint('A', value=1.0, min=0.0, max=np.inf)
-flory_schulz_isf_model.set_param_hint('Gamma', value=1.0, min=0.0, max=np.inf)
-flory_schulz_isf_model.set_param_hint('sigma', value=1.0, min=0.0, max=1.0)
+flory_schulz_isf_model.set_param_hint("A", value=1.0, min=0.0, max=np.inf)
+flory_schulz_isf_model.set_param_hint("Gamma", value=1.0, min=0.0, max=np.inf)
+flory_schulz_isf_model.set_param_hint("sigma", value=1.0, min=0.0, max=1.0)
 
 
 # ** exponential distribution model
 exponential_distribution_isf_model = Model(_flory_schulz_isf)
-exponential_distribution_isf_model.set_param_hint('A', value=1.0, min=0.0, max=np.inf)
-exponential_distribution_isf_model.set_param_hint('Gamma', value=1.0, min=0.0, max=np.inf)
-exponential_distribution_isf_model.set_param_hint('sigma', value=1.0, vary=False)
+exponential_distribution_isf_model.set_param_hint("A", value=1.0, min=0.0, max=np.inf)
+exponential_distribution_isf_model.set_param_hint(
+    "Gamma", value=1.0, min=0.0, max=np.inf
+)
+exponential_distribution_isf_model.set_param_hint("sigma", value=1.0, vary=False)
 
 
 # -------------------------------
 # -- STRUCTURE FUNCTION MODELS --
 # -------------------------------
 
+
 # ** generic exponential model
 def _generic_exponential(
-    x: Union[np.ndarray, float],
-    A: float,
-    B: float,
-    Gamma: float,
-    beta: float
+    x: Union[np.ndarray, float], A: float, B: float, Gamma: float, beta: float
 ) -> Union[np.ndarray, float]:
     """A generic exponential function model for the structure function
 
     .. math:
 
-        D(t) = 2A \\left( 1 - \\exp(- (\\Gamma t)^{\\beta}) \\right) + 2B
+        D(t) = A \\left( 1 - \\exp(- (\\Gamma t)^{\\beta}) \\right) + B
 
     where :math:`0 < \\beta < \\infty`.
 
@@ -233,38 +229,38 @@ def _generic_exponential(
     np.ndarray, float
         Generic exponential structure function model.
     """
-    return 2 * A * (1 - _generic_exponential_isf(x, 1.0, Gamma, beta)) + 2 * B
+    return A * (1 - _generic_exponential_isf(x, 1.0, Gamma, beta)) + B
 
 
 generic_exponential_model = Model(_generic_exponential)
-generic_exponential_model.set_param_hint('A', value=1.0, min=0.0, max=np.inf)
-generic_exponential_model.set_param_hint('B', value=0.0, min=-np.inf, max=np.inf)
-generic_exponential_model.set_param_hint('Gamma', value=1.0, min=0.0, max=np.inf)
-generic_exponential_model.set_param_hint('beta', value=1.0, min=0.0, max=np.inf)
+generic_exponential_model.set_param_hint("A", value=1.0, min=0.0, max=np.inf)
+generic_exponential_model.set_param_hint("B", value=0.0, min=-np.inf, max=np.inf)
+generic_exponential_model.set_param_hint("Gamma", value=1.0, min=0.0, max=np.inf)
+generic_exponential_model.set_param_hint("beta", value=1.0, min=0.0, max=np.inf)
 
 
 # ** simple exponential model
 simple_exponential_model = Model(_generic_exponential)
-simple_exponential_model.set_param_hint('A', value=1.0, min=0.0, max=np.inf)
-simple_exponential_model.set_param_hint('B', value=0.0, min=-np.inf, max=np.inf)
-simple_exponential_model.set_param_hint('Gamma', value=1.0, min=0.0, max=np.inf)
-simple_exponential_model.set_param_hint('beta', value=1.0, vary=False)
+simple_exponential_model.set_param_hint("A", value=1.0, min=0.0, max=np.inf)
+simple_exponential_model.set_param_hint("B", value=0.0, min=-np.inf, max=np.inf)
+simple_exponential_model.set_param_hint("Gamma", value=1.0, min=0.0, max=np.inf)
+simple_exponential_model.set_param_hint("beta", value=1.0, vary=False)
 
 
 # ** stretched exponential model
 stretched_exponential_model = Model(_generic_exponential)
-stretched_exponential_model.set_param_hint('A', value=1.0, min=0.0, max=np.inf)
-stretched_exponential_model.set_param_hint('B', value=0.0, min=-np.inf, max=np.inf)
-stretched_exponential_model.set_param_hint('Gamma', value=1.0, min=0.0, max=np.inf)
-stretched_exponential_model.set_param_hint('beta', value=1.0, min=0.0, max=1.0)
+stretched_exponential_model.set_param_hint("A", value=1.0, min=0.0, max=np.inf)
+stretched_exponential_model.set_param_hint("B", value=0.0, min=-np.inf, max=np.inf)
+stretched_exponential_model.set_param_hint("Gamma", value=1.0, min=0.0, max=np.inf)
+stretched_exponential_model.set_param_hint("beta", value=1.0, min=0.0, max=1.0)
 
 
 # ** compressed exponential model
 compressed_exponential_model = Model(_generic_exponential)
-compressed_exponential_model.set_param_hint('A', value=1.0, min=0.0, max=np.inf)
-compressed_exponential_model.set_param_hint('B', value=0.0, min=-np.inf, max=np.inf)
-compressed_exponential_model.set_param_hint('Gamma', value=1.0, min=0.0, max=np.inf)
-compressed_exponential_model.set_param_hint('beta', value=1.0, min=1.0, max=np.inf)
+compressed_exponential_model.set_param_hint("A", value=1.0, min=0.0, max=np.inf)
+compressed_exponential_model.set_param_hint("B", value=0.0, min=-np.inf, max=np.inf)
+compressed_exponential_model.set_param_hint("Gamma", value=1.0, min=0.0, max=np.inf)
+compressed_exponential_model.set_param_hint("beta", value=1.0, min=1.0, max=np.inf)
 
 
 # ** double exponential model
@@ -276,13 +272,13 @@ def _double_exponential(
     beta1: float,
     Gamma2: float,
     beta2: float,
-    alpha: float
+    alpha: float,
 ) -> Union[np.ndarray, float]:
     """A double exponential function model for the structure function
 
     .. math:
 
-        D(t) = 2A \\left( 1 - \\alpha \\exp(- (\\Gamma_1 t)^{\\beta_1}) - (1 - \\alpha) \\exp(- (\\Gamma_2 t)^{\\beta_2}) \\right) + 2B
+        D(t) = A \\left( 1 - \\alpha \\exp(- (\\Gamma_1 t)^{\\beta_1}) - (1 - \\alpha) \\exp(- (\\Gamma_2 t)^{\\beta_2}) \\right) + B
 
     where :math:`0 \\le \\beta \\le \\infty` and :math:`0 \\le \\alpha \\le 1`.
 
@@ -310,32 +306,31 @@ def _double_exponential(
     np.ndarray, float
         Double exponential structure function model.
     """
-    return 2 * A * (1 - _double_exponential_isf(x, 1.0, Gamma1, beta1, Gamma2, beta2, alpha)) + 2 * B
+    return (
+        A * (1 - _double_exponential_isf(x, 1.0, Gamma1, beta1, Gamma2, beta2, alpha))
+        + B
+    )
 
 
 double_exponential_model = Model(_double_exponential)
-double_exponential_model.set_param_hint('A', value=1.0, min=0.0, max=np.inf)
-double_exponential_model.set_param_hint('B', value=0.0, min=-np.inf, max=np.inf)
-double_exponential_model.set_param_hint('Gamma1', value=1.0, min=0.0, max=np.inf)
-double_exponential_model.set_param_hint('beta1', value=1.0, min=0.0, max=np.inf)
-double_exponential_model.set_param_hint('Gamma2', value=1.0, min=0.0, max=np.inf)
-double_exponential_model.set_param_hint('beta2', value=1.0, min=0.0, max=np.inf)
-double_exponential_model.set_param_hint('alpha', value=1.0, min=0.0, max=1.0)
+double_exponential_model.set_param_hint("A", value=1.0, min=0.0, max=np.inf)
+double_exponential_model.set_param_hint("B", value=0.0, min=-np.inf, max=np.inf)
+double_exponential_model.set_param_hint("Gamma1", value=1.0, min=0.0, max=np.inf)
+double_exponential_model.set_param_hint("beta1", value=1.0, min=0.0, max=np.inf)
+double_exponential_model.set_param_hint("Gamma2", value=1.0, min=0.0, max=np.inf)
+double_exponential_model.set_param_hint("beta2", value=1.0, min=0.0, max=np.inf)
+double_exponential_model.set_param_hint("alpha", value=1.0, min=0.0, max=1.0)
 
 
 # ** flory-schulz distribution model
 def _flory_schulz(
-    x: Union[np.ndarray, float],
-    A: float,
-    B: float,
-    Gamma: float,
-    sigma: float
+    x: Union[np.ndarray, float], A: float, B: float, Gamma: float, sigma: float
 ) -> Union[np.ndarray, float]:
     """A Flory-Schulz function model for the structure function
 
     .. math:
 
-        D(t) = 2A \\left( 1 - (1 + \\sigma^2 \\bar{\\Gamma} t)^{-1/\\sigma^2} \\right) + 2B
+        D(t) = A \\left( 1 - (1 + \\sigma^2 \\bar{\\Gamma} t)^{-1/\\sigma^2} \\right) + B
 
     where :math:`0 \\le \\sigma \\le 1`. The decay rates follow a Flory-Schulz distribution
 
@@ -371,19 +366,19 @@ def _flory_schulz(
     np.ndarray, float
         Flory-Schulz structure function model.
     """
-    return 2 * A * (1 - _flory_schulz_isf(x, 1.0, Gamma, sigma)) + 2 * B
+    return A * (1 - _flory_schulz_isf(x, 1.0, Gamma, sigma)) + B
 
 
 flory_schulz_model = Model(_flory_schulz)
-flory_schulz_model.set_param_hint('A', value=1.0, min=0.0, max=np.inf)
-flory_schulz_model.set_param_hint('B', value=0.0, min=-np.inf, max=np.inf)
-flory_schulz_model.set_param_hint('Gamma', value=1.0, min=0.0, max=np.inf)
-flory_schulz_model.set_param_hint('sigma', value=1.0, min=0.0, max=1.0)
+flory_schulz_model.set_param_hint("A", value=1.0, min=0.0, max=np.inf)
+flory_schulz_model.set_param_hint("B", value=0.0, min=-np.inf, max=np.inf)
+flory_schulz_model.set_param_hint("Gamma", value=1.0, min=0.0, max=np.inf)
+flory_schulz_model.set_param_hint("sigma", value=1.0, min=0.0, max=1.0)
 
 
 # ** exponential distribution model
 exponential_distribution_model = Model(_flory_schulz)
-exponential_distribution_model.set_param_hint('A', value=1.0, min=0.0, max=np.inf)
-exponential_distribution_model.set_param_hint('B', value=0.0, min=-np.inf, max=np.inf)
-exponential_distribution_model.set_param_hint('Gamma', value=1.0, min=0.0, max=np.inf)
-exponential_distribution_model.set_param_hint('sigma', value=1.0, vary=False)
+exponential_distribution_model.set_param_hint("A", value=1.0, min=0.0, max=np.inf)
+exponential_distribution_model.set_param_hint("B", value=0.0, min=-np.inf, max=np.inf)
+exponential_distribution_model.set_param_hint("Gamma", value=1.0, min=0.0, max=np.inf)
+exponential_distribution_model.set_param_hint("sigma", value=1.0, vary=False)
