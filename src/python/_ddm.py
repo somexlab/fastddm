@@ -106,7 +106,9 @@ def ddm(
     dim_t, dim_y, dim_x = img_seq.shape
 
     # sanity check on window
-    if window is not None:
+    if window is None:
+        window = np.array([], dtype=DTYPE)
+    else:
         if window.shape != (dim_y, dim_x):
             raise RuntimeError(
                 f"Window with shape {window.shape} incompatible with image shape {(dim_y, dim_x)}."

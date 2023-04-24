@@ -158,7 +158,7 @@ def _py_image_structure_function(
     lags: np.ndarray,
     nx: Optional[int] = None,
     ny: Optional[int] = None,
-    window: Optional[np.ndarray] = None,
+    window: np.ndarray = np.array([], dtype=DTYPE),
     *,
     mode: str = "fft",
     workers: int = 2,
@@ -176,8 +176,9 @@ def _py_image_structure_function(
         The number of Fourier nodes in x direction (for normalization), by default None.
     ny : int, optional
         The number of Fourier nodes in y direction (for normalization), by default None.
-    window : np.ndarray, optional
-        A 2D array containing the window function to be applied to the images. Default is None.
+    window : np.ndarray
+        A 2D array containing the window function to be applied to the images.
+        If window is empty, no window is applied. By default empty np.array.
     mode : str, optional
         Calculate the autocorrelation function with Wiener-Khinchin theorem ('fft') or classically ('diff'), by default "fft"
     workers : int, optional
@@ -252,7 +253,7 @@ def normalized_rfft2(
     ny: Optional[int] = None,
     *,
     workers: int = 2,
-    window: Optional[np.ndarray] = None,
+    window: np.ndarray = np.array([], dtype=DTYPE),
 ) -> np.ndarray:
     """Calculate the normalized rfft2.
 
@@ -281,7 +282,7 @@ def normalized_rfft2(
     if nx is None or ny is None:
         *_, ny, nx = images.shape
 
-    if window is not None:
+    if len(window) > 0:
         rfft2 = scifft.rfft2(images.astype(DTYPE) * window, s=(ny, nx), workers=workers)
     else:
         rfft2 = scifft.rfft2(images.astype(DTYPE), s=(ny, nx), workers=workers)
