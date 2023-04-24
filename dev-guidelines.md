@@ -8,6 +8,15 @@ The maintainers will then add the assignee and appropriate milestone.
 
 When working on the issue, create a new branch starting from the latest milestone branch or from `main`.
 
+## Adding python files to installer
+Python modules must be added to the `src/python` directory. To make a module installable, add it to the `src/CMakeLists.txt` file.
+Scroll down until you find a list of `configure_file(...)`. Add your file to the list following the syntax of the other items:
+
+```cmake
+configure_file(python/<your_file>.py
+  ${FASTDDM_OUTPUT_DIR}/<your_file>.py)
+```
+
 ## Pull Requests
 When opening a pull request, make sure that the source and destination branches are compatible, e.g. `<your_branch> -> <latest_milestone_branch>` or `<latest_milestone_branch> -> main`.
 
