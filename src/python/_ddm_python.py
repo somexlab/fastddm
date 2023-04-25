@@ -156,9 +156,9 @@ def image_structure_function(
 def _py_image_structure_function(
     images: np.ndarray,
     lags: np.ndarray,
-    nx: Optional[int] = None,
-    ny: Optional[int] = None,
-    window: np.ndarray = np.array([], dtype=DTYPE),
+    nx: int,
+    ny: int,
+    window: np.ndarray,
     *,
     mode: str = "fft",
     workers: int = 2,
@@ -172,13 +172,13 @@ def _py_image_structure_function(
         Input image series.
     lags : np.ndarray
         Array of lag times.
-    nx : int, optional
-        The number of Fourier nodes in x direction (for normalization), by default None.
-    ny : int, optional
-        The number of Fourier nodes in y direction (for normalization), by default None.
+    nx : int
+        The number of Fourier nodes in x direction (for normalization).
+    ny : int
+        The number of Fourier nodes in y direction (for normalization).
     window : np.ndarray
         A 2D array containing the window function to be applied to the images.
-        If window is empty, no window is applied. By default empty np.array.
+        If window is empty, no window is applied.
     mode : str, optional
         Calculate the autocorrelation function with Wiener-Khinchin theorem ('fft') or classically ('diff'), by default "fft"
     workers : int, optional
@@ -210,8 +210,6 @@ def _py_image_structure_function(
 
     # setup
     calc_dqt = backend[mode]  # select function
-    if nx is None or ny is None:
-        _, ny, nx = images.shape
     length = len(lags)
     dqt = np.zeros(
         (length + 2, ny, nx // 2 + 1),
@@ -219,7 +217,7 @@ def _py_image_structure_function(
     )  # +2 for (avg) power spectrum & variance
 
     # spatial fft & square modulus
-    rfft2 = normalized_rfft2(images, nx, ny, workers=workers, window=window)
+    rfft2 = normalized_rfft2(images, nx, ny, window=window, workers=workers)
     square_mod = np.abs(rfft2) ** 2
 
     if mode == "diff":
@@ -249,11 +247,11 @@ def _py_image_structure_function(
 # convenience #####################################################################################
 def normalized_rfft2(
     images: np.ndarray,
-    nx: Optional[int] = None,
-    ny: Optional[int] = None,
+    nx: int,
+    ny: int,
+    window: np.ndarray,
     *,
     workers: int = 2,
-    window: np.ndarray = np.array([], dtype=DTYPE),
 ) -> np.ndarray:
     """Calculate the normalized rfft2.
 
@@ -265,14 +263,15 @@ def normalized_rfft2(
     ----------
     images : np.ndarray
         An image sequence.
-    nx : int, optional
-        The number of Fourier nodes in x direction, by default None.
-    ny : int, optional
-        The number of Fourier nodes in y direction, by default None.
+    nx : int
+        The number of Fourier nodes in x direction.
+    ny : int
+        The number of Fourier nodes in y direction.
+    window : np.ndarray
+        A 2D array containing the window function to be applied to the images.
+        If window is empty, no window is applied.
     workers : int, optional
         The number of threads to be passed to scipy.fft, by default 2.
-    window : np.ndarray, optional
-        A 2D array containing the window function to be applied to the images. Default is None.
 
     Returns
     -------

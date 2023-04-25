@@ -18,7 +18,7 @@ def ddm_diff_gpu(
     lags: List[int],
     nx: int,
     ny: int,
-    window: np.ndarray = np.array([], dtype=DTYPE),
+    window: np.ndarray,
     gpu_id: Optional[int] = 0,
 ) -> np.ndarray:
     """Differential Dynamic Microscopy, diff mode on GPU
@@ -38,7 +38,7 @@ def ddm_diff_gpu(
         Number of fft nodes in y direction.
     window : np.ndarray
         A 2D array containing the window function to be applied to the images.
-        If window is empty, no window is applied. Default is empty np.array.
+        If window is empty, no window is applied.
     gpu_id : int, optional
         The ID of the device to be used. Default is 0.
 
@@ -66,7 +66,7 @@ def ddm_fft_gpu(
     nx: int,
     ny: int,
     nt: int,
-    window: np.ndarray = np.array([], dtype=DTYPE),
+    window: np.ndarray,
     gpu_id: Optional[int] = 0,
 ) -> np.ndarray:
     """Differential Dynamic Microscopy, fft mode on GPU.
@@ -90,7 +90,7 @@ def ddm_fft_gpu(
         (for very large transorms, this value must be even).
     window : np.ndarray
         A 2D array containing the window function to be applied to the images.
-        If window is empty, no window is applied. Default is empty np.array.
+        If window is empty, no window is applied.
     gpu_id : int, optional
         The ID of the device to be used. Default is 0.
 
