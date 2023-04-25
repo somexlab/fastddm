@@ -22,7 +22,7 @@ def ddm_diff_cpp(
     lags: List[int],
     nx: int,
     ny: int,
-    window: Optional[np.ndarray] = None,
+    window: np.ndarray,
 ):
     """Differential Dynamic Microscopy, diff mode
 
@@ -38,8 +38,9 @@ def ddm_diff_cpp(
         Number of fft nodes in x direction.
     ny : int
         Number of fft nodes in y direction.
-    window : np.ndarray, optional
-        A 2D array containing the window function to be applied to the images. Default is None.
+    window : np.ndarray
+        A 2D array containing the window function to be applied to the images.
+        If window is empty, no window is applied.
     Returns
     -------
     np.ndarray
@@ -50,10 +51,6 @@ def ddm_diff_cpp(
     RuntimeError
         If memory is not sufficient to perform the calculations.
     """
-    # if window not given, replace it with empty array
-    if window is None:
-        window = np.array([], dtype=DTYPE)
-
     # get available memory
     mem = psutil.virtual_memory().available
     mem_req = 0
@@ -77,7 +74,7 @@ def ddm_fft_cpp(
     nx: int,
     ny: int,
     nt: int,
-    window: Optional[np.ndarray] = None,
+    window: np.ndarray,
 ):
     """Differential Dynamic Microscopy, fft mode
 
@@ -95,8 +92,9 @@ def ddm_fft_cpp(
         Number of fft nodes in y direction.
     nt : int
         Number of fft nodes in t direction.
-    window : np.ndarray, optional
-        A 2D array containing the window function to be applied to the images. Default is None.
+    window : np.ndarray
+        A 2D array containing the window function to be applied to the images.
+        If window is empty, no window is applied.
 
     Returns
     -------
@@ -108,10 +106,6 @@ def ddm_fft_cpp(
     RuntimeError
         If memory available is not sufficient for calculations.
     """
-    # if window not given, replace it with empty array
-    if window is None:
-        window = np.array([], dtype=DTYPE)
-
     # get available memory
     mem = psutil.virtual_memory().available
 

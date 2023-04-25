@@ -18,7 +18,7 @@ def ddm_diff_gpu(
     lags: List[int],
     nx: int,
     ny: int,
-    window: Optional[np.ndarray] = None,
+    window: np.ndarray,
     gpu_id: Optional[int] = 0,
 ) -> np.ndarray:
     """Differential Dynamic Microscopy, diff mode on GPU
@@ -36,8 +36,9 @@ def ddm_diff_gpu(
         (for very large transorms, this value must be even).
     ny : int
         Number of fft nodes in y direction.
-    window : np.ndarray, optional
-        A 2D array containing the window function to be applied to the images. Default is None.
+    window : np.ndarray
+        A 2D array containing the window function to be applied to the images.
+        If window is empty, no window is applied.
     gpu_id : int, optional
         The ID of the device to be used. Default is 0.
 
@@ -52,10 +53,6 @@ def ddm_diff_gpu(
         If memory is not sufficient to perform the calculations
         or if device id is out of bounds.
     """
-    # if window not given, replace it with empty array
-    if window is None:
-        window = np.array([], dtype=DTYPE)
-
     # set device
     set_device(gpu_id)
 
@@ -69,7 +66,7 @@ def ddm_fft_gpu(
     nx: int,
     ny: int,
     nt: int,
-    window: Optional[np.ndarray] = None,
+    window: np.ndarray,
     gpu_id: Optional[int] = 0,
 ) -> np.ndarray:
     """Differential Dynamic Microscopy, fft mode on GPU.
@@ -91,8 +88,9 @@ def ddm_fft_gpu(
     nt : int
         Number of fft nodes in t direction
         (for very large transorms, this value must be even).
-    window : np.ndarray, optional
-        A 2D array containing the window function to be applied to the images. Default is None.
+    window : np.ndarray
+        A 2D array containing the window function to be applied to the images.
+        If window is empty, no window is applied.
     gpu_id : int, optional
         The ID of the device to be used. Default is 0.
 
@@ -106,10 +104,6 @@ def ddm_fft_gpu(
     RuntimeError
         If memory is not sufficient to perform the calculations.
     """
-    # if window not given, replace it with empty array
-    if window is None:
-        window = np.array([], dtype=DTYPE)
-
     # set device
     set_device(gpu_id)
 
