@@ -35,7 +35,7 @@ def _simple_image_structure_function(
     dt: np.ndarray, A: float, B: float, tau: float
 ) -> np.ndarray:
     """Basic image structure function shape with a simple exponential."""
-    return 2 * A * (1 - _simple_exp(dt, tau, 1.0)) + 2 * B  # type: ignore
+    return A * (1 - _simple_exp(dt, tau, 1.0)) + B  # type: ignore
 
 
 simple_structure_function = lm.Model(_simple_image_structure_function)
