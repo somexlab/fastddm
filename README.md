@@ -33,6 +33,13 @@ In your preferred environment, run from the local git clone
 export ENABLE_CUDA=ON
 pip install .
 ```
+### (iv) installing `fastddm` with single precision
+
+In your preferred environment, run from the local git clone
+```console
+export SINGLE_PRECISION=ON
+pip install .
+```
 ### Check your installation of C++ / CUDA is working
 In a python shell run:
 ```python
@@ -40,6 +47,8 @@ In a python shell run:
 >>> fddm.IS_CPP_ENABLED
 True
 >>> fddm.IS_CUDA_ENABLED
+True
+>>> fddm.IS_SINGLE_PRECISION
 True
 ```
 ## Usage examples
