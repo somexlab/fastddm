@@ -9,7 +9,7 @@ import pytest
 import fastddm as fddm
 import numpy as np
 
-from fastddm import IS_SINGLE_PRECISION
+from fastddm import IS_SINGLE_PRECISION, DTYPE
 
 impath = Path("tests/test-imgs/confocal/")
 imgs = fddm.read_images([p for p in sorted(impath.glob("*.tif"))][:20])
@@ -147,3 +147,18 @@ def test_ddm_cuda_diff_single(ddm_baseline):
     result = fddm.ddm(imgs, lags, core="cuda", mode="diff")
 
     assert np.isclose(result._data, ddm_baseline._data, atol=0.0, rtol=1e-3).all()
+
+
+def test_ddm_lags_errors():
+    # check error when negative lags are given
+    with pytest.raises(RuntimeError):
+        fddm.ddm(imgs, [-1], core="py", mode="diff")
+
+
+def test_ddm_window_error():
+    # check error when window and lags are incompatible
+    with pytest.raises(RuntimeError):
+        dim_t, dim_y, dim_x = imgs.shape
+        # make window slightly larger
+        window = np.ones((dim_y + 1, dim_x), dtype=DTYPE)
+        fddm.ddm(imgs, lags, core="cpp", mode="fft", window=window)
