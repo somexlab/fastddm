@@ -70,3 +70,20 @@ result = fit(structure_function, xdata=dt, ydata=data)
 Here we can directly set the initial values we want in the parameter hints, e.g. for the stretching exponent `delta` we set the range to $(0.1, 1.0)$ with a starting value of $0.5$.
 
 Not all parameter hints have to be set, but their default values (by `lmfit`) may be problematic depending on the model used.
+
+### Other model functions
+We also provide other model functions in `fastddm.fit_models`. The models are written in the generic format
+
+$$
+D(q,\Delta t) = A(q) [1 - f(q, \Delta t)] + B(q)
+$$
+
+where $f(q,\Delta t)$ is an intermediate scattering function model.
+We provide the following models:
+- `generic_exponential_model`: $f(q,\Delta t) = \exp(-(\Gamma \Delta t)^{\beta})$
+- `simple_exponential_model`: $f(q,\Delta t) = \exp(-(\Gamma \Delta t))$
+- `stretched_exponential_model`: $f(q,\Delta t) = \exp(-(\Gamma \Delta t)^{\beta})$, with $\beta < 1$
+- `compressed_exponential_model`: $f(q,\Delta t) = \exp(-(\Gamma \Delta t)^{\beta})$, with $\beta > 1$
+- `double_exponential_model`: $f(q,\Delta t) = \alpha \exp(-(\Gamma_1 \Delta t)^{\beta_1}) + (1-\alpha) \exp(-(\Gamma_2 \Delta t)^{\beta_2})$
+- `flory_schultz_model`: $f(q,\Delta t) = (1 + \sigma^2 \Gamma \Delta t)^{-1/\sigma^2}$, with $0 \le \sigma \le 1$
+- `exponential_distribution_model`: $f(q,\Delta t) = (1 + \Gamma \Delta t)^{-1}$
