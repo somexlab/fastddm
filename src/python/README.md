@@ -80,10 +80,13 @@ $$
 
 where $f(q,\Delta t)$ is an intermediate scattering function model.
 We provide the following models:
-- `generic_exponential_model`: $f(q,\Delta t) = \exp(-(\Gamma \Delta t)^{\beta})$
-- `simple_exponential_model`: $f(q,\Delta t) = \exp(-(\Gamma \Delta t))$
-- `stretched_exponential_model`: $f(q,\Delta t) = \exp(-(\Gamma \Delta t)^{\beta})$, with $\beta < 1$
-- `compressed_exponential_model`: $f(q,\Delta t) = \exp(-(\Gamma \Delta t)^{\beta})$, with $\beta > 1$
-- `double_exponential_model`: $f(q,\Delta t) = \alpha \exp(-(\Gamma_1 \Delta t)^{\beta_1}) + (1-\alpha) \exp(-(\Gamma_2 \Delta t)^{\beta_2})$
-- `flory_schultz_model`: $f(q,\Delta t) = (1 + \sigma^2 \Gamma \Delta t)^{-1/\sigma^2}$, with $0 \le \sigma \le 1$
-- `exponential_distribution_model`: $f(q,\Delta t) = (1 + \Gamma \Delta t)^{-1}$
+- `generic_exponential_model`: $f(q,\Delta t) = \exp(-(\Gamma(q) \Delta t)^{\beta(q)})$
+- `simple_exponential_model`: $f(q,\Delta t) = \exp(-(\Gamma(q) \Delta t))$
+- `stretched_exponential_model`: $f(q,\Delta t) = \exp(-(\Gamma(q) \Delta t)^{\beta(q)})$, with $\beta(q) < 1$
+- `compressed_exponential_model`: $f(q,\Delta t) = \exp(-(\Gamma(q) \Delta t)^{\beta(q)})$, with $\beta(q) > 1$
+- `double_exponential_model`: $f(q,\Delta t) = \alpha(q) \exp(-(\Gamma_1(q) \Delta t)^{\beta_1(q)}) + (1-\alpha(q)) \exp(-(\Gamma_2(q) \Delta t)^{\beta_2(q)})$
+- `flory_schultz_model`: $f(q,\Delta t) = (1 + \sigma^2(q) \Gamma(q) \Delta t)^{-1/\sigma^2(q)}$, with $0 \le \sigma(q) \le 1$
+- `exponential_distribution_model`: $f(q,\Delta t) = (1 + \Gamma(q) \Delta t)^{-1}$
+
+Fit models for the intermediate scattering function are provided as well.
+They can be retrieved by making the substitution `_model -> _isf_model` in the model names outlined above.
