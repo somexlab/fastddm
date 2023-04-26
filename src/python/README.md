@@ -1,6 +1,6 @@
 ## Using the `fastddm.fit` module
 
-The underlying framework in this module is [`lmfit`](https://lmfit.github.io//lmfit-py/). For convenience we provide a few helper tools for fitting the image structure function with a simple exponential function of the shape $D(q;\Delta t) = 2A(q)\left[1-\exp(\Delta t/\tau(q))\right] + 2B$.
+The underlying framework in this module is [`lmfit`](https://lmfit.github.io//lmfit-py/). For convenience we provide a few helper tools for fitting the image structure function with a simple exponential function of the shape $D(q;\Delta t) = A(q)\left[1-\exp(\Delta t/\tau(q))\right] + B$.
 
 We assume we have the 2 arrays for $\Delta t$ and $D(q;\Delta t)$ (for a fixed value of $q$). Then we can just fit the above shape for the image structure function:
 ```python
@@ -50,7 +50,7 @@ def structure_function(dt: np.ndarray, A: float, B: float, tau: float, delta: fl
     def stretched_exp(dt, tau, delta):
         return np.exp(-(dt/tau)**delta)
 
-    return 2*A*(1-stretched_exp(dt, tau, delta)) + 2*B
+    return A*(1-stretched_exp(dt, tau, delta)) + B
 
 # initialize model object
 sf_model = lm.Model(structure_function)
@@ -70,3 +70,23 @@ result = fit(structure_function, xdata=dt, ydata=data)
 Here we can directly set the initial values we want in the parameter hints, e.g. for the stretching exponent `delta` we set the range to $(0.1, 1.0)$ with a starting value of $0.5$.
 
 Not all parameter hints have to be set, but their default values (by `lmfit`) may be problematic depending on the model used.
+
+### Other model functions
+We also provide other model functions in `fastddm.fit_models`. The models are written in the generic format
+
+$$
+D(q,\Delta t) = A(q) [1 - f(q, \Delta t)] + B(q)
+$$
+
+where $f(q,\Delta t)$ is an intermediate scattering function model.
+We provide the following models:
+- `generic_exponential_model`: $f(q,\Delta t) = \exp(-(\Gamma(q) \Delta t)^{\beta(q)})$
+- `simple_exponential_model`: $f(q,\Delta t) = \exp(-(\Gamma(q) \Delta t))$
+- `stretched_exponential_model`: $f(q,\Delta t) = \exp(-(\Gamma(q) \Delta t)^{\beta(q)})$, with $\beta(q) < 1$
+- `compressed_exponential_model`: $f(q,\Delta t) = \exp(-(\Gamma(q) \Delta t)^{\beta(q)})$, with $\beta(q) > 1$
+- `double_exponential_model`: $f(q,\Delta t) = \alpha(q) \exp(-(\Gamma_1(q) \Delta t)^{\beta_1(q)}) + (1-\alpha(q)) \exp(-(\Gamma_2(q) \Delta t)^{\beta_2(q)})$
+- `flory_schultz_model`: $f(q,\Delta t) = (1 + \sigma^2(q) \Gamma(q) \Delta t)^{-1/\sigma^2(q)}$, with $0 \le \sigma(q) \le 1$
+- `exponential_distribution_model`: $f(q,\Delta t) = (1 + \Gamma(q) \Delta t)^{-1}$
+
+Fit models for the intermediate scattering function are provided as well.
+They can be retrieved by making the substitution `_model -> _isf_model` in the model names outlined above.
