@@ -6,6 +6,7 @@
 """Differential dynamic microscopy interface with backends."""
 
 from typing import Dict, Callable, Iterable, Optional
+import warnings
 from functools import partial
 import numpy as np
 
@@ -81,6 +82,8 @@ def ddm(
         If a value for `mode` other than "diff" and "fft" are given.
     RuntimeError
         If `window` and `img_seq` shapes are not compatible.
+    RuntimeError
+        If negative lags are given.
     """
 
     # renaming for convenience
@@ -104,6 +107,23 @@ def ddm(
 
     # read actual image dimensions
     dim_t, dim_y, dim_x = img_seq.shape
+
+    # sanity check on lags
+    # negative lags
+    if np.min(lags) < 0:
+        raise RuntimeError("Negative lags are not possible.")
+    # large lags
+    if np.max(lags) > dim_t - 1:  # maximum lag cna only go up to dim_t - 1 (included)
+        raise RuntimeError(
+            f"Lags larger than len(img_seq) - 1 = {dim_t - 1} are not possible."
+        )
+    # lag == 0
+    # lags are sorted, 0 can only be in 0th position if no negative values are present
+    if lags[0] == 0:
+        warnings.warn(
+            "Found 0 in lags. Removed for compatibility with other functions."
+        )
+        lags = lags[1:]
 
     # sanity check on window
     if window is None:
