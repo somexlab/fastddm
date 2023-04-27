@@ -10,9 +10,8 @@ Created on Thu Apr 20 08:49:07 2023
 
 import numpy as np
 
-""" specify UNKNOWN_FILE befor testing """
-from .imagestructurefunction import ImageStructureFunction
-from .azimuthalaverage import AzimuthalAverage
+from fastddm.imagestructurefunction import ImageStructureFunction
+from fastddm.azimuthalaverage import AzimuthalAverage
 
 
 def calculate_camera_noise(Dataclass, mode = 'default'):
