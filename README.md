@@ -13,6 +13,11 @@ Links to readthedocs pages...
 ## Installation
 To install `fastddm` from source, first clone this repository locally (`git clone https://github.com/somexlab/fastddm.git`). It is recommended to use it in a virtual environment of your choice, e.g. `conda` (to create a new virtual environment with conda, do `conda create -n fastddm python=3.10` to create a virtual environment `fastddm`, using python 3.10.* as the interpreter.)
 
+> **_NOTE FOR WINDOWS USERS_** You will need Python (with `python.exe` added to PATH) and a C++ compiler (even if you only need the python core).
+> You can download Python from [the official Python download page](https://www.python.org/downloads/). The option "add python.exe to PATH" will set up the environment variable for you.
+> We suggest to install Visual Studio Community Edition together with the optional "Desktop development with C++" workload.
+> CUDA (optional) can be installed following NVIDIA's [CUDA Installation Guide for Windows](https://docs.nvidia.com/cuda/cuda-installation-guide-microsoft-windows/).
+
 ### (i) installing `fastddm` only with python backend
 In your preferred environment, run from the local git clone
 ```console
