@@ -199,10 +199,10 @@ class AzimuthalAverage:
             The resampled azimuthal average.
         """
         # initialize data
-        _data = np.zeros((len(self.k), len(tau) + 2))
+        _data = np.zeros((len(self.k), len(tau) + 2), dtype=DTYPE)
         is_err = self._err is not None
         if is_err:
-            _err = np.zeros((len(self.k), len(tau) + 2))
+            _err = np.zeros((len(self.k), len(tau) + 2), dtype=DTYPE)
         else:
             _err = None
 
@@ -212,9 +212,9 @@ class AzimuthalAverage:
         for i in range(len(self.k)):
             # check for nan
             if np.isnan(self.data[i, 0]):
-                _data[i, :-2] = np.full(len(tau), np.nan)
+                _data[i, :-2] = np.full(len(tau), np.nan, dtype=DTYPE)
                 if is_err:
-                    _err[i, :-2] = np.full(len(tau), np.nan)
+                    _err[i, :-2] = np.full(len(tau), np.nan, dtype=DTYPE)
             else:
                 # interpolate points in loglog scale
                 f = interp1d(
@@ -242,7 +242,11 @@ class AzimuthalAverage:
             _err[:, -2] = self.power_spec_err
             _err[:, -1] = self.var_err
 
-        return AzimuthalAverage(_data, _err, self.k, tau, self.bin_edges)
+        # ensure DTYPE for all AzimuthalAverage args
+        k = self.k.astype(DTYPE)
+        bin_edges = self.bin_edges.astype(DTYPE)
+
+        return AzimuthalAverage(_data, _err, k, tau.astype(DTYPE), bin_edges)
 
 
 def azimuthal_average(
