@@ -1071,6 +1071,7 @@ def melt(az_avg1: AzimuthalAverage, az_avg2: AzimuthalAverage) -> AzimuthalAvera
             if err is not None:
                 err[i, -2:] = slow._err[i, -2:]
 
+    # ensure DTYPE for all AzimuthalAverage args
     k = fast.k.astype(DTYPE)
     bin_edges = fast.bin_edges.astype(DTYPE)
 
@@ -1093,21 +1094,25 @@ def mergesort(az_avg1: AzimuthalAverage, az_avg2: AzimuthalAverage) -> Azimuthal
     AzimuthalAverage
         The two AzimuthalAverage objects are fused into a new one.
     """
-    tau = np.append(az_avg1.tau, az_avg2.tau)
+    tau = np.append(az_avg1.tau, az_avg2.tau).astype(DTYPE)
     sortidx = np.argsort(tau)
 
     # create new data
     dim_k, dim_tau = az_avg1.shape
-    data = np.zeros_like(az_avg1.data, shape=(dim_k, len(tau) + 2))
+    data = np.zeros(az_avg1.data, shape=(dim_k, len(tau) + 2), dtype=DTYPE)
     if az_avg1._err is None or az_avg2._err is None:
         err = None
     else:
-        err = np.zeros_like(az_avg1.err, shape=(dim_k, len(tau) + 2))
+        err = np.zeros(az_avg1.err, shape=(dim_k, len(tau) + 2), dtype=DTYPE)
 
     # populate data
-    data[:, :-2] = np.append(az_avg1.data, az_avg2.data, axis=1)[:, sortidx]
+    data[:, :-2] = np.append(az_avg1.data, az_avg2.data, axis=1)[:, sortidx].astype(
+        DTYPE
+    )
     if err is not None:
-        err[:, :-2] = np.append(az_avg1.err, az_avg2.err, axis=1)[:, sortidx]
+        err[:, :-2] = np.append(az_avg1.err, az_avg2.err, axis=1)[:, sortidx].astype(
+            DTYPE
+        )
 
     # copy power spectrum and variance from input with longer tau
     if az_avg1.tau[-1] > az_avg2.tau[-1]:
@@ -1119,4 +1124,8 @@ def mergesort(az_avg1: AzimuthalAverage, az_avg2: AzimuthalAverage) -> Azimuthal
         if err is not None:
             err[:, -2:] = az_avg2._err[:, -2:]
 
-    return AzimuthalAverage(data, err, az_avg1.k, tau[sortidx], az_avg1.bin_edges)
+    # ensure DTYPE for all AzimuthalAverage args
+    k = az_avg1.k.astype(DTYPE)
+    bin_edges = az_avg1.bin_edges.astype(DTYPE)
+
+    return AzimuthalAverage(data, err, k, tau[sortidx], bin_edges)
