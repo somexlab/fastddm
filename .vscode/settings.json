@@ -1,8 +1,7 @@
 {
-    "files.insertFinalNewline": true,
-    "editor.autoIndent": "keep",
-    "editor.detectIndentation": false,
     "editor.formatOnSave": true,
+    "editor.autoIndent": "keep",
+    "files.insertFinalNewline": true,
     "editor.rulers": [
         100
     ],
@@ -26,19 +25,14 @@
             100
         ]
     },
-    "python.linting.flake8Enabled": true,
-    "python.linting.pycodestyleEnabled": false,
-    "python.linting.pylintEnabled": false,
     "python.formatting.provider": "black",
-    "cSpell.allowCompoundWords": true,
     "files.exclude": {
         ".cache": true,
         ".pytest_cache": true,
         "build": true,
         "sphinx-doc/_build": true,
     },
-    "cSpell.enableFiletypes": [
-        "cuda"
-    ],
-    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools"
+    "C_Cpp.default.includePath": [
+        "lib/**"
+    ]
 }

@@ -80,4 +80,4 @@ void cudaGetFftMemSize(size_t nt,
                        size_t *memsize,
                        cufftResult &cufft_res);
 
-#endif  // __HELPER_MEMCHK_GPU_CUH__
+#endif // __HELPER_MEMCHK_GPU_CUH__

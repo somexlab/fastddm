@@ -66,4 +66,4 @@ void fft_get_mem_size(size_t nt,
                       size_t *memsize,
                       cufftResult &cufft_res);
 
-#endif  // __HELPER_CUFFT_CUH__
+#endif // __HELPER_CUFFT_CUH__

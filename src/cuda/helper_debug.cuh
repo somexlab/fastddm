@@ -103,4 +103,4 @@ inline void __cufftSilentSafeCall(cufftResult err, const char *file, const int l
     }
 }
 
-#endif  // __HELPER_DEBUG_CUH__
+#endif // __HELPER_DEBUG_CUH__
