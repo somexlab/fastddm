@@ -17,12 +17,12 @@
 // definitions
 #define NUM_BANKS 32ULL
 #define LOG_NUM_BANKS 5ULL
-//#ifdef ZERO_BANK_CONFLICTS
-//#define CONFLICT_FREE_OFFSET(n) \ 
+// #ifdef ZERO_BANK_CONFLICTS
+// # define CONFLICT_FREE_OFFSET(n) \ 
 // ((n) >> NUM_BANKS + (n) >> (2 * LOG_NUM_BANKS))
-//#else
+// #else
 #define CONFLICT_FREE_OFFSET(n) ((n) >> LOG_NUM_BANKS)
-//#endif
+// #endif
 
 unsigned long long BLOCK_SIZE = 512;
 unsigned long long ELEMENTS_PER_BLOCK = BLOCK_SIZE * 2;
@@ -99,7 +99,7 @@ void scanManyLargeArrays(double *output,
         // sum the last element of the even arrays portion
         // and the first element of the remainder input
         // to the remainder scan
-        add_many_kernel<<<gridSize_copy, remainder>>>(output+length_even,
+        add_many_kernel<<<gridSize_copy, remainder>>>(output + length_even,
                                                       dist,
                                                       1,
                                                       N,

@@ -150,4 +150,4 @@ __global__ void copy_every_kernel(double *output,
  */
 unsigned long long nextPowerOfTwo(unsigned long long n);
 
-#endif  // __HELPER_PREFIX_SUM_CUH__
+#endif // __HELPER_PREFIX_SUM_CUH__
