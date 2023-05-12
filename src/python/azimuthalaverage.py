@@ -199,10 +199,10 @@ class AzimuthalAverage:
             The resampled azimuthal average.
         """
         # initialize data
-        _data = np.zeros((len(self.k), len(tau) + 2))
+        _data = np.zeros((len(self.k), len(tau) + 2), dtype=DTYPE)
         is_err = self._err is not None
         if is_err:
-            _err = np.zeros((len(self.k), len(tau) + 2))
+            _err = np.zeros((len(self.k), len(tau) + 2), dtype=DTYPE)
         else:
             _err = None
 
@@ -212,9 +212,9 @@ class AzimuthalAverage:
         for i in range(len(self.k)):
             # check for nan
             if np.isnan(self.data[i, 0]):
-                _data[i, :-2] = np.full(len(tau), np.nan)
+                _data[i, :-2] = np.full(len(tau), np.nan, dtype=DTYPE)
                 if is_err:
-                    _err[i, :-2] = np.full(len(tau), np.nan)
+                    _err[i, :-2] = np.full(len(tau), np.nan, dtype=DTYPE)
             else:
                 # interpolate points in loglog scale
                 f = interp1d(
@@ -242,7 +242,11 @@ class AzimuthalAverage:
             _err[:, -2] = self.power_spec_err
             _err[:, -1] = self.var_err
 
-        return AzimuthalAverage(_data, _err, self.k, tau, self.bin_edges)
+        # ensure DTYPE for all AzimuthalAverage args
+        k = self.k.astype(DTYPE)
+        bin_edges = self.bin_edges.astype(DTYPE)
+
+        return AzimuthalAverage(_data, _err, k, tau.astype(DTYPE), bin_edges)
 
 
 def azimuthal_average(
@@ -1035,12 +1039,12 @@ def melt(az_avg1: AzimuthalAverage, az_avg2: AzimuthalAverage) -> AzimuthalAvera
     Nt = min(10, np.sum(slow.tau < fast.tau[-1]))
     # keep data of `fast` up to (Nt/2)-th tau of `slow`
     idx = np.argmin(np.abs(fast.tau - slow.tau[Nt // 2])) + 1
-    tau = np.append(fast.tau[:idx], slow.tau[Nt // 2 + 1 :])
-    data = np.zeros((len(fast.k), len(tau) + 2))
+    tau = np.append(fast.tau[:idx], slow.tau[Nt // 2 + 1 :]).astype(DTYPE)
+    data = np.zeros((len(fast.k), len(tau) + 2), dtype=DTYPE)
     if fast._err is None or slow._err is None:
         err = None
     else:
-        err = np.zeros((len(fast.k), len(tau) + 2))
+        err = np.zeros((len(fast.k), len(tau) + 2), dtype=DTYPE)
 
     t = np.log(slow.tau[:Nt])
 
@@ -1048,7 +1052,7 @@ def melt(az_avg1: AzimuthalAverage, az_avg2: AzimuthalAverage) -> AzimuthalAvera
     for i in range(len(fast.k)):
         # check for nan
         if np.any(np.isnan([fast.data[i, 0], slow.data[i, 0]])):
-            data[i] = np.full(len(tau) + 2, np.nan)
+            data[i] = np.full(len(tau) + 2, np.nan, dtype=DTYPE)
         else:
             # find multiplicative factor via least squares minimization
             # interpolate in loglog scale (smoother curve)
@@ -1060,18 +1064,22 @@ def melt(az_avg1: AzimuthalAverage, az_avg2: AzimuthalAverage) -> AzimuthalAvera
             # scale fast on slow
             data[i, :-2] = np.append(
                 fast.data[i, :idx] * alpha, slow.data[i, Nt // 2 + 1 :]
-            )
+            ).astype(DTYPE)
             if err is not None:
                 err[i, :-2] = np.append(
                     fast.err[i, :idx] * alpha, slow.err[i, Nt // 2 + 1 :]
-                )
+                ).astype(DTYPE)
 
             # copy power spectrum and variance from slow
             data[i, -2:] = slow._data[i, -2:]
             if err is not None:
                 err[i, -2:] = slow._err[i, -2:]
 
-    return AzimuthalAverage(data, err, fast.k, tau, fast.bin_edges)
+    # ensure DTYPE for all AzimuthalAverage args
+    k = fast.k.astype(DTYPE)
+    bin_edges = fast.bin_edges.astype(DTYPE)
+
+    return AzimuthalAverage(data, err, k, tau, bin_edges)
 
 
 def mergesort(az_avg1: AzimuthalAverage, az_avg2: AzimuthalAverage) -> AzimuthalAverage:
@@ -1090,21 +1098,25 @@ def mergesort(az_avg1: AzimuthalAverage, az_avg2: AzimuthalAverage) -> Azimuthal
     AzimuthalAverage
         The two AzimuthalAverage objects are fused into a new one.
     """
-    tau = np.append(az_avg1.tau, az_avg2.tau)
+    tau = np.append(az_avg1.tau, az_avg2.tau).astype(DTYPE)
     sortidx = np.argsort(tau)
 
     # create new data
     dim_k, dim_tau = az_avg1.shape
-    data = np.zeros_like(az_avg1.data, shape=(dim_k, len(tau) + 2))
+    data = np.zeros(az_avg1.data, shape=(dim_k, len(tau) + 2), dtype=DTYPE)
     if az_avg1._err is None or az_avg2._err is None:
         err = None
     else:
-        err = np.zeros_like(az_avg1.err, shape=(dim_k, len(tau) + 2))
+        err = np.zeros(az_avg1.err, shape=(dim_k, len(tau) + 2), dtype=DTYPE)
 
     # populate data
-    data[:, :-2] = np.append(az_avg1.data, az_avg2.data, axis=1)[:, sortidx]
+    data[:, :-2] = np.append(az_avg1.data, az_avg2.data, axis=1)[:, sortidx].astype(
+        DTYPE
+    )
     if err is not None:
-        err[:, :-2] = np.append(az_avg1.err, az_avg2.err, axis=1)[:, sortidx]
+        err[:, :-2] = np.append(az_avg1.err, az_avg2.err, axis=1)[:, sortidx].astype(
+            DTYPE
+        )
 
     # copy power spectrum and variance from input with longer tau
     if az_avg1.tau[-1] > az_avg2.tau[-1]:
@@ -1116,4 +1128,8 @@ def mergesort(az_avg1: AzimuthalAverage, az_avg2: AzimuthalAverage) -> Azimuthal
         if err is not None:
             err[:, -2:] = az_avg2._err[:, -2:]
 
-    return AzimuthalAverage(data, err, az_avg1.k, tau[sortidx], az_avg1.bin_edges)
+    # ensure DTYPE for all AzimuthalAverage args
+    k = az_avg1.k.astype(DTYPE)
+    bin_edges = az_avg1.bin_edges.astype(DTYPE)
+
+    return AzimuthalAverage(data, err, k, tau[sortidx], bin_edges)
