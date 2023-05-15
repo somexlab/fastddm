@@ -1,20 +1,20 @@
 # Copyright (c) 2023-2023 University of Vienna, Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino.
 # Part of FastDDM, released under the GNU GPL-3.0 License.
-# Author:
-# Maintainer:
-"""
-Created on Thu Apr 20 08:49:07 2023
+# Author: Mike Chen and Enrico Lattuada
+# Maintainer: Enrico Lattuada
 
-@author: mkchn
-"""
-
+from typing import Union
 import numpy as np
 
 from fastddm.imagestructurefunction import ImageStructureFunction
 from fastddm.azimuthalaverage import AzimuthalAverage
 
 
-def calculate_camera_noise(Dataclass, mode = 'default'):
+def estimate_camera_noise(
+        obj: Union[ImageStructureFunction, AzimuthalAverage],
+        mode: str="zero",
+        **kwargs
+        ) -> np.ndarray:
   #take q_star and q_max also as optional input arguments
   #readability!
   #type in inner functions
@@ -25,26 +25,39 @@ def calculate_camera_noise(Dataclass, mode = 'default'):
     #initialize np array
     #np has polyfit already
     #using degree of polyfit as optional user define input
-    """
-    camera noise calculation function wrapper
+    f"""
+    Estimate of noise factor in ImageStructureFunction or AzimuthalAverage.
+    Possible modes are:
+
+    - "zero": zero at all wavevectors
+    - "min": min value at minimum lag
+    - "high_q": takes q_min and q_max (optional) float parameters. Returns the average value in the
+    range [q_min, q_max]
+    - "power_spec": takes `q_min` and `q_max` (optional) float parameters. Returns the average value of
+    the image power spectrum in the range `[q_min, q_max]`
+    - "var": takes `q_min` and `q_max` (optional) float parameters. Returns the average value of
+    the background corrected image power spectrum (2D Fourier transform variance) in the range
+    `[q_min, q_max]`
+    - "polyfit": takes `num_points` (optional) int parameter. For each wavevector, returns the
+    constant term of a quadratic polynomial fit of the first `num_points`
 
     Parameters
     ----------
-    Dataclass : ImageStructureFunction or AzimuthalAverage
-        Data class containing ISF data and metadata.
-    mode : String, optional
-        Which calculation mode to use. The default is 'default'.
-
-    Raises
-    ------
-    Exception
-        Unknown ISF data container.
+    obj : Union[ImageStructureFunction, AzimuthalAverage]
+        ImageStructureFunction or AzimuthalAverage object.
+    mode : str
+        Estimation mode. Possible values are: "zero", "min", "high_q", "power_spec", "var", and
+        "polyfit". Default is "zero".
 
     Returns
     -------
-    camera_noise : Numpy Array
-        Calculated camera noise.
+    np.ndarray
+        Estimated noise factor.
 
+    Raises
+    ------
+    TypeError
+        Input type not supported.
     """
     
     if type(Dataclass) is ImageStructureFunction:
