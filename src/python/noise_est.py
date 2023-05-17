@@ -297,7 +297,7 @@ def quadratic_mode_azi(AZI_Dataclass, N_points = 5):
     def quadratic_func(x, a, b, c):
         return a * (x**2) + b * x + c
     
-    for isf in AZI_Dataclass.data()[:, :N_points]:
+    for isf in AZI_Dataclass.data[:, :N_points]:
         popt, pcov = curve_fit(f = quadratic_func, 
                                xdata = AZI_Dataclass.k[:N_points], 
                                ydata = isf)
