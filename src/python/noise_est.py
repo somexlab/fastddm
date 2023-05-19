@@ -3,7 +3,7 @@
 # Authors: Mike Chen and Enrico Lattuada
 # Maintainer: Enrico Lattuada
 
-from typing import Union, Optional
+from typing import Union, Optional, Tuple
 import warnings
 import numpy as np
 
@@ -157,6 +157,40 @@ def _noise_min_az_avg(obj: AzimuthalAverage) -> np.ndarray:
     return noise
 
 
+def _check_k_range_az_avg(
+        obj: AzimuthalAverage,
+        k_min: Optional[float]=None,
+        k_max: Optional[float]=None
+        ) -> Tuple[float, float]:
+    """Sanity check for k_min and k_max in _noise_*_az_avg functions
+
+    Parameters
+    ----------
+    obj : AzimuthalAverage
+        AzimuthalAverage object.
+    k_min : float, optional
+        Lower bound of k range. If None, the maximum `k` is assumed. Default is None.
+    k_max : Optional[float], optional
+        Upper bound of k range. If None, the maximum `k` is assumed. Default is None.
+
+    Returns
+    -------
+    Tuple[float, float]
+        k_min, k_max values
+    """
+    # sanity checks
+    if k_min is None:
+        k_min = np.max(obj.k)
+    if k_max is None:
+        k_max = np.max(obj.k)
+    if k_min > k_max:
+        # if k_min > k_max, swap values
+        k_min, k_max = k_max, k_min
+        warnings.warn("Given k_min larger than k_max. Input values swapped.")
+
+    return k_min, k_max
+
+
 def _noise_high_q_az_avg(
         obj: AzimuthalAverage,
         k_min: Optional[float]=None,
@@ -182,14 +216,7 @@ def _noise_high_q_az_avg(
         Estimated noise factor.
     """
     # sanity checks
-    if k_min is None:
-        k_min = np.max(obj.k)
-    if k_max is None:
-        k_max = np.max(obj.k)
-    if k_min > k_max:
-        # if k_min > k_max, swap values
-        k_min, k_max = k_max, k_min
-        warnings.warn("Given k_min larger than k_max. Input values swapped.")
+    k_min, k_max = _check_k_range_az_avg(obj, k_min, k_max)
 
     # get output array dimension
     dim = len(obj.k)
@@ -229,14 +256,7 @@ def _noise_power_spec_az_avg(
         Estimated noise factor.
     """
     # sanity checks
-    if k_min is None:
-        k_min = np.max(obj.k)
-    if k_max is None:
-        k_max = np.max(obj.k)
-    if k_min > k_max:
-        # if k_min > k_max, swap values
-        k_min, k_max = k_max, k_min
-        warnings.warn("Given k_min larger than k_max. Input values swapped.")
+    k_min, k_max = _check_k_range_az_avg(obj, k_min, k_max)
 
     # get output array dimension
     dim = len(obj.k)
@@ -276,14 +296,7 @@ def _noise_var_az_avg(
         Estimated noise factor.
     """
     # sanity checks
-    if k_min is None:
-        k_min = np.max(obj.k)
-    if k_max is None:
-        k_max = np.max(obj.k)
-    if k_min > k_max:
-        # if k_min > k_max, swap values
-        k_min, k_max = k_max, k_min
-        warnings.warn("Given k_min larger than k_max. Input values swapped.")
+    k_min, k_max = _check_k_range_az_avg(obj, k_min, k_max)
 
     # get output array dimension
     dim = len(obj.k)
@@ -439,6 +452,86 @@ def _noise_min_img_str_func(
     return noise
 
 
+def _check_k_range_img_str_func(
+        obj: ImageStructureFunction,
+        k_min: Optional[float]=None,
+        k_max: Optional[float]=None
+        ) -> Tuple[float, float]:
+    """Sanity check for k_min and k_max in _noise_*_img_str_func functions
+
+    Parameters
+    ----------
+    obj : ImageStructureFunction
+        ImageStructureFunction object.
+    k_min : Optional[float], optional
+        Lower bound of k range. If None, the maximum of kx and ky is assumed. Default is None.
+    k_max : Optional[float], optional
+        Upper bound of k range. If None, the maximum of kx and ky is assumed. Default is None.
+
+    Returns
+    -------
+    Tuple[float, float]
+        k_min, k_max values
+    """
+    # sanity checks
+    if k_min is None:
+        kx_max = np.max(obj.kx)
+        ky_max = np.max(obj.ky)
+        k_min = max(kx_max, ky_max)
+    if k_max is None:
+        kx_max = np.max(obj.kx)
+        ky_max = np.max(obj.ky)
+        k_max = max(kx_max, ky_max)
+    if k_min > k_max:
+        # if k_min > k_max, swap values
+        k_min, k_max = k_max, k_min
+        warnings.warn("Given k_min larger than k_max. Input values swapped.")
+    
+    return k_min, k_max
+
+
+def _generate_bool_mask_img_str_func(
+        obj: ImageStructureFunction,
+        k_min: float,
+        k_max: float,
+        mask: Optional[np.ndarray]=None
+        ) -> np.ndarray:
+    """_summary_
+
+    Parameters
+    ----------
+    obj : ImageStructureFunction
+        _description_
+    k_min : float
+        _description_
+    k_max : float
+        _description_
+    mask : Optional[np.ndarray], optional
+        _description_, by default None
+
+    Returns
+    -------
+    np.ndarray
+        _description_
+    """
+    # get output array dimensions
+    dim_t, dim_y, dim_x = obj.shape
+
+    # check mask
+    if mask is None:
+        mask = np.full((dim_y, dim_x), True)
+    elif mask.dtype != bool:
+        mask = mask.astype(bool)
+        warnings.warn("Given mask not of boolean type. Casting to bool.")
+
+    # select k range with boolean mask
+    KX, KY = np.meshgrid(obj.kx, obj.ky)
+    k_modulus = np.sqrt(KX**2 + KY**2)
+    bool_mask = (k_modulus >= k_min) & (k_modulus <= k_max) & mask
+
+    return bool_mask
+
+
 def _noise_high_q_img_str_func(
         obj: ImageStructureFunction,
         k_min: Optional[float]=None,
@@ -470,33 +563,13 @@ def _noise_high_q_img_str_func(
         Estimated noise factor.
     """
     # sanity checks
-    if k_min is None:
-        kx_max = np.max(obj.kx)
-        ky_max = np.max(obj.ky)
-        k_min = max(kx_max, ky_max)
-    if k_max is None:
-        kx_max = np.max(obj.kx)
-        ky_max = np.max(obj.ky)
-        k_max = max(kx_max, ky_max)
-    if k_min > k_max:
-        # if k_min > k_max, swap values
-        k_min, k_max = k_max, k_min
-        warnings.warn("Given k_min larger than k_max. Input values swapped.")
+    k_min, k_max = _check_k_range_img_str_func(obj, k_min, k_max)
     
     # get output array dimensions
     dim_t, dim_y, dim_x = obj.shape
 
-    # check mask
-    if mask is None:
-        mask = np.full((dim_y, dim_x), True)
-    elif mask.dtype != bool:
-        mask = mask.astype(bool)
-        warnings.warn("Given mask not of boolean type. Casting to bool.")
-
-    # select k range with boolean mask
-    KX, KY = np.meshgrid(obj.kx, obj.ky)
-    k_modulus = np.sqrt(KX**2 + KY**2)
-    bool_mask = (k_modulus >= k_min) & (k_modulus <= k_max) & mask
+    # generate mask
+    bool_mask = _generate_bool_mask_img_str_func(obj, k_min, k_max, mask)
 
     # compute average value and create output array
     noise_value = np.nanmean(obj.data[:, bool_mask])
@@ -535,33 +608,13 @@ def _noise_power_spec_img_str_func(
         Estimated noise factor.
     """
     # sanity checks
-    if k_min is None:
-        kx_max = np.max(obj.kx)
-        ky_max = np.max(obj.ky)
-        k_min = max(kx_max, ky_max)
-    if k_max is None:
-        kx_max = np.max(obj.kx)
-        ky_max = np.max(obj.ky)
-        k_max = max(kx_max, ky_max)
-    if k_min > k_max:
-        # if k_min > k_max, swap values
-        k_min, k_max = k_max, k_min
-        warnings.warn("Given k_min larger than k_max. Input values swapped.")
+    k_min, k_max = _check_k_range_img_str_func(obj, k_min, k_max)
     
     # get output array dimensions
     dim_t, dim_y, dim_x = obj.shape
 
-    # check mask
-    if mask is None:
-        mask = np.full((dim_y, dim_x), True)
-    elif mask.dtype != bool:
-        mask = mask.astype(bool)
-        warnings.warn("Given mask not of boolean type. Casting to bool.")
-
-    # select k range with boolean mask
-    KX, KY = np.meshgrid(obj.kx, obj.ky)
-    k_modulus = np.sqrt(KX**2 + KY**2)
-    bool_mask = (k_modulus >= k_min) & (k_modulus <= k_max) & mask
+    # generate mask
+    bool_mask = _generate_bool_mask_img_str_func(obj, k_min, k_max, mask)
 
     # compute average value and create output array
     noise_value = 2 * np.nanmean(obj.power_spec[bool_mask])
@@ -601,33 +654,13 @@ def _noise_var_img_str_func(
         Estimated noise factor.
     """
     # sanity checks
-    if k_min is None:
-        kx_max = np.max(obj.kx)
-        ky_max = np.max(obj.ky)
-        k_min = max(kx_max, ky_max)
-    if k_max is None:
-        kx_max = np.max(obj.kx)
-        ky_max = np.max(obj.ky)
-        k_max = max(kx_max, ky_max)
-    if k_min > k_max:
-        # if k_min > k_max, swap values
-        k_min, k_max = k_max, k_min
-        warnings.warn("Given k_min larger than k_max. Input values swapped.")
+    k_min, k_max = _check_k_range_img_str_func(obj, k_min, k_max)
     
     # get output array dimensions
     dim_t, dim_y, dim_x = obj.shape
 
-    # check mask
-    if mask is None:
-        mask = np.full((dim_y, dim_x), True)
-    elif mask.dtype != bool:
-        mask = mask.astype(bool)
-        warnings.warn("Given mask not of boolean type. Casting to bool.")
-
-    # select k range with boolean mask
-    KX, KY = np.meshgrid(obj.kx, obj.ky)
-    k_modulus = np.sqrt(KX**2 + KY**2)
-    bool_mask = (k_modulus >= k_min) & (k_modulus <= k_max) & mask
+    # generate mask
+    bool_mask = _generate_bool_mask_img_str_func(obj, k_min, k_max, mask)
 
     # compute average value and create output array
     noise_value = 2 * np.nanmean(obj.var[bool_mask])
