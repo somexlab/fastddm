@@ -496,23 +496,27 @@ def _generate_bool_mask_img_str_func(
         k_max: float,
         mask: Optional[np.ndarray]=None
         ) -> np.ndarray:
-    """_summary_
+    """Generate boolean mask from k range and user given boolean mask
 
     Parameters
     ----------
     obj : ImageStructureFunction
-        _description_
+        ImageStructureFunction object.
     k_min : float
-        _description_
+        Lower bound of k range. If None, the maximum of kx and ky is assumed. Default is None.
     k_max : float
-        _description_
+        Upper bound of k range. If None, the maximum of kx and ky is assumed. Default is None.
     mask : Optional[np.ndarray], optional
-        _description_, by default None
+        mask : np.ndarray, optional
+        If a boolean mask is given, it is used to exclude grid points from
+        the azimuthal average (where False is set). The array must have the
+        same y,x shape of the data. If mask is not of boolean type, it is cast to bool
+        and a warning is raised. Default is None.
 
     Returns
     -------
     np.ndarray
-        _description_
+        Boolean k mask
     """
     # get output array dimensions
     dim_t, dim_y, dim_x = obj.shape
