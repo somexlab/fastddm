@@ -408,10 +408,12 @@ def _noise_min_img_str_func(obj: ImageStructureFunction) -> np.ndarray:
     np.ndarray
         Estimated noise factor.
     """
-    # the minimum tau is always in 0 on axis 1 since tau values are sorted
-    # nanmin is used to avoid nan values
+    # get output array dimensions
     dim_t, dim_y, dim_x = obj.shape
-    noise_value = np.nanmin(obj.data[:, 0])
+
+    # the minimum tau is always in 0 on axis 0 since tau values are sorted
+    # nanmin is used to avoid nan values
+    noise_value = np.nanmin(obj.data[0, :])
     noise = np.full((dim_y, dim_x), fill_value=noise_value, dtype=DTYPE)
 
     return noise
