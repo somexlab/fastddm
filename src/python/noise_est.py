@@ -240,7 +240,7 @@ def _noise_power_spec_az_avg(
     bool_mask = (obj.k >= k_min) & (obj.k <= k_max)
 
     # compute average value and create output array
-    noise_value = np.nanmean(obj.power_spec[bool_mask])
+    noise_value = 2 * np.nanmean(obj.power_spec[bool_mask])
     noise = np.full(dim, fill_value=noise_value, dtype=DTYPE)
 
     return noise
@@ -287,7 +287,7 @@ def _noise_var_az_avg(
     bool_mask = (obj.k >= k_min) & (obj.k <= k_max)
 
     # compute average value and create output array
-    noise_value = np.nanmean(obj.var[bool_mask])
+    noise_value = 2 * np.nanmean(obj.var[bool_mask])
     noise = np.full(dim, fill_value=noise_value, dtype=DTYPE)
 
     return noise
@@ -518,7 +518,7 @@ def _noise_power_spec_img_str_func(
     bool_mask = (k_modulus >= k_min) & (k_modulus <= k_max)
 
     # compute average value and create output array
-    noise_value = np.nanmean(obj.power_spec[bool_mask])
+    noise_value = 2 * np.nanmean(obj.power_spec[bool_mask])
     noise = np.full((dim_y, dim_x), fill_value=noise_value, dtype=DTYPE)
     
     return noise
@@ -571,7 +571,7 @@ def _noise_var_img_str_func(
     bool_mask = (k_modulus >= k_min) & (k_modulus <= k_max)
 
     # compute average value and create output array
-    noise_value = np.nanmean(obj.var[bool_mask])
+    noise_value = 2 * np.nanmean(obj.var[bool_mask])
     noise = np.full((dim_y, dim_x), fill_value=noise_value, dtype=DTYPE)
     
     return noise
