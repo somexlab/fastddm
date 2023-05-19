@@ -449,7 +449,7 @@ def _noise_high_q_img_str_func(
     if k_max is None:
         kx_max = np.max(obj.kx)
         ky_max = np.max(obj.ky)
-        k_min = max(kx_max, ky_max)
+        k_max = max(kx_max, ky_max)
     if k_min > k_max:
         # if k_min > k_max, swap values
         k_min, k_max = k_max, k_min
@@ -501,7 +501,7 @@ def _noise_power_spec_img_str_func(
     if k_max is None:
         kx_max = np.max(obj.kx)
         ky_max = np.max(obj.ky)
-        k_min = max(kx_max, ky_max)
+        k_max = max(kx_max, ky_max)
     if k_min > k_max:
         # if k_min > k_max, swap values
         k_min, k_max = k_max, k_min
@@ -554,7 +554,7 @@ def _noise_var_img_str_func(
     if k_max is None:
         kx_max = np.max(obj.kx)
         ky_max = np.max(obj.ky)
-        k_min = max(kx_max, ky_max)
+        k_max = max(kx_max, ky_max)
     if k_min > k_max:
         # if k_min > k_max, swap values
         k_min, k_max = k_max, k_min
