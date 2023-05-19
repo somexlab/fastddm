@@ -1,13 +1,15 @@
 # Copyright (c) 2023-2023 University of Vienna, Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino.
 # Part of FastDDM, released under the GNU GPL-3.0 License.
-# Author: Mike Chen and Enrico Lattuada
+# Authors: Mike Chen and Enrico Lattuada
 # Maintainer: Enrico Lattuada
 
-from typing import Union
+from typing import Union, Optional
+import warnings
 import numpy as np
 
 from fastddm.imagestructurefunction import ImageStructureFunction
 from fastddm.azimuthalaverage import AzimuthalAverage
+from fastddm._config import DTYPE
 
 
 def estimate_camera_noise(
@@ -15,38 +17,39 @@ def estimate_camera_noise(
         mode: str="zero",
         **kwargs
         ) -> np.ndarray:
-  #take q_star and q_max also as optional input arguments
-  #readability!
-  #type in inner functions
-  #q_min to optional q_max instead of q_star
-    #np.full
-    #average once and only relevant data
-  #quadratic_mode_azi
-    #initialize np array
-    #np has polyfit already
-    #using degree of polyfit as optional user define input
-    f"""
+    """
     Estimate of noise factor in ImageStructureFunction or AzimuthalAverage.
     Possible modes are:
 
-    - "zero": zero at all wavevectors
-    - "min": min value at minimum lag
-    - "high_q": takes q_min and q_max (optional) float parameters. Returns the average value in the
-    range [q_min, q_max]
-    - "power_spec": takes `q_min` and `q_max` (optional) float parameters. Returns the average value of
-    the image power spectrum in the range `[q_min, q_max]`
-    - "var": takes `q_min` and `q_max` (optional) float parameters. Returns the average value of
-    the background corrected image power spectrum (2D Fourier transform variance) in the range
-    `[q_min, q_max]`
-    - "polyfit": takes `num_points` (optional) int parameter. For each wavevector, returns the
-    constant term of a quadratic polynomial fit of the first `num_points`
+    - "zero": zero at all wavevectors.
+    - "min": minimum value at minimum lag time.
+    - "high_q": takes k_min and k_max (optional, defaults are None) float parameters. It
+    returns the average value of the data (calculated using all points over tau axis) in the range
+    [k_min, k_max].
+    - "power_spec": takes k_min and k_max (optional, defaults are None) float parameters. It
+    returns the average value of the image power spectrum in the range [k_min, k_max].
+    - "var": takes k_min and k_max (optional, defaults are None) float parameters. It returns
+    the average value of the background corrected image power spectrum (2D Fourier transform
+    variance) in the range [k_min, k_max].
+    - "polyfit": takes num_points (optional, default is 5) int parameter. For each wavevector,
+    it returns the constant term of a quadratic polynomial fit of the first num_points points.
+
+    In the case of ImageStructureFunction input:
+    - if k_min is None, the maximum between kx and ky is assumed
+    - if k_max is None, the maximum between kx and ky is assumed
+
+    In the case of AzimuthalAverage input:
+    - if k_min is None, the maximum k is assumed
+    - if k_max is None, the maximum k is assumed
+
+    If k_min > k_max, the two values are swapped and a Warning is raised.
 
     Parameters
     ----------
     obj : Union[ImageStructureFunction, AzimuthalAverage]
         ImageStructureFunction or AzimuthalAverage object.
-    mode : str
-        Estimation mode. Possible values are: "zero", "min", "high_q", "power_spec", "var", and
+    mode : str, optional
+        Estimate mode. Possible values are: "zero", "min", "high_q", "power_spec", "var", and
         "polyfit". Default is "zero".
 
     Returns
@@ -60,301 +63,560 @@ def estimate_camera_noise(
         Input type not supported.
     """
     
-    if type(Dataclass) is ImageStructureFunction:
-        camera_noise = calculate_camera_noise_ISF(ISF_Dataclass = Dataclass,
-                                                  mode = mode)
-    
-    elif type(Dataclass) is AzimuthalAverage:
-        camera_noise = calculate_camera_noise_AZI(AZI_Dataclass = Dataclass,
-                                                  mode = mode)
-    
+    if isinstance(obj, ImageStructureFunction):
+        camera_noise = _estimate_noise_img_str_func(obj=obj, mode=mode, **kwargs)
+    elif isinstance(obj, AzimuthalAverage):
+        camera_noise = _estimate_noise_az_avg(obj=obj, mode=mode, **kwargs)
     else:
-        raise Exception('Unknown Image Structure Function Data Class')
+        raise TypeError(f'Input type {type(obj)} not supported.')
 
     return camera_noise
 
-def calculate_camera_noise_AZI(
-        AZI_Dataclass,
-        mode = 'default',
-        q_max = None,
-        q_star = None):
-    """
-    Mode #1
-    Zero mode
-    """
-    if mode == 'zero' or mode == 'default':
-        camera_noise = zero_mode_azi(AZI_Dataclass)
-    
-    """
-    Mode #2
-    Minimum Mode
-    """
-    if mode == 'min':
-        camera_noise = min_mode_azi(AZI_Dataclass)
-        
-    """
-    Mode #3
-    High q Value Average Mode
-    """
-    if mode == 'high_q':
-        camera_noise = high_q_average_mode_azi(AZI_Dataclass,
-                                               q_max = q_max,
-                                               q_star = q_star)
-        
-    """
-    Mode #4
-    Power specturm mode
-    Uncertainty quantification in DDM
-    """
-    if mode == 'PS':
-        camera_noise = PS_mode_azi(AZI_Dataclass,
-                                   q_max = q_max,
-                                   q_star = q_star)
-    
-    """
-    Mode #5
-    Variance mode
-    """
-    if mode == 'variance':
-        camera_noise = variance_mode_azi(AZI_Dataclass,
-                                         q_max = q_max,
-                                         q_star = q_star)
-    
-    """
-    Mode #6
-    quadratic fit mode
-    """
-    if mode == 'quadratic':
-        camera_noise = quadratic_mode_azi(AZI_Dataclass,
-                                          N_points = 5)
-        
-    return camera_noise
 
-def calculate_camera_noise_ISF(
-        ISF_Dataclass,
-        mode = 'default',
-        q_max = None,
-        q_star = None):
-    """
-    Mode #1
-    Zero mode
-    """
-    if mode == 'zero' or mode == 'default':
-        camera_noise = zero_mode_isf(ISF_Dataclass)
-    
-    """
-    Mode #2
-    Minimum Mode
-    """
-    if mode == 'min':
-        camera_noise = min_mode_isf(ISF_Dataclass)
-        
-    """
-    Mode #3
-    High q Value Average Mode
-    """
-    if mode == 'high_q':
-        camera_noise = high_q_average_mode_isf(ISF_Dataclass,
-                                               q_max = q_max,
-                                               q_star = q_star)
-        
-    """
-    Mode #4
-    Power specturm mode
-    """
-    if mode == 'PS':
-        camera_noise = PS_mode_isf(ISF_Dataclass,
-                                   q_max = q_max,
-                                   q_star = q_star)
-    
-    """
-    Mode #5
-    Variance mode
-    """
-    if mode == 'variance':
-        camera_noise = variance_mode_isf(ISF_Dataclass,
-                                         q_max = q_max,
-                                         q_star = q_star)
-    
-    """
-    Mode #6
-    quadratic fit mode
-    """
-    if mode == 'quadratic':
-        camera_noise = quadratic_mode_isf(ISF_Dataclass,
-                                          N_points = 5)
-        
-    return camera_noise
-
-def zero_mode_azi(AZI_Dataclass):
-    """
-    Return an 1-D array of zeros the same length as obj.k
+def _estimate_noise_az_avg(
+        obj: AzimuthalAverage,
+        mode: str="zero",
+        **kwargs
+        ) -> np.ndarray:
+    """Wrapper function for the noise factor estimate for an AzimuthalAverage object.
 
     Parameters
     ----------
-    AZI_Dataclass : AzimuthalAverage
-        Azimuthal average container class.
+    obj : AzimuthalAverage
+        AzimuthalAverage object.
+    mode : str, optional
+        Estimate mode. Possible values are: "zero", "min", "high_q", "power_spec", "var", and
+        "polyfit". Default is "zero".
 
     Returns
     -------
-    Numpy 1-D Array
-        Camera noise, set to zero.
-
+    np.ndarray
+        Estimated noise factor.
     """
-    return np.zeros(shape = np.shape(AZI_Dataclass.k))
+    # create functions dictionary
+    func = {
+        "zero": _noise_zero_az_avg,
+        "min": _noise_min_az_avg,
+        "high_q": _noise_high_q_az_avg,
+        "power_spec": _noise_power_spec_az_avg,
+        "var": _noise_var_az_avg,
+        "polyfit": _noise_polyfit_az_avg,
+        }
+    
+    return func[mode](obj, **kwargs)
 
-def min_mode_azi(AZI_Dataclass):
-    """
-    Minimum ISF value at the lowest time delay
+
+def _noise_zero_az_avg(obj: AzimuthalAverage) -> np.ndarray:
+    """Noise factor estimate for an AzimuthalAverage object, 'zero' mode.
+
+    Noise is zero for all k vectors.
 
     Parameters
     ----------
-    AZI_Dataclass : AzimuthalAverage
-        Azimuthal average container class.
+    obj : AzimuthalAverage
+        AzimuthalAverage object.
 
     Returns
     -------
-    Numpy Array
-        Camera noise.
-
+    np.ndarray
+        Estimated noise factor.
     """
-    camera_noise = np.min(
-        AZI_Dataclass.data.take(np.argmin(AZI_Dataclass.tau), axis = -1))
-    
-    return np.ones(shape = np.shape(AZI_Dataclass.k)) * camera_noise
+    dim = len(obj.k)
+    noise = np.zeros(dim, dtype=DTYPE)
 
-def high_q_average_mode_azi(AZI_Dataclass, q_max, q_star = None):
-    """
-    Average over high frequency data to obtain camera noise
+    return noise
+
+
+def _noise_min_az_avg(obj: AzimuthalAverage) -> np.ndarray:
+    """Noise factor estimate for an AzimuthalAverage object, 'min' mode.
+
+    Noise is given by the minimum of the AzimuthalAverage at minimum tau.
 
     Parameters
     ----------
-    AZI_Dataclass : AzimuthalAverage
-        Azimuthal average container class.
-    q_max : Float
-        Maximum wavevector value the camera noise is evaluated at.
-    q_star : Float, optional
-        Minimum wavevector value the camera noise is evaluated at. The default
-        is None.
+    obj : AzimuthalAverage
+        AzimuthalAverage object.
 
     Returns
     -------
-    camera_noise : Numpy Array
-        Camera noise.
-
+    np.ndarray
+        Estimated noise factor.
     """
-    
-    """
-    Averaging the ISF over time
-    """
-    avg_azi = np.average(AZI_Dataclass.data, axis = -1)
-    idq_max = np.abs(AZI_Dataclass.k - q_max).argmin()
-    if q_star is None:
-        """
-        If user did not specify q_star value the average is carried out only at
-        the q value closest to q_max
-        """
-        camera_noise = avg_azi[idq_max]
-    
-    else:
-        """
-        Average the ISF from closest value from q_star to q_max
-        """
-        idq_star = np.abs(AZI_Dataclass.k - q_star).argmin()
-        camera_noise = np.average(avg_azi[idq_star:idq_max])
-    
-    return np.ones(shape = np.shape(AZI_Dataclass.k)) * camera_noise
+    # the minimum tau is always in 0 since values are sorted when the image structure function
+    # is calculated
+    # nanmin is used to avoid nan values
+    dim = len(obj.k)
+    noise_value = np.nanmin(obj.data[:, 0])
+    noise = np.full(dim, fill_value=noise_value, dtype=DTYPE)
 
-def PS_mode_azi(AZI_Dataclass, q_max, q_star = None):
-    
-    return
+    return noise
 
-def variance_mode_azi(AZI_Dataclass, q_max, q_star = None):
-    
-    return
 
-def quadratic_mode_azi(AZI_Dataclass, N_points = 5):
-    """
-    Fit the first N_points points to a quadratic curve and finding the 
-    y-intercept
+def _noise_high_q_az_avg(
+        obj: AzimuthalAverage,
+        k_min: Optional[float]=None,
+        k_max: Optional[float]=None
+        ) -> np.ndarray:
+    """Noise factor estimate for an AzimuthalAverage object, 'high_q' mode.
+
+    Noise is given by the average value of the data (calculated using all points over tau axis) in
+    the range [k_min, k_max].
 
     Parameters
     ----------
-    AZI_Dataclass : AzimuthalAverage
-        Azimuthal average container class.
-    N_points : Int, optional
-        The number of points to use in the fitting. The default is 5.
+    obj : AzimuthalAverage
+        AzimuthalAverage object.
+    k_min : float, optional
+        Lower bound of k range. If None, the maximum `k` is assumed. Default is None.
+    k_max : float, optional
+        Upper bound of k range. If None, the maximum `k` is assumed. Default is None.
 
     Returns
     -------
-    Numpy 1-D Array
-        Camera noise as a function of q.
-
+    np.ndarray
+        Estimated noise factor.
     """
-    from scipy.optimize import curve_fit
-    
-    camera_noise = []
-    def quadratic_func(x, a, b, c):
-        return a * (x**2) + b * x + c
-    
-    for isf in AZI_Dataclass.data[:, :N_points]:
-        popt, pcov = curve_fit(f = quadratic_func, 
-                               xdata = AZI_Dataclass.k[:N_points], 
-                               ydata = isf)
-        camera_noise.append(popt[-1])
-        
-    return camera_noise
+    # sanity checks
+    if k_min is None:
+        k_min = np.max(obj.k)
+    if k_max is None:
+        k_max = np.max(obj.k)
+    if k_min > k_max:
+        # if k_min > k_max, swap values
+        k_min, k_max = k_max, k_min
+        warnings.warn("Given k_min larger than k_max. Input values swapped.")
 
-def zero_mode_isf(ISF_Dataclass):
-    """
-    Return an 1-D array of zeros the same length as obj.k
+    # get output array dimension
+    dim = len(obj.k)
+
+    # select k range with boolean mask
+    bool_mask = (obj.k >= k_min) & (obj.k <= k_max)
+
+    # compute average value and create output array
+    noise_value = np.nanmean(obj.data[bool_mask])
+    noise = np.full(dim, fill_value=noise_value, dtype=DTYPE)
+
+    return noise
+
+
+def _noise_power_spec_az_avg(
+        obj: AzimuthalAverage,
+        k_min: Optional[float]=None,
+        k_max: Optional[float]=None
+        ) -> np.ndarray:
+    """Noise factor estimate for an AzimuthalAverage object, 'power_spec' mode.
+
+    Noise is given by the average value of the azimuthal average of the image power spectrum in the
+    range [k_min, k_max].
 
     Parameters
     ----------
-    ISF_Dataclass : ImageStructureFunction
-        Image Structure Function container class.
+    obj : AzimuthalAverage
+        AzimuthalAverage object.
+    k_min : float, optional
+        Lower bound of k range. If None, the maximum `k` is assumed. Default is None.
+    k_max : float, optional
+        Upper bound of k range. If None, the maximum `k` is assumed. Default is None.
 
     Returns
     -------
-    Numpy 1-D Array
-        Camera noise, set to zero.
-
+    np.ndarray
+        Estimated noise factor.
     """
-    return np.zeros(shape = ISF_Dataclass.shape[1:])
+    # sanity checks
+    if k_min is None:
+        k_min = np.max(obj.k)
+    if k_max is None:
+        k_max = np.max(obj.k)
+    if k_min > k_max:
+        # if k_min > k_max, swap values
+        k_min, k_max = k_max, k_min
+        warnings.warn("Given k_min larger than k_max. Input values swapped.")
 
-def min_mode_isf(ISF_Dataclass):
-    """
-    Minimum ISF value at the lowest time delay
+    # get output array dimension
+    dim = len(obj.k)
+
+    # select k range with boolean mask
+    bool_mask = (obj.k >= k_min) & (obj.k <= k_max)
+
+    # compute average value and create output array
+    noise_value = np.nanmean(obj.power_spec[bool_mask])
+    noise = np.full(dim, fill_value=noise_value, dtype=DTYPE)
+
+    return noise
+
+
+def _noise_var_az_avg(
+        obj: AzimuthalAverage,
+        k_min: Optional[float]=None,
+        k_max: Optional[float]=None
+        ) -> np.ndarray:
+    """Noise factor estimate for an AzimuthalAverage object, 'var' mode.
+
+    Noise is given by the average value of the azimuthal average of the background corrected image
+    power spectrum in the range [k_min, k_max].
 
     Parameters
     ----------
-    ISF_Dataclass : ImageStructureFunction
-        Image Structure Function container class.
+    obj : AzimuthalAverage
+        AzimuthalAverage object.
+    k_min : float, optional
+        Lower bound of k range. If None, the maximum `k` is assumed. Default is None.
+    k_max : float, optional
+        Upper bound of k range. If None, the maximum `k` is assumed. Default is None.
 
     Returns
     -------
-    Numpy Array
-        Camera noise.
-
+    np.ndarray
+        Estimated noise factor.
     """
-    camera_noise = np.min(
-        ISF_Dataclass.data().take(np.argmin(ISF_Dataclass.tau), axis = -1))
-    
-    return np.ones(shape = ISF_Dataclass.shape[1:]) * camera_noise
+    # sanity checks
+    if k_min is None:
+        k_min = np.max(obj.k)
+    if k_max is None:
+        k_max = np.max(obj.k)
+    if k_min > k_max:
+        # if k_min > k_max, swap values
+        k_min, k_max = k_max, k_min
+        warnings.warn("Given k_min larger than k_max. Input values swapped.")
 
-def high_q_average_mode_isf(ISF_Dataclass, q_max, q_star = None):
-    
-    return
-    
+    # get output array dimension
+    dim = len(obj.k)
 
-def PS_mode_isf(AZI_Dataclass, q_max, q_star = None):
-    
-    return
+    # select k range with boolean mask
+    bool_mask = (obj.k >= k_min) & (obj.k <= k_max)
 
-def variance_mode_isf(AZI_Dataclass, q_max, q_star = None) :
-    
-    return
+    # compute average value and create output array
+    noise_value = np.nanmean(obj.var[bool_mask])
+    noise = np.full(dim, fill_value=noise_value, dtype=DTYPE)
 
-def quadratic_mode_isf(AZI_Dataclass, N_points = 5):
-        
-    return 
+    return noise
+
+
+def _noise_polyfit_az_avg(
+        obj: AzimuthalAverage,
+        num_points: int=5,
+        ) -> np.ndarray:
+    """Noise factor estimate for an AzimuthalAverage object, 'polyfit' mode.
+
+    For each k, noise is given by the 0th degree term of a quadratic polynomial fit of the first
+    num_points points.
+
+    Parameters
+    ----------
+    obj : AzimuthalAverage
+        AzimuthalAverage object.
+    num_points : int, optional
+        Number of initial points (over tau axis) used in fit. Must be larger than (or equal to) 3.
+        Default is 5.
+
+    Returns
+    -------
+    np.ndarray
+        Estimated noise factor.
+    """
+    # polynomial degree
+    deg = 2
+
+    # sanity check
+    num_points = max(deg + 1, num_points)
+
+    # initialize noise
+    noise = _noise_zero_az_avg(obj)
+
+    # loop through k values and fit with polynomial
+    # the noise factor is estimated as the 0th degree coefficient
+    dim = len(obj.k)
+    for k_idx in range(dim):
+        if np.isnan(obj.data[k_idx, 0]):
+            noise[k_idx] = np.nan
+        else:
+            x = obj.tau[:num_points]
+            y = obj.data[k_idx, :num_points]
+            p = np.polyfit(x, y, deg=deg)
+            noise[k_idx] = p[-1]
+    
+    return noise
+
+
+def _estimate_noise_img_str_func(
+        obj: ImageStructureFunction,
+        mode: str="zero",
+        **kwargs
+        ) -> np.ndarray:
+    """Wrapper function for the noise factor estimate for an ImageStructureFunction object.
+
+    Parameters
+    ----------
+    obj : ImageStructureFunction
+        ImageStructureFunction object.
+    mode : str, optional
+        Estimate mode. Possible values are: "zero", "min", "high_q", "power_spec", "var", and
+        "polyfit". Default is "zero".
+
+    Returns
+    -------
+    np.ndarray
+        Estimated noise factor.
+    """
+    # create functions dictionary
+    func = {
+        "zero": _noise_zero_img_str_func,
+        "min": _noise_min_img_str_func,
+        "high_q": _noise_high_q_img_str_func,
+        "power_spec": _noise_power_spec_img_str_func,
+        "var": _noise_var_img_str_func,
+        "polyfit": _noise_polyfit_img_str_func,
+        }
+    
+    return func[mode](obj, **kwargs)
+
+
+def _noise_zero_img_str_func(obj: ImageStructureFunction) -> np.ndarray:
+    """Noise factor estimate for an ImageStructureFunction object, 'zero' mode.
+
+    Noise is zero for all (ky, kx) vectors.
+
+    Parameters
+    ----------
+    obj : ImageStructureFunction
+        ImageStructureFunction object.
+
+    Returns
+    -------
+    np.ndarray
+        Estimated noise factor.
+    """
+    dim_t, dim_y, dim_x = obj.shape
+    noise = np.zeros((dim_y, dim_x), dtype=DTYPE)
+
+    return noise
+
+
+def _noise_min_img_str_func(obj: ImageStructureFunction) -> np.ndarray:
+    """Noise factor estimate for an ImageStructureFunction object, 'min' mode.
+
+    Noise is given by the minimum of the ImageStructureFunction at minimum tau.
+
+    Parameters
+    ----------
+    obj : ImageStructureFunction
+        ImageStructureFunction object.
+
+    Returns
+    -------
+    np.ndarray
+        Estimated noise factor.
+    """
+    # the minimum tau is always in 0 on axis 1 since tau values are sorted
+    # nanmin is used to avoid nan values
+    dim_t, dim_y, dim_x = obj.shape
+    noise_value = np.nanmin(obj.data[:, 0])
+    noise = np.full((dim_y, dim_x), fill_value=noise_value, dtype=DTYPE)
+
+    return noise
+
+
+def _noise_high_q_img_str_func(
+        obj: ImageStructureFunction,
+        k_min: Optional[float]=None,
+        k_max: Optional[float]=None
+        ) -> np.ndarray:
+    """Noise factor estimate for an ImageStructureFunction object, 'high_q' mode.
+
+    Noise is given by the average value of the data (calculated using all points over tau axis) in
+    the range [k_min, k_max].
+
+    Parameters
+    ----------
+    obj : ImageStructureFunction
+        ImageStructureFunction object.
+    k_min : float, optional
+        Lower bound of k range. If None, the maximum of kx and ky is assumed. Default is None.
+    k_max : float, optional
+        Upper bound of k range. If None, the maximum of kx and ky is assumed. Default is None.
+
+    Returns
+    -------
+    np.ndarray
+        Estimated noise factor.
+    """
+    # sanity checks
+    if k_min is None:
+        kx_max = np.max(obj.kx)
+        ky_max = np.max(obj.ky)
+        k_min = max(kx_max, ky_max)
+    if k_max is None:
+        kx_max = np.max(obj.kx)
+        ky_max = np.max(obj.ky)
+        k_min = max(kx_max, ky_max)
+    if k_min > k_max:
+        # if k_min > k_max, swap values
+        k_min, k_max = k_max, k_min
+        warnings.warn("Given k_min larger than k_max. Input values swapped.")
+    
+    # get output array dimensions
+    dim_t, dim_y, dim_x = obj.shape
+
+    # select k range with boolean mask
+    KX, KY = np.meshgrid(obj.kx, obj.ky)
+    k_modulus = np.sqrt(KX**2 + KY**2)
+    bool_mask = (k_modulus >= k_min) & (k_modulus <= k_max)
+
+    # compute average value and create output array
+    noise_value = np.nanmean(obj.data[:, bool_mask])
+    noise = np.full((dim_y, dim_x), fill_value=noise_value, dtype=DTYPE)
+    
+    return noise
+
+
+def _noise_power_spec_img_str_func(
+        obj: ImageStructureFunction,
+        k_min: Optional[float]=None,
+        k_max: Optional[float]=None
+        ) -> np.ndarray:
+    """Noise factor estimate for an ImageStructureFunction object, 'power_spec' mode.
+
+    Noise is given by the average value of the image power spectrum in the range [k_min, k_max].
+
+    Parameters
+    ----------
+    obj : ImageStructureFunction
+        ImageStructureFunction object.
+    k_min : float, optional
+        Lower bound of k range. If None, the maximum of kx and ky is assumed. Default is None.
+    k_max : float, optional
+        Upper bound of k range. If None, the maximum of kx and ky is assumed. Default is None.
+
+    Returns
+    -------
+    np.ndarray
+        Estimated noise factor.
+    """
+    # sanity checks
+    if k_min is None:
+        kx_max = np.max(obj.kx)
+        ky_max = np.max(obj.ky)
+        k_min = max(kx_max, ky_max)
+    if k_max is None:
+        kx_max = np.max(obj.kx)
+        ky_max = np.max(obj.ky)
+        k_min = max(kx_max, ky_max)
+    if k_min > k_max:
+        # if k_min > k_max, swap values
+        k_min, k_max = k_max, k_min
+        warnings.warn("Given k_min larger than k_max. Input values swapped.")
+    
+    # get output array dimensions
+    dim_t, dim_y, dim_x = obj.shape
+
+    # select k range with boolean mask
+    KX, KY = np.meshgrid(obj.kx, obj.ky)
+    k_modulus = np.sqrt(KX**2 + KY**2)
+    bool_mask = (k_modulus >= k_min) & (k_modulus <= k_max)
+
+    # compute average value and create output array
+    noise_value = np.nanmean(obj.power_spec[bool_mask])
+    noise = np.full((dim_y, dim_x), fill_value=noise_value, dtype=DTYPE)
+    
+    return noise
+
+
+def _noise_var_img_str_func(
+        obj: ImageStructureFunction,
+        k_min: Optional[float]=None,
+        k_max: Optional[float]=None
+        ) -> np.ndarray:
+    """Noise factor estimate for an ImageStructureFunction object, 'var' mode.
+
+    Noise is given by the average value of the background corrected image power spectrum in the
+    range [k_min, k_max].
+
+    Parameters
+    ----------
+    obj : ImageStructureFunction
+        ImageStructureFunction object.
+    k_min : float, optional
+        Lower bound of k range. If None, the maximum of kx and ky is assumed. Default is None.
+    k_max : float, optional
+        Upper bound of k range. If None, the maximum of kx and ky is assumed. Default is None.
+
+    Returns
+    -------
+    np.ndarray
+        Estimated noise factor.
+    """
+    # sanity checks
+    if k_min is None:
+        kx_max = np.max(obj.kx)
+        ky_max = np.max(obj.ky)
+        k_min = max(kx_max, ky_max)
+    if k_max is None:
+        kx_max = np.max(obj.kx)
+        ky_max = np.max(obj.ky)
+        k_min = max(kx_max, ky_max)
+    if k_min > k_max:
+        # if k_min > k_max, swap values
+        k_min, k_max = k_max, k_min
+        warnings.warn("Given k_min larger than k_max. Input values swapped.")
+    
+    # get output array dimensions
+    dim_t, dim_y, dim_x = obj.shape
+
+    # select k range with boolean mask
+    KX, KY = np.meshgrid(obj.kx, obj.ky)
+    k_modulus = np.sqrt(KX**2 + KY**2)
+    bool_mask = (k_modulus >= k_min) & (k_modulus <= k_max)
+
+    # compute average value and create output array
+    noise_value = np.nanmean(obj.var[bool_mask])
+    noise = np.full((dim_y, dim_x), fill_value=noise_value, dtype=DTYPE)
+    
+    return noise
+
+
+def _noise_polyfit_img_str_func(
+        obj: ImageStructureFunction,
+        num_points: int=5
+        ) -> np.ndarray:
+    """Noise factor estimate for an ImageStructureFunction object, 'polyfit' mode.
+
+    For each (ky, kx), noise is given by the 0th degree term of a quadratic polynomial fit of the
+    first num_points points.
+
+    Parameters
+    ----------
+    obj : ImageStructureFunction
+        ImageStructureFunction object.
+    num_points : int, optional
+        Number of initial points (over tau axis) used in fit. Must be larger than (or equal to) 3.
+        Default is 5.
+
+    Returns
+    -------
+    np.ndarray
+        Estimated noise factor.
+    """
+    # polynomial degree
+    deg = 2
+
+    # sanity check
+    num_points = max(deg + 1, num_points)
+
+    # initialize noise
+    noise = _noise_zero_img_str_func(obj)
+
+    # loop through k values and fit with polynomial
+    # the noise factor is estimated as the 0th degree coefficient
+    dim_y, dim_x = noise.shape
+    for ky_idx in range(dim_y):
+        for kx_idx in range(dim_x):
+            if np.isnan(obj.data[0, ky_idx, kx_idx]):
+                noise[ky_idx, kx_idx] = np.nan
+            else:
+                x = obj.tau[:num_points]
+                y = obj.data[:num_points, ky_idx, kx_idx]
+                p = np.polyfit(x, y, deg=deg)
+                noise[ky_idx, kx_idx] = p[-1]
+    
+    return noise
