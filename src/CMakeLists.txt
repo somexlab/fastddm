@@ -17,6 +17,12 @@ else()
     SET(IS_SINGLE_PRECISION False)
 endif()
 
+if(BUILD_CONTIN)
+    SET(IS_CONTIN True)
+else()
+    SET(IS_CONTIN False)
+endif()
+
 if(ENABLE_CPP)
     SET(_fddm_sources
         cpp/ddm.cc
@@ -98,6 +104,16 @@ if(ENABLE_CUDA)
     # Add core_cuda python module
     target_link_libraries(_core PUBLIC cufft nvidia-ml)
 endif(ENABLE_CUDA)
+
+if(BUILD_CONTIN)
+    add_executable(contin
+        extras/contin/contin.for
+    )
+
+    set_target_properties(contin PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY_RELEASE ${FASTDDM_OUTPUT_DIR}
+    )
+endif(BUILD_CONTIN)
 
 # Copy the files required to install the library with python's setuptools
 configure_file(python/__init__.py
