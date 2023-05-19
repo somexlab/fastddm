@@ -44,6 +44,11 @@ def estimate_camera_noise(
 
     If k_min > k_max, the two values are swapped and a Warning is raised.
 
+    In the case of ImageStructureFunction input, a boolean mask can be optionally provided for the
+    following modes: "min", "high_q", "power_spec", "var". This mask is used to exclude grid points
+    from the noise evaluation (where False is set). The mask array must have the same y,x shape of 
+    data. If mask is not of boolean type, it is cast to bool and a warning is raised.
+
     Parameters
     ----------
     obj : Union[ImageStructureFunction, AzimuthalAverage]
@@ -393,7 +398,10 @@ def _noise_zero_img_str_func(obj: ImageStructureFunction) -> np.ndarray:
     return noise
 
 
-def _noise_min_img_str_func(obj: ImageStructureFunction) -> np.ndarray:
+def _noise_min_img_str_func(
+        obj: ImageStructureFunction,
+        mask: Optional[np.ndarray]=None
+        ) -> np.ndarray:
     """Noise factor estimate for an ImageStructureFunction object, 'min' mode.
 
     Noise is given by the minimum of the ImageStructureFunction at minimum tau.
@@ -402,6 +410,11 @@ def _noise_min_img_str_func(obj: ImageStructureFunction) -> np.ndarray:
     ----------
     obj : ImageStructureFunction
         ImageStructureFunction object.
+    mask : np.ndarray, optional
+        If a boolean mask is given, it is used to exclude grid points from
+        the azimuthal average (where False is set). The array must have the
+        same y,x shape of the data. If mask is not of boolean type, it is cast to bool
+        and a warning is raised. Default is None.
 
     Returns
     -------
@@ -411,9 +424,16 @@ def _noise_min_img_str_func(obj: ImageStructureFunction) -> np.ndarray:
     # get output array dimensions
     dim_t, dim_y, dim_x = obj.shape
 
-    # the minimum tau is always in 0 on axis 0 since tau values are sorted
+    # check mask
+    if mask is None:
+        mask = np.full((dim_y, dim_x), True)
+    elif mask.dtype != bool:
+        mask = mask.astype(bool)
+        warnings.warn("Given mask not of boolean type. Casting to bool.")
+
+    # the minimum tau is always at index 0 on axis 0 since tau values are sorted
     # nanmin is used to avoid nan values
-    noise_value = np.nanmin(obj.data[0, :])
+    noise_value = np.nanmin(obj.data[0, mask])
     noise = np.full((dim_y, dim_x), fill_value=noise_value, dtype=DTYPE)
 
     return noise
@@ -422,7 +442,8 @@ def _noise_min_img_str_func(obj: ImageStructureFunction) -> np.ndarray:
 def _noise_high_q_img_str_func(
         obj: ImageStructureFunction,
         k_min: Optional[float]=None,
-        k_max: Optional[float]=None
+        k_max: Optional[float]=None,
+        mask: Optional[np.ndarray]=None
         ) -> np.ndarray:
     """Noise factor estimate for an ImageStructureFunction object, 'high_q' mode.
 
@@ -437,6 +458,11 @@ def _noise_high_q_img_str_func(
         Lower bound of k range. If None, the maximum of kx and ky is assumed. Default is None.
     k_max : float, optional
         Upper bound of k range. If None, the maximum of kx and ky is assumed. Default is None.
+    mask : np.ndarray, optional
+        If a boolean mask is given, it is used to exclude grid points from
+        the azimuthal average (where False is set). The array must have the
+        same y,x shape of the data. If mask is not of boolean type, it is cast to bool
+        and a warning is raised. Default is None.
 
     Returns
     -------
@@ -460,10 +486,17 @@ def _noise_high_q_img_str_func(
     # get output array dimensions
     dim_t, dim_y, dim_x = obj.shape
 
+    # check mask
+    if mask is None:
+        mask = np.full((dim_y, dim_x), True)
+    elif mask.dtype != bool:
+        mask = mask.astype(bool)
+        warnings.warn("Given mask not of boolean type. Casting to bool.")
+
     # select k range with boolean mask
     KX, KY = np.meshgrid(obj.kx, obj.ky)
     k_modulus = np.sqrt(KX**2 + KY**2)
-    bool_mask = (k_modulus >= k_min) & (k_modulus <= k_max)
+    bool_mask = (k_modulus >= k_min) & (k_modulus <= k_max) & mask
 
     # compute average value and create output array
     noise_value = np.nanmean(obj.data[:, bool_mask])
@@ -475,7 +508,8 @@ def _noise_high_q_img_str_func(
 def _noise_power_spec_img_str_func(
         obj: ImageStructureFunction,
         k_min: Optional[float]=None,
-        k_max: Optional[float]=None
+        k_max: Optional[float]=None,
+        mask: Optional[np.ndarray]=None
         ) -> np.ndarray:
     """Noise factor estimate for an ImageStructureFunction object, 'power_spec' mode.
 
@@ -489,6 +523,11 @@ def _noise_power_spec_img_str_func(
         Lower bound of k range. If None, the maximum of kx and ky is assumed. Default is None.
     k_max : float, optional
         Upper bound of k range. If None, the maximum of kx and ky is assumed. Default is None.
+    mask : np.ndarray, optional
+        If a boolean mask is given, it is used to exclude grid points from
+        the azimuthal average (where False is set). The array must have the
+        same y,x shape of the data. If mask is not of boolean type, it is cast to bool
+        and a warning is raised. Default is None.
 
     Returns
     -------
@@ -512,10 +551,17 @@ def _noise_power_spec_img_str_func(
     # get output array dimensions
     dim_t, dim_y, dim_x = obj.shape
 
+    # check mask
+    if mask is None:
+        mask = np.full((dim_y, dim_x), True)
+    elif mask.dtype != bool:
+        mask = mask.astype(bool)
+        warnings.warn("Given mask not of boolean type. Casting to bool.")
+
     # select k range with boolean mask
     KX, KY = np.meshgrid(obj.kx, obj.ky)
     k_modulus = np.sqrt(KX**2 + KY**2)
-    bool_mask = (k_modulus >= k_min) & (k_modulus <= k_max)
+    bool_mask = (k_modulus >= k_min) & (k_modulus <= k_max) & mask
 
     # compute average value and create output array
     noise_value = 2 * np.nanmean(obj.power_spec[bool_mask])
@@ -527,7 +573,8 @@ def _noise_power_spec_img_str_func(
 def _noise_var_img_str_func(
         obj: ImageStructureFunction,
         k_min: Optional[float]=None,
-        k_max: Optional[float]=None
+        k_max: Optional[float]=None,
+        mask: Optional[np.ndarray]=None
         ) -> np.ndarray:
     """Noise factor estimate for an ImageStructureFunction object, 'var' mode.
 
@@ -542,6 +589,11 @@ def _noise_var_img_str_func(
         Lower bound of k range. If None, the maximum of kx and ky is assumed. Default is None.
     k_max : float, optional
         Upper bound of k range. If None, the maximum of kx and ky is assumed. Default is None.
+    mask : np.ndarray, optional
+        If a boolean mask is given, it is used to exclude grid points from
+        the azimuthal average (where False is set). The array must have the
+        same y,x shape of the data. If mask is not of boolean type, it is cast to bool
+        and a warning is raised. Default is None.
 
     Returns
     -------
@@ -565,10 +617,17 @@ def _noise_var_img_str_func(
     # get output array dimensions
     dim_t, dim_y, dim_x = obj.shape
 
+    # check mask
+    if mask is None:
+        mask = np.full((dim_y, dim_x), True)
+    elif mask.dtype != bool:
+        mask = mask.astype(bool)
+        warnings.warn("Given mask not of boolean type. Casting to bool.")
+
     # select k range with boolean mask
     KX, KY = np.meshgrid(obj.kx, obj.ky)
     k_modulus = np.sqrt(KX**2 + KY**2)
-    bool_mask = (k_modulus >= k_min) & (k_modulus <= k_max)
+    bool_mask = (k_modulus >= k_min) & (k_modulus <= k_max) & mask
 
     # compute average value and create output array
     noise_value = 2 * np.nanmean(obj.var[bool_mask])
