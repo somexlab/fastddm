@@ -167,4 +167,7 @@ configure_file(python/fit.py
 configure_file(python/fit_models.py
     ${FASTDDM_OUTPUT_DIR}/fit_models.py)
 
+configure_file(python/noise_est.py
+    ${FASTDDM_OUTPUT_DIR}/noise_est.py)
+
 install(CODE "execute_process(COMMAND ${PYTHON_EXECUTABLE} -m pip install ${FASTDDM_OUTPUT_DIR})")
