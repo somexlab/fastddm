@@ -110,6 +110,8 @@ if(BUILD_CONTIN)
         extras/contin/contin.for
     )
 
+    set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -std=legacy")
+
     set_target_properties(contin PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY_RELEASE ${FASTDDM_OUTPUT_DIR}
     )
