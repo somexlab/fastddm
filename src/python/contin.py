@@ -66,7 +66,14 @@ IUSER(10):  1: s(lambda) is weight fraction molecular weight distribution.
                of spheres satisfying the Stokes-Einstein relation.
                R23=3, R22=-1, R21=kB*R18*R20^2/(0.06*pi*R19)
             4: generic case where R21, R22, and R23 are set by the user
-LUSER(3):   if TRUE, use form factors (1 = TRUE, 0 = FALSE)
+LUSER(3):   0: do not use form factors (i.e., f_m = 1)
+            1: use Rayleigh Debye form factors for hollow spheres with R24 wall
+               thickness (in cm). If R24<=0, the form factors for solid spheres
+               are computed. An I18>0 causes the squared form factor to be
+               averaged over 2*I18+1 equally spaced points on the interval
+               centered at the grid point and extending halfway to its nearest
+               neighbors (if form factor rapidly oscillates). Default I18=50 is
+               recommended.
 
 Kernels are of the form
 F(lambda_m, tk) = f_m^2 lambda_m^R23 exp(-R21 tk lambda_m^R22)
