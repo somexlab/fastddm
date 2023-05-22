@@ -44,6 +44,10 @@ NORDER:     choice of the regularizors
             of the squares of the nth differences of the Ng-n sets (similar to
             order of derivative). 0 is sum xj^2, 2 is sum of second derivative
             squared (smooth solution)
+RUSER(1):   s(lambda_1)
+RUSER(2):   s(lambda_Ng)
+RUSER(3):   noise level
+RUSER(6):   integral of s(lambda)
 RUSER(10):  0: yk are not changed
             < 0: yk are replaced by yk^1/2
             > 0: yk are replaced by (yk/R10-1)^1/2
@@ -62,6 +66,7 @@ IUSER(10):  1: s(lambda) is weight fraction molecular weight distribution.
                of spheres satisfying the Stokes-Einstein relation.
                R23=3, R22=-1, R21=kB*R18*R20^2/(0.06*pi*R19)
             4: generic case where R21, R22, and R23 are set by the user
+LUSER(3):   if TRUE, use form factors (1 = TRUE, 0 = FALSE)
 
 Kernels are of the form
 F(lambda_m, tk) = f_m^2 lambda_m^R23 exp(-R21 tk lambda_m^R22)
