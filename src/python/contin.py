@@ -110,8 +110,38 @@ def _generate_input_file(
         _write_data(fh, xdata, ydata)
 
 
+def _generate_parameter_string(
+        name: str,
+        value: Union[float, int, str],
+        array_index: Optional[int]=None
+        ) -> str:
+    """Generate a parameter string for the contin input file.
 
-    
+    Parameters
+    ----------
+    name : str
+        Parameter name
+    value : Union[float, int, str]
+        Parameter value
+    array_index : int, optional
+        Parameter array index, by default None
+
+    Returns
+    -------
+    str
+        Contin input file parameter string
+    """
+    special_parameters = ('IFORMT', 'IFORMY', 'IFORMW')
+
+    if name in special_parameters:
+        return f" {name:6}\n {value}\n"
+    else:
+        if array_index is None:
+            array_index = ''
+        if isinstance(value, float):
+            return f" {name:6}{array_index:5}{value:>15.6E}\n"
+        if isinstance(value, int):
+            return f" {name:6}{array_index:5}{value:>15}.\n"
 
 
 def _write_header(
