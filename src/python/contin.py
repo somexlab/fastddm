@@ -44,6 +44,13 @@ NORDER:     choice of the regularizors
             of the squares of the nth differences of the Ng-n sets (similar to
             order of derivative). 0 is sum xj^2, 2 is sum of second derivative
             squared (smooth solution)
+IPLRES(2):  controls when the weighted residuals will be plotted.
+            0: never
+            1: only after peak-constrained solution
+            2: also after the CHOSEN SOLUTION
+            3: after every solution
+IPLFIT(2):  same as IPLRES, except that it controls when the plots of the fit to
+            the data will be made.
 RUSER(1):   s(lambda_1)
 RUSER(2):   s(lambda_Ng)
 RUSER(3):   noise level
@@ -58,6 +65,7 @@ RUSER(17):  scattering angle (in degrees).
 RUSER(18):  absolute temperature.
 RUSER(19):  viscosity (in cP).
 RUSER(20):  scattering vector (in cm^-1). Computed from R15, R16, R17.
+RUSER(24):  wall thickness of hollo spheres (in cm).
 IUSER(10):  1: s(lambda) is weight fraction molecular weight distribution.
                R23=1, R22=R18*R20^2, so that D=R18*lambda^R22
             2: s(lambda) is diffusion coefficient distribution.
@@ -102,8 +110,14 @@ def _generate_input_file(
         _write_data(fh, xdata, ydata)
 
 
+
+    
+
+
 def _write_header(
-        fh: TextIO
+        fh: TextIO,
+        mode: str='diffusion',
+        **kwargs
         ) -> None:
     pass
 
