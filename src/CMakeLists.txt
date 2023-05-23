@@ -115,6 +115,9 @@ configure_file(python/imagestructurefunction.py
 configure_file(python/azimuthalaverage.py
     ${FASTDDM_OUTPUT_DIR}/azimuthalaverage.py)
 
+configure_file(python/intermediatescatteringfunction.py
+    ${FASTDDM_OUTPUT_DIR}/intermediatescatteringfunction.py)
+
 configure_file(python/_ddm.py
     ${FASTDDM_OUTPUT_DIR}/_ddm.py)
 
