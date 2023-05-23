@@ -7,9 +7,6 @@ from typing import Union, Optional, List, Tuple, TextIO
 import os
 import numpy as np
 
-this_file_path = os.path.abspath(os.path.dirname(__file__))
-contin_exec_path = os.path.join(this_file_path, "contin")
-
 """Parameters summary (see contin-manual1.pdf)
 LAST:       if TRUE, CONTIN stops after analysis (1 = TRUE, 0 = FALSE)
 GMNMX, 1:   first grid point in the quadrature
@@ -334,7 +331,10 @@ def _run_contin(
     output_file : str
         File to which CONTIN output is redirected
     """
+    this_file_path = os.path.abspath(os.path.dirname(__file__))
+    contin_exec_path = os.path.join(this_file_path, "contin")
     exec_file = contin_exec_path
+    
     full_comm = exec_file + " < " + input_file + " > " + output_file
 
     os.system(full_comm)
