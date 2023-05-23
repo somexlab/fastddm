@@ -76,7 +76,7 @@ class ImageStructureFunction:
     set_frame_rate(frame_rate) : None
         Set the acquisition frame rate. This will propagate also on the values
         of tau.
-    save(*, fname, protocol) : None
+    save(*, fname) : None
         Save ImageStructureFunction to binary file.
     save_as_tiff(seq, fnames) : None
         Save ImageStructureFunction frames as tiff images.
