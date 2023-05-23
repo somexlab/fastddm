@@ -12,109 +12,11 @@ from fastddm.azimuthalaverage import AzimuthalAverage
 from fastddm._config import DTYPE
 
 
-def estimate_camera_noise(
-        obj: Union[ImageStructureFunction, AzimuthalAverage],
-        mode: str="zero",
-        **kwargs
-        ) -> np.ndarray:
-    """
-    Estimate of noise factor in ImageStructureFunction or AzimuthalAverage.
-    Possible modes are:
-
-    - "zero": zero at all wavevectors.
-    - "min": minimum value at minimum lag time.
-    - "high_q": takes k_min and k_max (optional, defaults are None) float parameters. It
-    returns the average value of the data (calculated using all points over tau axis) in the range
-    [k_min, k_max].
-    - "power_spec": takes k_min and k_max (optional, defaults are None) float parameters. It
-    returns the average value of the image power spectrum in the range [k_min, k_max].
-    - "var": takes k_min and k_max (optional, defaults are None) float parameters. It returns
-    the average value of the background corrected image power spectrum (2D Fourier transform
-    variance) in the range [k_min, k_max].
-    - "polyfit": takes num_points (optional, default is 5) int parameter. For each wavevector,
-    it returns the constant term of a quadratic polynomial fit of the first num_points points.
-
-    In the case of ImageStructureFunction input:
-    - if k_min is None, the maximum between kx and ky is assumed
-    - if k_max is None, the maximum between kx and ky is assumed
-
-    In the case of AzimuthalAverage input:
-    - if k_min is None, the maximum k is assumed
-    - if k_max is None, the maximum k is assumed
-
-    If k_min > k_max, the two values are swapped and a Warning is raised.
-
-    In the case of ImageStructureFunction input, a boolean mask can be optionally provided for the
-    following modes: "min", "high_q", "power_spec", "var". This mask is used to exclude grid points
-    from the noise evaluation (where False is set). The mask array must have the same y,x shape of 
-    data. If mask is not of boolean type, it is cast to bool and a warning is raised.
-
-    Parameters
-    ----------
-    obj : Union[ImageStructureFunction, AzimuthalAverage]
-        ImageStructureFunction or AzimuthalAverage object.
-    mode : str, optional
-        Estimate mode. Possible values are: "zero", "min", "high_q", "power_spec", "var", and
-        "polyfit". Default is "zero".
-
-    Returns
-    -------
-    np.ndarray
-        Estimated noise factor.
-
-    Raises
-    ------
-    TypeError
-        Input type not supported.
-    """
-    
-    if isinstance(obj, ImageStructureFunction):
-        camera_noise = _estimate_noise_img_str_func(obj=obj, mode=mode, **kwargs)
-    elif isinstance(obj, AzimuthalAverage):
-        camera_noise = _estimate_noise_az_avg(obj=obj, mode=mode, **kwargs)
-    else:
-        raise TypeError(f'Input type {type(obj)} not supported.')
-
-    return camera_noise
-
-
-def _estimate_noise_az_avg(
-        obj: AzimuthalAverage,
-        mode: str="zero",
-        **kwargs
-        ) -> np.ndarray:
-    """Wrapper function for the noise factor estimate for an AzimuthalAverage object.
-
-    Parameters
-    ----------
-    obj : AzimuthalAverage
-        AzimuthalAverage object.
-    mode : str, optional
-        Estimate mode. Possible values are: "zero", "min", "high_q", "power_spec", "var", and
-        "polyfit". Default is "zero".
-
-    Returns
-    -------
-    np.ndarray
-        Estimated noise factor.
-    """
-    # create functions dictionary
-    func = {
-        "zero": _noise_zero_az_avg,
-        "min": _noise_min_az_avg,
-        "high_q": _noise_high_q_az_avg,
-        "power_spec": _noise_power_spec_az_avg,
-        "var": _noise_var_az_avg,
-        "polyfit": _noise_polyfit_az_avg,
-        }
-    
-    return func[mode](obj, **kwargs)
-
-
-def _noise_zero_az_avg(obj: AzimuthalAverage) -> np.ndarray:
+def _noise_zero_az_avg(obj: AzimuthalAverage) -> Tuple[np.ndarray, np.ndarray]:
     """Noise factor estimate for an AzimuthalAverage object, 'zero' mode.
 
     Noise is zero for all k vectors.
+    Uncertainty is zero as well.
 
     Parameters
     ----------
@@ -123,19 +25,22 @@ def _noise_zero_az_avg(obj: AzimuthalAverage) -> np.ndarray:
 
     Returns
     -------
-    np.ndarray
-        Estimated noise factor.
+    Tuple[np.ndarray, np.ndarray]
+        Estimated noise factor and uncertainty.
     """
     dim = len(obj.k)
     noise = np.zeros(dim, dtype=DTYPE)
+    uncertainty = np.zeros(dim, dtype=DTYPE)
 
-    return noise
+    return noise, uncertainty
 
 
-def _noise_min_az_avg(obj: AzimuthalAverage) -> np.ndarray:
+def _noise_min_az_avg(obj: AzimuthalAverage) -> Tuple[np.ndarray, np.ndarray]:
     """Noise factor estimate for an AzimuthalAverage object, 'min' mode.
 
     Noise is given by the minimum of the AzimuthalAverage at minimum tau.
+    Uncertainty is given by the corresponding error (if present).
+    Otherwise, the uncertainty is assumed equal to the output value.
 
     Parameters
     ----------
@@ -144,17 +49,24 @@ def _noise_min_az_avg(obj: AzimuthalAverage) -> np.ndarray:
 
     Returns
     -------
-    np.ndarray
-        Estimated noise factor.
+    Tuple[np.ndarray, np.ndarray]
+        Estimated noise factor and uncertainty.
     """
     # the minimum tau is always in 0 since values are sorted when the image structure function
     # is calculated
     # nanmin is used to avoid nan values
     dim = len(obj.k)
-    noise_value = np.nanmin(obj.data[:, 0])
-    noise = np.full(dim, fill_value=noise_value, dtype=DTYPE)
+    min_idx = np.nanargmin(obj.data[:, 0])
+    noise_value = obj.data[min_idx, 0]
+    if obj.err is None:
+        uncertainty_value = noise_value
+    else:
+        uncertainty_value = obj.err[min_idx, 0]
 
-    return noise
+    noise = np.full(dim, fill_value=noise_value, dtype=DTYPE)
+    uncertainty = np.full(dim, fill_value=uncertainty_value, dtype=DTYPE)
+
+    return noise, uncertainty
 
 
 def _check_k_range_az_avg(
@@ -195,11 +107,13 @@ def _noise_high_q_az_avg(
         obj: AzimuthalAverage,
         k_min: Optional[float]=None,
         k_max: Optional[float]=None
-        ) -> np.ndarray:
+        ) -> Tuple[np.ndarray, np.ndarray]:
     """Noise factor estimate for an AzimuthalAverage object, 'high_q' mode.
 
     Noise is given by the average value of the data (calculated using all points over tau axis) in
     the range [k_min, k_max].
+    Uncertainty is computed from the errors of the values considered (if present).
+    Otherwise, the uncertainty is assumed equal to the output value.
 
     Parameters
     ----------
@@ -212,8 +126,8 @@ def _noise_high_q_az_avg(
 
     Returns
     -------
-    np.ndarray
-        Estimated noise factor.
+    Tuple[np.ndarray, np.ndarray]
+        Estimated noise factor and uncertainty.
     """
     # sanity checks
     k_min, k_max = _check_k_range_az_avg(obj, k_min, k_max)
@@ -226,20 +140,29 @@ def _noise_high_q_az_avg(
 
     # compute average value and create output array
     noise_value = np.nanmean(obj.data[bool_mask])
+    if obj.err is None:
+        uncertainty_value = noise_value
+    else:
+        numel = np.size(~np.isnan(obj.err[bool_mask]))
+        uncertainty_value = np.sqrt(np.nansum(obj.err[bool_mask]**2)) / numel
+    
     noise = np.full(dim, fill_value=noise_value, dtype=DTYPE)
+    uncertainty = np.full(dim, fill_value=uncertainty_value, dtype=DTYPE)
 
-    return noise
+    return noise, uncertainty
 
 
 def _noise_power_spec_az_avg(
         obj: AzimuthalAverage,
         k_min: Optional[float]=None,
         k_max: Optional[float]=None
-        ) -> np.ndarray:
+        ) -> Tuple[np.ndarray, np.ndarray]:
     """Noise factor estimate for an AzimuthalAverage object, 'power_spec' mode.
 
     Noise is given by the average value of the azimuthal average of the image power spectrum in the
     range [k_min, k_max].
+    Uncertainty is computed from the errors of the values considered (if present).
+    Otherwise, the uncertainty is assumed equal to the output value.
 
     Parameters
     ----------
@@ -252,8 +175,8 @@ def _noise_power_spec_az_avg(
 
     Returns
     -------
-    np.ndarray
-        Estimated noise factor.
+    Tuple[np.ndarray, np.ndarray]
+        Estimated noise factor and uncertainty.
     """
     # sanity checks
     k_min, k_max = _check_k_range_az_avg(obj, k_min, k_max)
@@ -266,20 +189,29 @@ def _noise_power_spec_az_avg(
 
     # compute average value and create output array
     noise_value = 2 * np.nanmean(obj.power_spec[bool_mask])
-    noise = np.full(dim, fill_value=noise_value, dtype=DTYPE)
+    if obj.power_spec_err is None:
+        uncertainty_value = noise_value
+    else:
+        numel = np.size(~np.isnan(obj.power_spec_err[bool_mask]))
+        uncertainty_value = 2 * np.sqrt(np.nansum(obj.power_spec_err[bool_mask]**2)) / numel
 
-    return noise
+    noise = np.full(dim, fill_value=noise_value, dtype=DTYPE)
+    uncertainty = np.full(dim, fill_value=uncertainty_value, dtype=DTYPE)
+
+    return noise, uncertainty
 
 
 def _noise_var_az_avg(
         obj: AzimuthalAverage,
         k_min: Optional[float]=None,
         k_max: Optional[float]=None
-        ) -> np.ndarray:
+        ) -> Tuple[np.ndarray, np.ndarray]:
     """Noise factor estimate for an AzimuthalAverage object, 'var' mode.
 
     Noise is given by the average value of the azimuthal average of the background corrected image
     power spectrum in the range [k_min, k_max].
+    Uncertainty is computed from the errors of the values considered (if present).
+    Otherwise, the uncertainty is assumed equal to the output value.
 
     Parameters
     ----------
@@ -292,8 +224,8 @@ def _noise_var_az_avg(
 
     Returns
     -------
-    np.ndarray
-        Estimated noise factor.
+    Tuple[np.ndarray, np.ndarray]
+        Estimated noise factor and uncertainty.
     """
     # sanity checks
     k_min, k_max = _check_k_range_az_avg(obj, k_min, k_max)
@@ -306,19 +238,30 @@ def _noise_var_az_avg(
 
     # compute average value and create output array
     noise_value = 2 * np.nanmean(obj.var[bool_mask])
+    if obj.var_err is None:
+        uncertainty_value = noise_value
+    else:
+        numel = np.size(~np.isnan(obj.var_err[bool_mask]))
+        uncertainty_value = 2 * np.sqrt(np.nansum(obj.var_err[bool_mask]**2)) / numel
+        
     noise = np.full(dim, fill_value=noise_value, dtype=DTYPE)
+    uncertainty = np.full(dim, fill_value=uncertainty_value, dtype=DTYPE)
 
-    return noise
+    return noise, uncertainty
 
 
 def _noise_polyfit_az_avg(
         obj: AzimuthalAverage,
         num_points: int=5,
-        ) -> np.ndarray:
+        ) -> Tuple[np.ndarray, np.ndarray]:
     """Noise factor estimate for an AzimuthalAverage object, 'polyfit' mode.
 
     For each k, noise is given by the 0th degree term of a quadratic polynomial fit of the first
     num_points points.
+    Uncertainty is computed from the covariance matrix of the polynomial fit.
+    If the errors are present in the input, they are used as weights in the polynomial fit
+    and the covariance matrix is unscaled. If not, the covariance is scaled by chi2/dof, with
+    dof = num_points - (deg + 1). See numpy.polyfit for more information.
 
     Parameters
     ----------
@@ -330,8 +273,8 @@ def _noise_polyfit_az_avg(
 
     Returns
     -------
-    np.ndarray
-        Estimated noise factor.
+    Tuple[np.ndarray, np.ndarray]
+        Estimated noise factor and uncertainty.
     """
     # polynomial degree
     deg = 2
@@ -340,7 +283,7 @@ def _noise_polyfit_az_avg(
     num_points = max(deg + 1, num_points)
 
     # initialize noise
-    noise = _noise_zero_az_avg(obj)
+    noise, uncertainty = _noise_zero_az_avg(obj)
 
     # loop through k values and fit with polynomial
     # the noise factor is estimated as the 0th degree coefficient
@@ -348,52 +291,28 @@ def _noise_polyfit_az_avg(
     for k_idx in range(dim):
         if np.isnan(obj.data[k_idx, 0]):
             noise[k_idx] = np.nan
+            uncertainty[k_idx] = np.nan
         else:
             x = obj.tau[:num_points]
             y = obj.data[k_idx, :num_points]
-            p = np.polyfit(x, y, deg=deg)
+            if obj.err is None:
+                p, pcov = np.polyfit(x, y, deg=deg, cov=True)
+            else:
+                err = obj.err[k_idx, :num_points]
+                # compute polynomial fit with unscaled covariance matrix
+                p, pcov = np.polyfit(x, y, deg=deg, w=1/err, cov='unscaled')
             noise[k_idx] = p[-1]
+            # error of coefficients is square root of diagonal
+            uncertainty[k_idx] = np.sqrt(np.diag(pcov))[-1]
     
-    return noise
+    return noise, uncertainty
 
 
-def _estimate_noise_img_str_func(
-        obj: ImageStructureFunction,
-        mode: str="zero",
-        **kwargs
-        ) -> np.ndarray:
-    """Wrapper function for the noise factor estimate for an ImageStructureFunction object.
-
-    Parameters
-    ----------
-    obj : ImageStructureFunction
-        ImageStructureFunction object.
-    mode : str, optional
-        Estimate mode. Possible values are: "zero", "min", "high_q", "power_spec", "var", and
-        "polyfit". Default is "zero".
-
-    Returns
-    -------
-    np.ndarray
-        Estimated noise factor.
-    """
-    # create functions dictionary
-    func = {
-        "zero": _noise_zero_img_str_func,
-        "min": _noise_min_img_str_func,
-        "high_q": _noise_high_q_img_str_func,
-        "power_spec": _noise_power_spec_img_str_func,
-        "var": _noise_var_img_str_func,
-        "polyfit": _noise_polyfit_img_str_func,
-        }
-    
-    return func[mode](obj, **kwargs)
-
-
-def _noise_zero_img_str_func(obj: ImageStructureFunction) -> np.ndarray:
+def _noise_zero_img_str_func(obj: ImageStructureFunction) -> Tuple[np.ndarray, np.ndarray]:
     """Noise factor estimate for an ImageStructureFunction object, 'zero' mode.
 
     Noise is zero for all (ky, kx) vectors.
+    Uncertainty is zero as well.
 
     Parameters
     ----------
@@ -402,22 +321,24 @@ def _noise_zero_img_str_func(obj: ImageStructureFunction) -> np.ndarray:
 
     Returns
     -------
-    np.ndarray
-        Estimated noise factor.
+    Tuple[np.ndarray, np.ndarray]
+        Estimated noise factor and uncertainty.
     """
     dim_t, dim_y, dim_x = obj.shape
     noise = np.zeros((dim_y, dim_x), dtype=DTYPE)
+    uncertainty = np.zeros((dim_y, dim_x), dtype=DTYPE)
 
-    return noise
+    return noise, uncertainty
 
 
 def _noise_min_img_str_func(
         obj: ImageStructureFunction,
         mask: Optional[np.ndarray]=None
-        ) -> np.ndarray:
+        ) -> Tuple[np.ndarray, np.ndarray]:
     """Noise factor estimate for an ImageStructureFunction object, 'min' mode.
 
     Noise is given by the minimum of the ImageStructureFunction at minimum tau.
+    Uncertainty is assumed equal to the output value.
 
     Parameters
     ----------
@@ -431,8 +352,8 @@ def _noise_min_img_str_func(
 
     Returns
     -------
-    np.ndarray
-        Estimated noise factor.
+    Tuple[np.ndarray, np.ndarray]
+        Estimated noise factor and uncertainty.
     """
     # get output array dimensions
     dim_t, dim_y, dim_x = obj.shape
@@ -446,10 +367,16 @@ def _noise_min_img_str_func(
 
     # the minimum tau is always at index 0 on axis 0 since tau values are sorted
     # nanmin is used to avoid nan values
-    noise_value = np.nanmin(obj.data[0, mask])
-    noise = np.full((dim_y, dim_x), fill_value=noise_value, dtype=DTYPE)
+    min_idx = np.nanargmin(obj.data[0, mask])
+    min_idx_y = min_idx // dim_x
+    min_idx_x = min_idx % dim_x
+    noise_value = obj.data[0, min_idx_y, min_idx_x]
+    uncertainty_value = noise_value
 
-    return noise
+    noise = np.full((dim_y, dim_x), fill_value=noise_value, dtype=DTYPE)
+    uncertainty = np.full((dim_y, dim_x), fill_value=uncertainty_value, dtype=DTYPE)
+
+    return noise, uncertainty
 
 
 def _check_k_range_img_str_func(
@@ -541,11 +468,12 @@ def _noise_high_q_img_str_func(
         k_min: Optional[float]=None,
         k_max: Optional[float]=None,
         mask: Optional[np.ndarray]=None
-        ) -> np.ndarray:
+        ) -> Tuple[np.ndarray, np.ndarray]:
     """Noise factor estimate for an ImageStructureFunction object, 'high_q' mode.
 
     Noise is given by the average value of the data (calculated using all points over tau axis) in
     the range [k_min, k_max].
+    Uncertainty is assumed equal to the output value.
 
     Parameters
     ----------
@@ -563,8 +491,8 @@ def _noise_high_q_img_str_func(
 
     Returns
     -------
-    np.ndarray
-        Estimated noise factor.
+    Tuple[np.ndarray, np.ndarray]
+        Estimated noise factor and uncertainty.
     """
     # sanity checks
     k_min, k_max = _check_k_range_img_str_func(obj, k_min, k_max)
@@ -577,9 +505,12 @@ def _noise_high_q_img_str_func(
 
     # compute average value and create output array
     noise_value = np.nanmean(obj.data[:, bool_mask])
-    noise = np.full((dim_y, dim_x), fill_value=noise_value, dtype=DTYPE)
+    uncertainty_value = noise_value
     
-    return noise
+    noise = np.full((dim_y, dim_x), fill_value=noise_value, dtype=DTYPE)
+    uncertainty = np.full((dim_y, dim_x), fill_value=uncertainty_value, dtype=DTYPE)
+
+    return noise, uncertainty
 
 
 def _noise_power_spec_img_str_func(
@@ -587,10 +518,11 @@ def _noise_power_spec_img_str_func(
         k_min: Optional[float]=None,
         k_max: Optional[float]=None,
         mask: Optional[np.ndarray]=None
-        ) -> np.ndarray:
+        ) -> Tuple[np.ndarray, np.ndarray]:
     """Noise factor estimate for an ImageStructureFunction object, 'power_spec' mode.
 
     Noise is given by the average value of the image power spectrum in the range [k_min, k_max].
+    Uncertainty is assumed equal to the output value.
 
     Parameters
     ----------
@@ -608,8 +540,8 @@ def _noise_power_spec_img_str_func(
 
     Returns
     -------
-    np.ndarray
-        Estimated noise factor.
+    Tuple[np.ndarray, np.ndarray]
+        Estimated noise factor and uncertainty.
     """
     # sanity checks
     k_min, k_max = _check_k_range_img_str_func(obj, k_min, k_max)
@@ -622,9 +554,12 @@ def _noise_power_spec_img_str_func(
 
     # compute average value and create output array
     noise_value = 2 * np.nanmean(obj.power_spec[bool_mask])
-    noise = np.full((dim_y, dim_x), fill_value=noise_value, dtype=DTYPE)
+    uncertainty_value = noise_value
     
-    return noise
+    noise = np.full((dim_y, dim_x), fill_value=noise_value, dtype=DTYPE)
+    uncertainty = np.full((dim_y, dim_x), fill_value=uncertainty_value, dtype=DTYPE)
+    
+    return noise, uncertainty
 
 
 def _noise_var_img_str_func(
@@ -632,11 +567,12 @@ def _noise_var_img_str_func(
         k_min: Optional[float]=None,
         k_max: Optional[float]=None,
         mask: Optional[np.ndarray]=None
-        ) -> np.ndarray:
+        ) -> Tuple[np.ndarray, np.ndarray]:
     """Noise factor estimate for an ImageStructureFunction object, 'var' mode.
 
     Noise is given by the average value of the background corrected image power spectrum in the
     range [k_min, k_max].
+    Uncertainty is assumed equal to the output value.
 
     Parameters
     ----------
@@ -654,8 +590,8 @@ def _noise_var_img_str_func(
 
     Returns
     -------
-    np.ndarray
-        Estimated noise factor.
+    Tuple[np.ndarray, np.ndarray]
+        Estimated noise factor and uncertainty.
     """
     # sanity checks
     k_min, k_max = _check_k_range_img_str_func(obj, k_min, k_max)
@@ -668,19 +604,25 @@ def _noise_var_img_str_func(
 
     # compute average value and create output array
     noise_value = 2 * np.nanmean(obj.var[bool_mask])
+    uncertainty_value = noise_value
+
     noise = np.full((dim_y, dim_x), fill_value=noise_value, dtype=DTYPE)
+    uncertainty = np.full((dim_y, dim_x), fill_value=uncertainty_value, dtype=DTYPE)
     
-    return noise
+    return noise, uncertainty
 
 
 def _noise_polyfit_img_str_func(
         obj: ImageStructureFunction,
         num_points: int=5
-        ) -> np.ndarray:
+        ) -> Tuple[np.ndarray, np.ndarray]:
     """Noise factor estimate for an ImageStructureFunction object, 'polyfit' mode.
 
     For each (ky, kx), noise is given by the 0th degree term of a quadratic polynomial fit of the
     first num_points points.
+    Uncertainty is computed from the covariance matrix of the polynomial fit.
+    The covariance is scaled by chi2/dof, with dof = num_points - (deg + 1).
+    See numpy.polyfit for more information.
 
     Parameters
     ----------
@@ -692,8 +634,8 @@ def _noise_polyfit_img_str_func(
 
     Returns
     -------
-    np.ndarray
-        Estimated noise factor.
+    Tuple[np.ndarray, np.ndarray]
+        Estimated noise factor and uncertainty.
     """
     # polynomial degree
     deg = 2
@@ -702,7 +644,7 @@ def _noise_polyfit_img_str_func(
     num_points = max(deg + 1, num_points)
 
     # initialize noise
-    noise = _noise_zero_img_str_func(obj)
+    noise, uncertainty = _noise_zero_img_str_func(obj)
 
     # loop through k values and fit with polynomial
     # the noise factor is estimated as the 0th degree coefficient
@@ -711,10 +653,112 @@ def _noise_polyfit_img_str_func(
         for kx_idx in range(dim_x):
             if np.isnan(obj.data[0, ky_idx, kx_idx]):
                 noise[ky_idx, kx_idx] = np.nan
+                uncertainty[ky_idx, kx_idx] = np.nan
             else:
                 x = obj.tau[:num_points]
                 y = obj.data[:num_points, ky_idx, kx_idx]
-                p = np.polyfit(x, y, deg=deg)
+                p, pcov = np.polyfit(x, y, deg=deg, cov=True)
                 noise[ky_idx, kx_idx] = p[-1]
+                # error of coefficients is square root of diagonal
+                uncertainty[ky_idx, kx_idx] = np.sqrt(np.diag(pcov))[-1]
     
-    return noise
+    return noise, uncertainty
+
+
+# create functions dictionaries
+_estimate_noise_az_avg = {
+    "zero": _noise_zero_az_avg,
+    "min": _noise_min_az_avg,
+    "high_q": _noise_high_q_az_avg,
+    "power_spec": _noise_power_spec_az_avg,
+    "var": _noise_var_az_avg,
+    "polyfit": _noise_polyfit_az_avg, 
+    }
+
+_estimate_noise_img_str_func = {
+    "zero": _noise_zero_img_str_func,
+    "min": _noise_min_img_str_func,
+    "high_q": _noise_high_q_img_str_func,
+    "power_spec": _noise_power_spec_img_str_func,
+    "var": _noise_var_img_str_func,
+    "polyfit": _noise_polyfit_img_str_func,
+    }
+
+
+def estimate_camera_noise(
+        obj: Union[ImageStructureFunction, AzimuthalAverage],
+        mode: str="zero",
+        **kwargs
+        ) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Estimate of noise factor in ImageStructureFunction or AzimuthalAverage.
+    Possible modes are:
+
+    - "zero": zero at all wavevectors.
+    - "min": minimum value at minimum lag time.
+    - "high_q": takes k_min and k_max (optional, defaults are None) float parameters. It
+    returns the average value of the data (calculated using all points over tau axis) in the range
+    [k_min, k_max].
+    - "power_spec": takes k_min and k_max (optional, defaults are None) float parameters. It
+    returns the average value of the image power spectrum in the range [k_min, k_max].
+    - "var": takes k_min and k_max (optional, defaults are None) float parameters. It returns
+    the average value of the background corrected image power spectrum (2D Fourier transform
+    variance) in the range [k_min, k_max].
+    - "polyfit": takes num_points (optional, default is 5) int parameter. For each wavevector,
+    it returns the constant term of a quadratic polynomial fit of the first num_points points.
+
+    In the case of ImageStructureFunction input:
+    - if k_min is None, the maximum between kx and ky is assumed
+    - if k_max is None, the maximum between kx and ky is assumed
+
+    In the case of AzimuthalAverage input:
+    - if k_min is None, the maximum k is assumed
+    - if k_max is None, the maximum k is assumed
+
+    If k_min > k_max, the two values are swapped and a Warning is raised.
+
+    In the case of ImageStructureFunction input, a boolean mask can be optionally provided for the
+    following modes: "min", "high_q", "power_spec", "var". This mask is used to exclude grid points
+    from the noise evaluation (where False is set). The mask array must have the same y,x shape of 
+    data. If mask is not of boolean type, it is cast to bool and a warning is raised.
+
+    Parameters
+    ----------
+    obj : Union[ImageStructureFunction, AzimuthalAverage]
+        ImageStructureFunction or AzimuthalAverage object.
+    mode : str, optional
+        Estimate mode. Possible values are: "zero", "min", "high_q", "power_spec", "var", and
+        "polyfit". Default is "zero".
+
+    Returns
+    -------
+    Tuple[np.ndarray, np.ndarray]
+        Estimated noise factor and uncertainty.
+
+    Raises
+    ------
+    TypeError
+        Input type not supported.
+    RuntimeError
+        Mode not supported
+    """    
+    if isinstance(obj, ImageStructureFunction):
+        # check if mode is supported
+        modes = list(_estimate_noise_img_str_func.keys())
+        if mode not in modes:
+            err_msg = f"Unknown mode '{mode}' selected. Only possible options are {modes}."
+            raise RuntimeError(err_msg)
+        
+        camera_noise = _estimate_noise_img_str_func[mode](obj=obj, **kwargs)
+    elif isinstance(obj, AzimuthalAverage):
+        # check if mode is supported
+        modes = list(_estimate_noise_az_avg.keys())
+        if mode not in modes:
+            err_msg = f"Unknown mode '{mode}' selected. Only possible options are {modes}."
+            raise RuntimeError(err_msg)
+        
+        camera_noise = _estimate_noise_az_avg[mode](obj=obj, **kwargs)
+    else:
+        raise TypeError(f'Input type {type(obj)} not supported.')
+
+    return camera_noise
