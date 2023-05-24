@@ -14,9 +14,10 @@ import warnings
 import numpy as np
 from scipy.interpolate import interp1d
 
-from .imagestructurefunction import ImageStructureFunction
+from .azimuthalaverage import AzimuthalAverage
 from ._io_common import calculate_format_size, npdtype2format, Writer, Reader, Parser
 from ._config import DTYPE
+from .noise_est import estimate_camera_noise
 
 
 @dataclass
@@ -660,11 +661,11 @@ def mergesort(
 
     # create new data
     dim_k, dim_tau = isf1.shape
-    data = np.zeros(isf1.data, shape=(dim_k, len(tau)), dtype=DTYPE)
+    data = np.zeros(shape=(dim_k, len(tau)), dtype=DTYPE)
     if isf1._err is None or isf2._err is None:
         err = None
     else:
-        err = np.zeros(isf1.err, shape=(dim_k, len(tau)), dtype=DTYPE)
+        err = np.zeros(shape=(dim_k, len(tau)), dtype=DTYPE)
 
     # populate data
     data = np.append(isf1.data, isf2.data, axis=1)[:, sortidx].astype(
@@ -680,3 +681,136 @@ def mergesort(
     bin_edges = isf1.bin_edges.astype(DTYPE)
 
     return IntermediateScatteringFunction(data, err, k, tau[sortidx], bin_edges)
+
+
+def azavg2isf_estimate(
+        az_avg: AzimuthalAverage,
+        noise_est: str = 'polyfit',
+        plateau_est: str = 'var',
+        noise: Optional[np.ndarray] = None,
+        noise_err: Optional[np.ndarray] = None,
+        plateau: Optional[np.ndarray] = None,
+        plateau_err: Optional[np.ndarray] = None,
+        **kwargs
+        ) -> IntermediateScatteringFunction:
+    """Convert AzimuthalAverage to IntermediateScatteringFunction
+
+    Parameters
+    ----------
+    az_avg : AzimuthalAverage
+        AzimuthalAverage object
+    noise_est : str, optional
+        Noise factor estimate mode, by default 'polyfit'. Accepted values are the ones
+        supported by the estimate_camera_noise function of fastddm.noise_est module plus
+        'custom'. In the latter case, noise input argument is required. Additional keyword
+        arguments are used in the estimate_camera_noise function.
+    plateau_est : str, optional
+        Plateau estimate mode, by default 'var'. Accepted values are 'var', 'power_spec',
+        or 'custom'. When 'var' ('power_spec') mode is selected, the plateau is estimated
+        as twice the az_avg.var (az_avg.power_spec). When 'custom' is selected, the plateau
+        input argument is required.
+    noise : np.ndarray, optional
+        Custom noise array, by default None. Required if noise_est is 'custom'
+    noise_err : np.ndarray, optional
+        Custom noise array uncertainty, by default None. Used if noise_est is 'custom'.
+        If None and noise_est is 'custom', the noise uncertainty is assumed equal to the
+        noise input array.
+    plateau : np.ndarray, optional
+        Custom plateau array, by default None. Required if plateau_est is 'custom'
+    plateau_err : np.ndarray, optional
+        Custom plateau array uncertainty, by default None. Used if plateau_est is 'custom'.
+        If None and plateau_est is 'custom', the plateau uncertainty is assumed equal to the
+        plateau input array.
+
+    Returns
+    -------
+    IntermediateScatteringFunction
+        IntermediateScatteringFunction
+
+    Raises
+    ------
+    RuntimeError
+        If the dimension of the input arrays are not compatible with the azimuthal average or
+        if any of the estimate mode is not supported.
+    """
+    # get number of k values
+    dim_k, dim_t = az_avg.shape
+
+    # estimate noise (B)
+    if noise_est == 'custom':
+        # sanity check on size of noise
+        if len(noise) != dim_k:
+            err_msg = 'Custom noise array dimension not compatible'
+            err_msg += ' with given azimuthal average.\n'
+            err_msg += f'Size of noise should be {dim_k}.'
+            raise RuntimeError(err_msg)
+
+        if noise_err is None:
+            noise_err = noise
+        # sanity check on size of noise_err
+        if len(noise_err) != dim_k:
+            err_msg = 'Custom noise_err array dimension not compatible'
+            err_msg += ' with given azimuthal average.\n'
+            err_msg += f'Size of noise_err should be {dim_k}.'
+            raise RuntimeError(err_msg)
+    else:
+        noise, noise_err = estimate_camera_noise(az_avg, mode=noise_est, **kwargs)
+    # enforce dtype
+    noise = noise.astype(DTYPE)
+    noise_err = noise_err.astype(DTYPE)
+
+    # estimate plateau (A+B)
+    if plateau_est == 'custom':
+        # sanity check on size of plateau
+        if len(plateau) != dim_k:
+            err_msg = 'Custom plateau array dimension not compatible'
+            err_msg += ' with given azimuthal average.\n'
+            err_msg += f'Size of plateau should be {dim_k}.'
+            raise RuntimeError(err_msg)
+
+        if plateau_err is None:
+            plateau_err = plateau
+        # sanity check on size of plateau_err
+        if len(plateau_err) != dim_k:
+            err_msg = 'Custom plateau_err array dimension not compatible'
+            err_msg += ' with given azimuthal average.\n'
+            err_msg += f'Size of plateau_err should be {dim_k}.'
+            raise RuntimeError(err_msg)
+    elif plateau_est == 'var':
+        plateau = 2 * az_avg.var
+        if az_avg.var_err is None:
+            plateau_err = 2 * az_avg.var
+        else:
+            plateau_err = 2 * az_avg.var_err
+    elif plateau_est == 'power_spec':
+        plateau = 2 * az_avg.power_spec
+        if az_avg.power_spec_err is None:
+            plateau_err = 2 * az_avg.power_spec
+        else:
+            plateau_err = 2 * az_avg.power_spec_err
+    else:
+        plateau_est_modes = ['custom', 'power_spec', 'var']
+        err_msg = f'Unsupported plateau_est mode {plateau_est}.'
+        err_msg += f' Possible values are {plateau_est_modes}'
+        raise RuntimeError(err_msg)
+    # enforce dtype
+    plateau = plateau.astype(DTYPE)
+    plateau_err = plateau_err.astype(DTYPE)
+
+    # scale azimuthal average
+    data = az_avg.data.astype(DTYPE)
+    if az_avg.err is None:
+        data_err = data
+    else:
+        data_err = az_avg.err.astype(DTYPE)
+    data = 1 - (az_avg.data - noise) / (plateau - noise)
+    sigma2 = data_err**2 + noise_err**2
+    sigma2 += (az_avg.data - noise)**2 * (plateau_err**2 + noise_err**2) / (plateau - noise)**2
+    sigma2 /= (plateau - noise)**2
+    err = np.sqrt(sigma2)
+
+    k = az_avg.k.astype(DTYPE)
+    tau = az_avg.tau.astype(DTYPE)
+    bin_edges = az_avg.bin_edges.astype(DTYPE)
+
+    return IntermediateScatteringFunction(data, err, k, tau, bin_edges)
