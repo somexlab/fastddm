@@ -1103,11 +1103,11 @@ def mergesort(az_avg1: AzimuthalAverage, az_avg2: AzimuthalAverage) -> Azimuthal
 
     # create new data
     dim_k, dim_tau = az_avg1.shape
-    data = np.zeros(az_avg1.data, shape=(dim_k, len(tau) + 2), dtype=DTYPE)
+    data = np.zeros(shape=(dim_k, len(tau) + 2), dtype=DTYPE)
     if az_avg1._err is None or az_avg2._err is None:
         err = None
     else:
-        err = np.zeros(az_avg1.err, shape=(dim_k, len(tau) + 2), dtype=DTYPE)
+        err = np.zeros(shape=(dim_k, len(tau) + 2), dtype=DTYPE)
 
     # populate data
     data[:, :-2] = np.append(az_avg1.data, az_avg2.data, axis=1)[:, sortidx].astype(
