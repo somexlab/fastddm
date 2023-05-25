@@ -797,17 +797,29 @@ def azavg2isf_estimate(
     plateau = plateau.astype(DTYPE)
     plateau_err = plateau_err.astype(DTYPE)
 
-    # scale azimuthal average
-    data = az_avg.data.astype(DTYPE)
-    if az_avg.err is None:
-        data_err = data
-    else:
-        data_err = az_avg.err.astype(DTYPE)
-    data = 1 - (az_avg.data - noise) / (plateau - noise)
-    sigma2 = data_err**2 + noise_err**2
-    sigma2 += (az_avg.data - noise)**2 * (plateau_err**2 + noise_err**2) / (plateau - noise)**2
-    sigma2 /= (plateau - noise)**2
-    err = np.sqrt(sigma2)
+    # convert structure function to intermediate scattering function
+    data = np.zeros((dim_k, dim_t), dtype=DTYPE)
+    err = np.zeros((dim_k, dim_t), dtype=DTYPE)
+    for idx_k in range(dim_k):
+        ApB = plateau[idx_k]    # A+B
+        B = noise[idx_k]        # B
+        A = ApB - B             # A
+
+        sigma_ApB = plateau_err[idx_k]
+        sigma_B = noise_err[idx_k]
+
+        y = az_avg.data[idx_k].astype(DTYPE)
+        if az_avg.err is None:
+            sigma_y = y
+        else:
+            sigma_y = az_avg.err[idx_k].astype(DTYPE)
+        # intermediate scattering function
+        data[idx_k] = 1 - (y - B) / A
+        # uncertainty
+        sigma2 = ((y - B) / A**2 * sigma_ApB) ** 2
+        sigma2 += ((ApB - y) / A**2 * sigma_B) ** 2
+        sigma2 += (sigma_y / A) ** 2
+        err[idx_k] = np.sqrt(sigma2)
 
     k = az_avg.k.astype(DTYPE)
     tau = az_avg.tau.astype(DTYPE)
