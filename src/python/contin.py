@@ -12,7 +12,11 @@ def _generate_input_file(
         file: str,
         xdata: np.ndarray,
         ydata: np.ndarray,
-        errdata: Optional[np.ndarray]=None
+        k: float,
+        quad_grid_range: Tuple[float, float],
+        errdata: Optional[np.ndarray] = None,
+        mode: str = 'diffusion',
+        **kwargs
         ) -> None:
     """Generate CONTIN input file with parameters and data.
 
@@ -29,6 +33,7 @@ def _generate_input_file(
     """
     with open(file, 'w') as fh:
         # write header
+        _write_header(fh, k, quad_grid_range, mode, **kwargs)
         # write data
         _write_data(fh, xdata, ydata, errdata)
 
@@ -36,7 +41,7 @@ def _generate_input_file(
 def _generate_parameter_string(
         name: str,
         value: Union[float, int, str],
-        array_index: Optional[int]=None
+        array_index: Optional[int] = None
         ) -> str:
     """Generate a parameter string for the CONTIN input file.
 
@@ -70,11 +75,12 @@ def _generate_parameter_string(
 def _write_header_common(
         fh: TextIO,
         quad_grid_range: Tuple[float, float],
-        num_quad_grid: int=40,
-        norder: int=2,
-        print_residuals: int=3,
-        print_fit: int=3,
-        use_err: bool=True
+        num_quad_grid: int = 40,
+        norder: int = 2,
+        print_residuals: int = 3,
+        print_fit: int = 3,
+        use_err: bool = True,
+        **kwargs
         ) -> None:
     """Write common header for all modes
 
@@ -136,8 +142,12 @@ def _write_header_common(
     # set GMNMX 1 and 2
     if min(quad_grid_range) < 0:
         raise ValueError("Negative quadrature grid points are not accepted.")
-    par_str += _generate_parameter_string(name='GMNMX', value=min(quad_grid_range), array_index=1)
-    par_str += _generate_parameter_string(name='GMNMX', value=max(quad_grid_range), array_index=2)
+    par_str += _generate_parameter_string(name='GMNMX',
+                                          value=min(quad_grid_range),
+                                          array_index=1)
+    par_str += _generate_parameter_string(name='GMNMX',
+                                          value=max(quad_grid_range),
+                                          array_index=2)
 
     # set NINTT to 0
     # no time intervals, all times are listed
@@ -185,7 +195,10 @@ def _write_header_common(
     par_str += _generate_parameter_string(name='IFORMT', value='(1E15.8)')
     par_str += _generate_parameter_string(name='IFORMY', value='(1E15.8)')
     if use_err:
-        par_str += _generate_input_file(name='IFORMW', value='(1E15.8)')
+        par_str += _generate_parameter_string(name='IFORMW', value='(1E15.8)')
+
+    # set RUSER(10) not to scale data
+    par_str += _generate_parameter_string(name='RUSER', value=0, array_index=10)
 
     # write to file
     fh.write(par_str)
@@ -193,18 +206,144 @@ def _write_header_common(
 
 def _write_header_diffusion(
         fh: TextIO,
-        k: float
+        k: float,
+        **kwargs
         ) -> None:
-    pass    
+    """Write header section for diffusion
+
+    Parameters
+    ----------
+    fh : TextIO
+        File handle
+    k : float
+        Magnitude of wave vector
+    """
+    # initialize parameter string
+    par_str = ""
+
+    # set generic distribution
+    par_str += _generate_parameter_string(name='IUSER',
+                                          value=4,
+                                          array_index=10)
+
+    # set user values
+    par_str += _generate_parameter_string(name='RUSER',
+                                          value=k**2,
+                                          array_index=21)
+    par_str += _generate_parameter_string(name='RUSER',
+                                          value=1,
+                                          array_index=22)
+    par_str += _generate_parameter_string(name='RUSER',
+                                          value=0,
+                                          array_index=23)
+    par_str += _generate_parameter_string(name='LUSER',
+                                          value=0,
+                                          array_index=3)
+
+    # write to file
+    fh.write(par_str)
+
+
+def _write_header_stokes_einstein(
+        fh: TextIO,
+        k: float,
+        refractive_index: float = 1.333,
+        wavelength: float = 550,
+        viscosity: float = 1,
+        temperature: float = 300,
+        wall_thickness: float = -1,
+        **kwargs
+        ) -> None:
+    """Write header for weight fraction distribution of spheres
+    satisfying the Stokes-Einstein relation
+
+    Parameters
+    ----------
+    fh : TextIO
+        File handle
+    k : float
+        Wave vector (in cm^-1)
+    refractive_index : float, optional
+        Medium refractive index, by default 1.333
+    wavelength : float, optional
+        Illumination wavelength (in nm), by default 550 nm
+    viscosity : float, optional
+        Medium viscosity (in cP = mPa s), by default 1 cP
+    temperature : float, optional
+        Absolute temperature (in K), by default 300 K
+    wall_thickness : float, optional
+        Wall thickness (in cm) for the hollow spheres Rayleigh-Debye form
+        factor calculation. If negative, the solid spheres model is used.
+        By default -1
+    """
+    # initialize parameter string
+    par_str = ""
+
+    # set weight fraction radius distribution of spheres
+    # satisfying the Stokes-Einstein relation
+    par_str += _generate_parameter_string(name='IUSER',
+                                          value=3,
+                                          array_index=10)
+
+    # set user values
+    # medium refractive index
+    par_str += _generate_parameter_string(name='RUSER',
+                                          value=refractive_index,
+                                          array_index=15)
+    # illumination wavelength (in nm)
+    par_str += _generate_parameter_string(name='RUSER',
+                                          value=wavelength,
+                                          array_index=16)
+    # scattering angle (in degrees)
+    """
+    the magnitude of the scattering vector is computed as
+    q = 4 10^7 pi n sin(theta/2) / lambda
+    so we need to compute the scattering angle (in degrees)
+    """
+    theta = np.arcsin(k * wavelength / (4e7 * np.pi * refractive_index))
+    theta *= 180 / np.pi
+    par_str += _generate_parameter_string(name='RUSER',
+                                          value=theta,
+                                          array_index=17)
+    # absolute temperature (in K)
+    par_str += _generate_parameter_string(name='RUSER',
+                                          value=temperature,
+                                          array_index=18)
+    # viscosity (in cP)
+    par_str += _generate_parameter_string(name='RUSER',
+                                          value=viscosity,
+                                          array_index=19)
+    # wall thickness (in cm)
+    par_str += _generate_parameter_string(name='RUSER',
+                                          value=wall_thickness,
+                                          array_index=24)
+
+    # write to file
+    fh.write(par_str)
 
 
 def _write_header(
         fh: TextIO,
+        k: float,
         quad_grid_range: Tuple[float, float],
-        mode: str='diffusion',
+        mode: str,
         **kwargs
         ) -> None:
-    
+    _write_header_common(fh=fh,
+                         quad_grid_range=quad_grid_range,
+                         **kwargs)
+
+    _write_header_spec = {
+        'diffusion': _write_header_diffusion,
+        'stokes': _write_header_stokes_einstein
+        }
+    modes = _write_header_spec.keys()
+    if mode in modes:
+        _write_header_spec[mode](fh=fh, k=k, **kwargs)
+    else:
+        err_msg = f'Unknown mode {mode} selected. Supported modes are {modes}'
+        raise RuntimeError(err_msg)
+
     # close header
     fh.write(" END\n")
 
@@ -213,7 +352,7 @@ def _write_data(
         fh: TextIO,
         xdata: np.ndarray,
         ydata: np.ndarray,
-        errdata: Optional[np.ndarray]=None
+        errdata: Optional[np.ndarray] = None
         ) -> None:
     """Write CONTIN input data to file.
 
@@ -260,9 +399,7 @@ def _run_contin(
     this_file_path = os.path.abspath(os.path.dirname(__file__))
     contin_exec_path = os.path.join(this_file_path, "contin")
     exec_file = contin_exec_path
-    
+
     full_comm = exec_file + " < " + input_file + " > " + output_file
 
     os.system(full_comm)
-
-
