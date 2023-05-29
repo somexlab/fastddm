@@ -31,9 +31,9 @@ For boolean flags, 1=TRUE and 0=FALSE
 - **RUSER(17)**: scattering angle (in degrees).
 - **RUSER(18)**: absolute temperature.
 - **RUSER(19)**: viscosity (in cP).
-- **RUSER(20)**: scattering vector (in cm$^{-1}$). Computed from $R_{15}$, $R_{16}$, and $R_{17}$.
+- **RUSER(20)**: scattering vector (in $\mathrm{cm}^{-1}$). Computed from $R_{15}$, $R_{16}$, and $R_{17}$.
 - **RUSER(24)**: wall thickness of hollow spheres (in cm).
-- **IUSER(10)**:  **1** = $s(\lambda)$ is weight fraction molecular weight distribution ($R_{23}=1$, $R_{22}=R_{18} R_{20}^2$, so that $D=R_{18} \lambda^{R_{22}}$); **2** = $s(\lambda)$ is diffusion coefficient distribution ($R_{23}=0$, $R_{22}=1$, $R_{21}=R_{20}^2$); **3** = $s(\lambda)$ is weight fraction radius distribution (in cm) of spheres satisfying the Stokes-Einstein relation ($R_{23}=3$, $R_{22}=-1$, $R_{21}=k_B R_{18} R_{20}^2/(0.06 \pi R_{19})$); **4** = generic case where $R_{21}$, $R_{22}$, and $R_{23}$ are set by the user
+- **IUSER(10)**:  **1** = $s(\lambda)$ is weight fraction molecular weight distribution ($R_{23}=1$, $R_{22}=R_{18} R_{20}^2$, so that $D=R_{18} \lambda^{R_{22}}$); **2** = $s(\lambda)$ is diffusion coefficient distribution ($R_{23}=0$, $R_{22}=1$, $R_{21}=R_{20}^2$); **3** = $s(\lambda)$ is weight fraction radius distribution (in cm) of spheres satisfying the Stokes-Einstein relation ($R_{23}=3$, $R_{22}=-1$, $R_{21} = k_B R_{18} R_{20}^2/(0.06 \pi R_{19})$); **4** = generic case where $R_{21}$, $R_{22}$, and $R_{23}$ are set by the user
 - **LUSER(3)**: **0** = do not use form factors (i.e., $f_m=1$); **1** = use Rayleigh-Debye form factors for hollow spheres with $R_{24}$ wall thickness (in cm; if $R_{24} \le 0$, the form factors for solid spheres are computed). An $I_{18}>0$ causes the squared form factor to be averaged over $2 I_{18} + 1$ equally spaced points on the interval centered at the grid point and extending halfway to its nearest neighbors (if form factor rapidly oscillates). Default $I_{18}=50$ is recommended.
 
 Kernels are of the form
