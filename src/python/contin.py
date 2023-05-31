@@ -17,6 +17,8 @@ _CM_SECTION_START = "    ORDINATE    ERROR  ABSCISSA"
 _CM_SECTION_END = "0LINEAR COEFFICIENTS"
 _FIT_SECTION_START = "    ORDINATE  ABSCISSA"
 _FIT_SECTION_END = "1"
+_INPUT_DATA_SECTION_START1 = "            T            Y"
+_INPUT_DATA_SECTION_START2 = "                 T            Y"
 _INPUT_DATA_SECTION_END = "0PRECIS"
 
 def _fortran2py_num_fmt(value: str) -> float:
@@ -1049,7 +1051,24 @@ class Contin:
         results = {}
         with open(self.file_out, "r") as fh:
             for line in fh:
-                if line[:len(_ALPHA_SECTION_START)] == _ALPHA_SECTION_START:
+                chk_in_sect_1 = line[:len(_INPUT_DATA_SECTION_START1)] == _INPUT_DATA_SECTION_START1
+                chk_in_sect_2 = line[:len(_INPUT_DATA_SECTION_START2)] == _INPUT_DATA_SECTION_START2
+                if chk_in_sect_1 or chk_in_sect_2:
+                    if "SQRTW" in set(line.split()):
+                        step = 3
+                    else:
+                        step = 2
+                    input_data = []
+                    while True:
+                        data_line = next(fh)
+                        if data_line[:len(_INPUT_DATA_SECTION_END)] == _INPUT_DATA_SECTION_END:
+                            break
+                        else:
+                            data = data_line.split()
+                            for d in data[1::step]:
+                                input_data.append(_fortran2py_num_fmt(d))
+                    input_data = np.array(input_data)
+                elif line[:len(_ALPHA_SECTION_START)] == _ALPHA_SECTION_START:
                     no_skip = True
                     alpha_line = next(fh)
                     if alpha_line.split()[0] != "*":
@@ -1112,21 +1131,6 @@ class Contin:
                                                   tau,
                                                   fit,
                                                   residuals)
-                elif set(line.split()).issubset({"T", "Y", "SQRTW"}):
-                    if "SQRTW" in set(line.split()):
-                        step = 3
-                    else:
-                        step = 2
-                    input_data = []
-                    while True:
-                        data_line = next(fh)
-                        if data_line[:len(_INPUT_DATA_SECTION_END)] == _INPUT_DATA_SECTION_END:
-                            break
-                        else:
-                            data = data_line.split()
-                            for d in data[1::step]:
-                                input_data.append(_fortran2py_num_fmt(d))
-                    input_data = np.array(input_data)
                 
         return results, alpha
 
