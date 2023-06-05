@@ -5,8 +5,4 @@
 from .azimuthalaverage import AzimuthalAverage
 from fastddm import fit
 
-def calculate_residue(model, xdata, ydata):
 
-
-
-    return xdata, residue
