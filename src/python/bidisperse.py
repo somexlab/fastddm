@@ -5,4 +5,4 @@
 from .azimuthalaverage import AzimuthalAverage
 from fastddm import fit
 
-
+def residual_analysis()
