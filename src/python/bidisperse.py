@@ -3,7 +3,7 @@
 # Authors: Mike Chen 
 
 from .azimuthalaverage import AzimuthalAverage
-from fastddm.fit import simple_structure_function, fit
+from fastddm.fit import simple_structure_function, bidisperse_structure_function, fit
 
 def relative_residual_analysis(azi):
     residual = np.zeros(shape = np.shape(azi.data))
@@ -21,6 +21,8 @@ def relative_residual_analysis(azi):
 
 def plot_residual_heatmap(azi,
                           residual: Optional = None, 
+                          xrange: Optional = None
+                          yrange: Optional = None
                           vmin: Optional = None,
                           vmax: Optional = None,
                           log_scale: Optional = False):
@@ -41,7 +43,6 @@ def plot_residual_heatmap(azi,
         
     tt, kk = np.meshgrid(azi.tau,azi.k)
     
-    # residual = kk+tt**2
     residual = residual[:-1,:-1]
     if log_scale:
         residual = np.log(residual)
