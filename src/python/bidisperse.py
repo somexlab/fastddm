@@ -5,31 +5,16 @@
 from .azimuthalaverage import AzimuthalAverage
 from fastddm.fit import simple_structure_function, fit
 
-def residual_analysis(azi_large, azi_bidisperse):
-    """
-    Analysis the residual with the fitting of only the large particles.
-    """
-    if azi_large.k != azi_bidisperse.k:
-        raise Exception(
-            "q vectors for the large and bidisperese data must match.")
-    if azi_large.tau != azi_bidisperse.tau:
-        raise Exception(
-            "time delays for the large and bidisperese data must match.")
-    
-    k = azi_large.k
-    time_delay = azi_large.tau
-    residual = []
-    
-    for idx, data_large in enumerate(azi_large.data):
-        model = fit(simple_structure_function, azi_large.tau, data_large)
-        parameters = model.best_values
-        fitting = simple_structure_function.eval(dt = time_delay, 
-                                                 A = parameters['A'],
-                                                 B = parameters['B'],
-                                                 tau = parameters['tau'])
-        data_bidisperse = azi_bidisperse.data[idx]
-        residual.append(fitting - data_bidisperse)
-        
-    
-    
+def relative_residual_analysis(azi):
+    residual = np.zeros(shape = np.shape(azi.data))
+    for idx, k in enumerate(azi.k):
+        model = fit(simple_structure_function, 
+                    xdata = azi.tau,
+                    ydata = azi.data[idx])
+        residual[idx] = np.divide(model.residual, 
+                                  model.eval(
+                                      dt = azi.tau,
+                                      A = model.best_values['A'],
+                                      B = model.best_values['B'],
+                                      tau = model.best_values['tau']))
     return residual
