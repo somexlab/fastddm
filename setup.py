@@ -124,6 +124,9 @@ class CMakeBuild(build_ext):
         # single precision
         if get_cmake_bool_flag("SINGLE_PRECISION", False):
             cmake_args += ["-DSINGLE_PRECISION=ON"]
+        # CONTIN
+        if get_cmake_bool_flag("BUILD_CONTIN", False):
+            cmake_args += ["-DBUILD_CONTIN=ON"]
 
         # Set CMAKE_BUILD_PARALLEL_LEVEL to control the parallel build level across all generators.
         if "CMAKE_BUILD_PARALLEL_LEVEL" not in os.environ:

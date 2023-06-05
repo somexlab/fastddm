@@ -4,3 +4,6 @@ build
 examples/.ipynb_checkpoints
 tests/test-imgs/nikon/test.nd2
 tests/__pycache__
+**/.DS_Store
+src/extras/contin/contin
+src/extras/contin/contin.out

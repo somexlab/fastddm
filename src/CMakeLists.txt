@@ -17,6 +17,12 @@ else()
     SET(IS_SINGLE_PRECISION False)
 endif()
 
+if(BUILD_CONTIN)
+    SET(IS_CONTIN True)
+else()
+    SET(IS_CONTIN False)
+endif()
+
 if(ENABLE_CPP)
     SET(_fddm_sources
         cpp/ddm.cc
@@ -99,6 +105,18 @@ if(ENABLE_CUDA)
     target_link_libraries(_core PUBLIC cufft nvidia-ml)
 endif(ENABLE_CUDA)
 
+if(BUILD_CONTIN)
+    add_executable(contin
+        extras/contin/contin.for
+    )
+
+    set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -std=legacy")
+
+    set_target_properties(contin PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY_RELEASE ${FASTDDM_OUTPUT_DIR}
+    )
+endif(BUILD_CONTIN)
+
 # Copy the files required to install the library with python's setuptools
 configure_file(python/__init__.py
     ${FASTDDM_OUTPUT_DIR}/__init__.py)
@@ -169,5 +187,11 @@ configure_file(python/fit_models.py
 
 configure_file(python/noise_est.py
     ${FASTDDM_OUTPUT_DIR}/noise_est.py)
+
+configure_file(python/contin.py
+    ${FASTDDM_OUTPUT_DIR}/contin.py)
+
+configure_file(python/contin_result.py
+    ${FASTDDM_OUTPUT_DIR}/contin_result.py)
 
 install(CODE "execute_process(COMMAND ${PYTHON_EXECUTABLE} -m pip install ${FASTDDM_OUTPUT_DIR})")

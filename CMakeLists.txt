@@ -5,6 +5,7 @@ cmake_policy(SET CMP0054 NEW)
 project(fastddm)
 
 option(SINGLE_PRECISION "Use single precision math" OFF)
+option(BUILD_CONTIN "Build CONTIN executable" OFF)
 
 # The default behavior is to build with optimization
 set(CMAKE_BUILD_TYPE Release)
@@ -76,6 +77,10 @@ if(ENABLE_CUDA)
     # Set CUDA C++ standard
     set(CMAKE_CUDA_STANDARD 11)
 endif(ENABLE_CUDA)
+
+if(BUILD_CONTIN)
+    enable_language(Fortran)
+endif(BUILD_CONTIN)
 
 # Add project library subdirectory
 add_subdirectory(src)
