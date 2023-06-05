@@ -17,3 +17,41 @@ def relative_residual_analysis(azi):
                                                             B = model.best_values['B'],
                                                             tau = model.best_values['tau']))
     return residual
+
+
+def plot_residual_heatmap(azi,
+                          residual: Optional = None, 
+                          vmin: Optional = None,
+                          vmax: Optional = None,
+                          log_scale: Optional = False):
+    
+    # qmin, qmax = min(azi.k), max(azi.k)
+    # tmin, tmax = min(azi.tau), max(azi.tau)
+    
+    if residual is None:
+        residual = relative_residual_analysis(azi)
+    
+    nk, ndata = np.shape(residual)
+    
+    if nk != len(azi.k):
+        raise Exception("Number of bins not matched")
+        
+    if ndata != len(azi.tau):
+        raise Exception("Time delay not matched")
+        
+    tt, kk = np.meshgrid(azi.tau,azi.k)
+    
+    # residual = kk+tt**2
+    residual = residual[:-1,:-1]
+    if log_scale:
+        residual = np.log(residual)
+    if vmin != None or vmax != None:
+        plt.pcolormesh(kk,tt, residual, vmin = vmin, vmax = vmax)
+    else:
+        plt.pcolormesh(kk,tt, residual)
+    
+    plt.colorbar()
+    plt.xlabel('q (um^-1)')
+    plt.ylabel(r'$\Delta t$ (s)')
+    
+    return
