@@ -11,10 +11,9 @@ def relative_residual_analysis(azi):
         model = fit(simple_structure_function, 
                     xdata = azi.tau,
                     ydata = azi.data[idx])
-        residual[idx] = np.divide(model.residual, 
-                                  model.eval(
-                                      dt = azi.tau,
-                                      A = model.best_values['A'],
-                                      B = model.best_values['B'],
-                                      tau = model.best_values['tau']))
+        residual[idx] = np.divide(model.residual, model.eval(
+                                                            dt = azi.tau,
+                                                            A = model.best_values['A'],
+                                                            B = model.best_values['B'],
+                                                            tau = model.best_values['tau']))
     return residual
