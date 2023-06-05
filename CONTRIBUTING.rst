@@ -9,11 +9,50 @@ the project.
 Features
 --------
 
+Request features or report bugs
+"""""""""""""""""""""""""""""""
+
+Feature requests or bug reports should be done through issues.
+Please, create a new issue following the provided template.
+Also consider adding proper labels, like `bug` or `enhancement`/`task`.
+Please, be concise in your description: adding screenshots (or mathematical formulas) may also help!
+The maintainers will then add the assignee and appropriate milestone.
+Or, if you want to contribute yourself, let the **FastDDM** developers know
+and **read carefully below**.
+
 Implement functionality in a general and flexible fashion
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 New features should be applicable to a variety of use-cases. The **FastDDM** developers can
 assist you in designing flexible interfaces.
+
+Pull requests
+"""""""""""""
+
+When opening a pull request, make sure that the source and destination branches are compatible,
+e.g. `<your_branch> -> <latest_milestone_branch>` or `<latest_milestone_branch> -> main`.
+
+If you want to contribute to the project, fork the latest milestone or the main branch.
+When you are done with your modifications, open a pull request.
+
+If you are an internal developer, while you're working on the PR,
+please use the title format "WIP: \<title>". Once you've finished your work,
+remove the WIP part and ask for a review from one of the repository's maintainers.
+
+If you need advice, add comments or open a discussion, possibly tagging the appropriate maintainer.
+
+Add your Python file to the installer
+"""""""""""""""""""""""""""""""""""""
+
+Python modules must be added to the `src/python` directory. To make a module installable,
+add it to the `src/CMakeLists.txt` file.
+Scroll down until you find a list of `configure_file(...)`.
+Add your file to the list following the syntax of the other items:
+
+.. code:: cmake
+    
+    configure_file(python/<your_file>.py
+        ${FASTDDM_OUTPUT_DIR}/<your_file>.py)
 
 Optimize for the current GPU generation
 """""""""""""""""""""""""""""""""""""""
@@ -24,6 +63,26 @@ Version control
 ---------------
 
 Guidelines for version control here...
+
+When working on the issue, create a new branch starting from the latest
+milestone branch or from `main`.
+
+Pull requests for new releases
+""""""""""""""""""""""""""""""
+
+After merging the latest release into `main`, open a new WIP release PR. Do so by:
+
+#. creating a new branch `vX.Y.Z` following the convention.
+#. updating the fallback version in `setup.py` and in `src/python/make_install_setup.py`.
+#. commiting to the new branch.
+#. opening a PR with title "WIP: vX.Y.Z" with destination branch `main`.
+
+Merge release into `main`
+"""""""""""""""""""""""""
+
+#. update changelog with the main modifications of the release you want to merge. Follow the convention in the `CHANGELOG.md`.
+#. Merge the PR to main & close the corresponding milestone.
+#. Create a tag via "create draft release" and name it according to the release version.
 
 Propose a minimal set of related changes
 """"""""""""""""""""""""""""""""""""""""
