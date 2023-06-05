@@ -1,10 +1,15 @@
-.. FastDDM documentation master file, created by
-   sphinx-quickstart on Thu Jun  1 17:13:03 2023.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+.. Copyright (c) 2023-2023 University of Vienna, Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino.
+.. Part of FastDDM, released under the GNU GPL-3.0 License.
 
-Welcome to FastDDM's documentation!
-===================================
+FastDDM
+=======
+
+.. only:: html
+
+   |License|
+
+   .. |License| image:: https://img.shields.io/badge/License-GPLv3-blue.svg
+       :target: https://fastddm.readthedocs.io/en/latest/license.html
 
 **FastDDM** is a Python package for the analysis of microscopy image sequences using Differential
 Dynamic Microscopy on CPU and GPU. The features implemented are targeted at the experimental soft
@@ -54,3 +59,13 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Reference
+
+   documentation
+   developers
+
+   open-source
