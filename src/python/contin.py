@@ -937,6 +937,11 @@ class Contin:
                                         value=theta_deg,
                                         array_index=17)
         
+        # set LUSER to TRUE
+        head_str += self._gen_param_str(name="LUSER",
+                                        value=1,
+                                        array_index=3)
+        
         return head_str
     
     def _gen_data_input(self) -> str:
