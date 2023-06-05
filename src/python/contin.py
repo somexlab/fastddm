@@ -660,7 +660,7 @@ class Contin:
         Sets by default the following CONTIN input parameters:
         - LAST      = TRUE  = only 1 analysis
         - NINTT     = 0     = no time intervals
-        - NLINF     = 1
+        - NLINF     = 0
         - DOUSNQ    = TRUE  = enable constraint
         - NONNEG    = TRUE  = fix non-negative solution
         - RUSER(10) = 0     = leave isf unchanged
@@ -690,8 +690,8 @@ class Contin:
         # set NINTT to 0
         head_str += self._gen_param_str(name="NINTT", value=0)
 
-        # set NLINF to 1
-        head_str += self._gen_param_str(name="NLINF", value=1)
+        # set NLINF to 0
+        head_str += self._gen_param_str(name="NLINF", value=0)
 
         # set DOUSNQ to 1
         head_str += self._gen_param_str(name="DOUSNQ", value=1)
