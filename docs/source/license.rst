@@ -59,3 +59,6 @@ license::
 
 `Python <https://www.python.org>`_, Used under the
 `Python license <http://www.python.org/psf/license/>`_
+
+Provencher's CONTIN was downloaded from the
+`official website <http://s-provencher.com/contin.shtml>`__ and included in the source tree.
