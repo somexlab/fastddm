@@ -8,6 +8,7 @@
 from typing import Any
 from .imagestructurefunction import SFReader
 from .azimuthalaverage import AAReader
+from .intermediatescatteringfunction import ISFReader
 
 
 def load(fname: str) -> Any:
@@ -28,5 +29,8 @@ def load(fname: str) -> Any:
             return f.load()
     if fname.endswith(".aa.ddm"):
         with AAReader(fname) as f:
+            return f.load()
+    if fname.endswith(".isf.ddm"):
+        with ISFReader(fname) as f:
             return f.load()
     raise RuntimeError('File extension not recognized.')

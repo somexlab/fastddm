@@ -66,9 +66,9 @@ class AzimuthalAverage:
 
     Methods
     -------
-    save(*, fname, protocol) : None
+    save(*, fname) : None
         Save azimuthal average to binary file.
-    resample(tau) : None
+    resample(tau) : AzimuthalAverage
         Resample azimuthal average with new tau values.
     """
 
@@ -653,7 +653,7 @@ class AAWriter(Writer):
     def _write_header(
         self, Nk: int, Nt: int, Nextra: int, is_err: bool, dtype: str
     ) -> None:
-        """Write image structure function file header.
+        """Write azimuthal average file header.
 
         In version 0.2, the header is structured as follows:
         * bytes 0-1: endianness (`LL` = 'little'; `BB` = 'big'), 'utf-8' encoding
@@ -1104,11 +1104,11 @@ def mergesort(az_avg1: AzimuthalAverage, az_avg2: AzimuthalAverage) -> Azimuthal
 
     # create new data
     dim_k, dim_tau = az_avg1.shape
-    data = np.zeros(az_avg1.data, shape=(dim_k, len(tau) + 2), dtype=DTYPE)
+    data = np.zeros(shape=(dim_k, len(tau) + 2), dtype=DTYPE)
     if az_avg1._err is None or az_avg2._err is None:
         err = None
     else:
-        err = np.zeros(az_avg1.err, shape=(dim_k, len(tau) + 2), dtype=DTYPE)
+        err = np.zeros(shape=(dim_k, len(tau) + 2), dtype=DTYPE)
 
     # populate data
     data[:, :-2] = np.append(az_avg1.data, az_avg2.data, axis=1)[:, sortidx].astype(
