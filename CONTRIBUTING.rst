@@ -12,7 +12,8 @@ Features
 Request features or report bugs
 """""""""""""""""""""""""""""""
 
-Feature requests or bug reports should be done through issues.
+Feature requests or bug reports should be done through
+`issues <https://github.com/somexlab/fastddm/issues>`__.
 Please, create a new issue following the provided template.
 Also consider adding proper labels, like `bug` or `enhancement`/`task`.
 Please, be concise in your description: adding screenshots (or mathematical formulas) may also help!
