@@ -38,6 +38,7 @@ exclude_patterns = []
 
 html_theme = 'furo'
 html_static_path = ['_static']
+html_logo = 'fastddm-logo-vertical.svg'
 html_theme_options = {
     'sidebar_hide_name': True,
     'top_of_page_button': None,
@@ -50,3 +51,4 @@ html_theme_options = {
         "color-brand-content": "#406a8c",
     },
 }
+html_favicon = 'fastddm-logo-favicon.svg'
