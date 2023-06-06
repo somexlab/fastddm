@@ -46,7 +46,7 @@ Calculation of the image structure function and its azimuthal average:
     dqt.set_frame_rate(frame_rate)
 
     # compute the azimuthal average
-    aa = fddm.azimuthal_average(dqt, bins=dqt.shape[-1], range=(0.0, dqt.ky[-1]))
+    aa = fddm.azimuthal_average(dqt, bins=dqt.shape[-1] - 1, range=(0.0, dqt.ky[-1]))
 
 
 .. toctree::
