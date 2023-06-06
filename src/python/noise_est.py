@@ -144,7 +144,10 @@ def _noise_high_q_az_avg(
         uncertainty_value = noise_value
     else:
         numel = np.size(~np.isnan(obj.err[bool_mask]))
-        uncertainty_value = np.sqrt(np.nansum(obj.err[bool_mask]**2)) / numel
+        if numel > 0:
+            uncertainty_value = np.sqrt(np.nansum(obj.err[bool_mask]**2)) / numel
+        else:
+            uncertainty_value = np.nan
     
     noise = np.full(dim, fill_value=noise_value, dtype=DTYPE)
     uncertainty = np.full(dim, fill_value=uncertainty_value, dtype=DTYPE)
@@ -193,7 +196,10 @@ def _noise_power_spec_az_avg(
         uncertainty_value = noise_value
     else:
         numel = np.size(~np.isnan(obj.power_spec_err[bool_mask]))
-        uncertainty_value = 2 * np.sqrt(np.nansum(obj.power_spec_err[bool_mask]**2)) / numel
+        if numel > 0:
+            uncertainty_value = 2 * np.sqrt(np.nansum(obj.power_spec_err[bool_mask]**2)) / numel
+        else:
+            uncertainty_value = np.nan
 
     noise = np.full(dim, fill_value=noise_value, dtype=DTYPE)
     uncertainty = np.full(dim, fill_value=uncertainty_value, dtype=DTYPE)
@@ -242,7 +248,10 @@ def _noise_var_az_avg(
         uncertainty_value = noise_value
     else:
         numel = np.size(~np.isnan(obj.var_err[bool_mask]))
-        uncertainty_value = 2 * np.sqrt(np.nansum(obj.var_err[bool_mask]**2)) / numel
+        if numel > 0:
+            uncertainty_value = 2 * np.sqrt(np.nansum(obj.var_err[bool_mask]**2)) / numel
+        else:
+            uncertainty_value = np.nan
         
     noise = np.full(dim, fill_value=noise_value, dtype=DTYPE)
     uncertainty = np.full(dim, fill_value=uncertainty_value, dtype=DTYPE)
