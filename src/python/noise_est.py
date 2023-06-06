@@ -296,11 +296,13 @@ def _noise_polyfit_az_avg(
             x = obj.tau[:num_points]
             y = obj.data[k_idx, :num_points]
             if obj.err is None:
-                p, pcov = np.polyfit(x, y, deg=deg, cov=True)
+                w = None
+            elif np.any(np.isnan(obj.err[k_idx, :num_points])):
+                w = None
             else:
-                err = obj.err[k_idx, :num_points]
-                # compute polynomial fit with unscaled covariance matrix
-                p, pcov = np.polyfit(x, y, deg=deg, w=1/err, cov='unscaled')
+                w = 1 / obj.err[k_idx, :num_points]
+            # compute polynomial fit with unscaled covariance matrix
+            p, pcov = np.polyfit(x, y, deg=deg, w=w, cov='unscaled')
             noise[k_idx] = p[-1]
             # error of coefficients is square root of diagonal
             uncertainty[k_idx] = np.sqrt(np.diag(pcov))[-1]
