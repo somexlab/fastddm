@@ -42,19 +42,6 @@ simple_structure_function.set_param_hint("A", min=0.0, max=np.inf, value=1.0)
 simple_structure_function.set_param_hint("B", min=0.0, max=np.inf, value=0.0)
 simple_structure_function.set_param_hint("tau", min=0.0, max=np.inf, value=1.0)
 
-def _bidisperse_image_structure_function(
-    dt: np.ndarray, A: float, B: float, tau1: float, tau2: float, alpha: float
-) -> np.ndarray:
-    """Basic image structure function shape with a simple exponential."""
-    return A * (1 - (alpha * _simple_exp(dt,tau1,1.0) + (1 - alpha) * _simple_exp(dt,tau2,1.0))) + B 
-
-bidisperse_structure_function = lm.Model(_bidisperse_image_structure_function)
-bidisperse_structure_function.set_param_hint("A", min=0.0, max=np.inf, value=1.0)
-bidisperse_structure_function.set_param_hint("B", min=0.0, max=np.inf, value=0.0)
-bidisperse_structure_function.set_param_hint("tau1", min=0.0, max=np.inf, value=1.0)
-bidisperse_structure_function.set_param_hint("tau2", min=0.0, max=np.inf, value=1.0)
-bidisperse_structure_function.set_param_hint("alpha", min=0.0, max=np.inf, value=0.5)
-
 def _simple_structure_function_parameter_helper(
     xdata: np.ndarray,
     ydata: np.ndarray,

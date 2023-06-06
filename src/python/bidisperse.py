@@ -3,7 +3,9 @@
 # Authors: Mike Chen 
 
 from .azimuthalaverage import AzimuthalAverage
-from fastddm.fit import simple_structure_function, bidisperse_structure_function, fit
+from fastddm.fit import simple_structure_function, fit
+from fastddm.fit_models import double_exponential_model
+from fastddm.noise_est import estimate_camera_noise
 import matplotlib.pyplot as plt
 
 def relative_residual_analysis(data):
