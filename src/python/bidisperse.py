@@ -4,6 +4,7 @@
 
 from .azimuthalaverage import AzimuthalAverage
 from fastddm.fit import simple_structure_function, bidisperse_structure_function, fit
+import matplotlib.pyplot as plt
 
 def relative_residual_analysis(data):
     residual = np.zeros(shape = np.shape(data.data))
