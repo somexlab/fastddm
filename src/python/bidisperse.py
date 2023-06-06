@@ -5,21 +5,21 @@
 from .azimuthalaverage import AzimuthalAverage
 from fastddm.fit import simple_structure_function, bidisperse_structure_function, fit
 
-def relative_residual_analysis(azi):
-    residual = np.zeros(shape = np.shape(azi.data))
-    for idx, k in enumerate(azi.k):
+def relative_residual_analysis(data):
+    residual = np.zeros(shape = np.shape(data.data))
+    for idx, k in enumerate(data.k):
         model = fit(simple_structure_function, 
-                    xdata = azi.tau,
-                    ydata = azi.data[idx])
+                    xdata = data.tau,
+                    ydata = data.data[idx])
         residual[idx] = np.divide(model.residual, model.eval(
-                                                            dt = azi.tau,
+                                                            dt = data.tau,
                                                             A = model.best_values['A'],
                                                             B = model.best_values['B'],
                                                             tau = model.best_values['tau']))
     return residual
 
 
-def plot_residual_heatmap(azi,
+def plot_residual_heatmap(data,
                           residual: Optional = None, 
                           xrange: Optional = None
                           yrange: Optional = None
@@ -27,21 +27,21 @@ def plot_residual_heatmap(azi,
                           vmax: Optional = None,
                           log_scale: Optional = False):
     
-    # qmin, qmax = min(azi.k), max(azi.k)
-    # tmin, tmax = min(azi.tau), max(azi.tau)
+    # qmin, qmax = min(data.k), max(data.k)
+    # tmin, tmax = min(data.tau), max(data.tau)
     
     if residual is None:
-        residual = relative_residual_analysis(azi)
+        residual = relative_residual_analysis(data)
     
     nk, ndata = np.shape(residual)
     
-    if nk != len(azi.k):
+    if nk != len(data.k):
         raise Exception("Number of bins not matched")
         
-    if ndata != len(azi.tau):
+    if ndata != len(data.tau):
         raise Exception("Time delay not matched")
         
-    tt, kk = np.meshgrid(azi.tau,azi.k)
+    tt, kk = np.meshgrid(data.tau,data.k)
     
     residual = residual[:-1,:-1]
     if log_scale:
