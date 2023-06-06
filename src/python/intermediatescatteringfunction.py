@@ -520,10 +520,12 @@ class ISFParser(Parser):
         # check file identifier
         file_id = self._read_id()
         if file_id != 43:
-            err_str = f"File identifier {file_id} not compatible with"
-            err_str += " intermediate scattering function file (43)."
-            err_str += " Input file might be wrong or corrupted."
-            raise RuntimeError(err_str)
+            err_msg = (
+                f"File identifier {file_id} not compatible with"
+                " intermediate scattering function file (43)."
+                " Input file might be wrong or corrupted."
+            )
+            raise RuntimeError(err_msg)
 
     def read_metadata(self) -> dict:
         """Read metadata from the binary file.
@@ -740,18 +742,22 @@ def azavg2isf_estimate(
     if noise_est == 'custom':
         # sanity check on size of noise
         if len(noise) != dim_k:
-            err_msg = 'Custom noise array dimension not compatible'
-            err_msg += ' with given azimuthal average.\n'
-            err_msg += f'Size of noise should be {dim_k}.'
+            err_msg = (
+                'Custom noise array dimension not compatible'
+                ' with given azimuthal average.\n'
+                f'Size of noise should be {dim_k}.'
+            )
             raise RuntimeError(err_msg)
 
         if noise_err is None:
             noise_err = noise
         # sanity check on size of noise_err
         if len(noise_err) != dim_k:
-            err_msg = 'Custom noise_err array dimension not compatible'
-            err_msg += ' with given azimuthal average.\n'
-            err_msg += f'Size of noise_err should be {dim_k}.'
+            err_msg = (
+                'Custom noise_err array dimension not compatible'
+                ' with given azimuthal average.\n'
+                f'Size of noise_err should be {dim_k}.'
+            )
             raise RuntimeError(err_msg)
     else:
         noise, noise_err = estimate_camera_noise(az_avg, mode=noise_est, **kwargs)
@@ -763,18 +769,22 @@ def azavg2isf_estimate(
     if plateau_est == 'custom':
         # sanity check on size of plateau
         if len(plateau) != dim_k:
-            err_msg = 'Custom plateau array dimension not compatible'
-            err_msg += ' with given azimuthal average.\n'
-            err_msg += f'Size of plateau should be {dim_k}.'
+            err_msg = (
+                'Custom plateau array dimension not compatible'
+                ' with given azimuthal average.\n'
+                f'Size of plateau should be {dim_k}.'
+            )
             raise RuntimeError(err_msg)
 
         if plateau_err is None:
             plateau_err = plateau
         # sanity check on size of plateau_err
         if len(plateau_err) != dim_k:
-            err_msg = 'Custom plateau_err array dimension not compatible'
-            err_msg += ' with given azimuthal average.\n'
-            err_msg += f'Size of plateau_err should be {dim_k}.'
+            err_msg = (
+                'Custom plateau_err array dimension not compatible'
+                ' with given azimuthal average.\n'
+                f'Size of plateau_err should be {dim_k}.'
+            )
             raise RuntimeError(err_msg)
     elif plateau_est == 'var':
         plateau = 2 * az_avg.var
@@ -790,8 +800,10 @@ def azavg2isf_estimate(
             plateau_err = 2 * az_avg.power_spec_err
     else:
         plateau_est_modes = ['custom', 'power_spec', 'var']
-        err_msg = f'Unsupported plateau_est mode {plateau_est}.'
-        err_msg += f' Possible values are {plateau_est_modes}'
+        err_msg = (
+            f'Unsupported plateau_est mode {plateau_est}.'
+            f' Possible values are {plateau_est_modes}'
+        )
         raise RuntimeError(err_msg)
     # enforce dtype
     plateau = plateau.astype(DTYPE)
