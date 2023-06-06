@@ -401,7 +401,8 @@ def azimuthal_average(
         for (i, j), curr_idx in np.ndenumerate(idx):
             # add contribution only if curr_idx was found in range
             # and if the weight is larger than 0
-            if curr_idx > -1 and wk[i, j]:
+            # and if the corr_fact is not infinite
+            if curr_idx > -1 and wk[i, j] and not np.isinf(corr_fact[curr_idx]):
                 # initialize to zero if not done before
                 if np.isnan(err[curr_idx, 0]):
                     err[curr_idx] = np.zeros(dim_t, dtype=DTYPE)
