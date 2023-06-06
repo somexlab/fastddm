@@ -28,3 +28,10 @@ General notation:
       - A mathematical function.
     * - a :math:`[\mathrm{length}]^2`
       - The quantity "a" has dimensions of :math:`\mathrm{length}^2`.
+    * - :math:`\mathcal{F}`
+      - The 1D Fourier transform.
+    * - :math:`\mathcal{F}^{-1}`
+      - The 1D inverse Fourier transform.
+    * - :math:`\mathcal{F}_{\mathrm{2D}}`
+      - The 2D Fourier transform.
+    
