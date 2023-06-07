@@ -4,7 +4,7 @@
 Code style
 ==========
 
-All code in HOOMD-blue follows a consistent style to ensure readability. We
+All code in FastDDM follows a consistent style to ensure readability. We
 provide configuration files for linters (see below) so that developers can
 automatically validate and format files.
 
