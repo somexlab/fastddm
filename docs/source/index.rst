@@ -60,6 +60,11 @@ Indices and tables
 * :ref:`modindex`
 * :ref:`search`
 
+.. toctree::
+   :maxdepth: 2
+   :caption: Guides
+
+   getting-started
 
 .. toctree::
    :maxdepth: 2
