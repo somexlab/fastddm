@@ -66,6 +66,7 @@ Indices and tables
    :caption: Reference
 
    documentation
+   changes
    developers
 
    open-source
