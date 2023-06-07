@@ -19,7 +19,7 @@ code. Checks will run on pull requests. Run checks manually with::
 Python
 ------
 
-Python code in HOOMD-blue should follow `PEP8`_ with the formatting performed by
+Python code in FastDDM should follow `PEP8`_ with the formatting performed by
 `black`_. Code should pass all **flake8** tests and formatted by **black**.
 
 .. _PEP8: https://www.python.org/dev/peps/pep-0008
