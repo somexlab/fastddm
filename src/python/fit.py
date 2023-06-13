@@ -12,6 +12,7 @@ import numpy as np
 import pandas as pd
 
 from .azimuthalaverage import AzimuthalAverage
+from .intermediatescatteringfunction import IntermediateScatteringFunction
 
 
 def _simple_exp(
@@ -142,7 +143,7 @@ def fit(
 
 
 def fit_multik(
-    data: AzimuthalAverage,
+    data: Union[AzimuthalAverage, IntermediateScatteringFunction],
     model: lm.Model,
     ref: int,
     ref_params: Optional[lm.Parameters] = None,
@@ -178,8 +179,8 @@ def fit_multik(
 
     Parameters
     ----------
-    data : AzimuthalAverage
-        The azimuthal average object to be fitted.
+    data : Union[AzimuthalAverage, IntermediateScatteringFunction]
+        The azimuthal average or intermediate scattering function object to be fitted.
     model : lm.Model
         The model to be used for the fit. It must have one and one only
         independent variable (i.e., the time delay), the name is not important.
@@ -289,7 +290,7 @@ def fit_multik(
         # perform fit in indexrange
         for idx in indexrange:
             # fit
-            if np.isnan(data.var[idx]):
+            if np.isnan(data.data[idx, 0]):
                 for p in model.param_names:
                     results[p][idx] = np.nan
             else:
