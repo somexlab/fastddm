@@ -321,6 +321,7 @@ def fit_multik(
     _fit(reversed(range(ref)))
 
     # perform fit towards large k vectors
-    _fit(range(ref + 1, len(data.k)))
+    # also repeat fit at ref
+    _fit(range(ref, len(data.k)))
 
     return pd.DataFrame(results), model_results
