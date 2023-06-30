@@ -67,6 +67,13 @@ Indices and tables
    getting-started
 
 .. toctree::
+   :maxdepth: 1
+   :caption: Python API
+
+   window
+   weights
+
+.. toctree::
    :maxdepth: 2
    :caption: Reference
 
