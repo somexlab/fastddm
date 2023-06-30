@@ -17,20 +17,21 @@ release = '0.3'
 pygments_style = "friendly"
 pygments_dark_style = "native"
 
+
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 extensions = [
     'nbsphinx', 'sphinx.ext.autodoc', 'sphinx.ext.autosummary',
     'sphinx.ext.napoleon', 'sphinx.ext.intersphinx', 'sphinx.ext.mathjax',
-    'sphinx.ext.todo', 'IPython.sphinxext.ipython_console_highlighting'
+    'sphinx.ext.todo', 'IPython.sphinxext.ipython_console_highlighting',
+    'matplotlib.sphinxext.plot_directive',
 ]
 
 napoleon_include_special_with_doc = True
 
 templates_path = ['_templates']
 exclude_patterns = []
-
 
 
 # -- Options for HTML output -------------------------------------------------
