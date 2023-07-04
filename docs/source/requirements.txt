@@ -4,6 +4,7 @@ nbconvert
 nbsphinx
 numpy
 pandoc
+matplotlib
 sphinx
 furo
 tornado
