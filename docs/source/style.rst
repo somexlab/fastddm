@@ -47,10 +47,10 @@ Documentation
 ^^^^^^^^^^^^^
 
 Python code should be documented with docstrings and added to the Sphinx
-documentation index in ``docs/``. Docstrings should follow `Google style`_
+documentation index in ``docs/``. Docstrings should follow `NumPy style`_
 formatting for use in `Napoleon`_.
 
-.. _Google Style: https://www.sphinx-doc.org/en/master/usage/extensions/example_google.html#example-google
+.. _NumPy Style: https://www.sphinx-doc.org/en/master/usage/extensions/example_numpy.html
 .. _Napoleon: https://www.sphinx-doc.org/en/master/usage/extensions/napoleon.html
 
 Non self-explanatory methods should unambiguously document what calculations they perform
@@ -62,6 +62,12 @@ When referencing classes, methods, and properties in documentation, use ``name``
 in the local scope (class method or property, or classes in the same module). For classes outside
 the module, use the fully qualified name (e.g. ``numpy.ndarray`` or
 ``fastddm.azimuthalaverage.AzimuthalAverage``).
+
+To build the documentation, run from the project root
+
+.. code-block:: bash
+
+  sphinx-build -b html docs/source/ docs/build/html
 
 C++/CUDA
 --------
