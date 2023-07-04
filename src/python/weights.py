@@ -17,9 +17,9 @@ def sector_average_weight(
     full_shape: Tuple[int, int],
     kx: Optional[np.ndarray] = None,
     ky: Optional[np.ndarray] = None,
-    theta_0: Optional[float] = 0.0,
-    delta_theta: Optional[float] = 90.0,
-    rep: Optional[int] = 2,
+    theta_0: float = 0.0,
+    delta_theta: float = 90.0,
+    rep: int = 2,
     kind: Optional[str] = 'uniform'
 ) -> np.ndarray:
     """Evaluate weights for sector azimuthal average.
@@ -108,12 +108,12 @@ def sector_average_weight(
 
 
 def sphere_form_factor(
-    shape : Tuple[int,int],
-    kx : Optional[np.ndarray] = None,
-    ky : Optional[np.ndarray] = None,
-    R : Optional[float] = 1.0,
-    contrast : Optional[float] = 1.0,
-    kind : Optional[str] = 'amplitude'
+    shape: Tuple[int, int],
+    kx: Optional[np.ndarray] = None,
+    ky: Optional[np.ndarray] = None,
+    R: float = 1.0,
+    contrast: float = 1.0,
+    kind: Optional[str] = 'amplitude'
 ) -> np.ndarray:
     """Evaluate sphere form factor.
 
