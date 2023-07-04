@@ -5,16 +5,16 @@
 
 r"""This module contains the fit models.
 
-The functions listed here are used to generate the corresponding `lmfit.Model`
+The functions listed here are used to generate the corresponding ``lmfit.Model``
 for the structure function or the intermediate scattering function.
 See the `lmfit documentation <https://lmfit.github.io/lmfit-py/>`_ for more
 information.
 
 The model can be imported using the model name separated by underscores.
 The models for the intermediate scattering function are characterized by
-the presence of `_isf_` in the name.
-For instance, to import the `double_exponential_model` and the
-`flory_schulz_isf_model`, do as follows:
+the presence of ``_isf_`` in the name.
+For instance, to import the ``double_exponential_model`` and the
+``flory_schulz_isf_model``, do as follows:
 
 .. code-block:: python
 
@@ -28,7 +28,7 @@ For instance, to import the `double_exponential_model` and the
 Structure function models
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The following `lmfit.Model` for the structure function are provided:
+The following ``lmfit.Model`` for the structure function are provided:
 
 generic exponential model
 *************************
@@ -93,7 +93,7 @@ Noise (:math:`B`)                 B       0               :math:`(-\infty, \inft
 Relaxation rate (:math:`\Gamma`)  Gamma   1               :math:`(0, \infty)`
 ================================  ======  ==============  =========================
 
-It is defined from the `generic_exponential_model` by fixing `beta` to 1.
+It is defined from the ``generic_exponential_model`` by fixing ``beta`` to 1.
 
 .. plot::
 
@@ -306,7 +306,7 @@ relaxation rates follow an exponential distribution:
 where :math:`\bar{\Gamma}` is the average relaxation rate
 (see `Mailer et al (2015) <https://iopscience.iop.org/article/10.1088/0953-8984/27/14/145102>`_).
 It is obtained by fixing :math:`\sigma=1` (i.e., :math:`z=0`)
-in the `flory_schulz_model`.
+in the ``flory_schulz_model``.
 
 The following parameters and settings are used:
 
@@ -489,7 +489,7 @@ relaxation rates follow an exponential distribution:
 where :math:`\bar{\Gamma}` is the average relaxation rate
 (see `Mailer et al (2015) <https://iopscience.iop.org/article/10.1088/0953-8984/27/14/145102>`_).
 It is obtained by fixing :math:`\sigma=1` (i.e., :math:`z=0`)
-in the `flory_schulz_isf_model`.
+in the ``flory_schulz_isf_model``.
 
 The following parameters and settings are used:
 
