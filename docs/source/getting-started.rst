@@ -8,3 +8,4 @@ Getting started
     :maxdepth: 1
 
     features
+    build

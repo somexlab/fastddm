@@ -70,6 +70,7 @@ Indices and tables
    :maxdepth: 1
    :caption: Python API
 
+   fit
    fit_models
    lags
    window
