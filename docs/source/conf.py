@@ -30,6 +30,14 @@ extensions = [
 
 napoleon_include_special_with_doc = True
 
+intersphinx_mapping = {
+    'python': ('https://docs.python.org/3', None),
+    'numpy': ('https://numpy.org/doc/stable', None),
+    'lmfit': ('https://lmfit.github.io/lmfit-py/', None),
+}
+autodoc_docstring_signature = True
+autodoc_typehints_format = 'short'
+
 templates_path = ['_templates']
 exclude_patterns = []
 
