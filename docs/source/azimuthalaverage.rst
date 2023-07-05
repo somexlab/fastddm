@@ -2,7 +2,7 @@
 .. Part of FastDDM, released under the GNU GPL-3.0 License.
 
 azimuthalaverage
-======================
+================
 
 .. automodule:: fastddm.azimuthalaverage
     :members:
