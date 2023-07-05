@@ -70,15 +70,7 @@ Indices and tables
    :maxdepth: 1
    :caption: Python API
 
-   azimuthalaverage
-   fit_models
-   fit
-   imagestructurefunction
-   lags
-   mask
-   noise_est
-   window
-   weights
+   fastddm
 
 .. toctree::
    :maxdepth: 2
