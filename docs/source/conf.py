@@ -37,6 +37,7 @@ intersphinx_mapping = {
 }
 autodoc_docstring_signature = True
 autodoc_typehints_format = 'short'
+autodoc_member_order = 'groupwise'
 
 templates_path = ['_templates']
 exclude_patterns = []
