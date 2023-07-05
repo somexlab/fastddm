@@ -73,6 +73,7 @@ Indices and tables
    fit
    fit_models
    lags
+   mask
    noise_est
    window
    weights
