@@ -97,20 +97,21 @@ def sector_average_weight(
     kind: Optional[str] = 'uniform'
 ) -> np.ndarray:
     """Evaluate weights for sector azimuthal average.
-    If `kx` or `ky` are not given, the half-plane representation for the 2D
+    If ``kx`` or ``ky`` are not given, the half-plane representation for the 2D
     image structure function is assumed and we use
 
-    `kx = 2.0 * np.pi * np.fft.fftfreq(full_shape[1])[:shape[1]]`
-    `ky = 2.0 * np.pi * np.fft.fftshift(np.fft.fftfreq(full_shape[0]))`
+    ``kx = 2.0 * np.pi * np.fft.fftfreq(full_shape[1])[:shape[1]]``
 
-    with `shape[1] = full_shape[1] // 2 + 1`.
+    ``ky = 2.0 * np.pi * np.fft.fftshift(np.fft.fftfreq(full_shape[0]))``
+
+    with ``shape[1] = full_shape[1] // 2 + 1``.
 
     Parameters
     ----------
     full_shape : Tuple[int, int]
         Shape of the full 2D image structure function. This is needed in order
         to correctly account for the spare column (Nyquist frequency). The
-        shape of the output will be `(full_shape[0], full_shape[1] // 2 + 1)`,
+        shape of the output will be ``(full_shape[0], full_shape[1] // 2 + 1)``,
         as for the image structure function data.
     kx : numpy.ndarray, optional
         The array of spatial frequencies along axis `x`. Default is None.
@@ -119,22 +120,24 @@ def sector_average_weight(
     theta_0 : float, optional
         Reference main angle (in degrees). Default is 0.
     delta_theta : float, optional
-        Gaussian width (in degrees). Default is 90.
+        Sector width (in degrees). If ``kind`` is "gauss", it is the
+        standard deviation of the gaussian function over the angles.
+        Default is 90.
     rep : int, optional
         Number of equally-spaced theta angles. Default is 2.
     kind : str, optional
-        Type of weight function. Supported types are 'uniform' and 'gauss'.
-        Default is 'uniform'.
+        Type of weight function. Supported types are "uniform" and "gauss".
+        Default is "uniform".
 
     Returns
     -------
-    weights : numpy.ndarray
+    numpy.ndarray
         The weights.
 
     Raises
     ------
     RuntimeError
-        If a value for `kind` other than 'uniform' or 'gauss' is given.
+        If a value for ``kind`` other than "uniform" or "gauss" is given.
     """
     # define gaussian function
     def gauss(x, mu, sigma):

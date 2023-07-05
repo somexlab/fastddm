@@ -798,7 +798,7 @@ def estimate_camera_noise(
 
     Returns
     -------
-    Tuple[np.ndarray, np.ndarray]
+    Tuple[numpy.ndarray, numpy.ndarray]
         Estimated noise factor and uncertainty.
 
     Raises

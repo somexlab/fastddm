@@ -111,7 +111,9 @@ def blackman_harris(shape: Tuple[int, ...]) -> np.ndarray:
     In the 1D case, the equation for the periodic four-term Blackman-Harris
     window of length `N` reads:
 
-    .. math:: w(x) = \sum_{j=0}^3 (-1)^j a_j \cos{\left( \frac{2 \pi j x}{N} \right)}
+    .. math::
+    
+        w(x) = \sum_{j=0}^3 (-1)^j a_j \cos{\left( \frac{2 \pi j x}{N} \right)}
 
     where :math:`0 \le x < N` and:
 

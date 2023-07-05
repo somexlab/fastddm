@@ -41,26 +41,26 @@ def logspace_int(stop: int,
     """
     Return quasi-evenly log-spaced integers over a specified interval.
 
-    Returns `num` evenly spaced samples, calculated over the interval `[1, stop]`.
+    Returns ``num`` evenly spaced samples, calculated over the interval ``[1, stop]``.
     The endpoint of the interval can optionally be included.
 
     Parameters
     ----------
     stop : int
-        The end value of the sequence, unless `endpoint` is False.
+        The end value of the sequence, unless ``endpoint`` is False.
         In that case, the sequence consists of all but the last of
-        `num + 1` samples, so that `stop` is excluded.
+        ``num + 1`` samples, so that ``stop`` is excluded.
         Note that the step size changes when `endpoint` is False.
     num : int, optional
         Number of samples to generate. Default is 50. Must be > 0.
     endpoint : bool, optional
-        If True, `stop` is the last sample. Otherwise, it is not included.
+        If True, ``stop`` is the last sample. Otherwise, it is not included.
         Default is False.
 
     Returns
     -------
-    samples : numpy.ndarray
-        The `num` log-spaced samples.
+    numpy.ndarray
+        The ``num`` log-spaced samples.
 
     Examples
     --------
@@ -108,21 +108,21 @@ def fibonacci(stop: int,
     """
     Return fibonacci sequence over a specified interval.
 
-    Returns fibonacci samples, calculated over the interval `[1, stop]`.
+    Returns fibonacci samples, calculated over the interval ``[1, stop]``.
 
     The endpoint of the interval can optionally be included.
 
     Parameters
     ----------
     stop : int
-        The end value of the sequence, unless `endpoint` is False.
+        The end value of the sequence, unless ``endpoint`` is False.
     endpoint : bool, optional
-        If True, `stop` is the last sample. Otherwise, it is not included.
+        If True, ``stop`` is the last sample. Otherwise, it is not included.
         Default is False.
 
     Returns
     -------
-    samples : numpy.ndarray
+    numpy.ndarray
         Fibonacci samples.
 
     Examples
