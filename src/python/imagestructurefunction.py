@@ -3,12 +3,12 @@
 # Authors: Enrico Lattuada and Fabian Krautgasser
 # Maintainers: Enrico Lattuada and Fabian Krautgasser
 
-"""This module contains the image structure function data class.
+r"""This module contains the image structure function data class.
 
-The ``ImageStructureFunction`` object is used to store and retrieve information
+The :py:class:`ImageStructureFunction` object is used to store and retrieve information
 about the image structure function computed in DDM.
 
-The ``ImageStructureFunction.data`` contains the image structure function
+The :py:class:`ImageStructureFunction.data` contains the image structure function
 values in :math:`(\Delta t, k_y, k_x)` order. For instance, the image
 structure function at the 10th delay computed can be accessed via
 
@@ -19,7 +19,7 @@ structure function at the 10th delay computed can be accessed via
 .. note::
    Remember that Python uses zero-based indexing.
 
-The ``ImageStructureFunction`` can then be saved into a binary file by using
+The :py:class:`ImageStructureFunction` can then be saved into a binary file by using
 :py:meth:`ImageStructureFunction.save` (it will have a `.sf.ddm` extension)
 and later retrieved from the memory using
 :py:meth:`SFReader.load`, which you can call directly from ``fastddm`` as
@@ -38,7 +38,7 @@ access directly from the disk the relevant data, for example:
     from fastddm.imagestructurefunction import SFReader
 
     # open file
-    r = SFReader('path/to/my_dt_file.sf.ddm')
+    r = SFReader('path/to/my_dqt_file.sf.ddm')
 
     # access quantities in full plane representation
     # access kx array
@@ -121,7 +121,7 @@ class ImageStructureFunction:
         Returns
         -------
         numpy.ndarray
-            The array of kx.
+            The array of ``kx``.
         """
         return self._kx
 
@@ -132,7 +132,7 @@ class ImageStructureFunction:
         Returns
         -------
         numpy.ndarray
-            The array of ky.
+            The array of ``ky``.
         """
         return self._ky
 
@@ -165,7 +165,7 @@ class ImageStructureFunction:
         Returns
         -------
         numpy.ndarray
-            The array of tau.
+            The array of ``tau``.
         """
         return self._tau
 
