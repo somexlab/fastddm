@@ -3,7 +3,65 @@
 # Authors: Enrico Lattuada and Fabian Krautgasser
 # Maintainers: Enrico Lattuada and Fabian Krautgasser
 
-"""Azimuthal average data class and methods."""
+r"""This module contains the azimuthal average data class and the method to compute
+the azimuthal average from the image structure function.
+
+The azimuthal average can be computed from the image structure function as
+
+.. code-block:: python
+
+    import fastddm as fddm
+
+    # compute image structure function dqt
+    ...
+
+    # compute azimuthal average masking out the central cross
+    mask = fddm.mask.central_cross_mask(dqt.full_shape()[1:])
+    aa = fddm.azimuthal_average(dqt, bins=bins, range=(0, dqt.ky[-1]), mask=mask)
+
+The :py:class:`AzimuthalAverage` object is used to store and retrieve information
+about the azimuthal average of the image structure function computed in DDM.
+
+The :py:class:`AzimuthalAverage.data` contains the values of the azimuthal average of
+the image structure function in :math:`(k, \Delta t)` order. For instance, the
+azimuthal average at the 20th wave vector can be accessed via
+
+.. code-block:: python
+
+    aa.data[19]
+
+.. note::
+   Remember that Python uses zero-based indexing.
+
+The :py:class:`AzimuthalAverage` can then be saved into a binary file by using
+:py:meth:`AzimuthalAverage.save` (it will have a `.aa.ddm` extension)
+and later retrieved from the memory using
+:py:meth:`AAReader.load`, which you can call directly from ``fastddm`` as
+
+.. code-block:: python
+
+    # load image structure function
+    dqt = fastddm.load('path/to/my_aa_file.aa.ddm')
+
+Loading the :py:class:`AzimuthalAverage` from disk is not as demanding as for
+the :py:class:`~fastddm.imagestructurefunction.ImageStructureFunction`.
+However, also in this case we provide a fast reader through the
+:py:class:`AAReader`, which can be used to access directly from the disk the
+relevant data, for example:
+
+.. code-block:: python
+
+    from fastddm.azimuthalaverage import AAReader
+
+    # open file
+    r = AAReader('path/to/my_aa_file.aa.ddm')
+
+    # access quantities
+    # access tau array
+    tau = r.get_tau()
+    # access data for 20th k bin
+    y = r.get_k_slice(k_index=19)
+"""
 
 from typing import Tuple, Optional, Union, Iterable, BinaryIO
 from dataclasses import dataclass
@@ -25,51 +83,18 @@ class AzimuthalAverage:
 
     Parameters
     ----------
-    _data : np.ndarray
+    _data : numpy.ndarray
         The packed data (azimuthal average of image structure function, power
         spectrum, and variance).
-    _err : np.ndarray
+    _err : numpy.ndarray
         The packed uncertainties (uncertainty of the azimuthal average, power
         spectrum, and variance).
-    k : np.ndarray
+    k : numpy.ndarray
         The array of reference wavevector values in the bins.
-    tau : np.ndarray
+    tau : numpy.ndarray
         The array of time delay values.
-    bin_edges : np.ndarray
+    bin_edges : numpy.ndarray
         The array of bin edges.
-
-    Attributes
-    ----------
-    data : np.ndarray
-        The azimuthal average of the 2D image structure function.
-    err : np.ndarray
-        The uncertainty (standard deviation) in the azimuthal average of the
-        2D image structure function.
-    power_spec : np.ndarray
-        The azimuthal average of the average 2D power spectrum of the input
-        images.
-    var : np.ndarray
-        The azimuthal average of the 2D variance (over time) of the
-        Fourier transformed images.
-    power_spec_err : np.ndarray
-        The uncertainty in the azimuthal average of the average 2D power
-        spectrum of the input images.
-    var_err : np.ndarray
-        The uncertainty in the azimuthal average of the 2D variance
-        (over time) of the Fourier transformed images.
-    k : np.ndarray
-        The array of reference wavevector values in the bins.
-    tau : np.ndarray
-        The array of time delay values.
-    bin_edges : np.ndarray
-        The array of bin edges.
-
-    Methods
-    -------
-    save(*, fname, protocol) : None
-        Save azimuthal average to binary file.
-    resample(tau) : None
-        Resample azimuthal average with new tau values.
     """
 
     _data: np.ndarray
@@ -84,7 +109,7 @@ class AzimuthalAverage:
 
         Returns
         -------
-        np.ndarray
+        numpy.ndarray
             The azimuthal average data.
         """
         return self._data[:, :-2]
@@ -96,7 +121,7 @@ class AzimuthalAverage:
 
         Returns
         -------
-        np.ndarray
+        numpy.ndarray
             The uncertainty.
         """
         if self._err is None:
@@ -111,7 +136,7 @@ class AzimuthalAverage:
 
         Returns
         -------
-        np.ndarray
+        numpy.ndarray
             The azimuthal average of the power spectrum.
         """
         return self._data[:, -2]
@@ -123,7 +148,7 @@ class AzimuthalAverage:
 
         Returns
         -------
-        np.ndarray
+        numpy.ndarray
             The azimuthal average of the variance.
         """
         return self._data[:, -1]
@@ -135,7 +160,7 @@ class AzimuthalAverage:
 
         Returns
         -------
-        np.ndarray
+        numpy.ndarray
             The uncertainty in the azimuthal average of the power spectrum.
         """
         if self._err is None:
@@ -150,7 +175,7 @@ class AzimuthalAverage:
 
         Returns
         -------
-        np.ndarray
+        numpy.ndarray
             The uncertainty in the azimuthal average of the variance.
         """
         if self._err is None:
@@ -170,7 +195,7 @@ class AzimuthalAverage:
         return self.data.shape
 
     def save(self, fname: str = "analysis_blob") -> None:
-        """Save AzimuthalAverage to binary file.
+        """Save ``AzimuthalAverage`` to binary file.
 
         Parameters
         ----------
@@ -186,12 +211,12 @@ class AzimuthalAverage:
             f.write_obj(self)
 
     def resample(self, tau: np.ndarray) -> "AzimuthalAverage":
-        """Resample with new tau values and return a new AzimuthalAverage.
+        """Resample with new ``tau`` values and return a new ``AzimuthalAverage``.
 
         Parameters
         ----------
-        tau : np.ndarray
-            New values of tau.
+        tau : numpy.ndarray
+            New values of ``tau``.
 
         Returns
         -------
@@ -257,14 +282,14 @@ def azimuthal_average(
     weights: Optional[np.ndarray] = None,
     eval_err: Optional[bool] = True,
 ) -> AzimuthalAverage:
-    """Compute the azimuthal average of the image structure function.
+    r"""Compute the azimuthal average of the image structure function.
 
     For every (not masked out) :math:`k` wavevector in the :math:`i`-th bin,
     the average is calculated as
 
     .. math:
 
-        \\bar{x}_i = \\frac{\\sum_k w_k x_k}{\\sum_k w_k} ,
+        \bar{x}_i = \frac{\sum_k w_k x_k}{\sum_k w_k} ,
 
     where :math:`w_k` is the weight given to the wavevector :math:`k`.
     The uncertainty is calculated as the square root of the variance for
@@ -272,36 +297,36 @@ def azimuthal_average(
 
     .. math:
 
-        \\text{Var}(x_i) = \\left( \\frac{\\sum_k w_k x_k^2}{\\sum_k w_k} - \\bar{x}_i^2 \\right) \\frac{N_i}{N_i - 1} ,
+        \text{Var}(x_i) = \left( \frac{\sum_k w_k x_k^2}{\sum_k w_k} - \bar{x}_i^2 \right) \frac{N_i}{N_i - 1} ,
 
     where
 
     .. math:
 
-        N_i = \\frac{(\\sum_k w_k)^2}{\\sum_k w_k^2} .
+        N_i = \frac{(\sum_k w_k)^2}{\sum_k w_k^2} .
 
     Parameters
     ----------
     img_str_func : ImageStructureFunction
         The image structure function.
     bins : Union[int, Iterable[float]], optional
-        If `bins` is an int, it defines the number of equal-width bins in the
-        given range (10, by default). If `bins` is a sequence, it defines a
+        If ``bins`` is an int, it defines the number of equal-width bins in the
+        given range (10, by default). If ``bins`` is a sequence, it defines a
         monotonically increasing array of bin edges, including the rightmost
         edge, allowing for non-uniform bin widths.
-    range : (float, float), optional
+    range : Tuple[float, float], optional
         The lower and upper range of the bins. If not provided, range is simply
-        `(k.min(), k.max())`, where `k` is the vector modulus computed from
-        `kx` and `ky`. Values outside the range are ignored. The first element
+        ``(k.min(), k.max())``, where ``k`` is the vector modulus computed from
+        ``kx`` and ``ky``. Values outside the range are ignored. The first element
         of the range must be less than or equal to the second.
-    mask : np.ndarray, optional
-        If a boolean `mask` is given, it is used to exclude grid points from
+    mask : numpy.ndarray, optional
+        If a boolean ``mask`` is given, it is used to exclude grid points from
         the azimuthal average (where False is set). The array must have the
-        same y,x shape of `data`. If `mask` is not of boolean type, it is cast
-        and a warning is raised.
-    weights : np.ndarray, optional
-        An array of weights, of the same y,x shape as `data`. Each
-        value in `data` only contributes its associated weight towards
+        same ``(y, x)`` shape of ``data``. If ``mask`` is not of boolean type, it is cast
+        and a ``warning`` is raised.
+    weights : numpy.ndarray, optional
+        An array of weights, of the same ``(y, x)`` shape as ``data``. Each
+        value in ``data`` only contributes its associated weight towards
         the bin count (instead of 1).
     eval_err : bool, optional
         If True, the uncertainty is computed. Default is True.
@@ -617,21 +642,16 @@ def _azimuthal_average(
 
 class AAWriter(Writer):
     """FastDDM azimuthal average writer class.
-    Inherits from `Writer`. It adds the following unique methods:
-
-    Methods
-    -------
-    write_obj(obj) : None
-        Write AzimuthalAverage object to binary file.
+    Inherits from ``Writer``.
     """
 
     def write_obj(self, obj: AzimuthalAverage) -> None:
-        """Write AzimuthalAverage object to binary file.
+        """Write ``AzimuthalAverage`` object to binary file.
 
         Parameters
         ----------
         obj : AzimuthalAverage
-            AzimuthalAverage object.
+            ``AzimuthalAverage`` object.
         """
         # get data dtype
         dtype = npdtype2format(obj.data.dtype.name)
@@ -777,22 +797,7 @@ class AAWriter(Writer):
 
 class AAReader(Reader):
     """FastDDM azimuthal average reader class.
-    Inherits from `Reader`. It adds the following unique parameters and methods:
-
-    Methods
-    -------
-    load(obj) : AzimuthalAverage
-        Load the azimuthal average.
-    get_k() : np.ndarray
-        Read k array.
-    get_tau() : np.ndarray
-        Read tau array.
-    get_bin_edges() : np.ndarray
-        Read bin_edges array.
-    get_k_slice(k_index) : np.ndarray
-        Read k slice from data.
-    get_k_slice_err(k_index) : np.ndarray
-        Read k slice uncertainty from data.
+    Inherits from ``Reader``.
     """
 
     def __init__(self, file: str):
@@ -806,7 +811,7 @@ class AAReader(Reader):
         Returns
         -------
         AzimuthalAverage
-            The AzimuthalAverage object.
+            The ``AzimuthalAverage`` object.
 
         Raises
         ------
@@ -842,12 +847,12 @@ class AAReader(Reader):
             )
 
     def get_k(self) -> np.ndarray:
-        """Read k array from file.
+        """Read ``k`` array from file.
 
         Returns
         -------
-        np.ndarray
-            The k array.
+        numpy.ndarray
+            The ``k`` array.
         """
         offset = self._metadata["k_offset"]
         Nk = self._metadata["Nk"]
@@ -855,12 +860,12 @@ class AAReader(Reader):
         return self._parser.read_array(offset, Nk)
 
     def get_tau(self) -> np.ndarray:
-        """Read tau array from file.
+        """Read ``tau`` array from file.
 
         Returns
         -------
-        np.ndarray
-            The tau array.
+        numpy.ndarray
+            The ``tau`` array.
         """
         offset = self._metadata["tau_offset"]
         Nt = self._metadata["Nt"]
@@ -868,12 +873,12 @@ class AAReader(Reader):
         return self._parser.read_array(offset, Nt)
 
     def get_bin_edges(self) -> np.ndarray:
-        """Read bin edges array from file.
+        """Read ``bin_edges`` array from file.
 
         Returns
         -------
-        np.ndarray
-            The bin edges array.
+        numpy.ndarray
+            The ``bin_edges`` array.
         """
         offset = self._metadata["bin_edges_offset"]
         Nk = self._metadata["Nk"]
@@ -881,22 +886,22 @@ class AAReader(Reader):
         return self._parser.read_array(offset, Nk)
 
     def get_k_slice(self, k_index: int) -> np.ndarray:
-        """Read a slice at k from data.
+        """Read a slice at ``k_index`` from data.
 
         Parameters
         ----------
         k_index : int
-            The k index
+            The ``k`` index
 
         Returns
         -------
-        np.ndarray
-            The data at k vs tau.
+        numpy.ndarray
+            The ``data`` at ``k`` vs ``tau``.
 
         Raises
         ------
         IndexError
-            If k_index is out of range.
+            If ``k_index`` is out of range.
         """
         # check index is in range
         Nk = self._metadata["Nk"]
@@ -913,22 +918,22 @@ class AAReader(Reader):
         return self._parser.read_array(offset, Nt)
 
     def get_k_slice_err(self, k_index: int) -> np.ndarray:
-        """Read a slice of uncertainty at k from data.
+        """Read a slice of uncertainty at ``k_index`` from ``data``.
 
         Parameters
         ----------
         k_index : int
-            The k index
+            The ``k`` index
 
         Returns
         -------
-        np.ndarray
-            The uncertainty of data at k vs tau.
+        numpy.ndarray
+            The uncertainty of ``data`` at ``k`` vs ``tau``.
 
         Raises
         ------
         IndexError
-            If k_index is out of range.
+            If ``k_index`` is out of range.
         """
         # check index is in range
         Nk = self._metadata["Nk"]
@@ -950,12 +955,7 @@ class AAReader(Reader):
 
 class AAParser(Parser):
     """Azimuthal average file parser class.
-    Inherits from `Parser`. It adds the following unique methods:
-
-    Methods
-    -------
-    read_metadata : dict
-        Returns a dictionary containing the file metadata.
+    Inherits from ``Parser``.
     """
 
     def __init__(self, fh: BinaryIO):
@@ -1013,20 +1013,35 @@ class AAParser(Parser):
         return metadata
 
 
-def melt(az_avg1: AzimuthalAverage, az_avg2: AzimuthalAverage) -> AzimuthalAverage:
+def melt(az_avg1: AzimuthalAverage,
+         az_avg2: AzimuthalAverage
+         ) -> AzimuthalAverage:
     """Melt two azimuthal averages into one object.
+
+    The melt is performed as follows:
+
+    * the "slow" acquisition is identified as the ``az_avg`` having the largest
+      ``.tau[0]`` value
+    * the first 10 data points are taken from the "slow" ``az_avg``
+    * data points from the "fast" ``az_avg`` at the time delays of the first
+      10 ``tau`` of the "slow" ``az_avg`` are obtained via cubic
+      interpolation of the log-log scaled fast data
+    * a multiplicative correction factor is obtained via least squares
+      minimization and the "fast" data points are scaled onto the "slow" ones
+
+    The ``var`` and ``power_spec`` are taken from the "slow" ``az_avg``.
 
     Parameters
     ----------
     az_avg1 : AzimuthalAverage
-        One AzimuthalAverage object.
+        One :py:class:`AzimuthalAverage` object.
     az_avg2 : AzimuthalAverage
-        Another AzimuthalAverage object.
+        Another :py:class:`AzimuthalAverage` object.
 
     Returns
     -------
     AzimuthalAverage
-        The two AzimuthalAverage objects, merged into a new one.
+        The two :py:class:`AzimuthalAverage` objects, merged into a new one.
     """
 
     # assign fast and slow acquisition
@@ -1084,19 +1099,20 @@ def melt(az_avg1: AzimuthalAverage, az_avg2: AzimuthalAverage) -> AzimuthalAvera
 
 def mergesort(az_avg1: AzimuthalAverage, az_avg2: AzimuthalAverage) -> AzimuthalAverage:
     """Merge the values of two azimuthal averages.
-    Values will then be sorted based on tau.
+
+    Values will then be sorted based on ``tau``.
 
     Parameters
     ----------
     az_avg1 : AzimuthalAverage
-        One AzimuthalAverage object.
+        One :py:class:`AzimuthalAverage` object.
     az_avg2 : AzimuthalAverage
-        Another AzimuthalAverage object.
+        Another :py:class:`AzimuthalAverage` object.
 
     Returns
     -------
     AzimuthalAverage
-        The two AzimuthalAverage objects are fused into a new one.
+        The two :py:class:`AzimuthalAverage` objects are fused into a new one.
     """
     tau = np.append(az_avg1.tau, az_avg2.tau).astype(DTYPE)
     sortidx = np.argsort(tau)

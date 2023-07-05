@@ -70,8 +70,9 @@ Indices and tables
    :maxdepth: 1
    :caption: Python API
 
-   fit
+   azimuthalaverage
    fit_models
+   fit
    imagestructurefunction
    lags
    mask
