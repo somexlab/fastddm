@@ -72,6 +72,7 @@ Indices and tables
 
    fit
    fit_models
+   imagestructurefunction
    lags
    mask
    noise_est
