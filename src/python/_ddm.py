@@ -3,7 +3,39 @@
 # Authors: Enrico Lattuada and Fabian Krautgasser
 # Maintainers: Enrico Lattuada and Fabian Krautgasser
 
-"""Differential dynamic microscopy interface with backends."""
+r"""Differential dynamic microscopy interface with backends.
+
+The image structure function is computed from the images :math:`I(\vec{x}, t)`
+as
+
+.. math::
+
+    D(\vec{q},\Delta t)=
+    \langle \lvert \tilde{I}(\vec{q},t+\Delta t) -
+    \tilde{I}(\vec{q},t) \rvert^2 \rangle_t
+
+where :math:`\tilde{I}(\vec{q},t)` is the 2D Fourier transform of the image at
+time :math:`t`.
+
+The image power spectrum is computed as
+
+.. math::
+
+    \mathrm{PS}(\vec{q})=
+    \langle\lvert\tilde{I}(\vec{q}, t)\rvert^2\rangle_t .
+
+The background-corrected image power spectrum is computed as
+
+.. math::
+
+    \mathrm{VAR}(\vec{q})=
+    \langle\lvert\tilde{I}(\vec{q},t)-\tilde{I}_0(\vec{q})\rvert^2\rangle_t=
+    \mathrm{PS}(\vec{q}) - \lvert \tilde{I}_0 (\vec{q}) \rvert^2
+
+where :math:`\tilde{I}_0(\vec{q}) = \langle\tilde{I}(\vec{q}, t)\rangle_t`.
+This is just the variance over time of the 2D Fourier transformed image
+sequence.
+"""
 
 from typing import Dict, Callable, Iterable, Optional
 import warnings
@@ -56,18 +88,19 @@ def ddm(
 
     Parameters
     ----------
-    img_seq : np.ndarray
-        Image sequence of shape (t, y, x) where t is time.
+    img_seq : numpy.ndarray
+        Image sequence of shape ``(t, y, x)`` where ``t`` is time.
     lags : Iterable[int]
         The delays to be inspected by the analysis.
     core : str, optional
         The backend core, choose between "py", "cpp", and "cuda".
         Default is "py".
     mode : str, optional
-        The mode of calculating the autocorrelation, choose between "diff"
+        The mode of calculating the structure function, choose between "diff"
         and "fft". Default is "fft".
-    window : np.ndarray, optional
-        A 2D array containing the window function to be applied to the images. Default is None.
+    window : numpy.ndarray, optional
+        A 2D array containing the window function to be applied to the images.
+        Default is None.
 
     Returns
     -------
@@ -77,13 +110,13 @@ def ddm(
     Raises
     ------
     RuntimeError
-        If a value for `core` other than "py", "cpp", and "cuda" are given.
+        If a value for ``core`` other than "py", "cpp", and "cuda" are given.
     RuntimeError
-        If a value for `mode` other than "diff" and "fft" are given.
+        If a value for ``mode`` other than "diff" and "fft" are given.
     RuntimeError
-        If `window` and `img_seq` shapes are not compatible.
+        If ``window`` and ``img_seq`` shapes are not compatible.
     RuntimeError
-        If negative lags are given.
+        If negative ``lags`` are given.
     """
 
     # renaming for convenience
