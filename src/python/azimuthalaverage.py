@@ -311,9 +311,8 @@ def azimuthal_average(
         The image structure function.
     bins : Union[int, Iterable[float]], optional
         If ``bins`` is an int, it defines the number of equal-width bins in the
-        given range (10, by default). If ``bins`` is a sequence, it defines a
-        monotonically increasing array of bin edges, including the rightmost
-        edge, allowing for non-uniform bin widths.
+        given range (10, by default). If ``bins`` is a sequence, it defines an
+        array of bin spacings, allowing for non-uniform bin widths.
     range : Tuple[float, float], optional
         The lower and upper range of the bins. If not provided, range is simply
         ``(k.min(), k.max())``, where ``k`` is the vector modulus computed from
