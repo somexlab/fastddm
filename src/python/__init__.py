@@ -3,6 +3,12 @@
 # Authors: Enrico Lattuada and Fabian Krautgasser
 # Maintainers: Enrico Lattuada and Fabian Krautgasser
 
+'''fastddm is the top-level Python package.
+
+It consists of the functions and classes that perform and manage the
+Differential Dynamic Microscopy analysis.
+'''
+
 # automatically retrieve version
 from pkg_resources import get_distribution, DistributionNotFound
 try:

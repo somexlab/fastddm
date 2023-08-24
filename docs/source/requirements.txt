@@ -1,0 +1,10 @@
+ipython
+ipython_genutils
+nbconvert
+nbsphinx
+numpy
+pandoc
+matplotlib
+sphinx
+furo
+tornado
