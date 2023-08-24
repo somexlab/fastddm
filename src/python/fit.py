@@ -63,6 +63,7 @@ import numpy as np
 import pandas as pd
 
 from .azimuthalaverage import AzimuthalAverage
+from .intermediatescatteringfunction import IntermediateScatteringFunction
 
 
 def _simple_exp(
@@ -194,7 +195,7 @@ def fit(
 
 
 def fit_multik(
-    data: AzimuthalAverage,
+    data: Union[AzimuthalAverage, IntermediateScatteringFunction],
     model: lm.Model,
     ref: int,
     ref_params: Optional[lm.Parameters] = None,
@@ -203,6 +204,7 @@ def fit_multik(
     fixed_params: Optional[Dict[str, Sequence[float]]] = None,
     fixed_params_min: Optional[Dict[str, Sequence[float]]] = None,
     fixed_params_max: Optional[Dict[str, Sequence[float]]] = None,
+    fixed_params_expr: Optional[Dict[str, Sequence[str]]] = None,
     **fitargs: Any,
 ) -> Tuple[pd.DataFrame, Optional[List[lm.model.ModelResult]]]:
     r"""A wrapper for fitting a given model to given data for multiple :math:`k` vectors.
@@ -229,9 +231,9 @@ def fit_multik(
 
     Parameters
     ----------
-    data : AzimuthalAverage
-        The azimuthal average object to be fitted.
-    model : lmfit.model.Model
+    data : Union[AzimuthalAverage, IntermediateScatteringFunction]
+        The azimuthal average or intermediate scattering function object to be fitted.
+    model : lm.Model
         The model to be used for the fit. It must have one and one only
         independent variable (i.e., the time delay), the name is not important.
     ref : int
@@ -258,6 +260,10 @@ def fit_multik(
         Dictionary of ``{parameter_name: values_array}`` pairs of parameter bounded max
         values to fix during fitting. The ``values_array`` length must be equal
         to ``len(data.k)``. Default is None.
+    fixed_params_expr : Dict[str, Sequence[str]], optional
+        Dictionary of ``{parameter_name: exprs_array}`` pairs of parameter expressions
+        to fix during fitting. The ``values_array`` length must be equal to ``len(data.k)``.
+        Default is None.
 
     Returns
     -------
@@ -280,6 +286,9 @@ def fit_multik(
     )
     fixed_params_max = (
         deepcopy(fixed_params_max) if fixed_params_max is not None else None
+    )
+    fixed_params_expr = (
+        deepcopy(fixed_params_expr) if fixed_params_expr is not None else None
     )
 
     # we require the models to have one and one only independent variable
@@ -310,6 +319,9 @@ def fit_multik(
     if fixed_params_max is not None:
         for p, pval in fixed_params_max.items():
             model_params[p].max = pval[ref]
+    if fixed_params_expr is not None:
+        for p, pexpr in fixed_params_expr.items():
+            model_params[p].expr = pexpr[ref]
 
     # initialize outputs
     results = {p: np.zeros(len(data.k)) for p in model.param_names}
@@ -340,7 +352,7 @@ def fit_multik(
         # perform fit in indexrange
         for idx in indexrange:
             # fit
-            if np.isnan(data.var[idx]):
+            if np.isnan(data.data[idx, 0]):
                 for p in model.param_names:
                     results[p][idx] = np.nan
             else:
@@ -357,6 +369,9 @@ def fit_multik(
                 if fixed_params_max is not None:
                     for p, pval in fixed_params_max.items():
                         model_params[p].max = pval[idx]
+                if fixed_params_expr is not None:
+                    for p, pexpr in fixed_params_expr.items():
+                        model_params[p].expr = pexpr[idx]
                 # do fit
                 result = model.fit(data.data[idx], params=model_params, **fitargs)
                 # update results and model_params
@@ -371,6 +386,7 @@ def fit_multik(
     _fit(reversed(range(ref)))
 
     # perform fit towards large k vectors
-    _fit(range(ref + 1, len(data.k)))
+    # also repeat fit at ref
+    _fit(range(ref, len(data.k)))
 
     return pd.DataFrame(results), model_results

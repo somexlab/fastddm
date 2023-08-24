@@ -95,6 +95,13 @@ class AzimuthalAverage:
         The array of time delay values.
     bin_edges : numpy.ndarray
         The array of bin edges.
+
+    Methods
+    -------
+    save(*, fname) : None
+        Save azimuthal average to binary file.
+    resample(tau) : AzimuthalAverage
+        Resample azimuthal average with new tau values.
     """
 
     _data: np.ndarray
@@ -425,7 +432,8 @@ def azimuthal_average(
         for (i, j), curr_idx in np.ndenumerate(idx):
             # add contribution only if curr_idx was found in range
             # and if the weight is larger than 0
-            if curr_idx > -1 and wk[i, j]:
+            # and if the corr_fact is not infinite
+            if curr_idx > -1 and wk[i, j] and not np.isinf(corr_fact[curr_idx]):
                 # initialize to zero if not done before
                 if np.isnan(err[curr_idx, 0]):
                     err[curr_idx] = np.zeros(dim_t, dtype=DTYPE)
@@ -671,7 +679,7 @@ class AAWriter(Writer):
     def _write_header(
         self, Nk: int, Nt: int, Nextra: int, is_err: bool, dtype: str
     ) -> None:
-        """Write image structure function file header.
+        """Write azimuthal average file header.
 
         In version 0.2, the header is structured as follows:
         * bytes 0-1: endianness (`LL` = 'little'; `BB` = 'big'), 'utf-8' encoding
@@ -1118,11 +1126,11 @@ def mergesort(az_avg1: AzimuthalAverage, az_avg2: AzimuthalAverage) -> Azimuthal
 
     # create new data
     dim_k, dim_tau = az_avg1.shape
-    data = np.zeros(az_avg1.data, shape=(dim_k, len(tau) + 2), dtype=DTYPE)
+    data = np.zeros(shape=(dim_k, len(tau) + 2), dtype=DTYPE)
     if az_avg1._err is None or az_avg2._err is None:
         err = None
     else:
-        err = np.zeros(az_avg1.err, shape=(dim_k, len(tau) + 2), dtype=DTYPE)
+        err = np.zeros(shape=(dim_k, len(tau) + 2), dtype=DTYPE)
 
     # populate data
     data[:, :-2] = np.append(az_avg1.data, az_avg2.data, axis=1)[:, sortidx].astype(

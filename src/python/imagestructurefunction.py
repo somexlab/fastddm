@@ -91,6 +91,54 @@ class ImageStructureFunction:
         The effective pixel size. Default is 1.
     _delta_t : float, optional
         The time delay between two consecutive frames. Default is 1.
+
+    Attributes
+    ----------
+    data : np.ndarray
+        The 2D image structure function.
+    power_spec: np.ndarray
+        The average 2D power spectrum of the input images.
+    var : np.ndarray
+        The 2D variance (over time) of the Fourier transformed images.
+    kx : np.ndarray
+        The array of wavevector values over x.
+    ky : np.ndarray
+        The array of wavevector values over y.
+    width : int
+        The width of the full (symmetric) 2D image structure function.
+    height : int
+        The height of the full (symmetric) 2D image structure function.
+    tau : np.ndarray
+        The array of time delays.
+    pixel_size : float
+        The effective pixel size.
+    delta_t : float
+        The time delay between to consecutive frames.
+    shape : Tuple[int, int, int]
+        The shape of the 2D image structure function.
+
+    Methods
+    -------
+    set_frame_rate(frame_rate) : None
+        Set the acquisition frame rate. This will propagate also on the values
+        of tau.
+    save(*, fname) : None
+        Save ImageStructureFunction to binary file.
+    save_as_tiff(seq, fnames) : None
+        Save ImageStructureFunction frames as tiff images.
+    full_shape() : Tuple[int, int, int]
+        The shape of the full (symmetric) 2D image structure function.
+    full_slice(idx) : np.ndarray
+        Get the full (symmetric) 2D image structure function at specific index.
+    full_power_spec() : np.ndarray
+        Get the full (symmetric) average 2D power spectrum of the input images.
+    full_var() : np.ndarray
+        Get the full (symmetric) 2D variance (over time) of the Fourier
+        transformed images.
+    full_kx() : np.ndarray
+        Get the full array of wavevector values over x.
+    full_ky() : np.ndarray
+        Get the full array of wavevector values over y.
     """
 
     _data: np.ndarray
