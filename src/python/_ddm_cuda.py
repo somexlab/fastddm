@@ -20,6 +20,7 @@ def ddm_diff_gpu(
     ny: int,
     window: np.ndarray,
     gpu_id: Optional[int] = 0,
+    **kwargs
 ) -> np.ndarray:
     """Differential Dynamic Microscopy, diff mode on GPU
 
@@ -68,6 +69,7 @@ def ddm_fft_gpu(
     nt: int,
     window: np.ndarray,
     gpu_id: Optional[int] = 0,
+    **kwargs
 ) -> np.ndarray:
     """Differential Dynamic Microscopy, fft mode on GPU.
 

@@ -23,6 +23,7 @@ def ddm_diff_cpp(
     nx: int,
     ny: int,
     window: np.ndarray,
+    **kwargs
 ):
     """Differential Dynamic Microscopy, diff mode
 
@@ -75,6 +76,7 @@ def ddm_fft_cpp(
     ny: int,
     nt: int,
     window: np.ndarray,
+    **kwargs
 ):
     """Differential Dynamic Microscopy, fft mode
 
