@@ -30,7 +30,7 @@ CUDA_PACKAGES_IN=(
 	"cudart-dev"
 	"nvcc"
 	"profiler-api"
- 	"cufft"
+        "cufft-dev"
 )
 
 ## -------------------
