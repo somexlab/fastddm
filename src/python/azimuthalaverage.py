@@ -95,13 +95,6 @@ class AzimuthalAverage:
         The array of time delay values.
     bin_edges : numpy.ndarray
         The array of bin edges.
-
-    Methods
-    -------
-    save(*, fname) : None
-        Save azimuthal average to binary file.
-    resample(tau) : AzimuthalAverage
-        Resample azimuthal average with new tau values.
     """
 
     _data: np.ndarray

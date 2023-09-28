@@ -5,12 +5,11 @@
 
 """Intermediate scattering function data class and methods."""
 
-from typing import Tuple, Optional, Union, Iterable, BinaryIO
+from typing import Tuple, Optional, BinaryIO
 from dataclasses import dataclass
 import os
 from sys import byteorder
 import struct
-import warnings
 import numpy as np
 from scipy.interpolate import interp1d
 
@@ -26,36 +25,18 @@ class IntermediateScatteringFunction:
 
     Parameters
     ----------
-    _data : np.ndarray
+    _data : numpy.ndarray
         The data (intermediate scattering function).
-    _err : np.ndarray
-        The uncertainties (uncertainty of the intermediate scattering function).
-    k : np.ndarray
+    _err : numpy.ndarray
+        The uncertainties (uncertainty of the intermediate scattering
+        function).
+    k : numpy.ndarray
         The array of reference wavevector values in the bins.
-    tau : np.ndarray
+    tau : numpy.ndarray
         The array of time delay values.
-    bin_edges : np.ndarray
-        The array of bin edges (from the azimuthal average of the image structure function).
-
-    Attributes
-    ----------
-    data : np.ndarray
-        The image structure function.
-    err : np.ndarray
-        The uncertainty (standard deviation) in the intermediate scattering function.
-    k : np.ndarray
-        The array of reference wavevector values in the bins.
-    tau : np.ndarray
-        The array of time delay values.
-    bin_edges : np.ndarray
-        The array of bin edges (from the azimuthal average of the image structure function).
-
-    Methods
-    -------
-    save(*, fname) : None
-        Save intermediate scattering function to binary file.
-    resample(tau) : IntermediateScatteringFunction
-        Resample intermediate scattering function with new tau values.
+    bin_edges : numpy.ndarray
+        The array of bin edges (from the azimuthal average of the image
+        structure function).
     """
 
     _data: np.ndarray
@@ -70,18 +51,19 @@ class IntermediateScatteringFunction:
 
         Returns
         -------
-        np.ndarray
+        numpy.ndarray
             The intermediate scattering function data.
         """
         return self._data
 
     @property
     def err(self) -> np.ndarray:
-        """The uncertainty (standard deviation) in the intermediate scattering function.
+        """The uncertainty (standard deviation) in the intermediate scattering
+        function.
 
         Returns
         -------
-        np.ndarray
+        numpy.ndarray
             The uncertainty.
         """
         if self._err is None:
@@ -117,11 +99,12 @@ class IntermediateScatteringFunction:
             f.write_obj(self)
 
     def resample(self, tau: np.ndarray) -> "IntermediateScatteringFunction":
-        """Resample with new tau values and return a new IntermediateScatteringFunction.
+        """Resample with new tau values and return a new
+        IntermediateScatteringFunction.
 
         Parameters
         ----------
-        tau : np.ndarray
+        tau : numpy.ndarray
             New values of tau.
 
         Returns
@@ -276,7 +259,8 @@ class ISFWriter(Writer):
     def _write_data(self, obj: IntermediateScatteringFunction) -> None:
         """Write intermediate scattering function data.
 
-        In version 0.1, the data is stored in 'C' order and `dtype` format as follows:
+        In version 0.1, the data is stored in 'C' order and `dtype` format as
+        follows:
         * from `data_offset`: _data
         * from `err_offset`: _err
         * from `k_offset`: `k` array
@@ -284,7 +268,8 @@ class ISFWriter(Writer):
         * from `bin_edges_offset`: `bin_edges` array
 
         From the end of the file,
-        the byte offsets are stored in `Q` (unsigned long long) format in this order:
+        the byte offsets are stored in `Q` (unsigned long long) format in this
+        order:
         * `data_offset`
         * `err_offset`
         * `k_offset`
@@ -334,7 +319,8 @@ class ISFWriter(Writer):
 
 class ISFReader(Reader):
     """FastDDM intermediate scattering function reader class.
-    Inherits from `Reader`. It adds the following unique parameters and methods:
+    Inherits from `Reader`. It adds the following unique parameters and
+    methods:
 
     Methods
     -------
@@ -403,7 +389,7 @@ class ISFReader(Reader):
 
         Returns
         -------
-        np.ndarray
+        numpy.ndarray
             The k array.
         """
         offset = self._metadata["k_offset"]
@@ -416,7 +402,7 @@ class ISFReader(Reader):
 
         Returns
         -------
-        np.ndarray
+        numpy.ndarray
             The tau array.
         """
         offset = self._metadata["tau_offset"]
@@ -429,7 +415,7 @@ class ISFReader(Reader):
 
         Returns
         -------
-        np.ndarray
+        numpy.ndarray
             The bin edges array.
         """
         offset = self._metadata["bin_edges_offset"]
@@ -447,7 +433,7 @@ class ISFReader(Reader):
 
         Returns
         -------
-        np.ndarray
+        numpy.ndarray
             The data at k vs tau.
 
         Raises
@@ -479,7 +465,7 @@ class ISFReader(Reader):
 
         Returns
         -------
-        np.ndarray
+        numpy.ndarray
             The uncertainty of data at k vs tau.
 
         Raises

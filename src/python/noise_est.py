@@ -8,7 +8,7 @@ r"""This module contains the helper function to estimate the noise factor.
 The methods implemented here are some of the most widely used in the
 literature and are implemented for both `ÌmageStructureFunction`` and
 ``AzimuthalAverage`` objects. For ``ImageStructureFunction`` objects,
-a ``mask`` as the one used to compute the `ÀzimuthalAverage`` can be
+a ``mask`` as the one used to compute the ``AzimuthalAverage`` can be
 given in order to mask-out points from the noise estimate.
 
 ============ ========================== ====================
