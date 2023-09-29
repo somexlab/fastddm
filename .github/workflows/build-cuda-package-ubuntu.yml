@@ -1,4 +1,4 @@
-name: Build and install CUDA package
+name: Build and install CUDA package Ubuntu
 
 on:
   workflow_dispatch:
