@@ -1,0 +1,24 @@
+name: Check CUDA installation Windows
+
+on:
+  workflow_dispatch:
+  
+jobs:
+
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest]
+        cuda: ["12.1"]
+    
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install CUDA on Windows
+        if: contains(matrix.os, 'windows')
+        env:
+          cuda: ${{ matrix.cuda }}
+        run: .github\action-scripts\install-cuda-windows.ps1
+        shell: powershell
+        
