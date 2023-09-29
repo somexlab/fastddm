@@ -131,6 +131,7 @@ do :
 	# Build the full package name and append to the string.
 	CUDA_PACKAGES+=" ${package}-${CUDA_MAJOR}-${CUDA_MINOR}"
 done
+CUDA_PACKAGES+=" cuda-drivers"
 echo "CUDA_PACKAGES ${CUDA_PACKAGES}"
 
 ## -----------------
