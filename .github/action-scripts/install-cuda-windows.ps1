@@ -67,6 +67,7 @@ $CUDA_PACKAGES_IN = @(
     "cudart";
     "visual_studio_integration";
     "cuda_profiler_api";
+    "toolkit";
 )
 
 
