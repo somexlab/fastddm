@@ -24,4 +24,4 @@ jobs:
         
       - name: Check import from the command line
         run: |
-          ls /usr/local/cuda*/include/cufft*
+          ls /usr/local/cuda*/
