@@ -31,7 +31,6 @@ CUDA_PACKAGES_IN=(
 	"nvcc"
 	"profiler-api"
  	"toolkit"
-  	"nvidia-driver"
 )
 
 ## -------------------
