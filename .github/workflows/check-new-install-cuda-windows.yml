@@ -16,10 +16,10 @@ jobs:
     steps:
       - uses: Jimver/cuda-toolkit@v0.2.11
         id: cuda-toolkit
-        sub-packages: ["nvcc", "visual_studio_integration"]
-        non-cuda-sub-packages: ["libcufft"]
         with:
           cuda: '12.1.1'
+          sub-packages: '["nvcc", "visual_studio_integration"]'
+          non-cuda-sub-packages: '["libcufft"]'
 
       - name: Check installation and paths
         run: |
