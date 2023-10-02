@@ -19,6 +19,7 @@ jobs:
         if: contains(matrix.os, 'windows')
         env:
           cuda: ${{ matrix.cuda }}
+        visual-studio: "Visual Studio 16 2019"
         run: .github\action-scripts\install-cuda-windows.ps1
         shell: powershell
         
