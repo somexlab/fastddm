@@ -1,0 +1,28 @@
+name: Check CUDA installation Windows
+
+on:
+  workflow_dispatch:
+  
+jobs:
+
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest]
+        visual-studio: ["Visual Studio 16 2019"]
+        cuda: ["12.1.1"]
+    
+    steps:
+      - uses: Jimver/cuda-toolkit@v0.2.11
+        id: cuda-toolkit
+        sub-packages: ["nvcc", "visual_studio_integration"]
+        non-cuda-sub-packages: ["libcufft"]
+        with:
+          cuda: '12.1.1'
+
+      - run: echo "Installed cuda version is: ${{steps.cuda-toolkit.outputs.cuda}}"
+
+      - run: echo "Cuda install location: ${{steps.cuda-toolkit.outputs.CUDA_PATH}}"
+
+      - run: nvcc -V
