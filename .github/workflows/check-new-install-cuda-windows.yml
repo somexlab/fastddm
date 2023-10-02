@@ -1,4 +1,4 @@
-name: Check CUDA installation Windows
+name: Check new CUDA installation Windows
 
 on:
   workflow_dispatch:
