@@ -14,21 +14,33 @@ jobs:
         cuda: ["12.1.1"]
     
     steps:
-      - uses: actions/checkout@v3
+      - uses: Jimver/cuda-toolkit@v0.2.11
+        id: cuda-toolkit
+        sub-packages: ["nvcc", "visual_studio_integration"]
+        non-cuda-sub-packages: ["libcufft"]
+        with:
+          cuda: '12.1.1'
 
-      - name: Install CUDA on Windows
-        if: contains(matrix.os, 'windows')
-        env:
-          cuda: ${{ matrix.cuda }}
-          cmake-generator: "${{ matrix.visual-studio }}"
-          visual_studio: "${{ matrix.visual-studio }}"
-        run: .github\action-scripts\install-cuda-windows.ps1
-        shell: powershell
+      - run: echo "Installed cuda version is: ${{steps.cuda-toolkit.outputs.cuda}}"
 
-      - name: Test nvcc
-        run: |
-          #nvcc -V
-          ls $env:CUDA_PATH
-          ls $env:CUDA_PATH\bin
-          ls $env:CUDA_PATH\include
-        shell: powershell
+      - run: echo "Cuda install location: ${{steps.cuda-toolkit.outputs.CUDA_PATH}}"
+
+      - run: nvcc -V
+      #- uses: actions/checkout@v3
+      
+      #- name: Install CUDA on Windows
+      #  if: contains(matrix.os, 'windows')
+      #  env:
+      #    cuda: ${{ matrix.cuda }}
+      #    cmake-generator: "${{ matrix.visual-studio }}"
+      #    visual_studio: "${{ matrix.visual-studio }}"
+      #  run: .github\action-scripts\install-cuda-windows.ps1
+      #  shell: powershell
+
+      #- name: Test nvcc
+      #  run: |
+      #    #nvcc -V
+      #    ls $env:CUDA_PATH
+      #    ls $env:CUDA_PATH\bin
+      #    ls $env:CUDA_PATH\include
+      #  shell: powershell
