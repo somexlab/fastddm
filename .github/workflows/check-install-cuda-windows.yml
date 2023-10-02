@@ -10,7 +10,7 @@ jobs:
     strategy:
       matrix:
         os: [windows-latest]
-        visual-studio: "Visual Studio 16 2019"
+        visual-studio: ["Visual Studio 16 2019"]
         cuda: ["12.1"]
     
     steps:
