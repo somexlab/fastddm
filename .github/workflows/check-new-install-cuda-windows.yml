@@ -18,6 +18,7 @@ jobs:
         id: cuda-toolkit
         with:
           cuda: '12.1.0'
+          method: 'network'
           sub-packages: '["nvcc", "visual_studio_integration"]'
           non-cuda-sub-packages: '["libcufft"]'
 
