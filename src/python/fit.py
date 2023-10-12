@@ -325,6 +325,7 @@ def fit_multik(
 
     # initialize outputs
     results = {p: np.zeros(len(data.k)) for p in model.param_names}
+    results.update({f'{p}_stderr': np.zeros(len(data.k)) for p in model.param_names})
     results["success"] = np.zeros(len(data.k), dtype=bool)
     results["k"] = data.k
 
@@ -336,6 +337,8 @@ def fit_multik(
     result = model.fit(data.data[ref], params=model_params, **fitargs)
     for p in model.param_names:
         results[p][ref] = result.params[p].value
+        results[f'{p}_stderr'][ref] = result.params[p].stderr
+
     results["success"][ref] = result.success
     if model_results is not None:
         model_results[ref] = result
@@ -355,6 +358,7 @@ def fit_multik(
             if np.isnan(data.data[idx, 0]):
                 for p in model.param_names:
                     results[p][idx] = np.nan
+                    results[f'{p}_stderr'][idx] = np.nan
             else:
                 # is use_err, set weights using error
                 if use_err and data.err is not None:
@@ -377,6 +381,7 @@ def fit_multik(
                 # update results and model_params
                 for p in model.param_names:
                     results[p][idx] = result.params[p].value
+                    results[f'{p}_stderr'][idx] = result.params[p].stderr
                     model_params[p].value = result.params[p].value
                 results["success"][idx] = result.success
                 if model_results is not None:
