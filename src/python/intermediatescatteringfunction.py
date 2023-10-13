@@ -15,7 +15,7 @@ provides this functionality, by assuming a basic functional shape of the image s
 the docstring.
 
 The :py:class:`IntermediateScatteringFunction.data` contains the ISF values in
-:math:`(k, \Delta t)` order. For instance, the ISF at the 10th delay computed can be accessed via
+:math:`(k, \Delta t)` order. For instance, the ISF computed at the 10th k vector bin can be accessed via
 
 .. code-block:: python
 
@@ -26,7 +26,7 @@ The :py:class:`IntermediateScatteringFunction.data` contains the ISF values in
 
 The :py:class:`IntermediateScatteringFunction` can then be saved into a binary file by using
 :py:meth:`IntermediateScatteringFunction.save` (by default called `analysis_blob`, with the
-extension `.isf.ddm`.) and later retrieved from the memory using
+extension `.isf.ddm`) and later retrieved from the memory using
 :py:meth:`ISFReader.load`, which you can call directly from ``fastddm`` as
 
 .. code-block:: python
