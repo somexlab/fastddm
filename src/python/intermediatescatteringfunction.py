@@ -3,19 +3,72 @@
 # Authors: Enrico Lattuada
 # Maintainers: Enrico Lattuada
 
-"""Intermediate scattering function data class and methods."""
+r"""This module contains the intermediate scattering function data class, and auxiliary classes &
+methods.
 
-from typing import Tuple, Optional, BinaryIO
-from dataclasses import dataclass
+The :py:class:`IntermediateScatteringFunction` object is used to store and retrieve information
+about the intermediate scattering function (ISF). The ISF can be estimated from the azimuthally
+averaged Image Structure Function, if some assumptions about the functional shape of the Image
+Structure Function are made. The method :py:func:`intermediatescatteringfunction.azavg2isf_estimate`
+provides this functionality, by assuming a basic functional shape of the image structure function
+:math:`D(q,\Delta t) = A(q)\left[ 1 - ISF(q, \Delta t) \right] + B(q)`. For more information see
+the docstring.
+
+The :py:class:`IntermediateScatteringFunction.data` contains the ISF values in
+:math:`(\Delta t, k)` order. For instance, the ISF at the 10th delay computed can be accessed via
+
+.. code-block:: python
+
+    isf.data[9]
+
+.. note::
+   Remember that Python uses zero-based indexing.
+
+The :py:class:`IntermediateScatteringFunction` can then be saved into a binary file by using
+:py:meth:`IntermediateScatteringFunction.save` (by default called `analysis_blob`, with the
+extension `.isf.ddm`.) and later retrieved from the memory using
+:py:meth:`ISFReader.load`, which you can call directly from ``fastddm`` as
+
+.. code-block:: python
+
+    # load intermediate scattering function
+    isf = fastddm.load('path/to/my_isf_file.isf.ddm')
+
+In order to avoid reading and loading the entire file, we also provide
+a fast reader through the :py:class:`ISFReader`, which can be used to
+access directly from the disk the relevant data, for example:
+
+.. code-block:: python
+
+    from fastddm.intermediatescatteringfunction import ISFReader
+
+    # open file
+    r = ISFReader('path/to/my_isf_file.isf.ddm')
+
+    # access quantities
+    # access k array
+    k = r.get_k()
+
+    # access delays/lags
+    dt = r.get_tau()
+
+    # access a slice of the ISF for the sixth k value
+    isf_slice = r.get_k_slice(k_index=5)
+"""
+
 import os
-from sys import byteorder
 import struct
+from dataclasses import dataclass
+from sys import byteorder
+from typing import BinaryIO, Optional, Tuple
+
 import numpy as np
 from scipy.interpolate import interp1d
 
-from .azimuthalaverage import AzimuthalAverage
-from ._io_common import calculate_format_size, npdtype2format, Writer, Reader, Parser
 from ._config import DTYPE
+from ._io_common import (Parser, Reader, Writer, calculate_format_size,
+                         npdtype2format)
+from .azimuthalaverage import AzimuthalAverage
 from .noise_est import estimate_camera_noise
 
 
@@ -27,7 +80,7 @@ class IntermediateScatteringFunction:
     ----------
     _data : numpy.ndarray
         The data (intermediate scattering function).
-    _err : numpy.ndarray
+    _err : Optional[numpy.ndarray]
         The uncertainties (uncertainty of the intermediate scattering
         function).
     k : numpy.ndarray
@@ -40,7 +93,7 @@ class IntermediateScatteringFunction:
     """
 
     _data: np.ndarray
-    _err: np.ndarray
+    _err: Optional[np.ndarray]
     k: np.ndarray
     tau: np.ndarray
     bin_edges: np.ndarray
@@ -57,7 +110,7 @@ class IntermediateScatteringFunction:
         return self._data
 
     @property
-    def err(self) -> np.ndarray:
+    def err(self) -> Optional[np.ndarray]:
         """The uncertainty (standard deviation) in the intermediate scattering
         function.
 
@@ -80,7 +133,7 @@ class IntermediateScatteringFunction:
         Tuple[int, int]
             The shape of the data.
         """
-        return self.data.shape
+        return self.data.shape  # type: ignore
 
     def save(self, fname: str = "analysis_blob") -> None:
         """Save IntermediateScatteringFunction to binary file.
@@ -110,7 +163,7 @@ class IntermediateScatteringFunction:
         Returns
         -------
         IntermediateScatteringFunction
-            The resampled intermediate scattering function.
+            A new instance of the resampled intermediate scattering function.
         """
         # initialize data
         _data = np.zeros((len(self.k), len(tau)), dtype=DTYPE)
@@ -127,7 +180,7 @@ class IntermediateScatteringFunction:
             # check for nan
             if np.isnan(self.data[i, 0]):
                 _data[i] = np.full(len(tau), np.nan, dtype=DTYPE)
-                if is_err:
+                if is_err and _err is not None:
                     _err[i] = np.full(len(tau), np.nan, dtype=DTYPE)
             else:
                 # interpolate points in loglog scale
@@ -135,17 +188,17 @@ class IntermediateScatteringFunction:
                     x=np.log(self.tau),
                     y=np.log(self.data[i]),
                     kind="quadratic",
-                    fill_value="extrapolate",
+                    fill_value="extrapolate",  # type: ignore
                 )
                 _data[i] = np.exp(f(_tau))
 
-                if is_err:
+                if is_err and _err is not None and self.err is not None:
                     # interpolate uncertainties in loglog scale
                     f = interp1d(
                         x=np.log(self.tau),
                         y=np.log(self.err[i]),
                         kind="quadratic",
-                        fill_value="extrapolate",
+                        fill_value="extrapolate",  # type: ignore
                     )
                     _err[i] = np.exp(f(_tau))
 
@@ -334,7 +387,7 @@ class ISFReader(Reader):
         Read bin_edges array.
     get_k_slice(k_index) : np.ndarray
         Read k slice from data.
-    get_k_slice_err(k_index) : np.ndarray
+    get_k_slice_err(k_index) : Optional[np.ndarray]
         Read k slice uncertainty from data.
     """
 
@@ -455,7 +508,7 @@ class ISFReader(Reader):
 
         return self._parser.read_array(offset, Nt)
 
-    def get_k_slice_err(self, k_index: int) -> np.ndarray:
+    def get_k_slice_err(self, k_index: int) -> Optional[np.ndarray]:
         """Read a slice of uncertainty at k from data.
 
         Parameters
@@ -611,11 +664,11 @@ def melt(
 
             # scale fast on slow
             data[i] = np.append(
-                fast.data[i, :idx] * alpha, slow.data[i, Nt // 2 + 1 :]
+                fast.data[i, :idx] * alpha, slow.data[i, Nt // 2 + 1:]
             ).astype(DTYPE)
             if err is not None:
                 err[i] = np.append(
-                    fast.err[i, :idx] * alpha, slow.err[i, Nt // 2 + 1 :]
+                    fast.err[i, :idx] * alpha, slow.err[i, Nt // 2 + 1:]  # type: ignore
                 ).astype(DTYPE)
 
     # ensure DTYPE for all IntermediateScatteringFunction args
@@ -660,7 +713,7 @@ def mergesort(
         DTYPE
     )
     if err is not None:
-        err = np.append(isf1.err, isf2.err, axis=1)[:, sortidx].astype(
+        err = np.append(isf1.err, isf2.err, axis=1)[:, sortidx].astype(  # type: ignore
             DTYPE
         )
 
@@ -727,7 +780,7 @@ def azavg2isf_estimate(
     # estimate noise (B)
     if noise_est == 'custom':
         # sanity check on size of noise
-        if len(noise) != dim_k:
+        if noise is not None and len(noise) != dim_k:
             err_msg = (
                 'Custom noise array dimension not compatible'
                 ' with given azimuthal average.\n'
@@ -738,7 +791,7 @@ def azavg2isf_estimate(
         if noise_err is None:
             noise_err = noise
         # sanity check on size of noise_err
-        if len(noise_err) != dim_k:
+        if noise_err is not None and len(noise_err) != dim_k:
             err_msg = (
                 'Custom noise_err array dimension not compatible'
                 ' with given azimuthal average.\n'
@@ -746,15 +799,15 @@ def azavg2isf_estimate(
             )
             raise RuntimeError(err_msg)
     else:
-        noise, noise_err = estimate_camera_noise(az_avg, mode=noise_est, **kwargs)
+        noise, noise_err = estimate_camera_noise(az_avg, mode=noise_est, **kwargs)  # type: ignore
     # enforce dtype
-    noise = noise.astype(DTYPE)
-    noise_err = noise_err.astype(DTYPE)
+    noise = noise.astype(DTYPE)  # type: ignore
+    noise_err = noise_err.astype(DTYPE)  # type: ignore
 
     # estimate plateau (A+B)
     if plateau_est == 'custom':
         # sanity check on size of plateau
-        if len(plateau) != dim_k:
+        if plateau is not None and len(plateau) != dim_k:
             err_msg = (
                 'Custom plateau array dimension not compatible'
                 ' with given azimuthal average.\n'
@@ -765,7 +818,7 @@ def azavg2isf_estimate(
         if plateau_err is None:
             plateau_err = plateau
         # sanity check on size of plateau_err
-        if len(plateau_err) != dim_k:
+        if plateau_err is not None and len(plateau_err) != dim_k:
             err_msg = (
                 'Custom plateau_err array dimension not compatible'
                 ' with given azimuthal average.\n'
@@ -792,8 +845,8 @@ def azavg2isf_estimate(
         )
         raise RuntimeError(err_msg)
     # enforce dtype
-    plateau = plateau.astype(DTYPE)
-    plateau_err = plateau_err.astype(DTYPE)
+    plateau = plateau.astype(DTYPE)  # type: ignore
+    plateau_err = plateau_err.astype(DTYPE)  # type: ignore
 
     # convert structure function to intermediate scattering function
     data = np.zeros((dim_k, dim_t), dtype=DTYPE)
