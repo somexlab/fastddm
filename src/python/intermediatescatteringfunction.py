@@ -15,7 +15,7 @@ provides this functionality, by assuming a basic functional shape of the image s
 the docstring.
 
 The :py:class:`IntermediateScatteringFunction.data` contains the ISF values in
-:math:`(\Delta t, k)` order. For instance, the ISF at the 10th delay computed can be accessed via
+:math:`(k, \Delta t)` order. For instance, the ISF at the 10th delay computed can be accessed via
 
 .. code-block:: python
 
@@ -211,12 +211,8 @@ class IntermediateScatteringFunction:
 
 class ISFWriter(Writer):
     """FastDDM intermediate scattering function writer class.
-    Inherits from `Writer`. It adds the following unique methods:
 
-    Methods
-    -------
-    write_obj(obj) : None
-        Write IntermediateScatteringFunction object to binary file.
+    Inherits from `Writer`. It adds the unique method `write_obj`.
     """
 
     def write_obj(self, obj: IntermediateScatteringFunction) -> None:
@@ -372,23 +368,8 @@ class ISFWriter(Writer):
 
 class ISFReader(Reader):
     """FastDDM intermediate scattering function reader class.
-    Inherits from `Reader`. It adds the following unique parameters and
-    methods:
 
-    Methods
-    -------
-    load(obj) : IntermediateScatteringFunction
-        Load the intermediate scattering function.
-    get_k() : np.ndarray
-        Read k array.
-    get_tau() : np.ndarray
-        Read tau array.
-    get_bin_edges() : np.ndarray
-        Read bin_edges array.
-    get_k_slice(k_index) : np.ndarray
-        Read k slice from data.
-    get_k_slice_err(k_index) : Optional[np.ndarray]
-        Read k slice uncertainty from data.
+    Inherits from `Reader`.
     """
 
     def __init__(self, file: str):
@@ -546,12 +527,8 @@ class ISFReader(Reader):
 
 class ISFParser(Parser):
     """Intermediate scattering function file parser class.
-    Inherits from `Parser`. It adds the following unique methods:
 
-    Methods
-    -------
-    read_metadata : dict
-        Returns a dictionary containing the file metadata.
+    Inherits from `Parser`.
     """
 
     def __init__(self, fh: BinaryIO):

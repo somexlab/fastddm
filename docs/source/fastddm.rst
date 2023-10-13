@@ -17,6 +17,7 @@ fastddm
    fit_models
    fit
    imagestructurefunction
+   intermediatescatteringfunction
    lags
    mask
    noise_est
