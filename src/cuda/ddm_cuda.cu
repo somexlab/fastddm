@@ -20,6 +20,7 @@
 #include <cufft.h>
 
 #include <stdlib.h>
+#include <stdint.h>
 
 // #include <chrono>
 // using namespace std::chrono;
@@ -238,13 +239,13 @@ void compute_fft2(const T *h_in,
     cufftSafeCall(cufftDestroy(fft2_plan));
 }
 
-template void compute_fft2<u_int8_t>(const u_int8_t *h_in, Scalar *h_out, const Scalar *h_window, bool is_window, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch, unsigned long long pitch_nx);
+template void compute_fft2<uint8_t>(const uint8_t *h_in, Scalar *h_out, const Scalar *h_window, bool is_window, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch, unsigned long long pitch_nx);
 template void compute_fft2<int16_t>(const int16_t *h_in, Scalar *h_out, const Scalar *h_window, bool is_window, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch, unsigned long long pitch_nx);
-template void compute_fft2<u_int16_t>(const u_int16_t *h_in, Scalar *h_out, const Scalar *h_window, bool is_window, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch, unsigned long long pitch_nx);
+template void compute_fft2<uint16_t>(const uint16_t *h_in, Scalar *h_out, const Scalar *h_window, bool is_window, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch, unsigned long long pitch_nx);
 template void compute_fft2<int32_t>(const int32_t *h_in, Scalar *h_out, const Scalar *h_window, bool is_window, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch, unsigned long long pitch_nx);
-template void compute_fft2<u_int32_t>(const u_int32_t *h_in, Scalar *h_out, const Scalar *h_window, bool is_window, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch, unsigned long long pitch_nx);
+template void compute_fft2<uint32_t>(const uint32_t *h_in, Scalar *h_out, const Scalar *h_window, bool is_window, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch, unsigned long long pitch_nx);
 template void compute_fft2<int64_t>(const int64_t *h_in, Scalar *h_out, const Scalar *h_window, bool is_window, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch, unsigned long long pitch_nx);
-template void compute_fft2<u_int64_t>(const u_int64_t *h_in, Scalar *h_out, const Scalar *h_window, bool is_window, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch, unsigned long long pitch_nx);
+template void compute_fft2<uint64_t>(const uint64_t *h_in, Scalar *h_out, const Scalar *h_window, bool is_window, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch, unsigned long long pitch_nx);
 template void compute_fft2<float>(const float *h_in, Scalar *h_out, const Scalar *h_window, bool is_window, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch, unsigned long long pitch_nx);
 template void compute_fft2<double>(const double *h_in, Scalar *h_out, const Scalar *h_window, bool is_window, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long nx, unsigned long long ny, unsigned long long num_fft2, unsigned long long buff_pitch, unsigned long long pitch_nx);
 
