@@ -11,11 +11,14 @@ The following is a list of contributors:
 
 - Enrico Lattuada
 - Fabian Krautgasser
-- Oleksandr Chepizhko
 - MoYuan Chen
 
 We also thank all who have reported bugs, commented on proposed changes, or otherwise contributed
-to FastDDM's development and usefulness.
+to FastDDM's development and usefulness:
+
+- Roberto Cerbino
+- Fabio Giavazzi
+- Oleksandr Chepizhko
 
 
 Fundings
