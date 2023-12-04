@@ -8,8 +8,8 @@
 from typing import List, Optional
 import numpy as np
 
-from ._core import set_device
-from ._core import ddm_diff_cuda, ddm_fft_cuda
+from ._core_cuda import set_device
+from ._core_cuda import ddm_diff_cuda, ddm_fft_cuda
 from ._config import DTYPE
 
 
@@ -20,7 +20,7 @@ def ddm_diff_gpu(
     ny: int,
     window: np.ndarray,
     gpu_id: Optional[int] = 0,
-    **kwargs
+    **kwargs,
 ) -> np.ndarray:
     """Differential Dynamic Microscopy, diff mode on GPU
 
@@ -69,7 +69,7 @@ def ddm_fft_gpu(
     nt: int,
     window: np.ndarray,
     gpu_id: Optional[int] = 0,
-    **kwargs
+    **kwargs,
 ) -> np.ndarray:
     """Differential Dynamic Microscopy, fft mode on GPU.
 

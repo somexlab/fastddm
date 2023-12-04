@@ -23,11 +23,11 @@
     using differences of Fourier transformed images on the GPU.
  */
 template <typename T>
-py::array_t<Scalar> ddm_diff_cuda(py::array_t<T, py::array::c_style> img_seq,
-                                  vector<unsigned int> lags,
-                                  unsigned long long nx,
-                                  unsigned long long ny,
-                                  py::array_t<Scalar, py::array::c_style> window)
+py::array_t<Scalar> PYBIND11_EXPORT ddm_diff_cuda(py::array_t<T, py::array::c_style> img_seq,
+                                                  vector<unsigned int> lags,
+                                                  unsigned long long nx,
+                                                  unsigned long long ny,
+                                                  py::array_t<Scalar, py::array::c_style> window)
 {
     // ***Get input array and dimensions
     unsigned long long length = img_seq.shape()[0]; // get length of original input
@@ -118,6 +118,51 @@ py::array_t<Scalar> ddm_diff_cuda(py::array_t<T, py::array::c_style> img_seq,
     // ***Return result to python
     return out;
 }
+template py::array_t<Scalar> PYBIND11_EXPORT ddm_diff_cuda(py::array_t<uint8_t, py::array::c_style> img_seq,
+                                                           vector<unsigned int> lags,
+                                                           unsigned long long nx,
+                                                           unsigned long long ny,
+                                                           py::array_t<Scalar, py::array::c_style> window);
+template py::array_t<Scalar> PYBIND11_EXPORT ddm_diff_cuda(py::array_t<int16_t, py::array::c_style> img_seq,
+                                                           vector<unsigned int> lags,
+                                                           unsigned long long nx,
+                                                           unsigned long long ny,
+                                                           py::array_t<Scalar, py::array::c_style> window);
+template py::array_t<Scalar> PYBIND11_EXPORT ddm_diff_cuda(py::array_t<uint16_t, py::array::c_style> img_seq,
+                                                           vector<unsigned int> lags,
+                                                           unsigned long long nx,
+                                                           unsigned long long ny,
+                                                           py::array_t<Scalar, py::array::c_style> window);
+template py::array_t<Scalar> PYBIND11_EXPORT ddm_diff_cuda(py::array_t<int32_t, py::array::c_style> img_seq,
+                                                           vector<unsigned int> lags,
+                                                           unsigned long long nx,
+                                                           unsigned long long ny,
+                                                           py::array_t<Scalar, py::array::c_style> window);
+template py::array_t<Scalar> PYBIND11_EXPORT ddm_diff_cuda(py::array_t<uint32_t, py::array::c_style> img_seq,
+                                                           vector<unsigned int> lags,
+                                                           unsigned long long nx,
+                                                           unsigned long long ny,
+                                                           py::array_t<Scalar, py::array::c_style> window);
+template py::array_t<Scalar> PYBIND11_EXPORT ddm_diff_cuda(py::array_t<int64_t, py::array::c_style> img_seq,
+                                                           vector<unsigned int> lags,
+                                                           unsigned long long nx,
+                                                           unsigned long long ny,
+                                                           py::array_t<Scalar, py::array::c_style> window);
+template py::array_t<Scalar> PYBIND11_EXPORT ddm_diff_cuda(py::array_t<uint64_t, py::array::c_style> img_seq,
+                                                           vector<unsigned int> lags,
+                                                           unsigned long long nx,
+                                                           unsigned long long ny,
+                                                           py::array_t<Scalar, py::array::c_style> window);
+template py::array_t<Scalar> PYBIND11_EXPORT ddm_diff_cuda(py::array_t<float, py::array::c_style> img_seq,
+                                                           vector<unsigned int> lags,
+                                                           unsigned long long nx,
+                                                           unsigned long long ny,
+                                                           py::array_t<Scalar, py::array::c_style> window);
+template py::array_t<Scalar> PYBIND11_EXPORT ddm_diff_cuda(py::array_t<double, py::array::c_style> img_seq,
+                                                           vector<unsigned int> lags,
+                                                           unsigned long long nx,
+                                                           unsigned long long ny,
+                                                           py::array_t<Scalar, py::array::c_style> window);
 
 /*!
     Compute the image structure function in fft mode
@@ -127,12 +172,12 @@ py::array_t<Scalar> ddm_diff_cuda(py::array_t<T, py::array::c_style> img_seq,
     circular correlation.
  */
 template <typename T>
-py::array_t<Scalar> ddm_fft_cuda(py::array_t<T, py::array::c_style> img_seq,
-                                 vector<unsigned int> lags,
-                                 unsigned long long nx,
-                                 unsigned long long ny,
-                                 unsigned long long nt,
-                                 py::array_t<Scalar, py::array::c_style> window)
+py::array_t<Scalar> PYBIND11_EXPORT ddm_fft_cuda(py::array_t<T, py::array::c_style> img_seq,
+                                                 vector<unsigned int> lags,
+                                                 unsigned long long nx,
+                                                 unsigned long long ny,
+                                                 unsigned long long nt,
+                                                 py::array_t<Scalar, py::array::c_style> window)
 {
     // ***Get input array and dimensions
     unsigned long long length = img_seq.shape()[0]; // get length of original input
@@ -227,6 +272,60 @@ py::array_t<Scalar> ddm_fft_cuda(py::array_t<T, py::array::c_style> img_seq,
     // ***Return result to python
     return out;
 }
+template py::array_t<Scalar> PYBIND11_EXPORT ddm_fft_cuda(py::array_t<uint8_t, py::array::c_style> img_seq,
+                                                          vector<unsigned int> lags,
+                                                          unsigned long long nx,
+                                                          unsigned long long ny,
+                                                          unsigned long long nt,
+                                                          py::array_t<Scalar, py::array::c_style> window);
+template py::array_t<Scalar> PYBIND11_EXPORT ddm_fft_cuda(py::array_t<int16_t, py::array::c_style> img_seq,
+                                                          vector<unsigned int> lags,
+                                                          unsigned long long nx,
+                                                          unsigned long long ny,
+                                                          unsigned long long nt,
+                                                          py::array_t<Scalar, py::array::c_style> window);
+template py::array_t<Scalar> PYBIND11_EXPORT ddm_fft_cuda(py::array_t<uint16_t, py::array::c_style> img_seq,
+                                                          vector<unsigned int> lags,
+                                                          unsigned long long nx,
+                                                          unsigned long long ny,
+                                                          unsigned long long nt,
+                                                          py::array_t<Scalar, py::array::c_style> window);
+template py::array_t<Scalar> PYBIND11_EXPORT ddm_fft_cuda(py::array_t<int32_t, py::array::c_style> img_seq,
+                                                          vector<unsigned int> lags,
+                                                          unsigned long long nx,
+                                                          unsigned long long ny,
+                                                          unsigned long long nt,
+                                                          py::array_t<Scalar, py::array::c_style> window);
+template py::array_t<Scalar> PYBIND11_EXPORT ddm_fft_cuda(py::array_t<uint32_t, py::array::c_style> img_seq,
+                                                          vector<unsigned int> lags,
+                                                          unsigned long long nx,
+                                                          unsigned long long ny,
+                                                          unsigned long long nt,
+                                                          py::array_t<Scalar, py::array::c_style> window);
+template py::array_t<Scalar> PYBIND11_EXPORT ddm_fft_cuda(py::array_t<int64_t, py::array::c_style> img_seq,
+                                                          vector<unsigned int> lags,
+                                                          unsigned long long nx,
+                                                          unsigned long long ny,
+                                                          unsigned long long nt,
+                                                          py::array_t<Scalar, py::array::c_style> window);
+template py::array_t<Scalar> PYBIND11_EXPORT ddm_fft_cuda(py::array_t<uint64_t, py::array::c_style> img_seq,
+                                                          vector<unsigned int> lags,
+                                                          unsigned long long nx,
+                                                          unsigned long long ny,
+                                                          unsigned long long nt,
+                                                          py::array_t<Scalar, py::array::c_style> window);
+template py::array_t<Scalar> PYBIND11_EXPORT ddm_fft_cuda(py::array_t<float, py::array::c_style> img_seq,
+                                                          vector<unsigned int> lags,
+                                                          unsigned long long nx,
+                                                          unsigned long long ny,
+                                                          unsigned long long nt,
+                                                          py::array_t<Scalar, py::array::c_style> window);
+template py::array_t<Scalar> PYBIND11_EXPORT ddm_fft_cuda(py::array_t<double, py::array::c_style> img_seq,
+                                                          vector<unsigned int> lags,
+                                                          unsigned long long nx,
+                                                          unsigned long long ny,
+                                                          unsigned long long nt,
+                                                          py::array_t<Scalar, py::array::c_style> window);
 
 /*!
     Set CUDA device to be used.
@@ -245,34 +344,4 @@ void set_device(int gpu_id)
     {
         throw std::runtime_error("Device id out of bounds. Choose id < " + to_string(dev_num));
     }
-}
-
-/*!
-    Export ddm_cuda functions to python.
- */
-void export_ddm_cuda(py::module &m)
-{
-    m.def("set_device", &set_device);
-    // m.def("get_device_pitch", &get_device_pitch);
-    // m.def("get_device_fft2_mem", &get_device_fft2_mem);
-    // m.def("get_device_fft_mem", &get_device_fft_mem);
-    // Leave function export in this order!
-    m.def("ddm_diff_cuda", &ddm_diff_cuda<uint8_t>, py::return_value_policy::take_ownership);
-    m.def("ddm_diff_cuda", &ddm_diff_cuda<int16_t>, py::return_value_policy::take_ownership);
-    m.def("ddm_diff_cuda", &ddm_diff_cuda<uint16_t>, py::return_value_policy::take_ownership);
-    m.def("ddm_diff_cuda", &ddm_diff_cuda<int32_t>, py::return_value_policy::take_ownership);
-    m.def("ddm_diff_cuda", &ddm_diff_cuda<uint32_t>, py::return_value_policy::take_ownership);
-    m.def("ddm_diff_cuda", &ddm_diff_cuda<int64_t>, py::return_value_policy::take_ownership);
-    m.def("ddm_diff_cuda", &ddm_diff_cuda<uint64_t>, py::return_value_policy::take_ownership);
-    m.def("ddm_diff_cuda", &ddm_diff_cuda<float>, py::return_value_policy::take_ownership);
-    m.def("ddm_diff_cuda", &ddm_diff_cuda<double>, py::return_value_policy::take_ownership);
-    m.def("ddm_fft_cuda", &ddm_fft_cuda<uint8_t>, py::return_value_policy::take_ownership);
-    m.def("ddm_fft_cuda", &ddm_fft_cuda<int16_t>, py::return_value_policy::take_ownership);
-    m.def("ddm_fft_cuda", &ddm_fft_cuda<uint16_t>, py::return_value_policy::take_ownership);
-    m.def("ddm_fft_cuda", &ddm_fft_cuda<int32_t>, py::return_value_policy::take_ownership);
-    m.def("ddm_fft_cuda", &ddm_fft_cuda<uint32_t>, py::return_value_policy::take_ownership);
-    m.def("ddm_fft_cuda", &ddm_fft_cuda<int64_t>, py::return_value_policy::take_ownership);
-    m.def("ddm_fft_cuda", &ddm_fft_cuda<uint64_t>, py::return_value_policy::take_ownership);
-    m.def("ddm_fft_cuda", &ddm_fft_cuda<float>, py::return_value_policy::take_ownership);
-    m.def("ddm_fft_cuda", &ddm_fft_cuda<double>, py::return_value_policy::take_ownership);
 }

@@ -12,6 +12,15 @@ from setuptools.command.build_ext import build_ext
 from setuptools.command.install_lib import install_lib
 
 
+# Convert distutils Windows platform specifiers to CMake -A arguments
+PLAT_TO_CMAKE = {
+    "win32": "Win32",
+    "win-amd64": "x64",
+    "win-arm32": "ARM",
+    "win-arm64": "ARM64",
+}
+
+
 def get_cmake_bool_flag(name, default_value=None):
     """
     Get cmake boolean flag from environment variables.
@@ -101,12 +110,18 @@ class CMakeBuild(build_ext):
         build_args = ["--config", cfg]
         native_generator_args = ["--"]
 
-        if platform.system() == "Windows":
+        if platform.system() == "windows":
             if sys.maxsize > 2**32:
-                cmake_args += ["-A", "x64"]
+                cmake_args += ["-A", PLAT_TO_CMAKE[self.plat_name]]
             native_generator_args += ["/m"]
         else:
             cmake_args += ["-DCMAKE_BUILD_TYPE=" + cfg]
+
+        if sys.platform.startswith("darwin"):
+            # Cross-compile support for macOS - respect ARCHFLAGS if set
+            archs = re.findall(r"-arch (\S+)", os.environ.get("ARCHFLAGS", ""))
+            if archs:
+                cmake_args += ["-DCMAKE_OSX_ARCHITECTURES={}".format(";".join(archs))]
 
         # Set optional CMake flags
         # C++

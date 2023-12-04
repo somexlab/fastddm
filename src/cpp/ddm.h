@@ -16,11 +16,8 @@
 #include <vector>
 #include <string>
 
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
-#include <pybind11/numpy.h>
+#include "../python_defs.h"
 
-namespace py = pybind11;
 using namespace std;
 
 #ifndef SINGLE_PRECISION
@@ -39,11 +36,11 @@ typedef float Scalar;
     \param window   numpy array containing the window function to be applied to the images
  */
 template <typename T>
-py::array_t<Scalar> ddm_diff(py::array_t<T, py::array::c_style> img_seq,
-                             vector<unsigned int> lags,
-                             unsigned long long nx,
-                             unsigned long long ny,
-                             py::array_t<Scalar, py::array::c_style> window);
+py::array_t<Scalar> PYBIND11_EXPORT ddm_diff(py::array_t<T, py::array::c_style> img_seq,
+                                             vector<unsigned int> lags,
+                                             unsigned long long nx,
+                                             unsigned long long ny,
+                                             py::array_t<Scalar, py::array::c_style> window);
 
 /*! \brief Compute image structure function in fft mode using Wiener-Khinchin theorem
     \param img_seq      numpy array containing the image sequence
@@ -55,17 +52,12 @@ py::array_t<Scalar> ddm_diff(py::array_t<T, py::array::c_style> img_seq,
     \param window       numpy array containing the window function to be applied to the images
  */
 template <typename T>
-py::array_t<Scalar> ddm_fft(py::array_t<T, py::array::c_style> img_seq,
-                            vector<unsigned int> lags,
-                            unsigned long long nx,
-                            unsigned long long ny,
-                            unsigned long long nt,
-                            unsigned long long chunk_size,
-                            py::array_t<Scalar, py::array::c_style> window);
-
-/*! \brief Export ddm functions to python
-    \param m    Module
- */
-void export_ddm(py::module &m);
+py::array_t<Scalar> PYBIND11_EXPORT ddm_fft(py::array_t<T, py::array::c_style> img_seq,
+                                            vector<unsigned int> lags,
+                                            unsigned long long nx,
+                                            unsigned long long ny,
+                                            unsigned long long nt,
+                                            unsigned long long chunk_size,
+                                            py::array_t<Scalar, py::array::c_style> window);
 
 #endif // __DDM_H__

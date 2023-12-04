@@ -35,11 +35,11 @@ void (*Fftw_Cleanup)() = &fftwf_cleanup;
     using differences of Fourier transformed images.
  */
 template <typename T>
-py::array_t<Scalar> ddm_diff(py::array_t<T, py::array::c_style> img_seq,
-                             vector<unsigned int> lags,
-                             unsigned long long nx,
-                             unsigned long long ny,
-                             py::array_t<Scalar, py::array::c_style> window)
+py::array_t<Scalar> PYBIND11_EXPORT ddm_diff(py::array_t<T, py::array::c_style> img_seq,
+                                             vector<unsigned int> lags,
+                                             unsigned long long nx,
+                                             unsigned long long ny,
+                                             py::array_t<Scalar, py::array::c_style> window)
 {
     // ***Get input array and dimensions
     unsigned long long length = img_seq.shape()[0]; // get length of original input
@@ -190,6 +190,51 @@ py::array_t<Scalar> ddm_diff(py::array_t<T, py::array::c_style> img_seq,
     // Return result to python
     return out;
 }
+template py::array_t<Scalar> PYBIND11_EXPORT ddm_diff(py::array_t<uint8_t, py::array::c_style> img_seq,
+                                                      vector<unsigned int> lags,
+                                                      unsigned long long nx,
+                                                      unsigned long long ny,
+                                                      py::array_t<Scalar, py::array::c_style> window);
+template py::array_t<Scalar> PYBIND11_EXPORT ddm_diff(py::array_t<int16_t, py::array::c_style> img_seq,
+                                                      vector<unsigned int> lags,
+                                                      unsigned long long nx,
+                                                      unsigned long long ny,
+                                                      py::array_t<Scalar, py::array::c_style> window);
+template py::array_t<Scalar> PYBIND11_EXPORT ddm_diff(py::array_t<uint16_t, py::array::c_style> img_seq,
+                                                      vector<unsigned int> lags,
+                                                      unsigned long long nx,
+                                                      unsigned long long ny,
+                                                      py::array_t<Scalar, py::array::c_style> window);
+template py::array_t<Scalar> PYBIND11_EXPORT ddm_diff(py::array_t<int32_t, py::array::c_style> img_seq,
+                                                      vector<unsigned int> lags,
+                                                      unsigned long long nx,
+                                                      unsigned long long ny,
+                                                      py::array_t<Scalar, py::array::c_style> window);
+template py::array_t<Scalar> PYBIND11_EXPORT ddm_diff(py::array_t<uint32_t, py::array::c_style> img_seq,
+                                                      vector<unsigned int> lags,
+                                                      unsigned long long nx,
+                                                      unsigned long long ny,
+                                                      py::array_t<Scalar, py::array::c_style> window);
+template py::array_t<Scalar> PYBIND11_EXPORT ddm_diff(py::array_t<int64_t, py::array::c_style> img_seq,
+                                                      vector<unsigned int> lags,
+                                                      unsigned long long nx,
+                                                      unsigned long long ny,
+                                                      py::array_t<Scalar, py::array::c_style> window);
+template py::array_t<Scalar> PYBIND11_EXPORT ddm_diff(py::array_t<uint64_t, py::array::c_style> img_seq,
+                                                      vector<unsigned int> lags,
+                                                      unsigned long long nx,
+                                                      unsigned long long ny,
+                                                      py::array_t<Scalar, py::array::c_style> window);
+template py::array_t<Scalar> PYBIND11_EXPORT ddm_diff(py::array_t<float, py::array::c_style> img_seq,
+                                                      vector<unsigned int> lags,
+                                                      unsigned long long nx,
+                                                      unsigned long long ny,
+                                                      py::array_t<Scalar, py::array::c_style> window);
+template py::array_t<Scalar> PYBIND11_EXPORT ddm_diff(py::array_t<double, py::array::c_style> img_seq,
+                                                      vector<unsigned int> lags,
+                                                      unsigned long long nx,
+                                                      unsigned long long ny,
+                                                      py::array_t<Scalar, py::array::c_style> window);
 
 /*!
     Compute the image structure function in fft mode
@@ -203,13 +248,13 @@ py::array_t<Scalar> ddm_diff(py::array_t<T, py::array::c_style> img_seq,
     circular correlation.
  */
 template <typename T>
-py::array_t<Scalar> ddm_fft(py::array_t<T, py::array::c_style> img_seq,
-                            vector<unsigned int> lags,
-                            unsigned long long nx,
-                            unsigned long long ny,
-                            unsigned long long nt,
-                            unsigned long long chunk_size,
-                            py::array_t<Scalar, py::array::c_style> window)
+py::array_t<Scalar> PYBIND11_EXPORT ddm_fft(py::array_t<T, py::array::c_style> img_seq,
+                                            vector<unsigned int> lags,
+                                            unsigned long long nx,
+                                            unsigned long long ny,
+                                            unsigned long long nt,
+                                            unsigned long long chunk_size,
+                                            py::array_t<Scalar, py::array::c_style> window)
 {
     // ***Get input array and dimensions
     unsigned long long length = img_seq.shape()[0]; // get length of original input
@@ -406,29 +451,66 @@ py::array_t<Scalar> ddm_fft(py::array_t<T, py::array::c_style> img_seq,
     // Return result to python
     return out;
 }
-
-/*!
-    Export ddm functions to python.
- */
-void export_ddm(py::module &m)
-{
-    // Leave function export in this order!
-    m.def("ddm_diff", &ddm_diff<uint8_t>, py::return_value_policy::take_ownership);
-    m.def("ddm_diff", &ddm_diff<int16_t>, py::return_value_policy::take_ownership);
-    m.def("ddm_diff", &ddm_diff<uint16_t>, py::return_value_policy::take_ownership);
-    m.def("ddm_diff", &ddm_diff<int32_t>, py::return_value_policy::take_ownership);
-    m.def("ddm_diff", &ddm_diff<uint32_t>, py::return_value_policy::take_ownership);
-    m.def("ddm_diff", &ddm_diff<int64_t>, py::return_value_policy::take_ownership);
-    m.def("ddm_diff", &ddm_diff<uint64_t>, py::return_value_policy::take_ownership);
-    m.def("ddm_diff", &ddm_diff<float>, py::return_value_policy::take_ownership);
-    m.def("ddm_diff", &ddm_diff<double>, py::return_value_policy::take_ownership);
-    m.def("ddm_fft", &ddm_fft<uint8_t>, py::return_value_policy::take_ownership);
-    m.def("ddm_fft", &ddm_fft<int16_t>, py::return_value_policy::take_ownership);
-    m.def("ddm_fft", &ddm_fft<uint16_t>, py::return_value_policy::take_ownership);
-    m.def("ddm_fft", &ddm_fft<int32_t>, py::return_value_policy::take_ownership);
-    m.def("ddm_fft", &ddm_fft<uint32_t>, py::return_value_policy::take_ownership);
-    m.def("ddm_fft", &ddm_fft<int64_t>, py::return_value_policy::take_ownership);
-    m.def("ddm_fft", &ddm_fft<uint64_t>, py::return_value_policy::take_ownership);
-    m.def("ddm_fft", &ddm_fft<float>, py::return_value_policy::take_ownership);
-    m.def("ddm_fft", &ddm_fft<double>, py::return_value_policy::take_ownership);
-}
+template py::array_t<Scalar> PYBIND11_EXPORT ddm_fft(py::array_t<uint8_t, py::array::c_style> img_seq,
+                                                     vector<unsigned int> lags,
+                                                     unsigned long long nx,
+                                                     unsigned long long ny,
+                                                     unsigned long long nt,
+                                                     unsigned long long chunk_size,
+                                                     py::array_t<Scalar, py::array::c_style> window);
+template py::array_t<Scalar> PYBIND11_EXPORT ddm_fft(py::array_t<int16_t, py::array::c_style> img_seq,
+                                                     vector<unsigned int> lags,
+                                                     unsigned long long nx,
+                                                     unsigned long long ny,
+                                                     unsigned long long nt,
+                                                     unsigned long long chunk_size,
+                                                     py::array_t<Scalar, py::array::c_style> window);
+template py::array_t<Scalar> PYBIND11_EXPORT ddm_fft(py::array_t<uint16_t, py::array::c_style> img_seq,
+                                                     vector<unsigned int> lags,
+                                                     unsigned long long nx,
+                                                     unsigned long long ny,
+                                                     unsigned long long nt,
+                                                     unsigned long long chunk_size,
+                                                     py::array_t<Scalar, py::array::c_style> window);
+template py::array_t<Scalar> PYBIND11_EXPORT ddm_fft(py::array_t<int32_t, py::array::c_style> img_seq,
+                                                     vector<unsigned int> lags,
+                                                     unsigned long long nx,
+                                                     unsigned long long ny,
+                                                     unsigned long long nt,
+                                                     unsigned long long chunk_size,
+                                                     py::array_t<Scalar, py::array::c_style> window);
+template py::array_t<Scalar> PYBIND11_EXPORT ddm_fft(py::array_t<uint32_t, py::array::c_style> img_seq,
+                                                     vector<unsigned int> lags,
+                                                     unsigned long long nx,
+                                                     unsigned long long ny,
+                                                     unsigned long long nt,
+                                                     unsigned long long chunk_size,
+                                                     py::array_t<Scalar, py::array::c_style> window);
+template py::array_t<Scalar> PYBIND11_EXPORT ddm_fft(py::array_t<int64_t, py::array::c_style> img_seq,
+                                                     vector<unsigned int> lags,
+                                                     unsigned long long nx,
+                                                     unsigned long long ny,
+                                                     unsigned long long nt,
+                                                     unsigned long long chunk_size,
+                                                     py::array_t<Scalar, py::array::c_style> window);
+template py::array_t<Scalar> PYBIND11_EXPORT ddm_fft(py::array_t<uint64_t, py::array::c_style> img_seq,
+                                                     vector<unsigned int> lags,
+                                                     unsigned long long nx,
+                                                     unsigned long long ny,
+                                                     unsigned long long nt,
+                                                     unsigned long long chunk_size,
+                                                     py::array_t<Scalar, py::array::c_style> window);
+template py::array_t<Scalar> PYBIND11_EXPORT ddm_fft(py::array_t<float, py::array::c_style> img_seq,
+                                                     vector<unsigned int> lags,
+                                                     unsigned long long nx,
+                                                     unsigned long long ny,
+                                                     unsigned long long nt,
+                                                     unsigned long long chunk_size,
+                                                     py::array_t<Scalar, py::array::c_style> window);
+template py::array_t<Scalar> PYBIND11_EXPORT ddm_fft(py::array_t<double, py::array::c_style> img_seq,
+                                                     vector<unsigned int> lags,
+                                                     unsigned long long nx,
+                                                     unsigned long long ny,
+                                                     unsigned long long nt,
+                                                     unsigned long long chunk_size,
+                                                     py::array_t<Scalar, py::array::c_style> window);
