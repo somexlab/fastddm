@@ -30,7 +30,3 @@ if(SINGLE_PRECISION)
         )
     endif(WIN32)
 endif(SINGLE_PRECISION)
-
-# Build with Python bindings
-set(PYBIND11_PYTHON_VERSION 3 CACHE STRING "Python version to use for compiling modules")
-add_subdirectory(pybind11)

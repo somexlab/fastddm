@@ -38,14 +38,16 @@ if(ENABLE_CPP)
     # Add library subdirectory
     add_subdirectory(lib)
 
-    # Add include directories
+    # Add python/pybind11 include directories
+    set(PYBIND11_PYTHON_VERSION 3 CACHE STRING "Python version to use for compiling modules")
+    add_subdirectory(lib/pybind11)
     include_directories(${PYTHON_INCLUDE_DIRS})
     include_directories(${PROJECT_SOURCE_DIR}/lib/pybind11/include)
 
     # Set C++ standard
     set(CMAKE_CXX_STANDARD 14)
     set(CMAKE_CXX_STANDARD_REQUIRED ON)
-    set(CMAKE_CXX_EXTENSIONS OFF)
+    #set(CMAKE_CXX_EXTENSIONS OFF)
 endif(ENABLE_CPP)
 
 # Enable CUDA

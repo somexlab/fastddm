@@ -14,5 +14,5 @@ setup(
     setup_requires=["setuptools_scm"],
     packages=["fastddm"],
     package_dir={"fastddm": "${FASTDDM_OUTPUT_DIR}"},
-    package_data={"fastddm": ["_core.so"]},
+    package_data={"fastddm": ["_core.*", "_core_cuda.*"]},
 )

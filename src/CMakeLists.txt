@@ -17,21 +17,21 @@ else()
     set(IS_SINGLE_PRECISION False)
 endif()
 
-# Set _fddm_SOURCES
-set(_fddm_SOURCES
+# Set fddm_SOURCES
+set(fddm_SOURCES
     cpp/ddm.cc
     cpp/helper_fftw.cc
     cpp/helper_ddm.cc
 )
 
-# Set _fddm_gpu_SOURCES
-set(_fddm_gpu_SOURCES
+# Set fddm_gpu_SOURCES
+set(fddm_gpu_SOURCES
     cuda/ddm_cuda.cc
     cuda/helper_memchk_gpu.cc
 )
 
-# Set _fddm_gpu_cu_SOURCES
-set(_fddm_gpu_cu_SOURCES
+# Set fddm_gpu_cu_SOURCES
+set(fddm_gpu_cu_SOURCES
     cuda/ddm_cuda.cu
     cuda/helper_cufft.cu
     cuda/helper_ddm_cuda.cu
@@ -41,7 +41,7 @@ set(_fddm_gpu_cu_SOURCES
 
 # Set language for cuda files
 if(ENABLE_CUDA)
-    set_source_files_properties(${_fddm_gpu_cu_SOURCES} PROPERTIES LANGUAGE CUDA)
+    set_source_files_properties(${fddm_gpu_cu_SOURCES} PROPERTIES LANGUAGE CUDA)
 endif(ENABLE_CUDA)
 
 # Compile with C++ support
@@ -49,20 +49,20 @@ if(ENABLE_CPP)
     # Include external libraries
     include_directories(${PROJECT_SOURCE_DIR}/lib/fftw-3.3.10/api)
 
-    # Add _fddm library
-    add_library(_fddm SHARED ${_fddm_SOURCES})
-    target_link_libraries(_fddm PUBLIC ${PYTHON_LIBRARIES} fftw3)
+    # Add fddm library
+    add_library(fddm SHARED ${fddm_SOURCES})
+    target_link_libraries(fddm PUBLIC ${PYTHON_LIBRARIES} fftw3)
 
     if(SINGLE_PRECISION)
-        target_link_libraries(_fddm PUBLIC fftw3f)
-        target_compile_definitions(_fddm PUBLIC SINGLE_PRECISION)
+        target_link_libraries(fddm PUBLIC fftw3f)
+        target_compile_definitions(fddm PUBLIC SINGLE_PRECISION)
     endif(SINGLE_PRECISION)
 
-    if(WIN32)
-        target_link_libraries(_fddm PUBLIC m)
-    endif(WIN32)
+    if(NOT WIN32)
+        target_link_libraries(fddm PUBLIC m)
+    endif(NOT WIN32)
 
-    set_target_properties(_fddm PROPERTIES
+    set_target_properties(fddm PROPERTIES
         LIBRARY_OUTPUT_DIRECTORY ${FASTDDM_OUTPUT_DIR}
         RUNTIME_OUTPUT_DIRECTORY_RELEASE ${FASTDDM_OUTPUT_DIR}
         WINDOWS_EXPORT_ALL_SYMBOLS ON
@@ -70,7 +70,7 @@ if(ENABLE_CPP)
 
     # Add suffix .so for UNIX systems
     if(NOT WIN32)
-        set_target_properties(_fddm PROPERTIES
+        set_target_properties(fddm PROPERTIES
             SUFFIX ".so"
         )
     endif(NOT WIN32)
@@ -78,7 +78,7 @@ if(ENABLE_CPP)
     # Add _core library with Python bindings
     pybind11_add_module(_core SHARED python/module.cc)
 
-    target_link_libraries(_core PRIVATE _fddm)
+    target_link_libraries(_core PRIVATE fddm)
     set_target_properties(_core PROPERTIES
         LIBRARY_OUTPUT_DIRECTORY ${FASTDDM_OUTPUT_DIR}
         RUNTIME_OUTPUT_DIRECTORY_RELEASE ${FASTDDM_OUTPUT_DIR}
@@ -92,27 +92,27 @@ if(ENABLE_CUDA)
     include_directories(${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
     include(CUDAsetup.cmake)
 
-    # Add _fddm_cuda library
-    add_library(_fddm_cuda SHARED ${_fddm_gpu_SOURCES} ${_fddm_gpu_cu_SOURCES})
-    target_link_libraries(_fddm_cuda PUBLIC ${PYTHON_LIBRARIES} CUDA::cudart CUDA::cufft CUDA::nvml)
+    # Add fddm_cuda library
+    add_library(fddm_cuda SHARED ${fddm_gpu_SOURCES} ${fddm_gpu_cu_SOURCES})
+    target_link_libraries(fddm_cuda PUBLIC ${PYTHON_LIBRARIES} CUDA::cudart CUDA::cufft CUDA::nvml)
 
     if(${CMAKE_VERSION} VERSION_LESS "3.18.0")
-        target_compile_options(_fddm_cuda PUBLIC $<$<COMPILE_LANGUAGE:CUDA>:-arch=sm_${_cuda_min_arch}>)
+        target_compile_options(fddm_cuda PUBLIC $<$<COMPILE_LANGUAGE:CUDA>:-arch=sm_${_cuda_min_arch}>)
     else()
-        set_target_properties(_fddm_cuda PROPERTIES
+        set_target_properties(fddm_cuda PROPERTIES
             CUDA_ARCHITECTURES ${_cuda_min_arch}
         )
     endif()
 
     if(SINGLE_PRECISION)
-        target_compile_definitions(_fddm_cuda PUBLIC SINGLE_PRECISION)
+        target_compile_definitions(fddm_cuda PUBLIC SINGLE_PRECISION)
     endif(SINGLE_PRECISION)
 
-    if(WIN32)
-        target_link_libraries(_fddm_cuda PUBLIC m)
-    endif(WIN32)
+    if(NOT WIN32)
+        target_link_libraries(fddm_cuda PUBLIC m)
+    endif(NOT WIN32)
 
-    set_target_properties(_fddm_cuda PROPERTIES
+    set_target_properties(fddm_cuda PROPERTIES
         LIBRARY_OUTPUT_DIRECTORY ${FASTDDM_OUTPUT_DIR}
         RUNTIME_OUTPUT_DIRECTORY_RELEASE ${FASTDDM_OUTPUT_DIR}
         WINDOWS_EXPORT_ALL_SYMBOLS ON
@@ -120,7 +120,7 @@ if(ENABLE_CUDA)
 
     # Add suffix .so for UNIX systems
     if(NOT WIN32)
-        set_target_properties(_fddm_cuda PROPERTIES
+        set_target_properties(fddm_cuda PROPERTIES
             SUFFIX ".so"
         )
     endif(NOT WIN32)
@@ -128,7 +128,7 @@ if(ENABLE_CUDA)
     # Add _core_cuda library with Python bindings
     pybind11_add_module(_core_cuda SHARED python/module_cuda.cc)
 
-    target_link_libraries(_core_cuda PRIVATE _fddm_cuda)
+    target_link_libraries(_core_cuda PRIVATE fddm_cuda)
     set_target_properties(_core_cuda PROPERTIES
         LIBRARY_OUTPUT_DIRECTORY ${FASTDDM_OUTPUT_DIR}
         RUNTIME_OUTPUT_DIRECTORY_RELEASE ${FASTDDM_OUTPUT_DIR}
