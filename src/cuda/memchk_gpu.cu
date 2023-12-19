@@ -4,12 +4,12 @@
 // Author: Enrico Lattuada
 // Maintainer: Enrico Lattuada
 
-/*! \file gpu_utils.cu
-    \brief Definition of utilities for GPU
+/*! \file memchk_gpu.cu
+    \brief Definition of utilities for GPU memory check
 */
 
 // *** headers ***
-#include "gpu_utils.cuh"
+#include "memchk_gpu.cuh"
 
 #include <cuda.h>
 #include <cuda_runtime.h>

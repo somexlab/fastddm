@@ -4,11 +4,11 @@
 // Author: Enrico Lattuada
 // Maintainer: Enrico Lattuada
 
-#ifndef __GPU_UTILS_H__
-#define __GPU_UTILS_H__
+#ifndef __MEMCHK_GPU_CUH__
+#define __MEMCHK_GPU_CUH__
 
-/*! \file gpu_utils.cuh
-    \brief Utility functions for GPU
+/*! \file memchk_gpu.cuh
+    \brief Utility functions for GPU memory check
 */
 
 // *** headers ***
@@ -25,4 +25,4 @@ void PYBIND11_EXPORT set_device(int device_id);
  */
 unsigned long long PYBIND11_EXPORT get_free_device_memory();
 
-#endif // __GPU_UTILS_H__
+#endif // __MEMCHK_GPU_CUH__

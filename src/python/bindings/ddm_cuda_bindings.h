@@ -14,7 +14,7 @@
 
 // *** headers ***
 #include "../../python_defs.h"
-#include "../../cuda/gpu_utils.cuh"
+#include "../../cuda/memchk_gpu.cuh"
 #include "../../cuda/ddm_cuda.h"
 
 /*! \brief Export ddm CUDA functions to Python
