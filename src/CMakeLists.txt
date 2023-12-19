@@ -26,6 +26,7 @@ set(fddm_SOURCES
 
 # Set fddm_gpu_SOURCES
 set(fddm_gpu_SOURCES
+    cuda/memchk_gpu.cc
     cuda/ddm_cuda.cc
 )
 

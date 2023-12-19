@@ -10,6 +10,7 @@
 
 // *** headers ***
 #include "ddm_cuda.h"
+#include "memchk_gpu.h"
 
 // *** code ***
 
@@ -41,6 +42,10 @@ py::array_t<Scalar> PYBIND11_EXPORT ddm_diff_cuda(py::array_t<T, py::array::c_st
     bool is_window = window_length > 0;
 
     // Check host memory
+    if (!check_host_memory_diff(nx, ny, length, lags.size()))
+    {
+        throw std::runtime_error("Not enough space in memory to store the result.\n");
+    }
 
     // Check device memory and optimize kernel execution
 
@@ -158,6 +163,10 @@ py::array_t<Scalar> PYBIND11_EXPORT ddm_fft_cuda(py::array_t<T, py::array::c_sty
     bool is_window = window_length > 0;
 
     // Check host memory
+    if (!check_host_memory_fft(nx, ny, length, lags.size()))
+    {
+        throw std::runtime_error("Not enough space in memory to store the result.\n");
+    }
 
     // Check device memory and optimize kernel execution
 

@@ -8,7 +8,7 @@
 #define __MEMCHK_GPU_CUH__
 
 /*! \file memchk_gpu.cuh
-    \brief Utility functions for GPU memory check
+    \brief Declaration of utility functions for GPU memory check and optimization
 */
 
 // *** headers ***

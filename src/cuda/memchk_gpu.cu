@@ -5,7 +5,7 @@
 // Maintainer: Enrico Lattuada
 
 /*! \file memchk_gpu.cu
-    \brief Definition of utilities for GPU memory check
+    \brief Definition of utility functions for GPU memory check and optimization
 */
 
 // *** headers ***
