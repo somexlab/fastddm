@@ -12,6 +12,8 @@
 #include "ddm_cuda.h"
 #include "memchk_gpu.h"
 
+#include "memchk_gpu.cuh"
+
 // *** code ***
 
 /*!
@@ -48,6 +50,25 @@ py::array_t<Scalar> PYBIND11_EXPORT ddm_diff_cuda(py::array_t<T, py::array::c_st
     }
 
     // Check device memory and optimize kernel execution
+    unsigned long long num_fft2, num_chunks, num_shift;
+    unsigned long long pitch_buff, pitch_nx, pitch_q, pitch_t, pitch_fs;
+    check_and_optimize_device_memory_diff(width,
+                                          height,
+                                          length,
+                                          lags.size(),
+                                          nx,
+                                          ny,
+                                          sizeof(T),
+                                          std::is_same<T, Scalar>::value,
+                                          is_window,
+                                          num_fft2,
+                                          num_chunks,
+                                          num_shift,
+                                          pitch_buff,
+                                          pitch_nx,
+                                          pitch_q,
+                                          pitch_t,
+                                          pitch_fs);
 
     // Allocate workspace memory
     /*
