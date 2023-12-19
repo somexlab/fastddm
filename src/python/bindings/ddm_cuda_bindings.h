@@ -13,8 +13,9 @@
 */
 
 // *** headers ***
-#include "../../cuda/ddm_cuda.h"
 #include "../../python_defs.h"
+#include "../../cuda/gpu_utils.cuh"
+#include "../../cuda/ddm_cuda.h"
 
 /*! \brief Export ddm CUDA functions to Python
     \param m    Module
@@ -23,6 +24,7 @@ void export_ddm_cuda(py::module &m)
 {
     // Misc
     m.def("set_device", &set_device);
+    m.def("get_free_device_memory", &get_free_device_memory);
     // Difference algorithm
     m.def("ddm_diff_cuda", &ddm_diff_cuda<uint8_t>, py::return_value_policy::take_ownership);
     m.def("ddm_diff_cuda", &ddm_diff_cuda<int16_t>, py::return_value_policy::take_ownership);

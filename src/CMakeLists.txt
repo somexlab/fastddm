@@ -27,16 +27,11 @@ set(fddm_SOURCES
 # Set fddm_gpu_SOURCES
 set(fddm_gpu_SOURCES
     cuda/ddm_cuda.cc
-    cuda/helper_memchk_gpu.cc
 )
 
 # Set fddm_gpu_cu_SOURCES
 set(fddm_gpu_cu_SOURCES
-    cuda/ddm_cuda.cu
-    cuda/helper_cufft.cu
-    cuda/helper_ddm_cuda.cu
-    cuda/helper_prefix_sum.cu
-    cuda/helper_memchk_gpu.cu
+    cuda/gpu_utils.cu
 )
 
 # Set language for cuda files
@@ -94,7 +89,7 @@ if(ENABLE_CUDA)
 
     # Add fddm_cuda library
     add_library(fddm_cuda SHARED ${fddm_gpu_SOURCES} ${fddm_gpu_cu_SOURCES})
-    target_link_libraries(fddm_cuda PUBLIC ${PYTHON_LIBRARIES} CUDA::cudart CUDA::cufft CUDA::nvml)
+    target_link_libraries(fddm_cuda PUBLIC ${PYTHON_LIBRARIES} CUDA::cufft CUDA::nvml)
 
     if(${CMAKE_VERSION} VERSION_LESS "3.18.0")
         target_compile_options(fddm_cuda PUBLIC $<$<COMPILE_LANGUAGE:CUDA>:-arch=sm_${_cuda_min_arch}>)

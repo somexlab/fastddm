@@ -14,6 +14,7 @@
 
 // *** headers ***
 #include <vector>
+#include <string>
 
 #include "../python_defs.h"
 
@@ -56,5 +57,10 @@ py::array_t<Scalar> PYBIND11_EXPORT ddm_fft_cuda(py::array_t<T, py::array::c_sty
                                                  unsigned long long ny,
                                                  unsigned long long nt,
                                                  py::array_t<Scalar, py::array::c_style> window);
+
+/*! \brief Set CUDA device to be used
+    \param gpu_id       The device id (starts from 0)
+*/
+void set_device(int gpu_id);
 
 #endif // __DDM_CUDA_H__

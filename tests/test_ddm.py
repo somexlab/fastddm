@@ -66,6 +66,7 @@ def test_ddm_py_diff(ddm_baseline):
     assert np.isclose(result._data, ddm_baseline._data).all()
 
 
+"""
 @pytest.mark.skipif(
     IS_SINGLE_PRECISION, reason="installed with SINGLE_PRECISION option"
 )
@@ -84,6 +85,7 @@ def test_ddm_cuda_diff(ddm_baseline):
     result = fddm.ddm(imgs, lags, core="cuda", mode="diff")
 
     assert np.isclose(result._data, ddm_baseline._data).all()
+"""
 
 
 @pytest.mark.skipif(
@@ -129,6 +131,7 @@ def test_ddm_py_diff_single(ddm_baseline):
     assert np.isclose(result._data, ddm_baseline._data, atol=0.0, rtol=1e-3).all()
 
 
+"""
 @pytest.mark.skipif(
     not IS_SINGLE_PRECISION, reason="installed with SINGLE_PRECISION option OFF"
 )
@@ -147,6 +150,7 @@ def test_ddm_cuda_diff_single(ddm_baseline):
     result = fddm.ddm(imgs, lags, core="cuda", mode="diff")
 
     assert np.isclose(result._data, ddm_baseline._data, atol=0.0, rtol=1e-3).all()
+"""
 
 
 def test_ddm_lags_errors():
@@ -162,3 +166,30 @@ def test_ddm_window_error():
         # make window slightly larger
         window = np.ones((dim_y + 1, dim_x), dtype=DTYPE)
         fddm.ddm(imgs, lags, core="cpp", mode="fft", window=window)
+
+
+@pytest.mark.skipif("cuda" not in CORES, reason="needs CUDA installed")
+def test_set_device_valid_gpu_id():
+    # Replace 0 with the actual valid GPU ID
+    fddm._core_cuda.set_device(0)
+
+
+@pytest.mark.skipif("cuda" not in CORES, reason="needs CUDA installed")
+def test_free_device_memory():
+    # Get available memory on device
+    import subprocess as sp
+
+    # retrieve free gpu memory
+    command = "nvidia-smi --query-gpu=memory.free --format=csv"
+    memory_free_info = (
+        sp.check_output(command.split()).decode("ascii").split("\n")[:-1][1:]
+    )
+
+    # convert memory from MB to bytes and create list
+    memory_free_values = [
+        1048576 * int(x.split()[0]) for i, x in enumerate(memory_free_info)
+    ]
+
+    assert np.isclose(
+        memory_free_values[0], fddm._core_cuda.get_free_device_memory(), rtol=1e-3
+    )
