@@ -14,6 +14,12 @@
 // *** headers ***
 #include "../python_defs.h"
 
+#ifndef SINGLE_PRECISION
+typedef double Scalar;
+#else
+typedef float Scalar;
+#endif
+
 // *** code ***
 
 /*! \brief Set the device to be used
@@ -67,6 +73,33 @@ void cudaGetDevicePitch1B(size_t N,
 */
 unsigned long long get_device_pitch(unsigned long long N,
                                     int num_bytes);
+
+/*! \brief Optimize fft2 execution parameters based on available gpu memory
+    \param width            Width of the image
+    \param height           Height of the image
+    \param length           Number of frames
+    \param nx               number of grid points in x
+    \param ny               number of grid points in y
+    \param pixel_Nbytes     Number of bytes per pixel
+    \param is_input_Scalar  True if image type memory size is same as Scalar
+    \param is_window        True if window function is given
+    \param free_mem         Available gpu memory
+    \param pitch_buff       Pitch of buffer device array
+    \param pitch_nx         Pitch of fft2 complex output array
+    \param num_fft2         Number of fft2 batches
+*/
+void optimize_fft2(unsigned long long width,
+                   unsigned long long height,
+                   unsigned long long length,
+                   unsigned long long nx,
+                   unsigned long long ny,
+                   unsigned long long pixel_Nbytes,
+                   bool is_input_Scalar,
+                   bool is_window,
+                   unsigned long long free_mem,
+                   unsigned long long &pitch_buff,
+                   unsigned long long &pitch_nx,
+                   unsigned long long &num_fft2);
 
 /*! \brief Optimize structure function "diff" execution parameters based on available gpu memory
     \param width            Width of the image

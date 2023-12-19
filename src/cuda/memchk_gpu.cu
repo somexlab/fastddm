@@ -174,6 +174,66 @@ unsigned long long get_device_pitch(unsigned long long N,
 }
 
 /*!
+    Optimize fft2 execution parameters based on available gpu memory.
+
+    Writes in the corresponding arguments:
+        - the number of iterations for fft2 (frame chunks)
+        - the pitch in number of elements for buffer array (real values)
+
+    Throws a runtime_error if the memory is not sufficient
+    to perform the calculations.
+*/
+void optimize_fft2(unsigned long long width,
+                   unsigned long long height,
+                   unsigned long long length,
+                   unsigned long long nx,
+                   unsigned long long ny,
+                   unsigned long long pixel_Nbytes,
+                   bool is_input_Scalar,
+                   bool is_window,
+                   unsigned long long free_mem,
+                   unsigned long long &pitch_buff,
+                   unsigned long long &pitch_nx,
+                   unsigned long long &num_fft2)
+{
+    /*
+        Calculations are always performed in double precision.
+        However, data is transferred as Scalar (float/double).
+
+        To compute the fft2, we need (values are in bytes):
+            - for the buffer (only if input is not Scalar):
+                pitch_buff * height * num_fft2 * pixel_Nbytes
+            - for the workspace (type: complex double [16 bytes]):
+                (nx / 2 + 1) * ny * num_fft2 * 16
+            - for the cufft2 internal buffer:
+                [determined programmatically...]
+            - for the window function (type: Scalar [SCALAR_SIZE bytes]):
+                pitch_nx * height * 2 * SCALAR_SIZE
+     */
+
+    // Compute the effective number of grid points in x of the rfft2
+    unsigned long long _nx = nx / 2ULL + 1ULL;
+
+    // Get the pitch for the buffer array (only if the input is not Scalar)
+    pitch_buff = is_input_Scalar ? 0ULL : get_device_pitch(width, pixel_Nbytes);
+
+    // Get the pitch for the rfft2 output complex array
+    pitch_nx = get_device_pitch(_nx, 2 * sizeof(Scalar));
+
+    /*
+        Start the optimization with the worst case scenario:
+        we need to perform as many rfft2 loops as the number of images,
+        namely, we transfer 1 image at a time.
+     */
+    num_fft2 = length;
+
+    // Define auxiliary variables
+    unsigned long long mem_required, prev_num_fft2;
+
+    // Optimize
+}
+
+/*!
     Optimize structure function "diff" execution parameters based on available gpu memory
 */
 void check_and_optimize_device_memory_diff(unsigned long long width,
@@ -201,6 +261,18 @@ void check_and_optimize_device_memory_diff(unsigned long long width,
     free_mem = (unsigned long long)(0.9 * (double)free_mem);
 
     // Evaluate parameters for fft2
+    optimize_fft2(width,
+                  height,
+                  length,
+                  nx,
+                  ny,
+                  pixel_Nbytes,
+                  is_input_Scalar,
+                  is_window,
+                  free_mem,
+                  pitch_buff,
+                  pitch_nx,
+                  num_fft2);
 
     // Evaluate parameters for structure function ("diff" mode)
 
