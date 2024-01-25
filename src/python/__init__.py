@@ -18,6 +18,14 @@ except DistributionNotFound:
     pass
 
 from ._config import *
+
+if IS_CUDA_ENABLED:
+    import sys
+    # On Windows, we need to add the CUDA Toolkit path to the DLL search path
+    if sys.platform == 'win32':
+        import os
+        os.add_dll_directory(os.path.join(os.environ['CUDA_PATH'], 'bin'))
+
 from ._ddm import ddm
 from .azimuthalaverage import azimuthal_average
 from ._io import load
