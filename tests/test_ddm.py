@@ -169,9 +169,23 @@ def test_ddm_window_error():
 
 
 @pytest.mark.skipif("cuda" not in CORES, reason="needs CUDA installed")
+def test_get_num_devices():
+    # Check that at least one CUDA device is available
+    assert fddm._core_cuda.get_num_devices() > 0
+
+
+@pytest.mark.skipif("cuda" not in CORES, reason="needs CUDA installed")
 def test_set_device_valid_gpu_id():
     # Replace 0 with the actual valid GPU ID
     fddm._core_cuda.set_device(0)
+
+
+@pytest.mark.skipif("cuda" not in CORES, reason="needs CUDA installed")
+def test_get_device_id_used():
+    # Check that the device we get with get_device()
+    # is the same as the one we set with set_device()
+    fddm._core_cuda.set_device(0)
+    assert fddm._core_cuda.get_device() == 0
 
 
 @pytest.mark.skipif("cuda" not in CORES, reason="needs CUDA installed")

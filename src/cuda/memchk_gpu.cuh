@@ -22,15 +22,6 @@ typedef float Scalar;
 
 // *** code ***
 
-/*! \brief Set the device to be used
-    \param device_id ID of the device to use
-*/
-void PYBIND11_EXPORT set_device(int device_id);
-
-/*! \brief Get free device memory (in bytes)
- */
-unsigned long long PYBIND11_EXPORT get_free_device_memory();
-
 /*! \brief Evaluate the device memory pitch for multiple subarrays of size N with 16bytes elements
     \param N        subarray size
     \param pitch    pitch of the subarray

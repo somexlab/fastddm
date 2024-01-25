@@ -14,7 +14,7 @@
 
 // *** headers ***
 #include "../../python_defs.h"
-#include "../../cuda/memchk_gpu.cuh"
+#include "../../cuda/gpu_utils.cuh"
 #include "../../cuda/memchk_gpu.h"
 #include "../../cuda/ddm_cuda.h"
 
@@ -24,7 +24,9 @@
 void export_ddm_cuda(py::module &m)
 {
     // Misc
+    m.def("get_num_devices", &get_num_devices);
     m.def("set_device", &set_device);
+    m.def("get_device", &get_device);
     m.def("get_free_device_memory", &get_free_device_memory);
     m.def("get_free_host_memory", &get_free_host_memory);
     m.def("get_host_memory_diff", &get_host_memory_diff);
