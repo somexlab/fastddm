@@ -69,8 +69,8 @@ unsigned long long get_device_pitch(unsigned long long N,
     \param width            Width of the image
     \param height           Height of the image
     \param length           Number of frames
-    \param nx               number of grid points in x
-    \param ny               number of grid points in y
+    \param nx               Number of grid points in x
+    \param ny               Number of grid points in y
     \param pixel_Nbytes     Number of bytes per pixel
     \param is_input_Scalar  True if image type memory size is same as Scalar
     \param is_window        True if window function is given

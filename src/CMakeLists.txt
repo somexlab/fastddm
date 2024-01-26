@@ -34,6 +34,7 @@ set(fddm_gpu_SOURCES
 set(fddm_gpu_cu_SOURCES
     cuda/gpu_utils.cu
     cuda/memchk_gpu.cu
+    cuda/helper_cufft.cu
 )
 
 # Set language for cuda files
