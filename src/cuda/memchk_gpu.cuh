@@ -93,6 +93,40 @@ void optimize_fft2(unsigned long long width,
                    unsigned long long &num_fft2);
 
 /*! \brief Optimize structure function "diff" execution parameters based on available gpu memory
+    \param length           Number of frames
+    \param nx               Number of grid points in x
+    \param ny               Number of grid points in y
+    \param num_lags         Number of lags to be analysed
+    \param free_mem         Available gpu memory
+    \param pitch_q          Pitch of device array (q-pitch)
+    \param pitch_t          Pitch of device array (t-pitch)
+    \param num_chunks       Number of q points chunks
+*/
+void optimize_diff(unsigned long long length,
+                   unsigned long long nx,
+                   unsigned long long ny,
+                   unsigned long long num_lags,
+                   unsigned long long free_mem,
+                   unsigned long long &pitch_q,
+                   unsigned long long &pitch_t,
+                   unsigned long long &num_chunks);
+
+/*! \brief Optimize fftshift execution parameters based on available gpu memory
+    \param nx               Number of grid points in x
+    \param ny               Number of grid points in y
+    \param num_lags         Number of lags to be analysed
+    \param free_mem         Available gpu memory
+    \param pitch_fs         Pitch of device array for shift operation
+    \param num_shift        Number of shift chunks
+*/
+void optimize_fftshift(unsigned long long nx,
+                       unsigned long long ny,
+                       unsigned long long num_lags,
+                       unsigned long long free_mem,
+                       unsigned long long &pitch_fs,
+                       unsigned long long &num_shift);
+
+/*! \brief Optimize "diff" execution parameters based on available gpu memory
     \param width            Width of the image
     \param height           Height of the image
     \param length           Number of frames

@@ -252,6 +252,8 @@ void optimize_fft2(unsigned long long width,
             }
             else
             {
+                // We already found a good number of fft2 loops previously,
+                // so we go back to the previous value and stop the optimization
                 num_fft2 = prev_num_fft2;
                 break;
             }
@@ -269,6 +271,197 @@ void optimize_fft2(unsigned long long width,
 
 /*!
     Optimize structure function "diff" execution parameters based on available gpu memory
+
+    Writes in the corresponding arguments:
+        - the pitch in number of elements for workspace (pitch_q, complex double)
+        - the pitch in number of elements for workspace (pitch_t, complex double)
+        - the number of iterations for structure function (num_chunks, q-vector chunks)
+
+    Throws a runtime_error if the memory is not sufficient to perform the calculations.
+*/
+void optimize_diff(unsigned long long length,
+                   unsigned long long nx,
+                   unsigned long long ny,
+                   unsigned long long num_lags,
+                   unsigned long long free_mem,
+                   unsigned long long &pitch_q,
+                   unsigned long long &pitch_t,
+                   unsigned long long &num_chunks)
+{
+    /*
+        Calculations are always performed in double precision.
+        However, data is transferred as Scalar (float/double).
+
+        To compute the image structure function in "diff" mode, we need (values are in bytes):
+            - for the lags helper array (type: unsigned int [4 bytes])
+                lags.size() * 4
+            - for the workspace1 and workspace2 arrays (type: complex double [16 bytes])
+                2 * max(pitch_q * length, chunk_size * pitch_t) * 16
+            - for the power_spec and var helper arrays (type: double2 [16 bytes])
+                2 * chunk_size * 16
+    */
+
+    // Get the pitch for the workspace array (time pitch, complex double)
+    pitch_t = get_device_pitch(length, 16);
+
+    /*
+        Start the optimization with the worst case scenario:
+        we need to perform as many loops as the number of q vectors
+    */
+    num_chunks = (nx / 2ULL + 1ULL) * ny;
+
+    // Define auxiliary variables
+    unsigned long long mem_required, prev_num_chunks;
+
+    // Optimize
+    while (true)
+    {
+        // Reset required memory value
+        mem_required = 0;
+
+        // Compute the number of batched q-vectors per chunk
+        unsigned long long chunk_size = ((nx / 2ULL + 1ULL) * ny + num_chunks - 1ULL) / num_chunks;
+
+        // Get the pitch for the workspace array (q pitch, complex Scalar)
+        pitch_q = get_device_pitch(chunk_size, 2 * sizeof(Scalar));
+
+        // Add the required memory for the lags helper array
+        mem_required += num_lags * 4ULL;
+
+        // Add the required memory for the two workspace arrays
+        mem_required += 2ULL * max(pitch_q * length, chunk_size * pitch_t) * 16ULL;
+
+        // Add the memory required for the power_spec and var helper arrays
+        mem_required += 2ULL * chunk_size * 16ULL;
+
+        // Check memory and update parameters
+        if (free_mem >= mem_required)
+        {
+            // Estimate the next number of chunks
+            unsigned long long next_num_chunks = (num_chunks * mem_required + free_mem - 1ULL) / free_mem;
+
+            // Check if the next number of chunks is the same
+            if (next_num_chunks == prev_num_chunks)
+            {
+                break;
+            }
+            else
+            {
+                prev_num_chunks = num_chunks;
+                num_chunks = next_num_chunks;
+            }
+        }
+        else if (num_chunks == (nx / 2ULL + 1ULL) * ny)
+        {
+            // In this case, the available memory is less than the required
+            // memory and the number of chunks is already the maximum possible.
+            // Therefore, we throw an error.
+            throw std::runtime_error("Not enough space on GPU for structure function calculation.");
+        }
+        else
+        {
+            // We already found a good number of chunks previously,
+            // so we go back to the previous value and stop the optimization
+            num_chunks = prev_num_chunks;
+
+            // We need to update the pitch for the workspace array (q pitch)
+            chunk_size = ((nx / 2ULL + 1ULL) * ny + num_chunks - 1ULL) / num_chunks;
+            pitch_q = get_device_pitch(chunk_size, 2 * sizeof(Scalar));
+
+            break;
+        }
+    }
+}
+
+/*!
+    Optimize fftshift execution parameters based on available gpu memory
+
+    Writes in the corresponding arguments:
+        - the number of iterations for fftshift (num_shift)
+        - the pitch in number of elements for shift workspace (pitch_fs, complex Scalar)
+
+    Throws a runtime_error if the memory is not sufficient
+    to perform the calculations.
+*/
+void optimize_fftshift(unsigned long long nx,
+                       unsigned long long ny,
+                       unsigned long long num_lags,
+                       unsigned long long free_mem,
+                       unsigned long long &pitch_fs,
+                       unsigned long long &num_shift)
+{
+    /*
+        Calculations are performed in single or double precision, based on the output.
+
+        To perform the fftshift, we need (values are in bytes):
+            - for the workspace1 (type: complex Scalar [2 * sizeof(Scalar) bytes])
+                pitch_fs * ny * batch_size * 2 * sizeof(Scalar)
+            - for the workspace2 (type: Scalar [sizeof(Scalar) bytes])
+                pitch_fs * ny * batch_size * sizeof(Scalar)
+    */
+
+    // Get the pitch for the workspace arrays (shift pitch, complex Scalar)
+    pitch_fs = get_device_pitch((nx / 2ULL + 1ULL), 2 * sizeof(Scalar));
+
+    /*
+        Start the optimization with the worst case scenario:
+        we need to perform as many fftshift loops as the number of lags
+    */
+    num_shift = num_lags;
+
+    // Define auxiliary variables
+    unsigned long long mem_required, prev_num_shift;
+
+    // Optimize
+    while (true)
+    {
+        // Reset required memory value
+        mem_required = 0;
+
+        // Compute the number of batched fftshifts
+        unsigned long long batch_size = (num_lags + num_shift - 1ULL) / num_shift;
+
+        // Add the required memory for the two workspace arrays
+        mem_required += pitch_fs * ny * batch_size * 2ULL * sizeof(Scalar);
+        mem_required += pitch_fs * ny * batch_size * sizeof(Scalar);
+
+        // Check memory and update parameters
+        if (free_mem >= mem_required)
+        {
+            // Estimate the next number of fftshift loops
+            unsigned long long next_num_shift = (num_shift * mem_required + free_mem - 1ULL) / free_mem;
+
+            // Check if the next number of fftshift loops is the same
+            if (next_num_shift == prev_num_shift)
+            {
+                break;
+            }
+            else
+            {
+                prev_num_shift = num_shift;
+                num_shift = next_num_shift;
+            }
+        }
+        else if (num_shift == num_lags)
+        {
+            // In this case, the available memory is less than the required
+            // memory and the number of fftshift loops is already the maximum possible.
+            // Therefore, we throw an error.
+            throw std::runtime_error("Not enough space on GPU for fftshift.");
+        }
+        else
+        {
+            // We already found a good number of fftshift loops previously,
+            // so we go back to the previous value and stop the optimization
+            num_shift = prev_num_shift;
+
+            break;
+        }
+    }
+}
+
+/*!
+    Optimize "diff" execution parameters based on available gpu memory
 */
 void check_and_optimize_device_memory_diff(unsigned long long width,
                                            unsigned long long height,
@@ -309,6 +502,20 @@ void check_and_optimize_device_memory_diff(unsigned long long width,
                   num_fft2);
 
     // Evaluate parameters for structure function ("diff" mode)
+    optimize_diff(length,
+                  nx,
+                  ny,
+                  num_lags,
+                  free_mem,
+                  pitch_q,
+                  pitch_t,
+                  num_chunks);
 
     // Evaluate parameters for fftshift
+    optimize_fftshift(nx,
+                      ny,
+                      num_lags,
+                      free_mem,
+                      pitch_fs,
+                      num_shift);
 }
