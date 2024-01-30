@@ -579,3 +579,77 @@ __global__ void shift_powspec_kernel(Scalar2 *d_in,
         }
     }
 }
+
+/*!
+    Do final linear combination c[i] = (a[0] - b[i].x - 2 * a[i]) / (length - i)
+ */
+__global__ void linear_combination_final_kernel(double2 *c,
+                                                unsigned long long pitch_c,
+                                                double2 *a,
+                                                unsigned long long pitch_a,
+                                                double2 *b,
+                                                unsigned long long pitch_b,
+                                                unsigned long long length,
+                                                unsigned long long N)
+{
+    __shared__ double a0;
+
+    for (unsigned long long blockID = blockIdx.x; blockID < N; blockID += gridDim.x)
+    {
+        unsigned long long blockOffset_a = blockID * pitch_a;
+        unsigned long long blockOffset_b = blockID * pitch_b;
+        unsigned long long blockOffset_c = blockID * pitch_c;
+
+        // read first value of fft corr
+        a0 = 2.0 * a[blockOffset_a].x;
+        __syncthreads();
+
+        for (unsigned long long threadID = threadIdx.x; threadID < length; threadID += blockDim.x)
+        {
+            double da = b[blockOffset_b + threadID].x;
+            double dc = a[blockOffset_a + threadID].x;
+            c[blockOffset_c + threadID].x = (a0 - da - 2 * dc) / (double)(length - threadID);
+        }
+    }
+}
+
+/*!
+    Keep only selected lags
+*/
+__global__ void copy_selected_lags_kernel(double2 *d_in,
+                                          double2 *d_out,
+                                          unsigned int *d_lags,
+                                          unsigned long long Nlags,
+                                          unsigned long long ipitch,
+                                          unsigned long long opitch,
+                                          unsigned long long N)
+{
+    for (unsigned long long blockID = blockIdx.x; blockID < N; blockID += gridDim.x)
+    {
+        unsigned long long blockOffsetIn = blockID * ipitch;
+        unsigned long long blockOffsetOut = blockID * opitch;
+
+        for (unsigned long long threadID = threadIdx.x; threadID < Nlags; threadID += blockDim.x)
+        {
+            d_out[blockOffsetOut + threadID] = d_in[blockOffsetIn + d_lags[threadID]];
+        }
+    }
+}
+
+/*!
+    Copy real part of element into imaginary part of opposite element
+ */
+__global__ void real2imagopposite_kernel(double2 *d_arr,
+                                         unsigned long long length,
+                                         unsigned long long pitch,
+                                         unsigned long long N)
+{
+    for (unsigned long long row = blockIdx.x; row < N; row += gridDim.x)
+    {
+        for (unsigned long long tid = threadIdx.x; tid < length; tid += blockDim.x)
+        {
+            unsigned long long opp_idx = length - tid - 1;
+            d_arr[row * pitch + tid].y = d_arr[row * pitch + opp_idx].x;
+        }
+    }
+}

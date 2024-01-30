@@ -106,3 +106,93 @@ cufftHandle create_fft2_plan(size_t nx,
 
     return plan;
 }
+
+/*!
+    Get the memory size needed for the work area for a 1D cufft
+*/
+unsigned long long get_fft_device_memory_size(size_t nt,
+                                              size_t batch,
+                                              size_t pitch,
+                                              cufftResult &cufft_res)
+{
+    // Initialize array for memory sizes
+    size_t memsize[1];
+
+    // Define cufft plan parameters
+    int rank = 1;               // The rank of the fft (1 = fft)
+    int n[1] = {(int)nt};       // Dimensions
+    int *inembed = NULL;        // nembed input values (NULL is equivalent to passing n)
+    int istride = 1;            // Distance between two elements in the input
+    int idist = (int)(pitch);   // Distance between k-th and (k+1)-th input elements
+    int *onembed = NULL;        // nembed output values (NULL is equivalent to passing n)
+    int ostride = 1;            // Distance between two elements in the output
+    int odist = (int)pitch;     // Distance between k-th and (k+1)-th output elements
+    cufftType type = CUFFT_Z2Z; // FFT type (complex to complex, double precision)
+
+    // Create the fft2 plan
+    cufftHandle plan;
+    cufftSilentSafeCall(cufftPlanMany(&plan,
+                                      rank,
+                                      n,
+                                      inembed,
+                                      istride,
+                                      idist,
+                                      onembed,
+                                      ostride,
+                                      odist,
+                                      type,
+                                      (int)batch));
+
+    // Evaluate the memory size
+    cufft_res = cufftGetSizeMany(plan,
+                                 rank,
+                                 n,
+                                 inembed,
+                                 istride,
+                                 idist,
+                                 onembed,
+                                 ostride,
+                                 odist,
+                                 type,
+                                 (int)batch,
+                                 memsize);
+
+    cufftSilentSafeCall(cufftDestroy(plan));
+
+    return (unsigned long long)memsize[0];
+}
+
+/*!
+    Create the cufft plan for the complex to complex fft
+*/
+cufftHandle create_fft_plan(size_t nt,
+                            size_t batch,
+                            size_t pitch)
+{
+    // Define cufft plan parameters
+    int rank = 1;                  // The rank of the fft (1 = fft)
+    int n[1] = {(int)nt};          // Dimensions
+    int inembed[1] = {(int)pitch}; // nembed input values (NULL is equivalent to passing n)
+    int istride = 1;               // Distance between two elements in the input
+    int idist = (int)(pitch);      // Distance between k-th and (k+1)-th input elements
+    int onembed[1] = {(int)pitch}; // nembed output values (NULL is equivalent to passing n)
+    int ostride = 1;               // Distance between two elements in the output
+    int odist = (int)pitch;        // Distance between k-th and (k+1)-th output elements
+    cufftType type = CUFFT_Z2Z;    // FFT type (complex to complex, double precision)
+
+    // Create the fft plan
+    cufftHandle plan;
+    cufftSafeCall(cufftPlanMany(&plan,
+                                rank,
+                                n,
+                                inembed,
+                                istride,
+                                idist,
+                                onembed,
+                                ostride,
+                                odist,
+                                type,
+                                (int)batch));
+
+    return plan;
+}

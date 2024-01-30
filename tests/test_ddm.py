@@ -66,7 +66,6 @@ def test_ddm_py_diff(ddm_baseline):
     assert np.isclose(result._data, ddm_baseline._data).all()
 
 
-"""
 @pytest.mark.skipif(
     IS_SINGLE_PRECISION, reason="installed with SINGLE_PRECISION option"
 )
@@ -75,7 +74,6 @@ def test_ddm_cuda_fft(ddm_baseline):
     result = fddm.ddm(imgs, lags, core="cuda", mode="fft")
 
     assert np.isclose(result._data, ddm_baseline._data).all()
-"""
 
 
 @pytest.mark.skipif(
@@ -131,7 +129,6 @@ def test_ddm_py_diff_single(ddm_baseline):
     assert np.isclose(result._data, ddm_baseline._data, atol=0.0, rtol=1e-3).all()
 
 
-"""
 @pytest.mark.skipif(
     not IS_SINGLE_PRECISION, reason="installed with SINGLE_PRECISION option OFF"
 )
@@ -140,7 +137,6 @@ def test_ddm_cuda_fft_single(ddm_baseline):
     result = fddm.ddm(imgs, lags, core="cuda", mode="fft")
 
     assert np.isclose(result._data, ddm_baseline._data, atol=0.0, rtol=1e-3).all()
-"""
 
 
 @pytest.mark.skipif(

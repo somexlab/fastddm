@@ -72,6 +72,29 @@ void structure_function_diff(Scalar *h_in,
                              unsigned long long pitch_q,
                              unsigned long long pitch_t);
 
+/*! \brief Compute image structure function using the Wiener-Khinchin theorem on the GPU
+    \param h_in         input array of Fourier transformed images
+    \param lags         lags to be analyzed
+    \param length       number of elements in z direction
+    \param nx           number of fft nodes in x direction
+    \param ny           number of fft nodes in y direction
+    \param ny           number of fft nodes in t direction
+    \param num_chunks   number of q points chunks
+    \param pitch_q      pitch of device array (q-pitch)
+    \param pitch_t      pitch of device array (t-pitch)
+    \param pitch_nt     pitch of device array (nt-pitch)
+ */
+void structure_function_fft(Scalar *h_in,
+                            vector<unsigned int> lags,
+                            unsigned long long length,
+                            unsigned long long nx,
+                            unsigned long long ny,
+                            unsigned long long nt,
+                            unsigned long long num_chunks,
+                            unsigned long long pitch_q,
+                            unsigned long long pitch_t,
+                            unsigned long long pitch_nt);
+
 /*! \brief Convert to fftshifted image structure function on the GPU
     \param h_in             input array after structure function calculation
     \param Nlags            number of lags analyzed

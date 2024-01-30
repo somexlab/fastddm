@@ -232,4 +232,51 @@ __global__ void shift_powspec_kernel(Scalar2 *d_in,
                                      unsigned long long NblocksX,
                                      unsigned long long NblocksY);
 
+/*! \brief Do final linear combination c[i] = (a[0] - b[i].x - 2 * a[i]) / (length - i)
+    \param c        Output array
+    \param pitch_c  Pitch of output array
+    \param a        Input array 1 (fft correlation part)
+    \param pitch_a  Pitch of input array a
+    \param b        Input array 2 (cumsum part)
+    \param pitch_b  Pitch of input array b
+    \param length   Number of elements in each subarray
+    \param N        Number of subarrays
+*/
+__global__ void linear_combination_final_kernel(double2 *c,
+                                                unsigned long long pitch_c,
+                                                double2 *a,
+                                                unsigned long long pitch_a,
+                                                double2 *b,
+                                                unsigned long long pitch_b,
+                                                unsigned long long length,
+                                                unsigned long long N);
+
+/*! \brief Keep only selected lags
+    \param d_in     Input complex array
+    \param d_out    Output complex array
+    \param d_lags   Lags array
+    \param Nlags    Number of lags
+    \param ipitch   Pitch of input array
+    \param opitch   Pitch of output array
+    \param N        Number of subarrays
+*/
+__global__ void copy_selected_lags_kernel(double2 *d_in,
+                                          double2 *d_out,
+                                          unsigned int *d_lags,
+                                          unsigned long long Nlags,
+                                          unsigned long long ipitch,
+                                          unsigned long long opitch,
+                                          unsigned long long N);
+
+/*! \brief Copy real part of element into imaginary part of opposite element
+    \param d_arr    Input complex array
+    \param length   Number of elements in each subarray
+    \param pitch    Distance (in number of elements) between the first element of two consecutive subarrays
+    \param N        Number of subarrays
+ */
+__global__ void real2imagopposite_kernel(double2 *d_arr,
+                                         unsigned long long length,
+                                         unsigned long long pitch,
+                                         unsigned long long N);
+
 #endif // __HELPER_DDM_CUDA_CUH__

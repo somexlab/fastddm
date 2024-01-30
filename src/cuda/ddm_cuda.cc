@@ -118,7 +118,6 @@ py::array_t<Scalar> PYBIND11_EXPORT ddm_diff_cuda(py::array_t<T, py::array::c_st
                             pitch_t);
 
     // Convert raw output to shifted structure function
-    // ***Convert raw output to shifted image structure function
     make_shift(result_ptr,
                lags.size() + 2,
                nx,
@@ -206,7 +205,7 @@ py::array_t<Scalar> PYBIND11_EXPORT ddm_fft_cuda(py::array_t<T, py::array::c_sty
     unsigned long long width = img_seq_info.shape[2];
 
     // Get window array and dimensions
-    T *window_ptr = static_cast<T *>(window_info.ptr);
+    Scalar *window_ptr = static_cast<Scalar *>(window_info.ptr);
     unsigned long long window_length = window_info.shape[0];
     // Check if the window is empty
     bool is_window = window_length > 0;
@@ -218,6 +217,27 @@ py::array_t<Scalar> PYBIND11_EXPORT ddm_fft_cuda(py::array_t<T, py::array::c_sty
     }
 
     // Check device memory and optimize kernel execution
+    unsigned long long num_fft2, num_chunks, num_shift;
+    unsigned long long pitch_buff, pitch_nx, pitch_q, pitch_t, pitch_nt, pitch_fs;
+    check_and_optimize_device_memory_fft(width,
+                                         height,
+                                         length,
+                                         lags.size(),
+                                         nx,
+                                         ny,
+                                         nt,
+                                         sizeof(T),
+                                         std::is_same<T, Scalar>::value,
+                                         is_window,
+                                         num_fft2,
+                                         num_chunks,
+                                         num_shift,
+                                         pitch_buff,
+                                         pitch_nx,
+                                         pitch_q,
+                                         pitch_t,
+                                         pitch_nt,
+                                         pitch_fs);
 
     // Allocate workspace memory
     /*
@@ -242,10 +262,38 @@ py::array_t<Scalar> PYBIND11_EXPORT ddm_fft_cuda(py::array_t<T, py::array::c_sty
     Scalar *result_ptr = static_cast<Scalar *>(result_info.ptr);
 
     // Compute the FFT2 on the GPU
+    compute_fft2(img_seq_ptr,
+                 result_ptr,
+                 window_ptr,
+                 is_window,
+                 width,
+                 height,
+                 length,
+                 nx,
+                 ny,
+                 num_fft2,
+                 pitch_buff,
+                 pitch_nx);
 
     // Compute the structure function on the GPU
+    structure_function_fft(result_ptr,
+                           lags,
+                           length,
+                           nx,
+                           ny,
+                           nt,
+                           num_chunks,
+                           pitch_q,
+                           pitch_t,
+                           pitch_nt);
 
     // Convert raw output to shifted structure function
+    make_shift(result_ptr,
+               lags.size() + 2,
+               nx,
+               ny,
+               num_shift,
+               pitch_fs);
 
     // Reshape and resize the output array
     // The full size of the structure function is

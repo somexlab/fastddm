@@ -41,4 +41,25 @@ cufftHandle create_fft2_plan(size_t nx,
                              size_t batch,
                              size_t pitch);
 
+/*! \brief Get the memory size needed for the work area for a 1D cufft
+    \param nt           Number of grid points in t
+    \param batch        Number of batched transforms
+    \param pitch        Pitch of device array (calculated for complex output)
+    \param cufft_res    CUFFT result
+    \return             Memory size required for work area
+*/
+unsigned long long get_fft_device_memory_size(size_t nt,
+                                              size_t batch,
+                                              size_t pitch,
+                                              cufftResult &cufft_res);
+
+/*! \brief Create cufft plan for the complex to complex fft
+    \param nt       Number of grid points in t
+    \param batch    Number of batched transforms
+    \param pitch    Pitch of device array (calculated for complex output)
+ */
+cufftHandle create_fft_plan(size_t nt,
+                            size_t batch,
+                            size_t pitch);
+
 #endif // __HELPER_CUFFT_CUH__

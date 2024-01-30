@@ -111,6 +111,29 @@ void optimize_diff(unsigned long long length,
                    unsigned long long &pitch_t,
                    unsigned long long &num_chunks);
 
+/*! \brief Optimize structure function "fft" execution parameters based on available gpu memory
+    \param length           Number of frames
+    \param nx               Number of grid points in x
+    \param ny               Number of grid points in y
+    \param nt               Number of grid points in t
+    \param num_lags         Number of lags to be analysed
+    \param free_mem         Available gpu memory
+    \param pitch_q          Pitch of device array (q-pitch)
+    \param pitch_t          Pitch of device array (t-pitch)
+    \param pitch_nt         Pitch of device array (nt-pitch)
+    \param num_chunks       Number of q points chunks
+*/
+void optimize_fft(unsigned long long length,
+                  unsigned long long nx,
+                  unsigned long long ny,
+                  unsigned long long nt,
+                  unsigned long long num_lags,
+                  unsigned long long free_mem,
+                  unsigned long long &pitch_q,
+                  unsigned long long &pitch_t,
+                  unsigned long long &pitch_nt,
+                  unsigned long long &num_chunks);
+
 /*! \brief Optimize fftshift execution parameters based on available gpu memory
     \param nx               Number of grid points in x
     \param ny               Number of grid points in y
@@ -162,5 +185,46 @@ void check_and_optimize_device_memory_diff(unsigned long long width,
                                            unsigned long long &pitch_q,
                                            unsigned long long &pitch_t,
                                            unsigned long long &pitch_fs);
+
+/*! \brief Optimize "fft" execution parameters based on available gpu memory
+    \param width            Width of the image
+    \param height           Height of the image
+    \param length           Number of frames
+    \param num_lags         Number of lags analysed
+    \param nx               Number of fft nodes, x direction
+    \param ny               Number of fft nodes, y direction
+    \param nt               Number of fft nodes, t direction
+    \param pixel_Nbytes     Number of bytes per pixel
+    \param is_input_Scalar  True if image type memory size is same as Scalar
+    \param is_window        True if window function is given
+    \param num_fft2         Number of fft2 batches
+    \param num_chunks       Number of q points chunks
+    \param num_shift        Number of shift chunks
+    \param pitch_buff       Pitch of buffer device array
+    \param pitch_nx         Pitch of device fft2 output array (nx-pitch)
+    \param pitch_q          Pitch of device array (q-pitch)
+    \param pitch_t          Pitch of device array (t-pitch)
+    \param pitch_nt         Pitch of device array (nt-pitch)
+    \param pitch_fs         Pitch of device array for shift operation
+*/
+void check_and_optimize_device_memory_fft(unsigned long long width,
+                                          unsigned long long height,
+                                          unsigned long long length,
+                                          unsigned long long num_lags,
+                                          unsigned long long nx,
+                                          unsigned long long ny,
+                                          unsigned long long nt,
+                                          int pixel_Nbytes,
+                                          bool is_input_Scalar,
+                                          bool is_window,
+                                          unsigned long long &num_fft2,
+                                          unsigned long long &num_chunks,
+                                          unsigned long long &num_shift,
+                                          unsigned long long &pitch_buff,
+                                          unsigned long long &pitch_nx,
+                                          unsigned long long &pitch_q,
+                                          unsigned long long &pitch_t,
+                                          unsigned long long &pitch_nt,
+                                          unsigned long long &pitch_fs);
 
 #endif // __MEMCHK_GPU_CUH__
