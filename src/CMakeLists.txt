@@ -32,9 +32,12 @@ set(fddm_gpu_SOURCES
 
 # Set fddm_gpu_cu_SOURCES
 set(fddm_gpu_cu_SOURCES
+    cuda/ddm_cuda.cu
     cuda/gpu_utils.cu
     cuda/memchk_gpu.cu
     cuda/helper_cufft.cu
+    cuda/helper_ddm_cuda.cu
+    cuda/helper_prefix_sum.cu
 )
 
 # Set language for cuda files

@@ -12,6 +12,7 @@
 #include "ddm_cuda.h"
 #include "memchk_gpu.h"
 
+#include "ddm_cuda.cuh"
 #include "memchk_gpu.cuh"
 
 // *** code ***
@@ -38,7 +39,7 @@ py::array_t<Scalar> PYBIND11_EXPORT ddm_diff_cuda(py::array_t<T, py::array::c_st
     unsigned long long width = img_seq_info.shape[2];
 
     // Get window array and dimensions
-    T *window_ptr = static_cast<T *>(window_info.ptr);
+    Scalar *window_ptr = static_cast<Scalar *>(window_info.ptr);
     unsigned long long window_length = window_info.shape[0];
     // Check if the window is empty
     bool is_window = window_length > 0;
@@ -93,10 +94,37 @@ py::array_t<Scalar> PYBIND11_EXPORT ddm_diff_cuda(py::array_t<T, py::array::c_st
     Scalar *result_ptr = static_cast<Scalar *>(result_info.ptr);
 
     // Compute the FFT2 on the GPU
+    compute_fft2(img_seq_ptr,
+                 result_ptr,
+                 window_ptr,
+                 is_window,
+                 width,
+                 height,
+                 length,
+                 nx,
+                 ny,
+                 num_fft2,
+                 pitch_buff,
+                 pitch_nx);
 
     // Compute the structure function on the GPU
+    structure_function_diff(result_ptr,
+                            lags,
+                            length,
+                            nx,
+                            ny,
+                            num_chunks,
+                            pitch_q,
+                            pitch_t);
 
     // Convert raw output to shifted structure function
+    // ***Convert raw output to shifted image structure function
+    make_shift(result_ptr,
+               lags.size() + 2,
+               nx,
+               ny,
+               num_shift,
+               pitch_fs);
 
     // Reshape and resize the output array
     // The full size of the structure function is

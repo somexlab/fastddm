@@ -75,6 +75,7 @@ def test_ddm_cuda_fft(ddm_baseline):
     result = fddm.ddm(imgs, lags, core="cuda", mode="fft")
 
     assert np.isclose(result._data, ddm_baseline._data).all()
+"""
 
 
 @pytest.mark.skipif(
@@ -85,7 +86,6 @@ def test_ddm_cuda_diff(ddm_baseline):
     result = fddm.ddm(imgs, lags, core="cuda", mode="diff")
 
     assert np.isclose(result._data, ddm_baseline._data).all()
-"""
 
 
 @pytest.mark.skipif(
@@ -140,6 +140,7 @@ def test_ddm_cuda_fft_single(ddm_baseline):
     result = fddm.ddm(imgs, lags, core="cuda", mode="fft")
 
     assert np.isclose(result._data, ddm_baseline._data, atol=0.0, rtol=1e-3).all()
+"""
 
 
 @pytest.mark.skipif(
@@ -150,7 +151,6 @@ def test_ddm_cuda_diff_single(ddm_baseline):
     result = fddm.ddm(imgs, lags, core="cuda", mode="diff")
 
     assert np.isclose(result._data, ddm_baseline._data, atol=0.0, rtol=1e-3).all()
-"""
 
 
 def test_ddm_lags_errors():

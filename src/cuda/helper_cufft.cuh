@@ -30,4 +30,15 @@ unsigned long long get_fft2_device_memory_size(size_t nx,
                                                size_t pitch,
                                                cufftResult &cufft_res);
 
+/*! \brief Create cufft plan for the real to complex fft2
+    \param nx       Number of grid points in x
+    \param ny       Number of grid points in y
+    \param batch    Number of batched transforms
+    \param pitch    Pitch of device array (calculated for complex output)
+ */
+cufftHandle create_fft2_plan(size_t nx,
+                             size_t ny,
+                             size_t batch,
+                             size_t pitch);
+
 #endif // __HELPER_CUFFT_CUH__
