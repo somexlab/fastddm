@@ -28,12 +28,12 @@ typedef float Scalar;
 
 // *** code ***
 
-/*! \brief Compute image structure function in diff mode
-    \param img_seq  numpy array containing the image sequence
-    \param lags     lags to be analyzed
-    \param nx       number of fft nodes in x direction
-    \param ny       number of fft nodes in y direction
-    \param window   numpy array containing the window function to be applied to the images
+/*! \brief Compute structure function in "diff" mode
+    \param img_seq  Numpy array containing the image sequence
+    \param lags     Lags to be analyzed
+    \param nx       Number of fft nodes in x direction
+    \param ny       Number of fft nodes in y direction
+    \param window   Numpy array containing the window function to be applied to the images
  */
 template <typename T>
 py::array_t<Scalar> PYBIND11_EXPORT ddm_diff(py::array_t<T, py::array::c_style> img_seq,
@@ -42,14 +42,14 @@ py::array_t<Scalar> PYBIND11_EXPORT ddm_diff(py::array_t<T, py::array::c_style> 
                                              unsigned long long ny,
                                              py::array_t<Scalar, py::array::c_style> window);
 
-/*! \brief Compute image structure function in fft mode using Wiener-Khinchin theorem
-    \param img_seq      numpy array containing the image sequence
-    \param lags         lags to be analyzed
-    \param nx           number of fft nodes in x direction
-    \param ny           number of fft nodes in y direction
-    \param nt           number of fft nodes in t direction
-    \param chunk_size   number of fft's in the chunk
-    \param window       numpy array containing the window function to be applied to the images
+/*! \brief Compute structure function in "fft" mode using Wiener-Khinchin theorem
+    \param img_seq      Numpy array containing the image sequence
+    \param lags         Lags to be analyzed
+    \param nx           Number of fft nodes in x direction
+    \param ny           Number of fft nodes in y direction
+    \param nt           Number of fft nodes in t direction
+    \param chunk_size   Number of fft's in the chunk
+    \param window       Numpy array containing the window function to be applied to the images
  */
 template <typename T>
 py::array_t<Scalar> PYBIND11_EXPORT ddm_fft(py::array_t<T, py::array::c_style> img_seq,

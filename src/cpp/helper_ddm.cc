@@ -32,8 +32,8 @@ void copy_vec_with_stride(vector<double> &src,
 }
 
 /*!
-    Make full image structure function from raw output and swap the quadrants
-    of the image structure function according to fft2 convention
+    Make full structure function from raw output and swap the quadrants
+    of the structure function according to fft2 convention
     (i.e., along axes x and y; leave t untouched).
     Keep only real part of vector and copy symmetric part.
     Make element contiguous in memory.

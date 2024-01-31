@@ -290,7 +290,7 @@ void optimize_diff(unsigned long long length,
         Calculations are always performed in double precision.
         However, data is transferred as Scalar (float/double).
 
-        To compute the image structure function in "diff" mode, we need (values are in bytes):
+        To compute the structure function in "diff" mode, we need (values are in bytes):
             - for the lags helper array (type: unsigned int [4 bytes])
                 num_lags * 4
             - for the workspace1 and workspace2 arrays (type: complex double [16 bytes])
@@ -397,7 +397,7 @@ void optimize_fft(unsigned long long length,
         Calculations are always performed in double precision.
         However, data is transferred as Scalar (float/double).
 
-        To compute the image structure function in "diff" mode, we need (values are in bytes):
+        To compute the structure function in "diff" mode, we need (values are in bytes):
             - for the lags helper array (type: unsigned int [4 bytes])
                 num_lags * 4
             - for the workspace1 array (type: complex double [16 bytes])

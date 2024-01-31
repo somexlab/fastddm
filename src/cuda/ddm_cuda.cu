@@ -269,7 +269,7 @@ template void compute_fft2<float>(const float *h_in, Scalar *h_out, const Scalar
 template void compute_fft2<double>(const double *h_in, Scalar *h_out, const Scalar *h_window, ImageData &img_data, StructureFunctionData &sf_data, ExecutionParameters &exec_params, PitchData &pitch_data);
 
 /*!
-    Compute image structure function using differences on the GPU
+    Compute structure function using differences on the GPU
  */
 void structure_function_diff(Scalar *h_in,
                              vector<unsigned int> lags,
@@ -528,7 +528,7 @@ void structure_function_diff(Scalar *h_in,
 }
 
 /*!
-    Compute image structure function using the Wiener-Khinchin theorem on the GPU
+    Compute structure function using the Wiener-Khinchin theorem on the GPU
 */
 void structure_function_fft(Scalar *h_in,
                             vector<unsigned int> lags,
@@ -921,7 +921,7 @@ void structure_function_fft(Scalar *h_in,
 }
 
 /*!
-    Convert to fftshifted image structure function on the GPU
+    Convert to fftshifted structure function on the GPU
  */
 void make_shift(Scalar *h_in,
                 ImageData &img_data,

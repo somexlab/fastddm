@@ -31,7 +31,7 @@ void (*Fftw_Cleanup)() = &fftwf_cleanup;
 // *** code ***
 
 /*!
-    Compute the image structure function in diff mode
+    Compute the structure function in "diff" mode
     using differences of Fourier transformed images.
  */
 template <typename T>
@@ -109,7 +109,7 @@ py::array_t<Scalar> PYBIND11_EXPORT ddm_diff(py::array_t<T, py::array::c_style> 
     Fftw_Destroy_Plan(fft2_plan);
     Fftw_Cleanup();
 
-    // ***Compute the image structure function
+    // ***Compute the structure function
     // initialize helper vector
     vector<double> tmp(lags.size() + 2, 0.0);
     double tmp2 = 0.0;
@@ -170,7 +170,7 @@ py::array_t<Scalar> PYBIND11_EXPORT ddm_diff(py::array_t<T, py::array::c_style> 
                              2 * (_nx * ny));
     }
 
-    // Convert raw output to shifted image structure function
+    // Convert raw output to shifted structure function
     make_shifted_isf(p_out,
                      nx,
                      ny,
@@ -180,7 +180,7 @@ py::array_t<Scalar> PYBIND11_EXPORT ddm_diff(py::array_t<T, py::array::c_style> 
     tmp.clear();
     tmp.shrink_to_fit();
 
-    // the size of the half-plane image structure function is
+    // the size of the half-plane structure function is
     // (nx / 2 + 1) * ny * [#(lags) + 2]
     out.resize({(unsigned long long)(lags.size() + 2), ny, _nx});
 
@@ -237,7 +237,7 @@ template py::array_t<Scalar> PYBIND11_EXPORT ddm_diff(py::array_t<double, py::ar
                                                       py::array_t<Scalar, py::array::c_style> window);
 
 /*!
-    Compute the image structure function in fft mode
+    Compute the structure function in "fft" mode
     using the Wiener-Khinchin theorem.
 
     Only (chunk_size) fft's in the t direction are computed
@@ -334,7 +334,7 @@ py::array_t<Scalar> PYBIND11_EXPORT ddm_fft(py::array_t<T, py::array::c_style> i
                                          nt,
                                          chunk_size);
 
-    // ***Compute the image structure function
+    // ***Compute the structure function
     // initialize helper vector used in average part
     vector<double> tmp(chunk_size);
     // initialize helper vector used in square modulus of average Fourier transform
@@ -425,7 +425,7 @@ py::array_t<Scalar> PYBIND11_EXPORT ddm_fft(py::array_t<T, py::array::c_style> i
         }
     }
 
-    // Convert raw output to shifted image structure function
+    // Convert raw output to shifted structure function
     make_shifted_isf(p_out,
                      nx,
                      ny,
@@ -441,7 +441,7 @@ py::array_t<Scalar> PYBIND11_EXPORT ddm_fft(py::array_t<T, py::array::c_style> i
     tmpAvg.clear();
     tmpAvg.shrink_to_fit();
 
-    // the size of the half-plane image structure function is
+    // the size of the half-plane structure function is
     // (nx / 2 + 1) * ny * [#(lags) + 2]
     out.resize({(unsigned long long)(lags.size() + 2), ny, _nx});
 

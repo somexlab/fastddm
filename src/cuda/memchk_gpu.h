@@ -33,10 +33,10 @@ typedef float Scalar;
 unsigned long long PYBIND11_EXPORT get_free_host_memory();
 
 /*! \brief Get the estimated RAM memory needed for the "diff" mode (in bytes)
-    \param nx       number of grid points in x
-    \param ny       number of grid points in y
-    \param length   number of frames
-    \param num_lags number of lags
+    \param nx       Number of grid points in x
+    \param ny       Number of grid points in y
+    \param length   Number of frames
+    \param num_lags Number of lags
 */
 unsigned long long PYBIND11_EXPORT get_host_memory_diff(unsigned long long nx,
                                                         unsigned long long ny,
@@ -44,10 +44,10 @@ unsigned long long PYBIND11_EXPORT get_host_memory_diff(unsigned long long nx,
                                                         unsigned long long num_lags);
 
 /*! \brief Get the estimated RAM memory needed for the "fft" mode (in bytes)
-    \param nx       number of grid points in x
-    \param ny       number of grid points in y
-    \param length   number of frames
-    \param num_lags number of lags
+    \param nx       Number of grid points in x
+    \param ny       Number of grid points in y
+    \param length   Number of frames
+    \param num_lags Number of lags
 */
 unsigned long long PYBIND11_EXPORT get_host_memory_fft(unsigned long long nx,
                                                        unsigned long long ny,
@@ -55,10 +55,10 @@ unsigned long long PYBIND11_EXPORT get_host_memory_fft(unsigned long long nx,
                                                        unsigned long long num_lags);
 
 /*! \brief Check if host memory is sufficient to execute the "diff" mode (Python interface)
-    \param nx       number of grid points in x
-    \param ny       number of grid points in y
-    \param length   number of frames
-    \param num_lags number of lags
+    \param nx       Number of grid points in x
+    \param ny       Number of grid points in y
+    \param length   Number of frames
+    \param num_lags Number of lags
     \return true if host memory is sufficient, false otherwise
 */
 bool PYBIND11_EXPORT check_host_memory_diff_py(unsigned long long nx,
@@ -75,10 +75,10 @@ bool check_host_memory_diff(ImageData &img_data,
                             StructureFunctionData &sf_data);
 
 /*! \brief Check if host memory is sufficient to execute the "fft" mode (Python interface)
-    \param nx       number of grid points in x
-    \param ny       number of grid points in y
-    \param length   number of frames
-    \param num_lags number of lags
+    \param nx       Number of grid points in x
+    \param ny       Number of grid points in y
+    \param length   Number of frames
+    \param num_lags Number of lags
     \return true if host memory is sufficient, false otherwise
 */
 bool PYBIND11_EXPORT check_host_memory_fft_py(unsigned long long nx,

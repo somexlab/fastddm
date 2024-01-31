@@ -21,7 +21,7 @@
 // *** code ***
 
 /*!
-    Compute the image structure function in diff mode
+    Compute the structure function in "diff" mode
     using differences of Fourier transformed images on the GPU.
  */
 template <typename T>
@@ -174,7 +174,7 @@ template py::array_t<Scalar> PYBIND11_EXPORT ddm_diff_cuda(py::array_t<double, p
                                                            py::array_t<Scalar, py::array::c_style> window);
 
 /*!
-    Compute the image structure function in fft mode
+    Compute the structure function in "fft" mode
     using the Wiener-Khinchin theorem on the GPU.
 
     Notice that nt must be at least 2*length to avoid

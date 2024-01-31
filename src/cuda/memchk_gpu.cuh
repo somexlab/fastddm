@@ -24,44 +24,44 @@ typedef float Scalar;
 // *** code ***
 
 /*! \brief Evaluate the device memory pitch for multiple subarrays of size N with 16bytes elements
-    \param N        subarray size
-    \param pitch    pitch of the subarray
+    \param N        Subarray size
+    \param pitch    Pitch of the subarray
 */
 void cudaGetDevicePitch16B(size_t N,
                            size_t &pitch);
 
 /*! \brief Evaluate the device memory pitch for multiple subarrays of size N with 8bytes elements
-    \param N        subarray size
-    \param pitch    pitch of the subarray
+    \param N        Subarray size
+    \param pitch    Pitch of the subarray
 */
 void cudaGetDevicePitch8B(size_t N,
                           size_t &pitch);
 
 /*! \brief Evaluate the device memory pitch for multiple subarrays of size N with 8bytes elements
-    \param N        subarray size
-    \param pitch    pitch of the subarray
+    \param N        Subarray size
+    \param pitch    Pitch of the subarray
 */
 void cudaGetDevicePitch4B(size_t N,
                           size_t &pitch);
 
 /*! \brief Evaluate the device memory pitch for multiple subarrays of size N with 8bytes elements
-    \param N        subarray size
-    \param pitch    pitch of the subarray
+    \param N        Subarray size
+    \param pitch    Pitch of the subarray
 */
 void cudaGetDevicePitch2B(size_t N,
                           size_t &pitch);
 
 /*! \brief Evaluate the device memory pitch for multiple subarrays of size N with 8bytes elements
-    \param N        subarray size
-    \param pitch    pitch of the subarray
+    \param N        Subarray size
+    \param pitch    Pitch of the subarray
 */
 void cudaGetDevicePitch1B(size_t N,
                           size_t &pitch);
 
 /*! \brief Get device memory pitch (in number of elements)
-    \param N            subarray size
-    \param num_bytes    element memory size (in bytes)
-    \return             pitch of the subarray
+    \param N            Subarray size
+    \param num_bytes    Element memory size (in bytes)
+    \return             Pitch of the subarray
 */
 unsigned long long get_device_pitch(unsigned long long N,
                                     int num_bytes);

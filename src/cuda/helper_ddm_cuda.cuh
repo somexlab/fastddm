@@ -49,8 +49,8 @@ __global__ void copy_convert_kernel(T *d_in,
                                     unsigned long long odist);
 
 /*! \brief Apply window function to image sequence
-    \param d_in     image sequence array
-    \param window   window array
+    \param d_in     Image sequence array
+    \param window   Window array
     \param width    Width of the input array
     \param height   Height of the input array
     \param length   Length of the input array
@@ -68,11 +68,11 @@ __global__ void apply_window_kernel(double *d_in,
                                     unsigned long long wpitch);
 
 /*! \brief Scale array by constant -- A * a
-    \param a        input array
-    \param pitch    pitch of input array
-    \param length   length of each subarray
-    \param A        multiplication factor
-    \param N        number of subarrays
+    \param a        Input array
+    \param pitch    Pitch of input array
+    \param length   Length of each subarray
+    \param A        Multiplication factor
+    \param N        Number of subarrays
 */
 __global__ void scale_array_kernel(double2 *a,
                                    unsigned long long pitch,
@@ -81,11 +81,11 @@ __global__ void scale_array_kernel(double2 *a,
                                    unsigned long long N);
 
 /*! \brief Convert 2D array in place from double2 to float2
-    \param a        input array
-    \param b        output array
-    \param pitch    pitch of input array
-    \param length   length of each subarray
-    \param N        number of subarrays
+    \param a        Input array
+    \param b        Output array
+    \param pitch    Pitch of input array
+    \param length   Length of each subarray
+    \param N        Number of subarrays
  */
 __global__ void double2float_inplace_kernel(double2 *a,
                                             float2 *b,
@@ -94,12 +94,12 @@ __global__ void double2float_inplace_kernel(double2 *a,
                                             unsigned long long N);
 
 /*! \brief Convert 2D array from double to float
-    \param a        input array
-    \param ipitch   pitch of input array
-    \param b        output array
-    \param opitch   pitch of output array
-    \param length   length of each subarray
-    \param N        number of subarrays
+    \param a        Input array
+    \param ipitch   Pitch of input array
+    \param b        Output array
+    \param opitch   Pitch of output array
+    \param length   Length of each subarray
+    \param N        Number of subarrays
  */
 __global__ void double2float_kernel(double *a,
                                     unsigned long long ipitch,
@@ -109,12 +109,12 @@ __global__ void double2float_kernel(double *a,
                                     unsigned long long N);
 
 /*! \brief Convert 2D array from float to double
-    \param a        input array
-    \param ipitch   pitch of input array
-    \param b        output array
-    \param opitch   pitch of output array
-    \param length   length of each subarray
-    \param N        number of subarrays
+    \param a        Input array
+    \param ipitch   Pitch of input array
+    \param b        Output array
+    \param opitch   Pitch of output array
+    \param length   Length of each subarray
+    \param N        Number of subarrays
  */
 __global__ void float2double_kernel(float *a,
                                     unsigned long long ipitch,
@@ -143,13 +143,13 @@ __global__ void transpose_complex_matrix_kernel(double2 *matIn,
                                                 unsigned long long NblocksY);
 
 /*! \brief Compute structure function using differences
-    \param d_in     input array
-    \param d_out    output array
-    \param d_lags   array of lags
-    \param length   length
-    \param Nlags    number of lags
-    \param Nq       number of q values (chunk size)
-    \param pitch    pitch of arrays
+    \param d_in     Input array
+    \param d_out    Output array
+    \param d_lags   Array of lags
+    \param length   Length
+    \param Nlags    Number of lags
+    \param Nq       Number of q values (chunk size)
+    \param pitch    Pitch of arrays
 */
 __global__ void structure_function_diff_kernel(double2 *d_in,
                                                double2 *d_out,
@@ -212,13 +212,13 @@ __global__ void linear_combination_kernel(double2 *c,
                                           unsigned int N);
 
 /*! \brief Shift power spectrum
-    \param d_in     input array
-    \param ipitch   pitch of input array
-    \param d_out    output array
-    \param opitch   pitch of output array
-    \param nx       number of fft nodes over x
-    \param ny       number of fft nodes over y
-    \param N        number of 2d matrices
+    \param d_in     Input array
+    \param ipitch   Pitch of input array
+    \param d_out    Output array
+    \param opitch   Pitch of output array
+    \param nx       Number of grid points in x
+    \param ny       Number of grid points in y
+    \param N        Number of 2d matrices
     \param NblocksX Number of blocks of tiles over x
     \param NblocksY Number of blocks of tiles over y
 */

@@ -27,12 +27,12 @@ typedef float Scalar;
 
 // *** code ***
 
-/*! \brief Compute image structure function in diff mode using differences on the GPU
-    \param img_seq      numpy array containing the image sequence
-    \param lags         lags to be analyzed
-    \param nx           number of fft nodes in x direction
-    \param ny           number of fft nodes in y direction
-    \param window       numpy array containing the window function to be applied to the images
+/*! \brief Compute structure function in "diff" mode using differences on the GPU
+    \param img_seq      Numpy array containing the image sequence
+    \param lags         Lags to be analyzed
+    \param nx           Number of grid points in x
+    \param ny           Number of grid points in y
+    \param window       Numpy array containing the window function to be applied to the images
  */
 template <typename T>
 py::array_t<Scalar> PYBIND11_EXPORT ddm_diff_cuda(py::array_t<T, py::array::c_style> img_seq,
@@ -41,13 +41,13 @@ py::array_t<Scalar> PYBIND11_EXPORT ddm_diff_cuda(py::array_t<T, py::array::c_st
                                                   unsigned long long ny,
                                                   py::array_t<Scalar, py::array::c_style> window);
 
-/*! \brief Compute image structure function in fft mode using Wiener-Khinchin theorem on the GPU
-    \param img_seq      numpy array containing the image sequence
-    \param lags         lags to be analyzed
-    \param nx           number of fft nodes in x direction
-    \param ny           number of fft nodes in y direction
-    \param nt           number of fft nodes in t direction
-    \param window       numpy array containing the window function to be applied to the images
+/*! \brief Compute structure function in "fft" mode using Wiener-Khinchin theorem on the GPU
+    \param img_seq      Numpy array containing the image sequence
+    \param lags         Lags to be analyzed
+    \param nx           Number of grid nodes in x
+    \param ny           Number of grid nodes in y
+    \param nt           Number of grid nodes in t
+    \param window       Numpy array containing the window function to be applied to the images
  */
 template <typename T>
 py::array_t<Scalar> PYBIND11_EXPORT ddm_fft_cuda(py::array_t<T, py::array::c_style> img_seq,
