@@ -16,7 +16,7 @@ endif(WIN32)
 if(SINGLE_PRECISION)
     # Build fftw3f as a shared lib
     set(ENABLE_FLOAT ON CACHE INTERNAL "")
-    add_subdirectory(lib/fftw-3.3.10 ${CMAKE_CURRENT_BINARY_DIR}/fftw3f)
+    add_subdirectory(fftw-3.3.10 ${CMAKE_CURRENT_BINARY_DIR}/fftw3f)
 
     if(WIN32)
         set_target_properties(fftw3f PROPERTIES
