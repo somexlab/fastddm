@@ -11,9 +11,12 @@
 // *** headers ***
 #include "ddm_cuda.h"
 #include "memchk_gpu.h"
+#include "data_struct.h"
 
 #include "ddm_cuda.cuh"
 #include "memchk_gpu.cuh"
+
+#include <iostream>
 
 // *** code ***
 
@@ -34,42 +37,43 @@ py::array_t<Scalar> PYBIND11_EXPORT ddm_diff_cuda(py::array_t<T, py::array::c_st
 
     // Get image sequence array and dimensions
     T *img_seq_ptr = static_cast<T *>(img_seq_info.ptr);
-    unsigned long long length = img_seq_info.shape[0];
-    unsigned long long height = img_seq_info.shape[1];
-    unsigned long long width = img_seq_info.shape[2];
 
-    // Get window array and dimensions
+    // Get image sequence parameters
+    ImageData img_data;
+    img_data.length = img_seq_info.shape[0];
+    img_data.height = img_seq_info.shape[1];
+    img_data.width = img_seq_info.shape[2];
+    img_data.is_input_type_scalar = std::is_same<T, Scalar>::value;
+    img_data.input_type_num_bytes = sizeof(T);
+
+    // Get window array
     Scalar *window_ptr = static_cast<Scalar *>(window_info.ptr);
+
+    // Get window parameters
+    StructureFunctionData sf_data;
+    sf_data.nx = nx;
+    sf_data.ny = ny;
+    sf_data.num_lags = lags.size();
+    sf_data.length = lags.size() + 2ULL;
+    sf_data.nx_half = nx / 2ULL + 1ULL;
+    // We check if the window is empty to understand if a window is applied or not
     unsigned long long window_length = window_info.shape[0];
-    // Check if the window is empty
-    bool is_window = window_length > 0;
+    sf_data.is_window = window_length > 0;
 
     // Check host memory
-    if (!check_host_memory_diff(nx, ny, length, lags.size()))
+    bool is_mem_ok = check_host_memory_diff(img_data, sf_data);
+    if (!is_mem_ok)
     {
         throw std::runtime_error("Not enough space in memory to store the result.\n");
     }
 
     // Check device memory and optimize kernel execution
-    unsigned long long num_fft2, num_chunks, num_shift;
-    unsigned long long pitch_buff, pitch_nx, pitch_q, pitch_t, pitch_fs;
-    check_and_optimize_device_memory_diff(width,
-                                          height,
-                                          length,
-                                          lags.size(),
-                                          nx,
-                                          ny,
-                                          sizeof(T),
-                                          std::is_same<T, Scalar>::value,
-                                          is_window,
-                                          num_fft2,
-                                          num_chunks,
-                                          num_shift,
-                                          pitch_buff,
-                                          pitch_nx,
-                                          pitch_q,
-                                          pitch_t,
-                                          pitch_fs);
+    ExecutionParameters exec_params;
+    PitchData pitch_data;
+    check_and_optimize_device_memory_diff(img_data,
+                                          sf_data,
+                                          exec_params,
+                                          pitch_data);
 
     // Allocate workspace memory
     /*
@@ -82,12 +86,10 @@ py::array_t<Scalar> PYBIND11_EXPORT ddm_diff_cuda(py::array_t<T, py::array::c_st
         The workspace array must be as long as the maximum of the length of the input image sequence
         and the number of lags +2.
      */
-    // Compute the width of the r2c fft2 output
-    unsigned long long _nx = nx / 2 + 1;
     // Compute the length of the workspace
-    unsigned long long dim_t = max(length, lags.size() + 2);
+    unsigned long long dim_t = max(img_data.length, sf_data.length);
     // Create the output array and get the buffer info
-    py::array_t<Scalar> result = py::array_t<Scalar>(dim_t * ny * _nx * 2);
+    py::array_t<Scalar> result = py::array_t<Scalar>(dim_t * sf_data.ny * sf_data.nx_half * 2ULL);
     py::buffer_info result_info = result.request();
 
     // Get pointer to the output array
@@ -97,38 +99,30 @@ py::array_t<Scalar> PYBIND11_EXPORT ddm_diff_cuda(py::array_t<T, py::array::c_st
     compute_fft2(img_seq_ptr,
                  result_ptr,
                  window_ptr,
-                 is_window,
-                 width,
-                 height,
-                 length,
-                 nx,
-                 ny,
-                 num_fft2,
-                 pitch_buff,
-                 pitch_nx);
+                 img_data,
+                 sf_data,
+                 exec_params,
+                 pitch_data);
 
     // Compute the structure function on the GPU
     structure_function_diff(result_ptr,
                             lags,
-                            length,
-                            nx,
-                            ny,
-                            num_chunks,
-                            pitch_q,
-                            pitch_t);
+                            img_data,
+                            sf_data,
+                            exec_params,
+                            pitch_data);
 
     // Convert raw output to shifted structure function
     make_shift(result_ptr,
-               lags.size() + 2,
-               nx,
-               ny,
-               num_shift,
-               pitch_fs);
+               img_data,
+               sf_data,
+               exec_params,
+               pitch_data);
 
     // Reshape and resize the output array
     // The full size of the structure function is
     // nx * ny * (#lags + 2)
-    result.resize({(unsigned long long)(lags.size() + 2), ny, _nx});
+    result.resize({sf_data.length, sf_data.ny, sf_data.nx_half});
 
     // Return the output
     return result;
@@ -200,44 +194,44 @@ py::array_t<Scalar> PYBIND11_EXPORT ddm_fft_cuda(py::array_t<T, py::array::c_sty
 
     // Get image sequence array and dimensions
     T *img_seq_ptr = static_cast<T *>(img_seq_info.ptr);
-    unsigned long long length = img_seq_info.shape[0];
-    unsigned long long height = img_seq_info.shape[1];
-    unsigned long long width = img_seq_info.shape[2];
 
-    // Get window array and dimensions
+    // Get image sequence parameters
+    ImageData img_data;
+    img_data.length = img_seq_info.shape[0];
+    img_data.height = img_seq_info.shape[1];
+    img_data.width = img_seq_info.shape[2];
+    img_data.is_input_type_scalar = std::is_same<T, Scalar>::value;
+    img_data.input_type_num_bytes = sizeof(T);
+
+    // Get window array
     Scalar *window_ptr = static_cast<Scalar *>(window_info.ptr);
+
+    // Get window parameters
+    StructureFunctionData sf_data;
+    sf_data.nx = nx;
+    sf_data.ny = ny;
+    sf_data.num_lags = lags.size();
+    sf_data.length = lags.size() + 2ULL;
+    sf_data.nx_half = nx / 2ULL + 1ULL;
+    // We check if the window is empty to understand if a window is applied or not
     unsigned long long window_length = window_info.shape[0];
-    // Check if the window is empty
-    bool is_window = window_length > 0;
+    sf_data.is_window = window_length > 0;
 
     // Check host memory
-    if (!check_host_memory_fft(nx, ny, length, lags.size()))
+    bool is_mem_ok = check_host_memory_fft(img_data, sf_data);
+    if (!is_mem_ok)
     {
         throw std::runtime_error("Not enough space in memory to store the result.\n");
     }
 
     // Check device memory and optimize kernel execution
-    unsigned long long num_fft2, num_chunks, num_shift;
-    unsigned long long pitch_buff, pitch_nx, pitch_q, pitch_t, pitch_nt, pitch_fs;
-    check_and_optimize_device_memory_fft(width,
-                                         height,
-                                         length,
-                                         lags.size(),
-                                         nx,
-                                         ny,
-                                         nt,
-                                         sizeof(T),
-                                         std::is_same<T, Scalar>::value,
-                                         is_window,
-                                         num_fft2,
-                                         num_chunks,
-                                         num_shift,
-                                         pitch_buff,
-                                         pitch_nx,
-                                         pitch_q,
-                                         pitch_t,
-                                         pitch_nt,
-                                         pitch_fs);
+    ExecutionParameters exec_params;
+    PitchData pitch_data;
+    check_and_optimize_device_memory_fft(nt,
+                                         img_data,
+                                         sf_data,
+                                         exec_params,
+                                         pitch_data);
 
     // Allocate workspace memory
     /*
@@ -250,12 +244,10 @@ py::array_t<Scalar> PYBIND11_EXPORT ddm_fft_cuda(py::array_t<T, py::array::c_sty
         The workspace array must be as long as the maximum of the length of the input image sequence
         and the number of lags +2.
      */
-    // Compute the width of the r2c fft2 output
-    unsigned long long _nx = nx / 2 + 1;
     // Compute the length of the workspace
-    unsigned long long dim_t = max(length, lags.size() + 2);
+    unsigned long long dim_t = max(img_data.length, sf_data.length);
     // Create the output array and get the buffer info
-    py::array_t<Scalar> result = py::array_t<Scalar>(dim_t * ny * _nx * 2);
+    py::array_t<Scalar> result = py::array_t<Scalar>(dim_t * sf_data.ny * sf_data.nx_half * 2ULL);
     py::buffer_info result_info = result.request();
 
     // Get pointer to the output array
@@ -265,40 +257,30 @@ py::array_t<Scalar> PYBIND11_EXPORT ddm_fft_cuda(py::array_t<T, py::array::c_sty
     compute_fft2(img_seq_ptr,
                  result_ptr,
                  window_ptr,
-                 is_window,
-                 width,
-                 height,
-                 length,
-                 nx,
-                 ny,
-                 num_fft2,
-                 pitch_buff,
-                 pitch_nx);
+                 img_data,
+                 sf_data,
+                 exec_params,
+                 pitch_data);
 
     // Compute the structure function on the GPU
     structure_function_fft(result_ptr,
                            lags,
-                           length,
-                           nx,
-                           ny,
-                           nt,
-                           num_chunks,
-                           pitch_q,
-                           pitch_t,
-                           pitch_nt);
+                           img_data,
+                           sf_data,
+                           exec_params,
+                           pitch_data);
 
     // Convert raw output to shifted structure function
     make_shift(result_ptr,
-               lags.size() + 2,
-               nx,
-               ny,
-               num_shift,
-               pitch_fs);
+               img_data,
+               sf_data,
+               exec_params,
+               pitch_data);
 
     // Reshape and resize the output array
     // The full size of the structure function is
     // nx * ny * (#lags + 2)
-    result.resize({(unsigned long long)(lags.size() + 2), ny, _nx});
+    result.resize({sf_data.length, sf_data.ny, sf_data.nx_half});
 
     // Return the output
     return result;

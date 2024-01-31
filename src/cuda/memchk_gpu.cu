@@ -143,6 +143,7 @@ void optimize_fft2(unsigned long long width,
                    unsigned long long length,
                    unsigned long long nx,
                    unsigned long long ny,
+                   unsigned long long nx_half,
                    unsigned long long pixel_Nbytes,
                    bool is_input_Scalar,
                    bool is_window,
@@ -166,14 +167,11 @@ void optimize_fft2(unsigned long long width,
                 pitch_nx * height * 2 * SCALAR_SIZE
      */
 
-    // Compute the effective number of grid points in x of the rfft2
-    unsigned long long _nx = nx / 2ULL + 1ULL;
-
     // Get the pitch for the buffer array (only if the input is not Scalar)
     pitch_buff = is_input_Scalar ? 0ULL : get_device_pitch(width, pixel_Nbytes);
 
     // Get the pitch for the rfft2 output complex array
-    pitch_nx = get_device_pitch(_nx, 2 * sizeof(Scalar));
+    pitch_nx = get_device_pitch(nx_half, 2 * sizeof(Scalar));
 
     /*
         Start the optimization with the worst case scenario:
@@ -604,23 +602,10 @@ void optimize_fftshift(unsigned long long nx,
 /*!
     Optimize "diff" execution parameters based on available gpu memory
 */
-void check_and_optimize_device_memory_diff(unsigned long long width,
-                                           unsigned long long height,
-                                           unsigned long long length,
-                                           unsigned long long num_lags,
-                                           unsigned long long nx,
-                                           unsigned long long ny,
-                                           int pixel_Nbytes,
-                                           bool is_input_Scalar,
-                                           bool is_window,
-                                           unsigned long long &num_fft2,
-                                           unsigned long long &num_chunks,
-                                           unsigned long long &num_shift,
-                                           unsigned long long &pitch_buff,
-                                           unsigned long long &pitch_nx,
-                                           unsigned long long &pitch_q,
-                                           unsigned long long &pitch_t,
-                                           unsigned long long &pitch_fs)
+void check_and_optimize_device_memory_diff(ImageData &img_data,
+                                           StructureFunctionData &sf_data,
+                                           ExecutionParameters &exec_params,
+                                           PitchData &pitch_data)
 {
     // Get the available gpu memory
     unsigned long long free_mem = get_free_device_memory();
@@ -629,60 +614,47 @@ void check_and_optimize_device_memory_diff(unsigned long long width,
     free_mem = (unsigned long long)(0.9 * (double)free_mem);
 
     // Evaluate parameters for fft2
-    optimize_fft2(width,
-                  height,
-                  length,
-                  nx,
-                  ny,
-                  pixel_Nbytes,
-                  is_input_Scalar,
-                  is_window,
+    optimize_fft2(img_data.width,
+                  img_data.height,
+                  img_data.length,
+                  sf_data.nx,
+                  sf_data.ny,
+                  sf_data.nx_half,
+                  img_data.input_type_num_bytes,
+                  img_data.is_input_type_scalar,
+                  sf_data.is_window,
                   free_mem,
-                  pitch_buff,
-                  pitch_nx,
-                  num_fft2);
+                  pitch_data.p_buffer,
+                  pitch_data.p_nx,
+                  exec_params.num_fft2_loops);
 
     // Evaluate parameters for structure function ("diff" mode)
-    optimize_diff(length,
-                  nx,
-                  ny,
-                  num_lags,
+    optimize_diff(img_data.length,
+                  sf_data.nx,
+                  sf_data.ny,
+                  sf_data.num_lags,
                   free_mem,
-                  pitch_q,
-                  pitch_t,
-                  num_chunks);
+                  pitch_data.p_q,
+                  pitch_data.p_t,
+                  exec_params.num_batch_loops);
 
     // Evaluate parameters for fftshift
-    optimize_fftshift(nx,
-                      ny,
-                      num_lags,
+    optimize_fftshift(sf_data.nx,
+                      sf_data.ny,
+                      sf_data.num_lags,
                       free_mem,
-                      pitch_fs,
-                      num_shift);
+                      pitch_data.p_fftshift,
+                      exec_params.num_fftshift_loops);
 }
 
 /*!
     Optimize "fft" execution parameters based on available gpu memory
 */
-void check_and_optimize_device_memory_fft(unsigned long long width,
-                                          unsigned long long height,
-                                          unsigned long long length,
-                                          unsigned long long num_lags,
-                                          unsigned long long nx,
-                                          unsigned long long ny,
-                                          unsigned long long nt,
-                                          int pixel_Nbytes,
-                                          bool is_input_Scalar,
-                                          bool is_window,
-                                          unsigned long long &num_fft2,
-                                          unsigned long long &num_chunks,
-                                          unsigned long long &num_shift,
-                                          unsigned long long &pitch_buff,
-                                          unsigned long long &pitch_nx,
-                                          unsigned long long &pitch_q,
-                                          unsigned long long &pitch_t,
-                                          unsigned long long &pitch_nt,
-                                          unsigned long long &pitch_fs)
+void check_and_optimize_device_memory_fft(unsigned long long nt,
+                                          ImageData &img_data,
+                                          StructureFunctionData &sf_data,
+                                          ExecutionParameters &exec_params,
+                                          PitchData &pitch_data)
 {
     // Get the available gpu memory
     unsigned long long free_mem = get_free_device_memory();
@@ -690,37 +662,41 @@ void check_and_optimize_device_memory_fft(unsigned long long width,
     // Scale the available memory by 0.9 to leave some free space
     free_mem = (unsigned long long)(0.9 * (double)free_mem);
 
+    // Set nt in the execution parameters
+    exec_params.nt = nt;
+
     // Evaluate parameters for fft2
-    optimize_fft2(width,
-                  height,
-                  length,
-                  nx,
-                  ny,
-                  pixel_Nbytes,
-                  is_input_Scalar,
-                  is_window,
+    optimize_fft2(img_data.width,
+                  img_data.height,
+                  img_data.length,
+                  sf_data.nx,
+                  sf_data.ny,
+                  sf_data.nx_half,
+                  img_data.input_type_num_bytes,
+                  img_data.is_input_type_scalar,
+                  sf_data.is_window,
                   free_mem,
-                  pitch_buff,
-                  pitch_nx,
-                  num_fft2);
+                  pitch_data.p_buffer,
+                  pitch_data.p_nx,
+                  exec_params.num_fft2_loops);
 
     // Evaluate parameters for structure function ("fft" mode)
-    optimize_fft(length,
-                 nx,
-                 ny,
-                 nt,
-                 num_lags,
+    optimize_fft(img_data.length,
+                 sf_data.nx,
+                 sf_data.ny,
+                 exec_params.nt,
+                 sf_data.num_lags,
                  free_mem,
-                 pitch_q,
-                 pitch_t,
-                 pitch_nt,
-                 num_chunks);
+                 pitch_data.p_q,
+                 pitch_data.p_t,
+                 pitch_data.p_nt,
+                 exec_params.num_batch_loops);
 
     // Evaluate parameters for fftshift
-    optimize_fftshift(nx,
-                      ny,
-                      num_lags,
+    optimize_fftshift(sf_data.nx,
+                      sf_data.ny,
+                      sf_data.num_lags,
                       free_mem,
-                      pitch_fs,
-                      num_shift);
+                      pitch_data.p_fftshift,
+                      exec_params.num_fftshift_loops);
 }

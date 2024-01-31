@@ -139,12 +139,12 @@ unsigned long long PYBIND11_EXPORT get_host_memory_fft(unsigned long long nx,
 }
 
 /*!
-    Check if host memory is sufficient to execute the "diff" mode
+    Check if host memory is sufficient to execute the "diff" mode (Python interface)
 */
-bool PYBIND11_EXPORT check_host_memory_diff(unsigned long long nx,
-                                            unsigned long long ny,
-                                            unsigned long long length,
-                                            unsigned long long num_lags)
+bool PYBIND11_EXPORT check_host_memory_diff_py(unsigned long long nx,
+                                               unsigned long long ny,
+                                               unsigned long long length,
+                                               unsigned long long num_lags)
 {
     // Get the free host memory and estimated memory needed for the "diff" mode
     unsigned long long free_mem = get_free_host_memory();
@@ -157,12 +157,24 @@ bool PYBIND11_EXPORT check_host_memory_diff(unsigned long long nx,
 }
 
 /*!
-    Check if host memory is sufficient to execute the "fft" mode
+    Check if host memory is sufficient to execute the "diff" mode
 */
-bool PYBIND11_EXPORT check_host_memory_fft(unsigned long long nx,
-                                           unsigned long long ny,
-                                           unsigned long long length,
-                                           unsigned long long num_lags)
+bool check_host_memory_diff(ImageData &img_data,
+                            StructureFunctionData &sf_data)
+{
+    return check_host_memory_diff_py(sf_data.nx,
+                                     sf_data.ny,
+                                     img_data.length,
+                                     sf_data.num_lags);
+}
+
+/*!
+    Check if host memory is sufficient to execute the "fft" mode (Python interface)
+*/
+bool PYBIND11_EXPORT check_host_memory_fft_py(unsigned long long nx,
+                                              unsigned long long ny,
+                                              unsigned long long length,
+                                              unsigned long long num_lags)
 {
     // Get the free host memory and estimated memory needed for the "fft" mode
     unsigned long long free_mem = get_free_host_memory();
@@ -172,4 +184,16 @@ bool PYBIND11_EXPORT check_host_memory_fft(unsigned long long nx,
     free_mem = (unsigned long long)(0.95 * (double)free_mem);
 
     return (free_mem > mem_required);
+}
+
+/*!
+    Check if host memory is sufficient to execute the "fft" mode
+*/
+bool check_host_memory_fft(ImageData &img_data,
+                           StructureFunctionData &sf_data)
+{
+    return check_host_memory_fft_py(sf_data.nx,
+                                    sf_data.ny,
+                                    img_data.length,
+                                    sf_data.num_lags);
 }

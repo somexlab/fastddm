@@ -31,8 +31,8 @@ void export_ddm_cuda(py::module &m)
     m.def("get_free_host_memory", &get_free_host_memory);
     m.def("get_host_memory_diff", &get_host_memory_diff);
     m.def("get_host_memory_fft", &get_host_memory_fft);
-    m.def("check_host_memory_diff", &check_host_memory_diff);
-    m.def("check_host_memory_fft", &check_host_memory_fft);
+    m.def("check_host_memory_diff", &check_host_memory_diff_py);
+    m.def("check_host_memory_fft", &check_host_memory_fft_py);
     // Difference algorithm
     m.def("ddm_diff_cuda", &ddm_diff_cuda<uint8_t>, py::return_value_policy::take_ownership);
     m.def("ddm_diff_cuda", &ddm_diff_cuda<int16_t>, py::return_value_policy::take_ownership);

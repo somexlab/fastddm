@@ -15,6 +15,8 @@
 // *** headers ***
 #include "../python_defs.h"
 
+#include "data_struct.h"
+
 using namespace std;
 
 #ifndef SINGLE_PRECISION
@@ -52,28 +54,44 @@ unsigned long long PYBIND11_EXPORT get_host_memory_fft(unsigned long long nx,
                                                        unsigned long long length,
                                                        unsigned long long num_lags);
 
-/*! \brief Check if host memory is sufficient to execute the "diff" mode
+/*! \brief Check if host memory is sufficient to execute the "diff" mode (Python interface)
     \param nx       number of grid points in x
     \param ny       number of grid points in y
     \param length   number of frames
     \param num_lags number of lags
     \return true if host memory is sufficient, false otherwise
 */
-bool PYBIND11_EXPORT check_host_memory_diff(unsigned long long nx,
-                                            unsigned long long ny,
-                                            unsigned long long length,
-                                            unsigned long long num_lags);
+bool PYBIND11_EXPORT check_host_memory_diff_py(unsigned long long nx,
+                                               unsigned long long ny,
+                                               unsigned long long length,
+                                               unsigned long long num_lags);
+
+/*! \brief Check if host memory is sufficient to execute the "diff" mode
+    \param img_data      Structure holding the image sequence parameters
+    \param sf_data       Structure holding the structure function parameters
+    \return true if host memory is sufficient, false otherwise
+*/
+bool check_host_memory_diff(ImageData &img_data,
+                            StructureFunctionData &sf_data);
+
+/*! \brief Check if host memory is sufficient to execute the "fft" mode (Python interface)
+    \param nx       number of grid points in x
+    \param ny       number of grid points in y
+    \param length   number of frames
+    \param num_lags number of lags
+    \return true if host memory is sufficient, false otherwise
+*/
+bool PYBIND11_EXPORT check_host_memory_fft_py(unsigned long long nx,
+                                              unsigned long long ny,
+                                              unsigned long long length,
+                                              unsigned long long num_lags);
 
 /*! \brief Check if host memory is sufficient to execute the "fft" mode
-    \param nx       number of grid points in x
-    \param ny       number of grid points in y
-    \param length   number of frames
-    \param num_lags number of lags
+    \param img_data      Structure holding the image sequence parameters
+    \param sf_data       Structure holding the structure function parameters
     \return true if host memory is sufficient, false otherwise
 */
-bool PYBIND11_EXPORT check_host_memory_fft(unsigned long long nx,
-                                           unsigned long long ny,
-                                           unsigned long long length,
-                                           unsigned long long num_lags);
+bool check_host_memory_fft(ImageData &img_data,
+                           StructureFunctionData &sf_data);
 
 #endif // __MEMCHK_GPU_H__

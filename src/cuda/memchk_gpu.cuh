@@ -13,6 +13,7 @@
 
 // *** headers ***
 #include "../python_defs.h"
+#include "data_struct.h"
 
 #ifndef SINGLE_PRECISION
 typedef double Scalar;
@@ -71,6 +72,7 @@ unsigned long long get_device_pitch(unsigned long long N,
     \param length           Number of frames
     \param nx               Number of grid points in x
     \param ny               Number of grid points in y
+    \param nx_half          Number of grid points of the half-plane representation of the real-to-complex FFT2
     \param pixel_Nbytes     Number of bytes per pixel
     \param is_input_Scalar  True if image type memory size is same as Scalar
     \param is_window        True if window function is given
@@ -84,6 +86,7 @@ void optimize_fft2(unsigned long long width,
                    unsigned long long length,
                    unsigned long long nx,
                    unsigned long long ny,
+                   unsigned long long nx_half,
                    unsigned long long pixel_Nbytes,
                    bool is_input_Scalar,
                    bool is_window,
@@ -150,81 +153,27 @@ void optimize_fftshift(unsigned long long nx,
                        unsigned long long &num_shift);
 
 /*! \brief Optimize "diff" execution parameters based on available gpu memory
-    \param width            Width of the image
-    \param height           Height of the image
-    \param length           Number of frames
-    \param num_lags         Number of lags analysed
-    \param nx               Number of fft nodes, x direction
-    \param ny               Number of fft nodes, y direction
-    \param pixel_Nbytes     Number of bytes per pixel
-    \param is_input_Scalar  True if image type memory size is same as Scalar
-    \param is_window        True if window function is given
-    \param num_fft2         Number of fft2 batches
-    \param num_chunks       Number of q points chunks
-    \param num_shift        Number of shift chunks
-    \param pitch_buff       Pitch of buffer device array
-    \param pitch_nx         Pitch of device fft2 output array (nx-pitch)
-    \param pitch_q          Pitch of device array (q-pitch)
-    \param pitch_t          Pitch of device array (t-pitch)
-    \param pitch_fs         Pitch of device array for shift operation
+    \param img_data     Structure holding the image sequence parameters
+    \param sf_data      Structure holding the structure function parameters
+    \param exec_params  Structure holding the execution parameters
+    \param pitch_data   Structure holding the memory pitch parameters
 */
-void check_and_optimize_device_memory_diff(unsigned long long width,
-                                           unsigned long long height,
-                                           unsigned long long length,
-                                           unsigned long long num_lags,
-                                           unsigned long long nx,
-                                           unsigned long long ny,
-                                           int pixel_Nbytes,
-                                           bool is_input_Scalar,
-                                           bool is_window,
-                                           unsigned long long &num_fft2,
-                                           unsigned long long &num_chunks,
-                                           unsigned long long &num_shift,
-                                           unsigned long long &pitch_buff,
-                                           unsigned long long &pitch_nx,
-                                           unsigned long long &pitch_q,
-                                           unsigned long long &pitch_t,
-                                           unsigned long long &pitch_fs);
+void check_and_optimize_device_memory_diff(ImageData &img_data,
+                                           StructureFunctionData &sf_data,
+                                           ExecutionParameters &exec_params,
+                                           PitchData &pitch_data);
 
 /*! \brief Optimize "fft" execution parameters based on available gpu memory
-    \param width            Width of the image
-    \param height           Height of the image
-    \param length           Number of frames
-    \param num_lags         Number of lags analysed
-    \param nx               Number of fft nodes, x direction
-    \param ny               Number of fft nodes, y direction
-    \param nt               Number of fft nodes, t direction
-    \param pixel_Nbytes     Number of bytes per pixel
-    \param is_input_Scalar  True if image type memory size is same as Scalar
-    \param is_window        True if window function is given
-    \param num_fft2         Number of fft2 batches
-    \param num_chunks       Number of q points chunks
-    \param num_shift        Number of shift chunks
-    \param pitch_buff       Pitch of buffer device array
-    \param pitch_nx         Pitch of device fft2 output array (nx-pitch)
-    \param pitch_q          Pitch of device array (q-pitch)
-    \param pitch_t          Pitch of device array (t-pitch)
-    \param pitch_nt         Pitch of device array (nt-pitch)
-    \param pitch_fs         Pitch of device array for shift operation
+    \param nt           Number of grid points in t
+    \param img_data     Structure holding the image sequence parameters
+    \param sf_data      Structure holding the structure function parameters
+    \param exec_params  Structure holding the execution parameters
+    \param pitch_data   Structure holding the memory pitch parameters
 */
-void check_and_optimize_device_memory_fft(unsigned long long width,
-                                          unsigned long long height,
-                                          unsigned long long length,
-                                          unsigned long long num_lags,
-                                          unsigned long long nx,
-                                          unsigned long long ny,
-                                          unsigned long long nt,
-                                          int pixel_Nbytes,
-                                          bool is_input_Scalar,
-                                          bool is_window,
-                                          unsigned long long &num_fft2,
-                                          unsigned long long &num_chunks,
-                                          unsigned long long &num_shift,
-                                          unsigned long long &pitch_buff,
-                                          unsigned long long &pitch_nx,
-                                          unsigned long long &pitch_q,
-                                          unsigned long long &pitch_t,
-                                          unsigned long long &pitch_nt,
-                                          unsigned long long &pitch_fs);
+void check_and_optimize_device_memory_fft(unsigned long long nt,
+                                          ImageData &img_data,
+                                          StructureFunctionData &sf_data,
+                                          ExecutionParameters &exec_params,
+                                          PitchData &pitch_data);
 
 #endif // __MEMCHK_GPU_CUH__
