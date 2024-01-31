@@ -66,20 +66,20 @@ void cudaGetDevicePitch1B(size_t N,
 unsigned long long get_device_pitch(unsigned long long N,
                                     int num_bytes);
 
-/*! \brief Optimize fft2 execution parameters based on available gpu memory
-    \param width            Width of the image
-    \param height           Height of the image
-    \param length           Number of frames
-    \param nx               Number of grid points in x
-    \param ny               Number of grid points in y
-    \param nx_half          Number of grid points of the half-plane representation of the real-to-complex FFT2
-    \param pixel_Nbytes     Number of bytes per pixel
-    \param is_input_Scalar  True if image type memory size is same as Scalar
-    \param is_window        True if window function is given
-    \param free_mem         Available gpu memory
-    \param pitch_buff       Pitch of buffer device array
-    \param pitch_nx         Pitch of fft2 complex output array
-    \param num_fft2         Number of fft2 batches
+/*! \brief Optimize FFT2 execution parameters based on available gpu memory
+    \param width                    Width of the image
+    \param height                   Height of the image
+    \param length                   Number of frames
+    \param nx                       Number of grid points in x
+    \param ny                       Number of grid points in y
+    \param nx_half                  Number of grid points of the half-plane representation of the real-to-complex FFT2
+    \param input_type_num_bytes     Number of bytes per pixel
+    \param is_input_type_scalar     True if image type memory size is same as Scalar
+    \param is_window                True if window function is given
+    \param free_mem                 Available gpu memory
+    \param pitch_buff               Pitch of buffer device array
+    \param pitch_nx                 Pitch of fft2 complex output array
+    \param num_fft2_loops           Number of fft2 batches
 */
 void optimize_fft2(unsigned long long width,
                    unsigned long long height,
@@ -87,13 +87,13 @@ void optimize_fft2(unsigned long long width,
                    unsigned long long nx,
                    unsigned long long ny,
                    unsigned long long nx_half,
-                   unsigned long long pixel_Nbytes,
-                   bool is_input_Scalar,
+                   unsigned long long input_type_num_bytes,
+                   bool is_input_type_scalar,
                    bool is_window,
                    unsigned long long free_mem,
                    unsigned long long &pitch_buff,
                    unsigned long long &pitch_nx,
-                   unsigned long long &num_fft2);
+                   unsigned long long &num_fft2_loops);
 
 /*! \brief Optimize structure function "diff" execution parameters based on available gpu memory
     \param length           Number of frames
@@ -103,7 +103,7 @@ void optimize_fft2(unsigned long long width,
     \param free_mem         Available gpu memory
     \param pitch_q          Pitch of device array (q-pitch)
     \param pitch_t          Pitch of device array (t-pitch)
-    \param num_chunks       Number of q points chunks
+    \param num_batch_loops  Number of q points batches
 */
 void optimize_diff(unsigned long long length,
                    unsigned long long nx,
@@ -112,7 +112,7 @@ void optimize_diff(unsigned long long length,
                    unsigned long long free_mem,
                    unsigned long long &pitch_q,
                    unsigned long long &pitch_t,
-                   unsigned long long &num_chunks);
+                   unsigned long long &num_batch_loops);
 
 /*! \brief Optimize structure function "fft" execution parameters based on available gpu memory
     \param length           Number of frames
@@ -124,7 +124,7 @@ void optimize_diff(unsigned long long length,
     \param pitch_q          Pitch of device array (q-pitch)
     \param pitch_t          Pitch of device array (t-pitch)
     \param pitch_nt         Pitch of device array (nt-pitch)
-    \param num_chunks       Number of q points chunks
+    \param num_batch_loops  Number of q points batches
 */
 void optimize_fft(unsigned long long length,
                   unsigned long long nx,
@@ -135,22 +135,22 @@ void optimize_fft(unsigned long long length,
                   unsigned long long &pitch_q,
                   unsigned long long &pitch_t,
                   unsigned long long &pitch_nt,
-                  unsigned long long &num_chunks);
+                  unsigned long long &num_batch_loops);
 
 /*! \brief Optimize fftshift execution parameters based on available gpu memory
-    \param nx               Number of grid points in x
-    \param ny               Number of grid points in y
-    \param num_lags         Number of lags to be analysed
-    \param free_mem         Available gpu memory
-    \param pitch_fs         Pitch of device array for shift operation
-    \param num_shift        Number of shift chunks
+    \param nx                   Number of grid points in x
+    \param ny                   Number of grid points in y
+    \param num_lags             Number of lags to be analysed
+    \param free_mem             Available gpu memory
+    \param pitch_fs             Pitch of device array for shift operation
+    \param num_fftshift_loops   Number of fftshift batches
 */
 void optimize_fftshift(unsigned long long nx,
                        unsigned long long ny,
                        unsigned long long num_lags,
                        unsigned long long free_mem,
                        unsigned long long &pitch_fs,
-                       unsigned long long &num_shift);
+                       unsigned long long &num_fftshift_loops);
 
 /*! \brief Optimize "diff" execution parameters based on available gpu memory
     \param img_data     Structure holding the image sequence parameters

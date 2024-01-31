@@ -46,8 +46,8 @@ void compute_fft2(const T *h_in,
                   PitchData &pitch_data);
 
 /*! \brief Compute image structure function using differences on the GPU
-    \param h_in         input array of Fourier transformed images
-    \param lags         lags to be analyzed
+    \param h_in         Input array of Fourier transformed images
+    \param lags         Lags to be analyzed
     \param img_data     Structure holding the image sequence parameters
     \param sf_data      Structure holding the structure function parameters
     \param exec_params  Structure holding the execution parameters
@@ -61,8 +61,8 @@ void structure_function_diff(Scalar *h_in,
                              PitchData &pitch_data);
 
 /*! \brief Compute image structure function using the Wiener-Khinchin theorem on the GPU
-    \param h_in         input array of Fourier transformed images
-    \param lags         lags to be analyzed
+    \param h_in         Input array of Fourier transformed images
+    \param lags         Lags to be analyzed
     \param img_data     Structure holding the image sequence parameters
     \param sf_data      Structure holding the structure function parameters
     \param exec_params  Structure holding the execution parameters
@@ -76,7 +76,7 @@ void structure_function_fft(Scalar *h_in,
                             PitchData &pitch_data);
 
 /*! \brief Convert to fftshifted image structure function on the GPU
-    \param h_in             input array after structure function calculation
+    \param h_in         Input array after structure function calculation
     \param img_data     Structure holding the image sequence parameters
     \param sf_data      Structure holding the structure function parameters
     \param exec_params  Structure holding the execution parameters
