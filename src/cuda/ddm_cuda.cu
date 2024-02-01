@@ -20,6 +20,8 @@
 #include <cufft.h>
 #include <cuda_runtime.h>
 
+#include <cstdint>
+
 #define CUFFTCOMPLEX cufftDoubleComplex
 
 #ifndef SINGLE_PRECISION

@@ -12,6 +12,8 @@
 #include "helper_ddm_cuda.cuh"
 #include "helper_debug.cuh"
 
+#include <cstdint>
+
 #include <cuda_runtime.h>
 
 #include <cooperative_groups.h>
