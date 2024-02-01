@@ -16,8 +16,6 @@
 #include "ddm_cuda.cuh"
 #include "memchk_gpu.cuh"
 
-#include <iostream>
-
 // *** code ***
 
 /*!
