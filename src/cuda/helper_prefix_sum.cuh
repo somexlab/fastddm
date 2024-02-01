@@ -16,6 +16,11 @@
 
 // *** code ***
 
+/*! \brief Compute next power of two larger or equal to n
+    \param n    Target
+ */
+unsigned long long nextPowerOfTwo(unsigned long long n);
+
 /*! \brief Scan multiple large arrays on the GPU
     \param output   Output array
     \param input    Input array
@@ -144,10 +149,5 @@ __global__ void copy_every_kernel(double *output,
                                   double *input,
                                   unsigned long long dist,
                                   unsigned long long N);
-
-/*! \brief Compute next power of two larger or equal to n
-    \param n    Target
- */
-unsigned long long nextPowerOfTwo(unsigned long long n);
 
 #endif // __HELPER_PREFIX_SUM_CUH__

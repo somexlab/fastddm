@@ -162,3 +162,44 @@ def test_ddm_window_error():
         # make window slightly larger
         window = np.ones((dim_y + 1, dim_x), dtype=DTYPE)
         fddm.ddm(imgs, lags, core="cpp", mode="fft", window=window)
+
+
+@pytest.mark.skipif("cuda" not in CORES, reason="needs CUDA installed")
+def test_get_num_devices():
+    # Check that at least one CUDA device is available
+    assert fddm._core_cuda.get_num_devices() > 0
+
+
+@pytest.mark.skipif("cuda" not in CORES, reason="needs CUDA installed")
+def test_set_device_valid_gpu_id():
+    # Replace 0 with the actual valid GPU ID
+    fddm._core_cuda.set_device(0)
+
+
+@pytest.mark.skipif("cuda" not in CORES, reason="needs CUDA installed")
+def test_get_device_id_used():
+    # Check that the device we get with get_device()
+    # is the same as the one we set with set_device()
+    fddm._core_cuda.set_device(0)
+    assert fddm._core_cuda.get_device() == 0
+
+
+@pytest.mark.skipif("cuda" not in CORES, reason="needs CUDA installed")
+def test_free_device_memory():
+    # Get available memory on device
+    import subprocess as sp
+
+    # retrieve free gpu memory
+    command = "nvidia-smi --query-gpu=memory.free --format=csv"
+    memory_free_info = (
+        sp.check_output(command.split()).decode("ascii").split("\n")[:-1][1:]
+    )
+
+    # convert memory from MB to bytes and create list
+    memory_free_values = [
+        1048576 * int(x.split()[0]) for i, x in enumerate(memory_free_info)
+    ]
+
+    assert np.isclose(
+        memory_free_values[0], fddm._core_cuda.get_free_device_memory(), rtol=1e-3
+    )

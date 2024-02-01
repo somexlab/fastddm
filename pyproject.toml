@@ -3,7 +3,7 @@ requires = [
     "setuptools>=47",
     "setuptools_scm",
     "wheel",
-    "cmake",
+    "cmake>=3.12",
 ]
 
 [project]

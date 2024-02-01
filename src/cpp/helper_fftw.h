@@ -31,10 +31,10 @@ typedef fftwf_complex FFTW_COMPLEX;
 // *** code ***
 
 /*! \brief Create fftw plan for the real to complex fft2
-    \param input    input array
-    \param nx       number of fft nodes in x direction
-    \param ny       number of fft nodes in y direction
-    \param nt       number of elements (in t direction)
+    \param input    Input array
+    \param nx       Number of fft nodes in x direction
+    \param ny       Number of fft nodes in y direction
+    \param nt       Number of elements (in t direction)
  */
 FFTW_PLAN fft2_create_plan(Scalar *input,
                            size_t nx,
@@ -42,9 +42,9 @@ FFTW_PLAN fft2_create_plan(Scalar *input,
                            size_t nt);
 
 /*! \brief Create fftw plan for the complex to complex fft
-    \param input    input vector
-    \param nt       number of fft nodes in t direction
-    \param N        number of elements
+    \param input    Input vector
+    \param nt       Number of fft nodes in t direction
+    \param N        Number of elements
  */
 fftw_plan fft_create_plan(vector<double> &input,
                           size_t nt,

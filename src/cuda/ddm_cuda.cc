@@ -1,4 +1,4 @@
-/// Copyright (c) 2023-2023 University of Vienna, Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino.
+// Copyright (c) 2023-2023 University of Vienna, Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino.
 // Part of FastDDM, released under the GNU GPL-3.0 License.
 
 // Author: Enrico Lattuada
@@ -10,269 +10,330 @@
 
 // *** headers ***
 #include "ddm_cuda.h"
+#include "memchk_gpu.h"
+#include "data_struct.h"
+
 #include "ddm_cuda.cuh"
-
-#include "helper_memchk_gpu.h"
-
-#include <cuda_runtime.h>
+#include "memchk_gpu.cuh"
 
 // *** code ***
 
 /*!
-    Compute the image structure function in diff mode
+    Compute the structure function in "diff" mode
     using differences of Fourier transformed images on the GPU.
  */
 template <typename T>
-py::array_t<Scalar> ddm_diff_cuda(py::array_t<T, py::array::c_style> img_seq,
-                                  vector<unsigned int> lags,
-                                  unsigned long long nx,
-                                  unsigned long long ny,
-                                  py::array_t<Scalar, py::array::c_style> window)
+py::array_t<Scalar> PYBIND11_EXPORT ddm_diff_cuda(py::array_t<T, py::array::c_style> img_seq,
+                                                  vector<unsigned int> lags,
+                                                  unsigned long long nx,
+                                                  unsigned long long ny,
+                                                  py::array_t<Scalar, py::array::c_style> window)
 {
-    // ***Get input array and dimensions
-    unsigned long long length = img_seq.shape()[0]; // get length of original input
-    unsigned long long height = img_seq.shape()[1]; // get height of original input
-    unsigned long long width = img_seq.shape()[2];  // get width of original input
-    auto p_img_seq = img_seq.data();                // get input data
+    // Get buffer info to image sequence and window
+    py::buffer_info img_seq_info = img_seq.request();
+    py::buffer_info window_info = window.request();
 
-    // ***Get window array
-    unsigned long long window_length = window.shape()[0]; // get length of window array
-    auto p_window = window.data();
-    bool is_window = window_length > 0; // true if window is not empty
+    // Get image sequence array and dimensions
+    T *img_seq_ptr = static_cast<T *>(img_seq_info.ptr);
+
+    // Get image sequence parameters
+    ImageData img_data;
+    img_data.length = img_seq_info.shape[0];
+    img_data.height = img_seq_info.shape[1];
+    img_data.width = img_seq_info.shape[2];
+    img_data.is_input_type_scalar = std::is_same<T, Scalar>::value;
+    img_data.input_type_num_bytes = sizeof(T);
+
+    // Get window array
+    Scalar *window_ptr = static_cast<Scalar *>(window_info.ptr);
+
+    // Get window parameters
+    StructureFunctionData sf_data;
+    sf_data.nx = nx;
+    sf_data.ny = ny;
+    sf_data.num_lags = lags.size();
+    sf_data.length = lags.size() + 2ULL;
+    sf_data.nx_half = nx / 2ULL + 1ULL;
+    // We check if the window is empty to understand if a window is applied or not
+    unsigned long long window_length = window_info.shape[0];
+    sf_data.is_window = window_length > 0;
 
     // Check host memory
-    chk_host_mem_diff(nx, ny, length, lags.size());
+    bool is_mem_ok = check_host_memory_diff(img_data, sf_data);
+    if (!is_mem_ok)
+    {
+        throw std::runtime_error("Not enough space in memory to store the result.\n");
+    }
 
-    // Check device memory and optimize
-    unsigned long long num_fft2, num_chunks, num_shift;
-    unsigned long long pitch_buff, pitch_nx, pitch_q, pitch_t, pitch_fs;
-    chk_device_mem_diff(width,
-                        height,
-                        sizeof(T),
-                        nx,
-                        ny,
-                        length,
-                        lags,
-                        std::is_same<T, Scalar>::value,
-                        is_window,
-                        num_fft2,
-                        num_chunks,
-                        num_shift,
-                        pitch_buff,
-                        pitch_nx,
-                        pitch_q,
-                        pitch_t,
-                        pitch_fs);
+    // Check device memory and optimize kernel execution
+    ExecutionParameters exec_params;
+    PitchData pitch_data;
+    check_and_optimize_device_memory_diff(img_data,
+                                          sf_data,
+                                          exec_params,
+                                          pitch_data);
 
-    // ***Allocate workspace vector
+    // Allocate workspace memory
     /*
-    - We need to make sure that the fft2 r2c fits in the array,
-      so the size of one fft2 output is [ny * (nx // 2 + 1)] complex
-      Scalar [the input needs to be twice as large]
+        We need to make sure that the fft2 r2c fits in the array, so the size of one fft2 output is
+        [ny * (nx // 2 + 1)]   complex Scalar
+        The workspace array (of Scalar) needs to be twice as large.
+
+        We also need to make sure that the full output fits in the array, also including the average
+        power spectrum of the input images and the variance of their spatial FFT2 outputs.
+        The workspace array must be as long as the maximum of the length of the input image sequence
+        and the number of lags +2.
      */
-    unsigned long long _nx = nx / 2 + 1;
-    unsigned long long dim_t = max(length, (unsigned long long)(lags.size() + 2));
-    py::array_t<Scalar> out = py::array_t<Scalar>(2 * _nx * ny * dim_t);
-    auto p_out = out.mutable_data();
+    // Compute the length of the workspace
+    unsigned long long dim_t = max(img_data.length, sf_data.length);
+    // Create the output array and get the buffer info
+    py::array_t<Scalar> result = py::array_t<Scalar>(dim_t * sf_data.ny * sf_data.nx_half * 2ULL);
+    py::buffer_info result_info = result.request();
 
-    // ***Transfer data to GPU and compute fft2
-    compute_fft2(p_img_seq,
-                 p_out,
-                 p_window,
-                 is_window,
-                 width,
-                 height,
-                 length,
-                 nx,
-                 ny,
-                 num_fft2,
-                 pitch_buff,
-                 pitch_nx);
+    // Get pointer to the output array
+    Scalar *result_ptr = static_cast<Scalar *>(result_info.ptr);
 
-    // ***Compute image structure function
-    structure_function_diff(p_out,
+    // Compute the FFT2 on the GPU
+    compute_fft2(img_seq_ptr,
+                 result_ptr,
+                 window_ptr,
+                 img_data,
+                 sf_data,
+                 exec_params,
+                 pitch_data);
+
+    // Compute the structure function on the GPU
+    structure_function_diff(result_ptr,
                             lags,
-                            length,
-                            nx,
-                            ny,
-                            num_chunks,
-                            pitch_q,
-                            pitch_t);
+                            img_data,
+                            sf_data,
+                            exec_params,
+                            pitch_data);
 
-    // ***Convert raw output to shifted image structure function
-    make_shift(p_out,
-               lags.size() + 2,
-               nx,
-               ny,
-               num_shift,
-               pitch_fs);
+    // Convert raw output to shifted structure function
+    make_shift(result_ptr,
+               img_data,
+               sf_data,
+               exec_params,
+               pitch_data);
 
-    // ***Resize output
-    // the full size of the image structure function is
-    // nx * ny * #(lags)
-    out.resize({(unsigned long long)(lags.size() + 2), ny, _nx});
+    // Reshape and resize the output array
+    // The full size of the structure function is
+    // nx * ny * (#lags + 2)
+    result.resize({sf_data.length, sf_data.ny, sf_data.nx_half});
 
-    // release pointer to output array
-    p_out = NULL;
-
-    // ***Return result to python
-    return out;
+    // Return the output
+    return result;
 }
+template py::array_t<Scalar> PYBIND11_EXPORT ddm_diff_cuda(py::array_t<uint8_t, py::array::c_style> img_seq,
+                                                           vector<unsigned int> lags,
+                                                           unsigned long long nx,
+                                                           unsigned long long ny,
+                                                           py::array_t<Scalar, py::array::c_style> window);
+template py::array_t<Scalar> PYBIND11_EXPORT ddm_diff_cuda(py::array_t<int16_t, py::array::c_style> img_seq,
+                                                           vector<unsigned int> lags,
+                                                           unsigned long long nx,
+                                                           unsigned long long ny,
+                                                           py::array_t<Scalar, py::array::c_style> window);
+template py::array_t<Scalar> PYBIND11_EXPORT ddm_diff_cuda(py::array_t<uint16_t, py::array::c_style> img_seq,
+                                                           vector<unsigned int> lags,
+                                                           unsigned long long nx,
+                                                           unsigned long long ny,
+                                                           py::array_t<Scalar, py::array::c_style> window);
+template py::array_t<Scalar> PYBIND11_EXPORT ddm_diff_cuda(py::array_t<int32_t, py::array::c_style> img_seq,
+                                                           vector<unsigned int> lags,
+                                                           unsigned long long nx,
+                                                           unsigned long long ny,
+                                                           py::array_t<Scalar, py::array::c_style> window);
+template py::array_t<Scalar> PYBIND11_EXPORT ddm_diff_cuda(py::array_t<uint32_t, py::array::c_style> img_seq,
+                                                           vector<unsigned int> lags,
+                                                           unsigned long long nx,
+                                                           unsigned long long ny,
+                                                           py::array_t<Scalar, py::array::c_style> window);
+template py::array_t<Scalar> PYBIND11_EXPORT ddm_diff_cuda(py::array_t<int64_t, py::array::c_style> img_seq,
+                                                           vector<unsigned int> lags,
+                                                           unsigned long long nx,
+                                                           unsigned long long ny,
+                                                           py::array_t<Scalar, py::array::c_style> window);
+template py::array_t<Scalar> PYBIND11_EXPORT ddm_diff_cuda(py::array_t<uint64_t, py::array::c_style> img_seq,
+                                                           vector<unsigned int> lags,
+                                                           unsigned long long nx,
+                                                           unsigned long long ny,
+                                                           py::array_t<Scalar, py::array::c_style> window);
+template py::array_t<Scalar> PYBIND11_EXPORT ddm_diff_cuda(py::array_t<float, py::array::c_style> img_seq,
+                                                           vector<unsigned int> lags,
+                                                           unsigned long long nx,
+                                                           unsigned long long ny,
+                                                           py::array_t<Scalar, py::array::c_style> window);
+template py::array_t<Scalar> PYBIND11_EXPORT ddm_diff_cuda(py::array_t<double, py::array::c_style> img_seq,
+                                                           vector<unsigned int> lags,
+                                                           unsigned long long nx,
+                                                           unsigned long long ny,
+                                                           py::array_t<Scalar, py::array::c_style> window);
 
 /*!
-    Compute the image structure function in fft mode
+    Compute the structure function in "fft" mode
     using the Wiener-Khinchin theorem on the GPU.
 
     Notice that nt must be at least 2*length to avoid
     circular correlation.
  */
 template <typename T>
-py::array_t<Scalar> ddm_fft_cuda(py::array_t<T, py::array::c_style> img_seq,
-                                 vector<unsigned int> lags,
-                                 unsigned long long nx,
-                                 unsigned long long ny,
-                                 unsigned long long nt,
-                                 py::array_t<Scalar, py::array::c_style> window)
+py::array_t<Scalar> PYBIND11_EXPORT ddm_fft_cuda(py::array_t<T, py::array::c_style> img_seq,
+                                                 vector<unsigned int> lags,
+                                                 unsigned long long nx,
+                                                 unsigned long long ny,
+                                                 unsigned long long nt,
+                                                 py::array_t<Scalar, py::array::c_style> window)
 {
-    // ***Get input array and dimensions
-    unsigned long long length = img_seq.shape()[0]; // get length of original input
-    unsigned long long height = img_seq.shape()[1]; // get height of original input
-    unsigned long long width = img_seq.shape()[2];  // get width of original input
-    auto p_img_seq = img_seq.data();                // get input data
+    // Get buffer info to image sequence and window
+    py::buffer_info img_seq_info = img_seq.request();
+    py::buffer_info window_info = window.request();
 
-    // ***Get window array
-    unsigned long long window_length = window.shape()[0]; // get length of window array
-    auto p_window = window.data();
-    bool is_window = window_length > 0; // true if window is not empty
+    // Get image sequence array and dimensions
+    T *img_seq_ptr = static_cast<T *>(img_seq_info.ptr);
+
+    // Get image sequence parameters
+    ImageData img_data;
+    img_data.length = img_seq_info.shape[0];
+    img_data.height = img_seq_info.shape[1];
+    img_data.width = img_seq_info.shape[2];
+    img_data.is_input_type_scalar = std::is_same<T, Scalar>::value;
+    img_data.input_type_num_bytes = sizeof(T);
+
+    // Get window array
+    Scalar *window_ptr = static_cast<Scalar *>(window_info.ptr);
+
+    // Get window parameters
+    StructureFunctionData sf_data;
+    sf_data.nx = nx;
+    sf_data.ny = ny;
+    sf_data.num_lags = lags.size();
+    sf_data.length = lags.size() + 2ULL;
+    sf_data.nx_half = nx / 2ULL + 1ULL;
+    // We check if the window is empty to understand if a window is applied or not
+    unsigned long long window_length = window_info.shape[0];
+    sf_data.is_window = window_length > 0;
 
     // Check host memory
-    chk_host_mem_fft(nx, ny, length, lags.size());
+    bool is_mem_ok = check_host_memory_fft(img_data, sf_data);
+    if (!is_mem_ok)
+    {
+        throw std::runtime_error("Not enough space in memory to store the result.\n");
+    }
 
-    // Check device memory and optimize
-    unsigned long long num_fft2, num_chunks, num_shift;
-    unsigned long long pitch_buff, pitch_nx, pitch_q, pitch_t, pitch_nt, pitch_fs;
-    chk_device_mem_fft(width,
-                       height,
-                       sizeof(T),
-                       nx,
-                       ny,
-                       nt,
-                       length,
-                       lags,
-                       std::is_same<T, Scalar>::value,
-                       is_window,
-                       num_fft2,
-                       num_chunks,
-                       num_shift,
-                       pitch_buff,
-                       pitch_nx,
-                       pitch_q,
-                       pitch_t,
-                       pitch_nt,
-                       pitch_fs);
+    // Check device memory and optimize kernel execution
+    ExecutionParameters exec_params;
+    PitchData pitch_data;
+    check_and_optimize_device_memory_fft(nt,
+                                         img_data,
+                                         sf_data,
+                                         exec_params,
+                                         pitch_data);
 
-    // ***Allocate workspace vector
+    // Allocate workspace memory
     /*
-    - We need to make sure that the fft2 r2c fits in the array,
-      so the size of one fft2 output is [ny * (nx // 2 + 1)] complex
-      Scalar [the input needs to be twice as large]
+        We need to make sure that the fft2 r2c fits in the array, so the size of one fft2 output is
+        [ny * (nx // 2 + 1)]   complex Scalar
+        The workspace array (of Scalar) needs to be twice as large.
+
+        We also need to make sure that the full output fits in the array, also including the average
+        power spectrum of the input images and the variance of their spatial FFT2 outputs.
+        The workspace array must be as long as the maximum of the length of the input image sequence
+        and the number of lags +2.
      */
-    unsigned long long _nx = nx / 2 + 1;
-    unsigned long long dim_t = max(length, (unsigned long long)(lags.size() + 2));
-    py::array_t<Scalar> out = py::array_t<Scalar>(2 * _nx * ny * dim_t);
-    auto p_out = out.mutable_data();
+    // Compute the length of the workspace
+    unsigned long long dim_t = max(img_data.length, sf_data.length);
+    // Create the output array and get the buffer info
+    py::array_t<Scalar> result = py::array_t<Scalar>(dim_t * sf_data.ny * sf_data.nx_half * 2ULL);
+    py::buffer_info result_info = result.request();
 
-    // ***Transfer data to GPU and compute fft2
-    compute_fft2(p_img_seq,
-                 p_out,
-                 p_window,
-                 is_window,
-                 width,
-                 height,
-                 length,
-                 nx,
-                 ny,
-                 num_fft2,
-                 pitch_buff,
-                 pitch_nx);
+    // Get pointer to the output array
+    Scalar *result_ptr = static_cast<Scalar *>(result_info.ptr);
 
-    // ***Compute image structure function
-    structure_function_fft(p_out,
+    // Compute the FFT2 on the GPU
+    compute_fft2(img_seq_ptr,
+                 result_ptr,
+                 window_ptr,
+                 img_data,
+                 sf_data,
+                 exec_params,
+                 pitch_data);
+
+    // Compute the structure function on the GPU
+    structure_function_fft(result_ptr,
                            lags,
-                           length,
-                           nx,
-                           ny,
-                           nt,
-                           num_chunks,
-                           pitch_q,
-                           pitch_t,
-                           pitch_nt);
+                           img_data,
+                           sf_data,
+                           exec_params,
+                           pitch_data);
 
-    // ***Convert raw output to shifted image structure function
-    make_shift(p_out,
-               lags.size() + 2,
-               nx,
-               ny,
-               num_shift,
-               pitch_fs);
+    // Convert raw output to shifted structure function
+    make_shift(result_ptr,
+               img_data,
+               sf_data,
+               exec_params,
+               pitch_data);
 
-    // ***Resize output
-    // the full size of the image structure function is
-    // nx * ny * #(lags)
-    out.resize({(unsigned long long)(lags.size() + 2), ny, _nx});
+    // Reshape and resize the output array
+    // The full size of the structure function is
+    // nx * ny * (#lags + 2)
+    result.resize({sf_data.length, sf_data.ny, sf_data.nx_half});
 
-    // release pointer to output array
-    p_out = NULL;
-
-    // ***Return result to python
-    return out;
+    // Return the output
+    return result;
 }
-
-/*!
-    Set CUDA device to be used.
-    Throws a runtime_error if the device id is out of bounds.
-*/
-void set_device(int gpu_id)
-{
-    int dev_num;
-    cudaGetDeviceCount(&dev_num);
-    if (gpu_id < dev_num)
-    {
-        int valid_devices[] = {gpu_id};
-        cudaSetValidDevices(valid_devices, 1);
-    }
-    else
-    {
-        throw std::runtime_error("Device id out of bounds. Choose id < " + to_string(dev_num));
-    }
-}
-
-/*!
-    Export ddm_cuda functions to python.
- */
-void export_ddm_cuda(py::module &m)
-{
-    m.def("set_device", &set_device);
-    // m.def("get_device_pitch", &get_device_pitch);
-    // m.def("get_device_fft2_mem", &get_device_fft2_mem);
-    // m.def("get_device_fft_mem", &get_device_fft_mem);
-    // Leave function export in this order!
-    m.def("ddm_diff_cuda", &ddm_diff_cuda<uint8_t>, py::return_value_policy::take_ownership);
-    m.def("ddm_diff_cuda", &ddm_diff_cuda<int16_t>, py::return_value_policy::take_ownership);
-    m.def("ddm_diff_cuda", &ddm_diff_cuda<uint16_t>, py::return_value_policy::take_ownership);
-    m.def("ddm_diff_cuda", &ddm_diff_cuda<int32_t>, py::return_value_policy::take_ownership);
-    m.def("ddm_diff_cuda", &ddm_diff_cuda<uint32_t>, py::return_value_policy::take_ownership);
-    m.def("ddm_diff_cuda", &ddm_diff_cuda<int64_t>, py::return_value_policy::take_ownership);
-    m.def("ddm_diff_cuda", &ddm_diff_cuda<uint64_t>, py::return_value_policy::take_ownership);
-    m.def("ddm_diff_cuda", &ddm_diff_cuda<float>, py::return_value_policy::take_ownership);
-    m.def("ddm_diff_cuda", &ddm_diff_cuda<double>, py::return_value_policy::take_ownership);
-    m.def("ddm_fft_cuda", &ddm_fft_cuda<uint8_t>, py::return_value_policy::take_ownership);
-    m.def("ddm_fft_cuda", &ddm_fft_cuda<int16_t>, py::return_value_policy::take_ownership);
-    m.def("ddm_fft_cuda", &ddm_fft_cuda<uint16_t>, py::return_value_policy::take_ownership);
-    m.def("ddm_fft_cuda", &ddm_fft_cuda<int32_t>, py::return_value_policy::take_ownership);
-    m.def("ddm_fft_cuda", &ddm_fft_cuda<uint32_t>, py::return_value_policy::take_ownership);
-    m.def("ddm_fft_cuda", &ddm_fft_cuda<int64_t>, py::return_value_policy::take_ownership);
-    m.def("ddm_fft_cuda", &ddm_fft_cuda<uint64_t>, py::return_value_policy::take_ownership);
-    m.def("ddm_fft_cuda", &ddm_fft_cuda<float>, py::return_value_policy::take_ownership);
-    m.def("ddm_fft_cuda", &ddm_fft_cuda<double>, py::return_value_policy::take_ownership);
-}
+template py::array_t<Scalar> PYBIND11_EXPORT ddm_fft_cuda(py::array_t<uint8_t, py::array::c_style> img_seq,
+                                                          vector<unsigned int> lags,
+                                                          unsigned long long nx,
+                                                          unsigned long long ny,
+                                                          unsigned long long nt,
+                                                          py::array_t<Scalar, py::array::c_style> window);
+template py::array_t<Scalar> PYBIND11_EXPORT ddm_fft_cuda(py::array_t<int16_t, py::array::c_style> img_seq,
+                                                          vector<unsigned int> lags,
+                                                          unsigned long long nx,
+                                                          unsigned long long ny,
+                                                          unsigned long long nt,
+                                                          py::array_t<Scalar, py::array::c_style> window);
+template py::array_t<Scalar> PYBIND11_EXPORT ddm_fft_cuda(py::array_t<uint16_t, py::array::c_style> img_seq,
+                                                          vector<unsigned int> lags,
+                                                          unsigned long long nx,
+                                                          unsigned long long ny,
+                                                          unsigned long long nt,
+                                                          py::array_t<Scalar, py::array::c_style> window);
+template py::array_t<Scalar> PYBIND11_EXPORT ddm_fft_cuda(py::array_t<int32_t, py::array::c_style> img_seq,
+                                                          vector<unsigned int> lags,
+                                                          unsigned long long nx,
+                                                          unsigned long long ny,
+                                                          unsigned long long nt,
+                                                          py::array_t<Scalar, py::array::c_style> window);
+template py::array_t<Scalar> PYBIND11_EXPORT ddm_fft_cuda(py::array_t<uint32_t, py::array::c_style> img_seq,
+                                                          vector<unsigned int> lags,
+                                                          unsigned long long nx,
+                                                          unsigned long long ny,
+                                                          unsigned long long nt,
+                                                          py::array_t<Scalar, py::array::c_style> window);
+template py::array_t<Scalar> PYBIND11_EXPORT ddm_fft_cuda(py::array_t<int64_t, py::array::c_style> img_seq,
+                                                          vector<unsigned int> lags,
+                                                          unsigned long long nx,
+                                                          unsigned long long ny,
+                                                          unsigned long long nt,
+                                                          py::array_t<Scalar, py::array::c_style> window);
+template py::array_t<Scalar> PYBIND11_EXPORT ddm_fft_cuda(py::array_t<uint64_t, py::array::c_style> img_seq,
+                                                          vector<unsigned int> lags,
+                                                          unsigned long long nx,
+                                                          unsigned long long ny,
+                                                          unsigned long long nt,
+                                                          py::array_t<Scalar, py::array::c_style> window);
+template py::array_t<Scalar> PYBIND11_EXPORT ddm_fft_cuda(py::array_t<float, py::array::c_style> img_seq,
+                                                          vector<unsigned int> lags,
+                                                          unsigned long long nx,
+                                                          unsigned long long ny,
+                                                          unsigned long long nt,
+                                                          py::array_t<Scalar, py::array::c_style> window);
+template py::array_t<Scalar> PYBIND11_EXPORT ddm_fft_cuda(py::array_t<double, py::array::c_style> img_seq,
+                                                          vector<unsigned int> lags,
+                                                          unsigned long long nx,
+                                                          unsigned long long ny,
+                                                          unsigned long long nt,
+                                                          py::array_t<Scalar, py::array::c_style> window);
