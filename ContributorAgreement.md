@@ -2,8 +2,8 @@
 
 The FastDDM project, hosted at
 [https://github.com/somexlab/fastddm](https://github.com/somexlab/fastddm) at University of Vienna,
-Faculty of Physics, Computational and Soft Matter Physics unit, operates under the GPLv3 open-source
-license (Administrator).
+Faculty of Physics, Computational and Soft Matter Physics group, operates under the GPLv3
+open-source license (Administrator).
 When you submit code changes, your contributions automatically fall under the same GPLv3 license
 that applies to the entire project. This means that you accept the terms and conditions of that
 GPLv3 license and your contribution complies with these. If you have any concerns, feel free to
