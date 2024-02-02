@@ -24,19 +24,11 @@ endif()
 list(REVERSE _cuda_arch_list_sorted)
 list(GET _cuda_arch_list_sorted 0 _cuda_max_arch)
 
-if(${CMAKE_VERSION} VERSION_GREATER_EQUAL 3.18)
-    # CMAKE 3.18 handles CUDA ARCHITECTURES with CMAKE_CUDA_ARCHITECTURES
-    set(CMAKE_CUDA_ARCHITECTURES "")
+# CMAKE 3.18 handles CUDA ARCHITECTURES with CMAKE_CUDA_ARCHITECTURES
+set(CMAKE_CUDA_ARCHITECTURES "")
 
-    foreach(_cuda_arch ${CUDA_ARCH_LIST})
-        list(APPEND CMAKE_CUDA_ARCHITECTURES "${_cuda_arch}-real")
-    endforeach()
+foreach(_cuda_arch ${CUDA_ARCH_LIST})
+    list(APPEND CMAKE_CUDA_ARCHITECTURES "${_cuda_arch}-real")
+endforeach()
 
-    list(APPEND CMAKE_CUDA_ARCHITECTURES "${_cuda_max_arch}-virtual")
-else()
-    foreach(_cuda_arch ${CUDA_ARCH_LIST})
-        set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -gencode=arch=compute_${_cuda_arch},code=sm_${_cuda_arch}")
-    endforeach()
-
-    set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -gencode=arch=compute_${_cuda_max_arch},code=compute_${_cuda_max_arch}")
-endif()
+list(APPEND CMAKE_CUDA_ARCHITECTURES "${_cuda_max_arch}-virtual")
