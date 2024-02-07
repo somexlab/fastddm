@@ -27,6 +27,7 @@ dependencies = [
     'scikit-image',
     'tifffile',
     'nd2reader',
-    'pandas'
+    'pandas',
+    'lmfit'
 ]
 dynamic = [ "license", "version" ]
