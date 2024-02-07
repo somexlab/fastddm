@@ -97,13 +97,9 @@ if(ENABLE_CUDA)
     add_library(fddm_cuda SHARED ${fddm_gpu_SOURCES} ${fddm_gpu_cu_SOURCES})
     target_link_libraries(fddm_cuda PUBLIC ${PYTHON_LIBRARIES} CUDA::cufft CUDA::nvml)
 
-    if(${CMAKE_VERSION} VERSION_LESS "3.18.0")
-        target_compile_options(fddm_cuda PUBLIC $<$<COMPILE_LANGUAGE:CUDA>:-arch=sm_${_cuda_min_arch}>)
-    else()
-        set_target_properties(fddm_cuda PROPERTIES
-            CUDA_ARCHITECTURES ${_cuda_min_arch}
-        )
-    endif()
+    set_target_properties(fddm_cuda PROPERTIES
+        CUDA_ARCHITECTURES ${_cuda_min_arch}
+    )
 
     if(SINGLE_PRECISION)
         target_compile_definitions(fddm_cuda PUBLIC SINGLE_PRECISION)

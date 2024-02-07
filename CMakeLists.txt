@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.18)
 
 option(ENABLE_CPP "Set to ON to compile with C++ support" OFF)
 option(ENABLE_CUDA "Set to ON to compile with CUDA support" OFF)
@@ -21,11 +21,7 @@ if(APPLE)
     SET(CMAKE_BUILD_WITH_INSTALL_RPATH ON)
 else()
     # Use ORIGIN as the build rpath
-    IF(${CMAKE_VERSION} VERSION_LESS "3.14")
-        SET(CMAKE_INSTALL_RPATH "$ORIGIN")
-    ELSE()
-        SET(CMAKE_BUILD_RPATH_USE_ORIGIN TRUE)
-    ENDIF()
+    SET(CMAKE_BUILD_RPATH_USE_ORIGIN TRUE)
 endif()
 
 # The library should be in a folder with the same name to make it easier to use python distutils
@@ -47,7 +43,6 @@ if(ENABLE_CPP)
     # Set C++ standard
     set(CMAKE_CXX_STANDARD 14)
     set(CMAKE_CXX_STANDARD_REQUIRED ON)
-    #set(CMAKE_CXX_EXTENSIONS OFF)
 endif(ENABLE_CPP)
 
 # Enable CUDA
@@ -58,11 +53,7 @@ if(ENABLE_CUDA)
     set(CMAKE_CUDA_STANDARD 11)
 
     # Find CUDA Toolkit
-    if(CMAKE_VERSION VERSION_LESS "3.17")
-        include(src/FindCUDALibs.cmake)
-    else()
-        find_package(CUDAToolkit REQUIRED)
-    endif()
+    find_package(CUDAToolkit REQUIRED)
 endif(ENABLE_CUDA)
 
 # Add source subdirectory
