@@ -8,7 +8,9 @@
 import numpy as np
 
 IS_CPP_ENABLED = True  # configured by CMake
-IS_CUDA_ENABLED = True  # configured by CMake
+IS_CUDA_ENABLED = False  # configured by CMake
 IS_SINGLE_PRECISION = False  # configured by CMake
+
+CUDA_VERSION = ""  # configured by CMake
 
 DTYPE = np.float32 if IS_SINGLE_PRECISION else np.float64

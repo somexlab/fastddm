@@ -28,7 +28,11 @@ if IS_CUDA_ENABLED:
     if sys.platform == "win32":
         import os
 
-        os.add_dll_directory(os.path.join(os.environ["CUDA_PATH"], "bin"))
+        # Get the CUDA Toolkit version
+        cuda_version = CUDA_VERSION.replace(".", "_")
+        os.add_dll_directory(
+            os.path.join(os.environ["CUDA_PATH_V" + cuda_version], "bin")
+        )
 
 from ._ddm import ddm
 from .azimuthalaverage import azimuthal_average
