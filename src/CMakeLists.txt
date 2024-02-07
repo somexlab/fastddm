@@ -141,7 +141,6 @@ endif(ENABLE_CUDA)
 # Set Python files
 set(python_SOURCES
     python/__init__.py
-    python/_config.py
     python/_fftopt.py
     python/imagestructurefunction.py
     python/azimuthalaverage.py
@@ -191,6 +190,10 @@ configure_files(python_SOURCES ${FASTDDM_OUTPUT_DIR})
 # Manually configure the make_install_setup.py
 configure_file(python/make_install_setup.py
     ${FASTDDM_OUTPUT_DIR}/setup.py)
+
+# Manually configure the _config.py.in
+configure_file(python/_config.py.in
+    ${FASTDDM_OUTPUT_DIR}/_config.py)
 
 # Install the library
 install(CODE "execute_process(COMMAND ${PYTHON_EXECUTABLE} -m pip install ${FASTDDM_OUTPUT_DIR})")
