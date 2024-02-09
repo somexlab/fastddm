@@ -43,23 +43,25 @@ The options ``ENABLE_CPP`` and ``ENABLE_CUDA`` each require additional softwares
 
 **General requirements:**
 
-- C++14 capable compiler (tested with ``gcc``, ``clang``, and ``msvc``)
 - Python >= 3.8
 - Pip
+- C++14 capable compiler (tested with ``gcc``, ``clang``, and ``msvc``)
 
 Make sure that Python is available from your ``PATH``.
 
 .. tabs::
 
-   .. group-tab:: Linux
+   .. group-tab:: Ubuntu
 
       ``gcc`` can be installed by running from the terminal:
 
       .. code-block:: bash
-      
+
+          $ sudo apt update      
           $ sudo apt install build-essentials
 
-      Ensure that the compiler was succesfully installed by running
+      If you are using other Linux distros, look for the appropriate package and package manager.
+      Ensure that the compiler was succesfully installed by running:
 
       .. code-block:: bash
 
@@ -67,13 +69,13 @@ Make sure that Python is available from your ``PATH``.
 
    .. group-tab:: Mac OSX
 
-      ``clang`` can be installed on macOS by running from the terminal
+      ``clang`` can be installed on macOS by running from the terminal:
 
       .. code-block:: bash
 
           $ xcode-select --install
 
-      Ensure that the compiler was succesfully installed by running
+      Ensure that the compiler was succesfully installed by running:
 
       .. code-block:: bash
 
@@ -85,7 +87,7 @@ Make sure that Python is available from your ``PATH``.
       enabling the ``Desktop development with C++`` option.
 
       To ensure that the compiler was succesfully installed, open the Developer Command Prompt for VS
-      and execute
+      and execute:
 
       .. code-block:: shell
 
@@ -117,7 +119,7 @@ Obtain the source
 
 Clone using Git_::
 
-  $ git clone https://github.com/somexlab/fastddm
+  $ git clone https://github.com/somexlab/fastddm.git
 
 Release tarballs are also available as `GitHub release`_ assets.
 
@@ -142,9 +144,9 @@ These must be set before installation.
 
 .. tabs::
 
-   .. group-tab:: Linux and Mac OSX
+   .. group-tab:: Ubuntu and Mac OSX
 
-      Options can be set through the terminal by running the following command
+      Options can be set through the terminal by running the following command:
 
       .. code-block:: bash
 
@@ -158,7 +160,7 @@ These must be set before installation.
 
    .. group-tab:: Windows
 
-      Options can be set through the terminal by running the following command
+      Options can be set through the PowerShell by running the following command:
 
       .. code-block:: shell
 
