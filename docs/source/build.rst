@@ -45,9 +45,10 @@ The options ``ENABLE_CPP`` and ``ENABLE_CUDA`` each require additional softwares
 
 - Python >= 3.8
 - Pip
-- C++14 capable compiler (tested with ``gcc``, ``clang``, and ``msvc``)
+- C++14 capable compiler (tested with ``gcc`` [Ubuntu], ``clang`` [MacOS], and ``msvc`` [Windows])
 
 Make sure that Python is available from your ``PATH``.
+Follow the instructions below to obtain the compiler for your system.
 
 .. tabs::
 
@@ -131,8 +132,10 @@ Release tarballs are also available as `GitHub release`_ assets.
 Configure
 ---------
 
-**FastDDM**'s cmake configuration accepts a number of options.
-These must be set before installation.
+**FastDDM**'s cmake configuration accepts a number of options that you can use to customize your
+installation.
+For example, you can enable the C++ and/or CUDA core, or select single precision calculation.
+These options must be set before installation.
 
 - ``ENABLE_CPP`` - When enabled, build the core C++ library (default: ``OFF``).
 - ``ENABLE_CUDA`` - When enabled, build the core CUDA library (default: ``OFF``).
@@ -144,13 +147,27 @@ These must be set before installation.
 
 .. tabs::
 
-   .. group-tab:: Ubuntu and Mac OSX
+   .. group-tab:: Ubuntu
 
       Options can be set through the terminal by running the following command:
 
       .. code-block:: bash
 
-        $ export <variable>=ON
+        $ export <variable>=<value>
+
+      For example, to set ``ENABLE_CPP`` use:
+
+      .. code-block:: bash
+
+        $ export ENABLE_CPP=ON
+
+   .. group-tab:: Mac OSX
+
+      Options can be set through the terminal by running the following command:
+
+      .. code-block:: bash
+
+        $ export <variable>=<value>
 
       For example, to set ``ENABLE_CPP`` use:
 
@@ -164,7 +181,7 @@ These must be set before installation.
 
       .. code-block:: shell
 
-          > $env:<variable> = 'ON'
+          > $env:<variable> = '<value>'
 
       For example, to set ``ENABLE_CPP`` use:
 
@@ -177,7 +194,7 @@ These must be set before installation.
 Build and install the package
 -----------------------------
 
-To build and install from source, run the following command in a terminal from within the
+To build and install from source, run the following command in a terminal from within the:
 source directory:
 
 .. code-block:: bash
@@ -201,7 +218,7 @@ To test the installation, start python and try importing the package:
 Build the documentation
 -----------------------
 
-To build the documentation, run the following command from within the source directory
+To build the documentation, run the following command from within the source directory:
 
 .. code-block:: bash
 
