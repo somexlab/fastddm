@@ -94,6 +94,12 @@ Follow the instructions below to obtain the compiler for your system.
 
           > cl
 
+.. warning::
+     
+   If the installation fails, delete the `build` and `fastddm.egg-info` directories created by the
+   installer before making a new attempt!
+   This ensures that CMake generates fresh makefiles.
+
 **For GPU execution** (required when ``ENABLE_CUDA=ON``):
 
 - `NVIDIA CUDA Toolkit`_ >= 9.0
