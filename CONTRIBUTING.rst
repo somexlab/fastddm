@@ -4,7 +4,7 @@ Contributing
 Contributions are welcomed via `pull requests on GitHub
 <https://github.com/somexlab/fastddm/pulls>`__. Contact the **FastDDM** developers before
 starting work to ensure it meshes well with the planned development direction and standards set for
-the project.
+the project. (Contact Roberto Cerbino via email at roberto.cerbino@univie.ac.at.)
 
 Features
 --------
@@ -47,23 +47,19 @@ Add your Python file to the installer
 
 Python modules must be added to the `src/python` directory. To make a module installable,
 add it to the `src/CMakeLists.txt` file.
-Scroll down until you find a list of `configure_file(...)`.
-Add your file to the list following the syntax of the other items:
+Scroll down until you find
 
 .. code:: cmake
     
-    configure_file(python/<your_file>.py
-        ${FASTDDM_OUTPUT_DIR}/<your_file>.py)
+    set(python_SOURCES
+        python/__init__.py
+        ...
+    )
 
-Optimize for the current GPU generation
-"""""""""""""""""""""""""""""""""""""""
-
-Write, test, and optimize your GPU kernels on the latest generation of GPUs.
+Add your file to the list.
 
 Version control
 ---------------
-
-Guidelines for version control here...
 
 When working on the issue, create a new branch starting from the latest
 milestone branch or from `main`.
@@ -81,7 +77,8 @@ After merging the latest release into `main`, open a new WIP release PR. Do so b
 Merge release into `main`
 """""""""""""""""""""""""
 
-#. update changelog with the main modifications of the release you want to merge. Follow the convention in the `CHANGELOG.md`.
+#. update changelog with the main modifications of the release you want to merge.
+   Follow the convention in the `CHANGELOG.md`.
 #. Merge the PR to main & close the corresponding milestone.
 #. Create a tag via "create draft release" and name it according to the release version.
 
@@ -95,7 +92,7 @@ Agree to the Contributor Agreement
 """"""""""""""""""""""""""""""""""
 
 All contributors must agree to the Contributor Agreement before their pull request can be merged.
-WE NEED A CONTRIBUTOR AGREEMENT!!!
+Send an email to roberto.cerbino@univie.ac.at to confirm.
 
 Source code
 -----------
