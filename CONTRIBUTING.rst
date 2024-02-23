@@ -133,7 +133,7 @@ User documentation
 Write user documentation
 """"""""""""""""""""""""
 
-Document public-facing API with Python docstrings in Google style.
+Document public-facing API with Python docstrings in NumPy style.
 
 Document version status
 """""""""""""""""""""""
