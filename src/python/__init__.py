@@ -29,9 +29,10 @@ if IS_CUDA_ENABLED:
         import os
 
         # Get the CUDA Toolkit version
-        cuda_version = CUDA_VERSION.replace(".", "_")
+        cuda_version = CUDA_VERSION.split(".")
+        cuda_v_major, cuda_v_minor = cuda_version[:2]
         os.add_dll_directory(
-            os.path.join(os.environ["CUDA_PATH_V" + cuda_version], "bin")
+            os.path.join(os.environ[f"CUDA_PATH_V{cuda_v_major}_{cuda_v_minor}"], "bin")
         )
 
 from ._ddm import ddm
