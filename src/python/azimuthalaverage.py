@@ -640,6 +640,164 @@ def _azimuthal_average(
     return AzimuthalAverage(az_avg, err, k, tau.astype(DTYPE), bin_edges)
 
 
+def azimuthal_average_array(
+    data: np.ndarray,
+    dist: np.ndarray,
+    bins: Optional[Union[int, Iterable[float]]] = 10,
+    range: Optional[Tuple[float, float]] = None,
+    mask: Optional[np.ndarray] = None,
+    weights: Optional[np.ndarray] = None,
+    counts: Optional[np.ndarray] = None,
+    eval_err: Optional[bool] = True,
+) -> Tuple[np.ndarray, ...]:
+    """Compute the azimuthal average of a 3D array.
+
+    Parameters
+    ----------
+    data : numpy.ndarray
+        The 3D input array.
+    dist : numpy.ndarray
+        A 2D array storing the distances from a center. The array must have the
+        same y, x shape as `data`.
+    bins : Union[int, Iterable[float]], optional
+        If `bins` is an int, it defines the number of equal-width bins in the
+        given range (10, by default). If `bins` is a sequence, it defines a
+        monotonically increasing array of bin edges, including the rightmost
+        edge, allowing for non-uniform bin widths.
+    range : (float, float), optional
+        The lower and upper range of the bins. If not provided, range is simply
+        `(dist.min(), dist.max())`. Values outside the range are ignored.
+    mask : numpy.ndarray, optional
+        If a boolean `mask` is given, it is used to exclude points from
+        the azimuthal average (where False is set). The array must have the
+        same shape of `dist`. If `mask` is not of boolean type, it is cast
+        and a warning is raised.
+    weights : numpy.ndarray, optional
+        An array of weights, of the same shape as `dist`. Each
+        value in `data` and `dist` only contributes its associated weight
+        (instead of 1).
+    counts : numpy.ndarray, optional
+        An array of bin counts, of the same shape as `dist`.
+        Each value in `data` and `dist` is sampled its associated number of
+        counts (instead of 1).
+    eval_err : bool, optional
+        If True, the uncertainty is computed. Default is True.
+
+    Returns
+    -------
+    Tuple[numpy.ndarray, numpy.ndarray, numpy.ndarray]
+        The distances, the azimuthal average, and the uncertainty of the
+        azimuthal average.
+
+    Raises
+    ------
+    ValueError
+        If dist, mask, weights, or counts are not compatible with shape of data.
+    """
+    # read data shape
+    dim_y, dim_x = data.shape[-2:]
+
+    # check dist
+    if dist.shape != (dim_y, dim_x):
+        raise ValueError("dist shape must be compatible with data shape.")
+
+    # check mask
+    if mask is not None:
+        if mask.shape != dist.shape:
+            raise ValueError("mask shape and dist shape must be the same.")
+        if mask.dtype != bool:
+            mask = mask.astype(bool)
+            warnings.warn("mask is not of boolean type, it is cast to bool.")
+    else:
+        mask = np.full((dist.shape), True)
+
+    # check weights
+    if weights is not None:
+        if weights.shape != dist.shape:
+            raise ValueError("weights shape and dist shape must be the same.")
+    else:
+        weights = np.ones(dist.shape, dtype=DTYPE)
+
+    # check counts
+    if counts is not None:
+        if counts.shape != dist.shape:
+            raise ValueError("counts shape and dist shape must be the same.")
+    else:
+        counts = np.ones(dist.shape, dtype=DTYPE)
+
+    # check range
+    if range is None:
+        x_min = np.min(dist)
+        x_max = np.max(dist)
+    else:
+        x_min, x_max = range
+        if x_min > x_max:
+            x_min, x_max = x_max, x_min
+
+    # compute bin edges
+    if isinstance(bins, int):
+        bin_edges = np.linspace(x_min, x_max, bins, dtype=DTYPE)
+    elif isinstance(bins, Iterable):
+        bin_edges = np.cumsum(np.concatenate(([x_min], bins)), dtype=DTYPE)
+        bins = len(bins) + 1
+    else:
+        raise ValueError("bins must be an int or an iterable.")
+
+    # digitize dist
+    bin_indices = np.searchsorted(bin_edges, dist)
+
+    # apply mask
+    bin_indices[~mask] = -1
+
+    # correct weights for counts
+    wi_corr = weights * counts
+
+    # compute squared weights and correct for counts
+    if eval_err:
+        wi2_corr = weights**2 * counts
+
+    # initialize outputs
+    x = np.zeros(bins, dtype=DTYPE)
+    avg = np.full((bins, len(data)), np.nan, dtype=DTYPE)
+    if eval_err:
+        err = np.full((bins, len(data)), np.nan, dtype=DTYPE)
+    else:
+        err = None
+
+    x[0] = bin_edges[0]
+    x[1:] = 0.5 * (bin_edges[:-1] + bin_edges[1:])
+
+    for i in np.arange(bins):
+        # get indices
+        idx_y, idx_x = np.where(bin_indices == i)
+
+        # sum weights
+        sum_wi = np.sum(wi_corr[idx_y, idx_x])
+
+        if sum_wi > 0:
+            # compute weighted average
+            x[i] = np.sum(dist[idx_y, idx_x] * wi_corr[idx_y, idx_x]) / sum_wi
+            avg[i] = (
+                np.sum(data[:, idx_y, idx_x] * wi_corr[idx_y, idx_x], axis=1) / sum_wi
+            )
+
+            # compute uncertainty
+            if eval_err:
+                # sum squared weights
+                sum_wi2 = np.sum(wi2_corr[idx_y, idx_x])
+
+                err_sq = np.sum(
+                    wi_corr[idx_y, idx_x]
+                    * (data[:, idx_y, idx_x] - avg[i, np.newaxis].T) ** 2,
+                    axis=1,
+                )
+                err_sq /= sum_wi - (sum_wi2 / sum_wi)
+
+                err[i] = np.sqrt(err_sq)
+
+    return x, avg, err
+
+
 class AAWriter(Writer):
     """FastDDM azimuthal average writer class.
     Inherits from ``Writer``.
@@ -1013,9 +1171,7 @@ class AAParser(Parser):
         return metadata
 
 
-def melt(az_avg1: AzimuthalAverage,
-         az_avg2: AzimuthalAverage
-         ) -> AzimuthalAverage:
+def melt(az_avg1: AzimuthalAverage, az_avg2: AzimuthalAverage) -> AzimuthalAverage:
     """Melt two azimuthal averages into one object.
 
     The melt is performed as follows:
