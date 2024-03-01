@@ -200,7 +200,7 @@ These options must be set before installation.
 Build and install the package
 -----------------------------
 
-To build and install from source, run the following command in a terminal from within the:
+To build and install from source, run the following command in a terminal from within the
 source directory:
 
 .. code-block:: bash
