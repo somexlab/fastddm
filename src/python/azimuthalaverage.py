@@ -295,9 +295,9 @@ def azimuthal_average_array(
     where :math:`w_i` is the weight given to the pixel :math:`i`.
     The sum runs over the elements :math:`i \in \mathcal{S}_k`, where
     :math:`\mathcal{S}_k` is the subset of elements :math:`i` with distance
-    `dist` in the bin.
-    The `mask` allows to exclude certain pixels from the calculation.
-    A pixel :math:`i` is counted as many times as indicated by `counts`.
+    ``dist`` in the bin.
+    The ``mask`` allows to exclude certain pixels from the calculation.
+    A pixel :math:`i` is counted as many times as indicated by ``counts``.
     The uncertainty is calculated as the square root of the unbiased variance
     for weighed measures
 
@@ -498,7 +498,7 @@ def azimuthal_average(
     The sum runs over the elements :math:`k \in \mathcal{S}_i`, where
     :math:`\mathcal{S}_i` is the subset of wavevector :math:`k` with modulus
     in the bin :math:`i`.
-    The `mask` allows to exclude certain wavevectors from the calculation.
+    The ``mask`` allows to exclude certain wavevectors from the calculation.
     The uncertainty is calculated as the square root of the unbiased variance
     for weighed measures
 
