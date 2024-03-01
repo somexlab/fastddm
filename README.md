@@ -1,5 +1,6 @@
 # `FastDDM` :rocket:
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
+![Python](https://img.shields.io/badge/python-3.8%20%7C%203.11-blue)
 
 **FastDDM** is a Python package for the analysis of microscopy image sequences using Differential Dynamic Microscopy on CPU and GPU.
 The features implemented are targeted at the experimental soft matter research community dealing with inert and active/biological samples.
