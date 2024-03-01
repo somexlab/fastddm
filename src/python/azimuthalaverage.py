@@ -650,7 +650,26 @@ def azimuthal_average_array(
     counts: Optional[np.ndarray] = None,
     eval_err: Optional[bool] = True,
 ) -> Tuple[np.ndarray, ...]:
-    """Compute the azimuthal average of a 3D array.
+    r"""Compute the azimuthal average of a 3D array.
+
+    For every bin :math:`k`, the average is calculated as
+
+    .. math::
+
+        \bar{x}_k = \frac{\sum_i w_i x_i}{\sum_i w_i} ,
+
+    where :math:`w_i` is the weight given to the pixel :math:`i`.
+    The sum runs over the elements :math:`i \in \mathcal{S}_k`, where
+    :math:`\mathcal{S}_k` is the subset of elements :math:`i` with distance
+    `dist` in the bin.
+    The `mask` allows to exclude certain pixels from the calculation.
+    A pixel :math:`i` is counted as many times as indicated by `counts`.
+    The uncertainty is calculated as the square root of the unbiased variance
+    for weighed measures
+
+    .. math::
+
+        \text{VAR}(x_k) = \frac{\sum_i w_i (x_i - \bar{x}_k)^2}{\sum_i w_i - \sum_i w_i^2 / \sum_i w_i}.
 
     Parameters
     ----------
@@ -673,7 +692,7 @@ def azimuthal_average_array(
         same shape of `dist`. If `mask` is not of boolean type, it is cast
         and a warning is raised.
     weights : numpy.ndarray, optional
-        An array of weights, of the same shape as `dist`. Each
+        An array of non-negative weights, of the same shape as `dist`. Each
         value in `data` and `dist` only contributes its associated weight
         (instead of 1).
     counts : numpy.ndarray, optional
@@ -704,20 +723,21 @@ def azimuthal_average_array(
 
     # check mask
     if mask is not None:
+        _mask = mask.copy()
         if mask.shape != dist.shape:
             raise ValueError("mask shape and dist shape must be the same.")
         if mask.dtype != bool:
-            mask = mask.astype(bool)
+            _mask = mask.astype(bool)
             warnings.warn("mask is not of boolean type, it is cast to bool.")
     else:
-        mask = np.full((dist.shape), True)
+        _mask = np.full((dist.shape), True)
 
     # check weights
     if weights is not None:
         if weights.shape != dist.shape:
             raise ValueError("weights shape and dist shape must be the same.")
-    else:
-        weights = np.ones(dist.shape, dtype=DTYPE)
+        if np.any(weights < 0):
+            raise ValueError("weights must be non-negative.")
 
     # check counts
     if counts is not None:
@@ -752,13 +772,13 @@ def azimuthal_average_array(
     # digitize dist
     bin_indices = np.searchsorted(bin_edges, dist)
 
-    # apply mask
-    bin_indices[~mask] = -1
-    # remove also values outside the range
-    bin_indices[(bin_indices == n_bins) | (dist < x_min)] = -1
+    # update mask
+    _mask[(bin_indices == n_bins) | (dist < x_min)] = False
 
     # correct weights for counts
-    wi_corr = weights * counts
+    wi_corr = counts.astype(DTYPE)
+    if weights is not None:
+        wi_corr *= weights
 
     # initialize outputs
     x = np.zeros(n_bins, dtype=DTYPE)
@@ -768,29 +788,28 @@ def azimuthal_average_array(
         err = np.zeros((n_bins, len(data)), dtype=DTYPE)
 
         # compute squared weights and correct for counts
-        wi2_corr = weights**2 * counts
+        wi2_corr = counts.astype(DTYPE)
+        if weights is not None:
+            wi2_corr *= weights**2
 
-    # prefill x using the mid point of the bin edges
-    # x[0] = bin_edges[0]
-    # x[1:] = 0.5 * (bin_edges[:-1] + bin_edges[1:])
+    # update mask
+    _mask[np.logical_not(wi_corr)] = False
 
     # calculate sum of weights
-    # we also append another value at the end of the array
-    # to simplify the loops and avoid nested if's
-    sum_wi = np.zeros(n_bins + 1, dtype=DTYPE)
-    sum_wi2 = np.zeros(n_bins + 1, dtype=DTYPE)
+    sum_wi = np.zeros(n_bins, dtype=DTYPE)
+    sum_wi2 = np.zeros(n_bins, dtype=DTYPE)
     for (i, j), bin_idx in np.ndenumerate(bin_indices):
-        if bin_idx >= 0:
+        if _mask[i, j]:
             sum_wi[bin_idx] += wi_corr[i, j]
             sum_wi2[bin_idx] += wi2_corr[i, j]
 
     # calculate the azimuthal average
     for (i, j), bin_idx in np.ndenumerate(bin_indices):
-        if sum_wi[bin_idx] > 0:
+        if _mask[i, j]:
             x[bin_idx] += dist[i, j] * wi_corr[i, j] / sum_wi[bin_idx]
             avg[bin_idx] += data[:, i, j] * wi_corr[i, j] / sum_wi[bin_idx]
     # replace missing values from average with nan
-    avg[sum_wi[:-1] == 0] = np.nan
+    avg[sum_wi == 0] = np.nan
 
     # replace values in k where sum_wi is 0 with bin edges mid points
     for bin_idx in np.arange(n_bins):
@@ -810,14 +829,14 @@ def azimuthal_average_array(
         # compute variance
         with np.errstate(divide="ignore", invalid="ignore"):
             for (i, j), bin_idx in np.ndenumerate(bin_indices):
-                if sum_wi[bin_idx] > 0:
+                if _mask[i, j]:
                     err[bin_idx] += (
                         wi_corr[i, j]
                         * (data[:, i, j] - avg[bin_idx]) ** 2
                         / bias_factor[bin_idx]
                     )
         # replace missing values with nan
-        err[sum_wi[:-1] == 0] = np.nan
+        err[sum_wi == 0] = np.nan
 
         # take square root
         np.sqrt(err, out=err)
@@ -835,26 +854,23 @@ def azimuthal_average_new(
 ) -> AzimuthalAverage:
     r"""Compute the azimuthal average of the image structure function.
 
-    For every (not masked out) :math:`k` wavevector in the :math:`i`-th bin,
-    the average is calculated as
+    For every bin :math:`i`, the average is calculated as
 
-    .. math:
+    .. math::
 
         \bar{x}_i = \frac{\sum_k w_k x_k}{\sum_k w_k} ,
 
     where :math:`w_k` is the weight given to the wavevector :math:`k`.
-    The uncertainty is calculated as the square root of the variance for
-    weighed measures
+    The sum runs over the elements :math:`k \in \mathcal{S}_i`, where
+    :math:`\mathcal{S}_i` is the subset of wavevector :math:`k` with modulus
+    in the bin :math:`i`.
+    The `mask` allows to exclude certain wavevectors from the calculation.
+    The uncertainty is calculated as the square root of the unbiased variance
+    for weighed measures
 
-    .. math:
+    .. math::
 
-        \text{Var}(x_i) = \left( \frac{\sum_k w_k x_k^2}{\sum_k w_k} - \bar{x}_i^2 \right) \frac{N_i}{N_i - 1} ,
-
-    where
-
-    .. math:
-
-        N_i = \frac{(\sum_k w_k)^2}{\sum_k w_k^2} .
+        \text{VAR}(x_i) = \frac{\sum_k w_k (x_k - \bar{x}_i)^2}{\sum_k w_k - \sum_k w_k^2 / \sum_k w_k}.
 
     Parameters
     ----------
