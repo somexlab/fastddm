@@ -311,27 +311,27 @@ def azimuthal_average_array(
         The 3D input array.
     dist : numpy.ndarray
         A 2D array storing the distances from a center. The array must have the
-        same y, x shape as `data`.
+        same y, x shape as ``data``.
     bins : Union[int, Iterable[float]], optional
-        If `bins` is an int, it defines the number of equal-width bins in the
-        given range (10, by default). If `bins` is a sequence, it defines a
+        If ``bins`` is an int, it defines the number of equal-width bins in the
+        given range (10, by default). If ``bins`` is a sequence, it defines a
         monotonically increasing array of bin edges, including the rightmost
         edge, allowing for non-uniform bin widths.
     range : (float, float), optional
         The lower and upper range of the bins. If not provided, range is simply
-        `(dist.min(), dist.max())`. Values outside the range are ignored.
+        ``(dist.min(), dist.max())``. Values outside the range are ignored.
     mask : numpy.ndarray, optional
-        If a boolean `mask` is given, it is used to exclude points from
+        If a boolean ``mask`` is given, it is used to exclude points from
         the azimuthal average (where False is set). The array must have the
-        same shape of `dist`. If `mask` is not of boolean type, it is cast
+        same shape of ``dist``. If ``mask`` is not of boolean type, it is cast
         and a warning is raised.
     weights : numpy.ndarray, optional
-        An array of non-negative weights, of the same shape as `dist`. Each
-        value in `data` and `dist` only contributes its associated weight
+        An array of non-negative weights, of the same shape as ``dist``. Each
+        value in ``data`` and ``dist`` only contributes its associated weight
         (instead of 1).
     counts : numpy.ndarray, optional
-        An array of bin counts, of the same shape as `dist`.
-        Each value in `data` and `dist` is sampled its associated number of
+        An array of bin counts, of the same shape as ``dist``.
+        Each value in ``data`` and ``dist`` is sampled its associated number of
         counts (instead of 1).
     eval_err : bool, optional
         If True, the uncertainty is computed. Default is True.
@@ -345,8 +345,8 @@ def azimuthal_average_array(
     Raises
     ------
     ValueError
-        If dist, mask, weights, or counts are not compatible with shape of
-        data.
+        If ``dist``, ``mask``, ``weights``, or ``counts`` are not compatible
+        with shape of ``data``.
     """
     # read data shape
     dim_y, dim_x = data.shape[-2:]
@@ -511,8 +511,8 @@ def azimuthal_average(
     img_str_func : ImageStructureFunction
         The image structure function.
     bins : Union[int, Iterable[float]], optional
-        If `bins` is an int, it defines the number of equal-width bins in the
-        given range (10, by default). If `bins` is a sequence, it defines a
+        If ``bins`` is an int, it defines the number of equal-width bins in the
+        given range (10, by default). If ``bins`` is a sequence, it defines a
         monotonically increasing array of bin edges, including the rightmost
         edge, allowing for non-uniform bin widths.
     range : Tuple[float, float], optional
