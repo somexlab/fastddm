@@ -19,6 +19,7 @@ to FastDDM's development and usefulness:
 - Roberto Cerbino
 - Fabio Giavazzi
 - Oleksandr Chepizhko
+- Jasmin Di Franco
 
 
 Fundings
