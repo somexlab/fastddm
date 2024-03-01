@@ -274,6 +274,210 @@ class AzimuthalAverage:
         return AzimuthalAverage(_data, _err, k, tau.astype(DTYPE), bin_edges)
 
 
+def azimuthal_average_array(
+    data: np.ndarray,
+    dist: np.ndarray,
+    bins: Optional[Union[int, Iterable[float]]] = 10,
+    range: Optional[Tuple[float, float]] = None,
+    mask: Optional[np.ndarray] = None,
+    weights: Optional[np.ndarray] = None,
+    counts: Optional[np.ndarray] = None,
+    eval_err: Optional[bool] = True,
+) -> Tuple[np.ndarray, ...]:
+    r"""Compute the azimuthal average of a 3D array.
+
+    For every bin :math:`k`, the average is calculated as
+
+    .. math::
+
+        \bar{x}_k = \frac{\sum_i w_i x_i}{\sum_i w_i} ,
+
+    where :math:`w_i` is the weight given to the pixel :math:`i`.
+    The sum runs over the elements :math:`i \in \mathcal{S}_k`, where
+    :math:`\mathcal{S}_k` is the subset of elements :math:`i` with distance
+    ``dist`` in the bin.
+    The ``mask`` allows to exclude certain pixels from the calculation.
+    A pixel :math:`i` is counted as many times as indicated by ``counts``.
+    The uncertainty is calculated as the square root of the unbiased variance
+    for weighed measures
+
+    .. math::
+
+        \text{VAR}(x_k) = \frac{\sum_i w_i (x_i - \bar{x}_k)^2}{\sum_i w_i - \sum_i w_i^2 / \sum_i w_i}.
+
+    Parameters
+    ----------
+    data : numpy.ndarray
+        The 3D input array.
+    dist : numpy.ndarray
+        A 2D array storing the distances from a center. The array must have the
+        same y, x shape as ``data``.
+    bins : Union[int, Iterable[float]], optional
+        If ``bins`` is an int, it defines the number of equal-width bins in the
+        given range (10, by default). If ``bins`` is a sequence, it defines a
+        monotonically increasing array of bin edges, including the rightmost
+        edge, allowing for non-uniform bin widths.
+    range : (float, float), optional
+        The lower and upper range of the bins. If not provided, range is simply
+        ``(dist.min(), dist.max())``. Values outside the range are ignored.
+    mask : numpy.ndarray, optional
+        If a boolean ``mask`` is given, it is used to exclude points from
+        the azimuthal average (where False is set). The array must have the
+        same shape of ``dist``. If ``mask`` is not of boolean type, it is cast
+        and a warning is raised.
+    weights : numpy.ndarray, optional
+        An array of non-negative weights, of the same shape as ``dist``. Each
+        value in ``data`` and ``dist`` only contributes its associated weight
+        (instead of 1).
+    counts : numpy.ndarray, optional
+        An array of bin counts, of the same shape as ``dist``.
+        Each value in ``data`` and ``dist`` is sampled its associated number of
+        counts (instead of 1).
+    eval_err : bool, optional
+        If True, the uncertainty is computed. Default is True.
+
+    Returns
+    -------
+    Tuple[numpy.ndarray, numpy.ndarray, numpy.ndarray, numpy.ndarray]
+        The azimuthal average, its uncertainty, the distances, and the bin
+        edges.
+
+    Raises
+    ------
+    ValueError
+        If ``dist``, ``mask``, ``weights``, or ``counts`` are not compatible
+        with shape of ``data``.
+    """
+    # read data shape
+    dim_y, dim_x = data.shape[-2:]
+
+    # check dist
+    if dist.shape != (dim_y, dim_x):
+        raise ValueError("dist shape must be compatible with data shape.")
+
+    # check mask
+    if mask is not None:
+        _mask = mask.copy()
+        if mask.shape != dist.shape:
+            raise ValueError("mask shape and dist shape must be the same.")
+        if mask.dtype != bool:
+            _mask = mask.astype(bool)
+            warnings.warn("mask is not of boolean type, it is cast to bool.")
+    else:
+        _mask = np.full((dist.shape), True)
+
+    # check weights
+    if weights is not None:
+        if weights.shape != dist.shape:
+            raise ValueError("weights shape and dist shape must be the same.")
+        if np.any(weights < 0):
+            raise ValueError("weights must be non-negative.")
+
+    # check counts
+    if counts is not None:
+        if counts.shape != dist.shape:
+            raise ValueError("counts shape and dist shape must be the same.")
+    else:
+        counts = np.ones(dist.shape, dtype=DTYPE)
+
+    # check range
+    if range is None:
+        x_min = np.min(dist)
+        x_max = np.max(dist)
+    else:
+        x_min, x_max = range
+        if x_min > x_max:
+            x_min, x_max = x_max, x_min
+
+    # compute bin edges
+    if isinstance(bins, int):
+        bin_edges = np.linspace(x_min, x_max, bins, dtype=DTYPE)
+        n_bins = bins
+    elif isinstance(bins, Iterable):
+        # check if it is a monotonically increasing array
+        if not np.all(bins[1:] >= bins[:-1]):
+            raise ValueError("bins must be monotonically increasing.")
+        bin_edges = bins.astype(DTYPE)
+        n_bins = len(bins)
+        x_min = bins[0]
+    else:
+        raise ValueError("bins must be an int or an iterable.")
+
+    # digitize dist
+    bin_indices = np.searchsorted(bin_edges, dist)
+
+    # update mask
+    _mask[(bin_indices == n_bins) | (dist < x_min)] = False
+
+    # correct weights for counts
+    wi_corr = counts.astype(DTYPE)
+    if weights is not None:
+        wi_corr *= weights
+
+    # initialize outputs
+    x = np.zeros(n_bins, dtype=DTYPE)
+    avg = np.zeros((n_bins, len(data)), dtype=DTYPE)
+    err = None
+    if eval_err:
+        err = np.zeros((n_bins, len(data)), dtype=DTYPE)
+
+        # compute squared weights and correct for counts
+        wi2_corr = counts.astype(DTYPE)
+        if weights is not None:
+            wi2_corr *= weights**2
+
+    # update mask
+    _mask[np.logical_not(wi_corr)] = False
+
+    # calculate sum of weights
+    sum_wi = np.zeros(n_bins, dtype=DTYPE)
+    sum_wi2 = np.zeros(n_bins, dtype=DTYPE)
+    for (i, j), bin_idx in np.ndenumerate(bin_indices):
+        if _mask[i, j]:
+            sum_wi[bin_idx] += wi_corr[i, j]
+            sum_wi2[bin_idx] += wi2_corr[i, j]
+
+    # calculate the azimuthal average
+    for (i, j), bin_idx in np.ndenumerate(bin_indices):
+        if _mask[i, j]:
+            x[bin_idx] += dist[i, j] * wi_corr[i, j] / sum_wi[bin_idx]
+            avg[bin_idx] += data[:, i, j] * wi_corr[i, j] / sum_wi[bin_idx]
+    # replace missing values from average with nan
+    avg[sum_wi == 0] = np.nan
+
+    # replace values in k where sum_wi is 0 with bin edges mid points
+    for bin_idx in np.arange(n_bins):
+        if sum_wi[bin_idx] == 0:
+            if bin_idx > 0:
+                x[bin_idx] = 0.5 * (bin_edges[bin_idx - 1] + bin_edges[bin_idx])
+            else:
+                x[0] = bin_edges[0]
+
+    # calculate the uncertainty
+    if eval_err:
+        # compute the bias factor
+        bias_factor = [
+            swi - (swi2 / swi) if swi > 0 else 0 for (swi, swi2) in zip(sum_wi, sum_wi2)
+        ]
+
+        # compute variance
+        with np.errstate(divide="ignore", invalid="ignore"):
+            for (i, j), bin_idx in np.ndenumerate(bin_indices):
+                if _mask[i, j]:
+                    err[bin_idx] += (
+                        wi_corr[i, j]
+                        * (data[:, i, j] - avg[bin_idx]) ** 2
+                        / bias_factor[bin_idx]
+                    )
+        # replace missing values with nan
+        err[sum_wi == 0] = np.nan
+
+        # take square root
+        np.sqrt(err, out=err)
+
+    return avg, err, x, bin_edges
+
+
 def azimuthal_average(
     img_str_func: ImageStructureFunction,
     bins: Optional[Union[int, Iterable[float]]] = 10,
@@ -284,26 +488,23 @@ def azimuthal_average(
 ) -> AzimuthalAverage:
     r"""Compute the azimuthal average of the image structure function.
 
-    For every (not masked out) :math:`k` wavevector in the :math:`i`-th bin,
-    the average is calculated as
+    For every bin :math:`i`, the average is calculated as
 
-    .. math:
+    .. math::
 
         \bar{x}_i = \frac{\sum_k w_k x_k}{\sum_k w_k} ,
 
     where :math:`w_k` is the weight given to the wavevector :math:`k`.
-    The uncertainty is calculated as the square root of the variance for
-    weighed measures
+    The sum runs over the elements :math:`k \in \mathcal{S}_i`, where
+    :math:`\mathcal{S}_i` is the subset of wavevector :math:`k` with modulus
+    in the bin :math:`i`.
+    The ``mask`` allows to exclude certain wavevectors from the calculation.
+    The uncertainty is calculated as the square root of the unbiased variance
+    for weighed measures
 
-    .. math:
+    .. math::
 
-        \text{Var}(x_i) = \left( \frac{\sum_k w_k x_k^2}{\sum_k w_k} - \bar{x}_i^2 \right) \frac{N_i}{N_i - 1} ,
-
-    where
-
-    .. math:
-
-        N_i = \frac{(\sum_k w_k)^2}{\sum_k w_k^2} .
+        \text{VAR}(x_i) = \frac{\sum_k w_k (x_k - \bar{x}_i)^2}{\sum_k w_k - \sum_k w_k^2 / \sum_k w_k}.
 
     Parameters
     ----------
@@ -311,18 +512,19 @@ def azimuthal_average(
         The image structure function.
     bins : Union[int, Iterable[float]], optional
         If ``bins`` is an int, it defines the number of equal-width bins in the
-        given range (10, by default). If ``bins`` is a sequence, it defines an
-        array of bin spacings, allowing for non-uniform bin widths.
+        given range (10, by default). If ``bins`` is a sequence, it defines a
+        monotonically increasing array of bin edges, including the rightmost
+        edge, allowing for non-uniform bin widths.
     range : Tuple[float, float], optional
         The lower and upper range of the bins. If not provided, range is simply
         ``(k.min(), k.max())``, where ``k`` is the vector modulus computed from
-        ``kx`` and ``ky``. Values outside the range are ignored. The first element
-        of the range must be less than or equal to the second.
+        ``kx`` and ``ky``. Values outside the range are ignored. The first
+        element of the range must be less than or equal to the second.
     mask : numpy.ndarray, optional
         If a boolean ``mask`` is given, it is used to exclude grid points from
         the azimuthal average (where False is set). The array must have the
-        same ``(y, x)`` shape of ``data``. If ``mask`` is not of boolean type, it is cast
-        and a ``warning`` is raised.
+        same ``(y, x)`` shape of ``data``. If ``mask`` is not of boolean type,
+        it is cast to booland a ``warning`` is raised.
     weights : numpy.ndarray, optional
         An array of weights, of the same ``(y, x)`` shape as ``data``. Each
         value in ``data`` only contributes its associated weight towards
@@ -335,309 +537,31 @@ def azimuthal_average(
     AzimuthalAverage
         The azimuthal average.
     """
-    # read actual image structure function shape
-    dim_t, dim_y, dim_x = img_str_func._data.shape
-    is_even = img_str_func.width % 2 == 0
+    # get the counts
+    # the first column is counted once
+    # the last column is counted once if the full width is even
+    # the other elements are counted twice
+    counts = np.full(img_str_func.shape[1:], 2)
+    counts[:, 0] = 1
+    counts[:, -1] = 1 if img_str_func.width % 2 == 0 else 2
 
     # compute the k modulus
     X, Y = np.meshgrid(img_str_func.kx, img_str_func.ky)
     k_modulus = np.sqrt(X**2 + Y**2)
 
-    # check range
-    if range is None:
-        k_min = np.min(k_modulus)
-        k_max = np.max(k_modulus)
-    else:
-        k_min, k_max = range
-
-    # check mask
-    if mask is None:
-        mask = np.full((dim_y, dim_x), True)
-    elif mask.dtype != bool:
-        mask = mask.astype(bool)
-        warnings.warn("Given mask not of boolean type. Casting to bool.")
-
-    # compute bin edges and initialize k
-    if isinstance(bins, int):
-        bin_edges = np.linspace(k_min, k_max, bins, dtype=DTYPE)
-    else:  # bins is an iterable
-        bin_edges = [k_min]
-        for bin_width in bins:
-            bin_edges.append(bin_edges[-1] + bin_width)
-        bin_edges = np.array(bin_edges, dtype=DTYPE)
-        bins = len(bins) + 1
-    k = np.zeros(bins, dtype=DTYPE)
-
-    # initialize k values
-    k[0] = bin_edges[0]
-    k[1:] = 0.5 * (bin_edges[:-1] + bin_edges[1:])
-
-    # pre-compute weights
-    idx = np.full((dim_y, dim_x), fill_value=-1, dtype=np.int64)
-    wk = np.zeros((dim_y, dim_x), dtype=DTYPE)
-    sum_wk = np.zeros(bins, dtype=DTYPE)
-    if eval_err:
-        sum_wk2 = np.zeros(bins, dtype=DTYPE)
-
-    # loop over k-vectors in half-plane
-    for (i, j), k_val in np.ndenumerate(k_modulus):
-        if mask[i, j] and k_val <= bin_edges[-1]:
-            # get current bin
-            idx[i, j] = np.searchsorted(bin_edges, k_val)
-            # count 1 if 0th column (kx==0) or if last column and width is even
-            # count 2 otherwise
-            fact = 1 if ((j == 0) or (is_even and j == dim_x - 1)) else 2
-            # update weights
-            if weights is None:
-                wk[i, j] = fact
-                # if `weights` not given, sum_wk2 = sum_wk
-                # assign outside loop
-            else:
-                wk[i, j] = fact * weights[i, j]
-                if eval_err:
-                    sum_wk2[idx[i, j]] += wk[i, j] * weights[i, j]
-            sum_wk[idx[i, j]] += wk[i, j]
-    if weights is None and eval_err:
-        sum_wk2 = sum_wk
-
     # compute the azimuthal average
-    az_avg = np.full((bins, dim_t), fill_value=np.nan, dtype=DTYPE)
-    for (i, j), curr_idx in np.ndenumerate(idx):
-        # add contribution only if curr_idx was found in range
-        # and if the weight is larger than 0
-        if curr_idx > -1 and wk[i, j]:
-            # initialize to zero if not done before
-            if np.isnan(az_avg[curr_idx, 0]):
-                az_avg[curr_idx] = np.zeros(dim_t, dtype=DTYPE)
-                k[curr_idx] = 0.0
-            k[curr_idx] += k_modulus[i, j] * wk[i, j] / sum_wk[curr_idx]
-            az_avg[curr_idx] += img_str_func._data[:, i, j] * (
-                wk[i, j] / sum_wk[curr_idx]
-            )
-
-    if eval_err:
-        with np.errstate(divide="ignore", invalid="ignore"):
-            # evaluate Ni/(Ni-1) term
-            corr_fact = sum_wk / (sum_wk**2 - sum_wk2)
-
-        # compute uncertainty
-        err = np.full((bins, dim_t), fill_value=np.nan, dtype=DTYPE)
-        for (i, j), curr_idx in np.ndenumerate(idx):
-            # add contribution only if curr_idx was found in range
-            # and if the weight is larger than 0
-            # and if the corr_fact is not infinite
-            if curr_idx > -1 and wk[i, j] and not np.isinf(corr_fact[curr_idx]):
-                # initialize to zero if not done before
-                if np.isnan(err[curr_idx, 0]):
-                    err[curr_idx] = np.zeros(dim_t, dtype=DTYPE)
-                if not np.isinf(corr_fact[curr_idx]):
-                    err[curr_idx] += (wk[i, j] * corr_fact[curr_idx]) * (
-                        img_str_func._data[:, i, j] - az_avg[curr_idx]
-                    ) ** 2
-        np.sqrt(err, out=err)
-    else:
-        err = None
+    az_avg, err, k, bin_edges = azimuthal_average_array(
+        img_str_func._data,
+        k_modulus,
+        bins,
+        range,
+        mask,
+        weights,
+        counts,
+        eval_err,
+    )
 
     return AzimuthalAverage(az_avg, err, k, img_str_func.tau, bin_edges)
-
-
-def _azimuthal_average(
-    data: np.ndarray,
-    tau: np.ndarray,
-    kx: Optional[np.ndarray] = None,
-    ky: Optional[np.ndarray] = None,
-    bins: Optional[Union[int, Iterable[float]]] = 10,
-    range: Optional[Tuple[float, float]] = None,
-    mask: Optional[np.ndarray] = None,
-    weights: Optional[np.ndarray] = None,
-    eval_err: Optional[bool] = True,
-) -> AzimuthalAverage:
-    """Compute the azimuthal average of the image structure function.
-
-    For every (not masked out) :math:`k` wavevector in the :math:`i`-th bin,
-    the average is calculated as
-
-    .. math:
-
-        \\bar{x}_i = \\frac{\\sum_k w_k x_k}{\\sum_k w_k} ,
-
-    where :math:`w_k` is the weight given to the wavevector :math:`k`.
-    The uncertainty is calculated as the square root of the variance for
-    weighed measures
-
-    .. math:
-
-        \\text{Var}(x_i) = \\left( \\frac{\\sum_k w_k x_k^2}{\\sum_k w_k} - \\bar{x}_i^2 \\right) \\frac{N_i}{N_i - 1} ,
-
-    where
-
-    .. math:
-
-        N_i = \\frac{(\\sum_k w_k)^2}{\\sum_k w_k^2} .
-
-    Parameters
-    ----------
-    data : np.ndarray
-        The image structure function packed data. Second last and last frames
-        should contain the average 2D power spectrum of the input images and
-        the 2D variance (over time) of the 2D Fourier transformed images,
-        respectively.
-    tau : np.ndarray
-        The array of time delay values.
-    kx : np.ndarray, optional
-        The array of spatial frequencies along axis x. If kx is None,
-        the frequencies evaluated with
-        `2.0 * np.pi * np.fft.fftshift(np.fft.fftfreq(Nx))`
-        are used (`Nx = data.shape[2]`). Default is None.
-    ky : np.ndarray, optional
-        The array of spatial frequencies along axis y. If ky is None
-        the frequencies evaluated with
-        `2.0 * np.pi * np.fft.fftshift(np.fft.fftfreq(Ny))`
-        are used (`Ny = data.shape[1]`). Default is None.
-    bins : Union[int, Iterable[float]], optional
-        If `bins` is an int, it defines the number of equal-width bins in the
-        given range (10, by default). If `bins` is a sequence, it defines a
-        monotonically increasing array of bin edges, including the rightmost
-        edge, allowing for non-uniform bin widths.
-    range : (float, float), optional
-        The lower and upper range of the bins. If not provided, range is simply
-        `(k.min(), k.max())`, where `k` is the vector modulus computed from
-        `kx` and `ky`. Values outside the range are ignored. The first element
-        of the range must be less than or equal to the second.
-    mask : np.ndarray, optional
-        If a boolean `mask` is given, it is used to exclude grid points from
-        the azimuthal average (where False is set). The array must have the
-        same y,x shape of `data`. If `mask` is not of boolean type, it is cast
-        and a warning is raised.
-    weights : np.ndarray, optional
-        An array of weights, of the same y,x shape as `data`. Each
-        value in `data` only contributes its associated weight towards
-        the bin count (instead of 1).
-    eval_err : bool, optional
-        If True, the uncertainty is computed. Default is True.
-
-    Returns
-    -------
-    AzimuthalAverage
-        The azimuthal average.
-
-    Raises
-    ------
-    ValueError
-        If tau, kx, and ky are not compatible with shape of data.
-    """
-    # check input arguments
-    if tau is None:
-        raise ValueError(
-            "`tau` must be given for non-`ImageStructureFunction` data input."
-        )
-    elif (len(tau) + 2) != len(data):
-        raise ValueError("Length of `tau` not compatible with shape of `data`.")
-
-    # read actual image structure function shape
-    dim_t, dim_y, dim_x = data.shape
-
-    # check kx and ky
-    if kx is None:
-        kx = 2 * np.pi * np.fft.fftshift(np.fft.fftfreq(dim_x))
-    elif len(kx) != data.shape[2]:
-        raise ValueError("Length of `kx` not compatible with shape of `data`.")
-    if ky is None:
-        ky = 2 * np.pi * np.fft.fftshift(np.fft.fftfreq(dim_y))
-    elif len(ky) != data.shape[1]:
-        raise ValueError("Length of `ky` not compatible with shape of `data`.")
-
-    # compute the k modulus
-    X, Y = np.meshgrid(kx, ky)
-    k_modulus = np.sqrt(X**2 + Y**2)
-
-    # check range
-    if range is None:
-        k_min = np.min(k_modulus)
-        k_max = np.max(k_modulus)
-    else:
-        k_min, k_max = range
-
-    # check mask
-    if mask is None:
-        mask = np.full((dim_y, dim_x), True)
-    elif mask.dtype != bool:
-        mask = mask.astype(bool)
-        warnings.warn("Given mask not of boolean type. Casting to bool.")
-
-    # compute bin edges and initialize k
-    if isinstance(bins, int):
-        bin_edges = np.linspace(k_min, k_max, bins, dtype=DTYPE)
-    else:  # bins is an iterable
-        bin_edges = [k_min]
-        for bin_width in bins:
-            bin_edges.append(bin_edges[-1] + bin_width)
-        bin_edges = np.array(bin_edges, dtype=DTYPE)
-        bins = len(bins) + 1
-    k = np.zeros(bins, dtype=DTYPE)
-
-    # initialize k values
-    k[0] = bin_edges[0]
-    k[1:] = 0.5 * (bin_edges[:-1] + bin_edges[1:])
-
-    # pre-compute weights
-    idx = np.full((dim_y, dim_x), fill_value=-1, dtype=np.int64)
-    wk = np.ones((dim_y, dim_x), dtype=DTYPE)
-    sum_wk = np.zeros(bins, dtype=DTYPE)
-    if eval_err:
-        sum_wk2 = np.zeros(bins, dtype=DTYPE)
-
-    # loop over k-vectors in half-plane
-    for (i, j), k_val in np.ndenumerate(k_modulus):
-        if mask[i, j] and k_val <= bin_edges[-1]:
-            # get current bin
-            idx[i, j] = np.searchsorted(bin_edges, k_val)
-            # update weights
-            if weights is not None:
-                wk[i, j] *= weights[i, j]
-                if eval_err:
-                    sum_wk2[idx[i, j]] += weights[i, j] ** 2
-            sum_wk[idx[i, j]] += wk[i, j]
-    # if `weights` not given, sum_wk2 = sum_wk
-    if weights is None and eval_err:
-        sum_wk2 = sum_wk
-
-    # compute the azimuthal average
-    az_avg = np.full((bins, dim_t), fill_value=np.nan, dtype=DTYPE)
-    for (i, j), curr_idx in np.ndenumerate(idx):
-        # add contribution only if curr_idx was found in range
-        # and if the weight is larger than 0
-        if curr_idx > -1 and wk[i, j]:
-            # initialize to zero if not done before
-            if np.isnan(az_avg[curr_idx, 0]):
-                az_avg[curr_idx] = np.zeros(dim_t, dtype=DTYPE)
-                k[curr_idx] = 0.0
-            k[curr_idx] += k_modulus[i, j] * wk[i, j] / sum_wk[curr_idx]
-            az_avg[curr_idx] += data[:, i, j] * (wk[i, j] / sum_wk[curr_idx])
-
-    if eval_err:
-        with np.errstate(divide="ignore", invalid="ignore"):
-            # evaluate Ni/(Ni-1) term
-            corr_fact = sum_wk / (sum_wk**2 - sum_wk2)
-
-        # compute uncertainty
-        err = np.full((bins, dim_t), fill_value=np.nan, dtype=DTYPE)
-        for (i, j), curr_idx in np.ndenumerate(idx):
-            # add contribution only if curr_idx was found in range
-            # and if the weight is larger than 0
-            if curr_idx > -1 and wk[i, j]:
-                # initialize to zero if not done before
-                if np.isnan(err[curr_idx, 0]):
-                    err[curr_idx] = np.zeros(dim_t, dtype=DTYPE)
-                if not np.isinf(corr_fact[curr_idx]):
-                    err[curr_idx] += (wk[i, j] * corr_fact[curr_idx]) * (
-                        data[:, i, j] - az_avg[curr_idx]
-                    ) ** 2
-        np.sqrt(err, out=err)
-    else:
-        err = None
-
-    return AzimuthalAverage(az_avg, err, k, tau.astype(DTYPE), bin_edges)
 
 
 class AAWriter(Writer):
@@ -1013,9 +937,7 @@ class AAParser(Parser):
         return metadata
 
 
-def melt(az_avg1: AzimuthalAverage,
-         az_avg2: AzimuthalAverage
-         ) -> AzimuthalAverage:
+def melt(az_avg1: AzimuthalAverage, az_avg2: AzimuthalAverage) -> AzimuthalAverage:
     """Melt two azimuthal averages into one object.
 
     The melt is performed as follows:
