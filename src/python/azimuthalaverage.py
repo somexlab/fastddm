@@ -685,14 +685,15 @@ def azimuthal_average_array(
 
     Returns
     -------
-    Tuple[numpy.ndarray, numpy.ndarray, numpy.ndarray]
-        The distances, the azimuthal average, and the uncertainty of the
-        azimuthal average.
+    Tuple[numpy.ndarray, numpy.ndarray, numpy.ndarray, numpy.ndarray]
+        The azimuthal average, its uncertainty, the distances, and the bin
+        edges.
 
     Raises
     ------
     ValueError
-        If dist, mask, weights, or counts are not compatible with shape of data.
+        If dist, mask, weights, or counts are not compatible with shape of
+        data.
     """
     # read data shape
     dim_y, dim_x = data.shape[-2:]
@@ -737,9 +738,14 @@ def azimuthal_average_array(
     # compute bin edges
     if isinstance(bins, int):
         bin_edges = np.linspace(x_min, x_max, bins, dtype=DTYPE)
+        n_bins = bins
     elif isinstance(bins, Iterable):
-        bin_edges = np.cumsum(np.concatenate(([x_min], bins)), dtype=DTYPE)
-        bins = len(bins) + 1
+        # check if it is a monotonically increasing array
+        if not np.all(bins[1:] >= bins[:-1]):
+            raise ValueError("bins must be monotonically increasing.")
+        bin_edges = bins.astype(DTYPE)
+        n_bins = len(bins)
+        x_min = bins[0]
     else:
         raise ValueError("bins must be an int or an iterable.")
 
@@ -748,54 +754,164 @@ def azimuthal_average_array(
 
     # apply mask
     bin_indices[~mask] = -1
+    # remove also values outside the range
+    bin_indices[(bin_indices == n_bins) | (dist < x_min)] = -1
 
     # correct weights for counts
     wi_corr = weights * counts
 
-    # compute squared weights and correct for counts
+    # initialize outputs
+    x = np.zeros(n_bins, dtype=DTYPE)
+    avg = np.zeros((n_bins, len(data)), dtype=DTYPE)
+    err = None
     if eval_err:
+        err = np.zeros((n_bins, len(data)), dtype=DTYPE)
+
+        # compute squared weights and correct for counts
         wi2_corr = weights**2 * counts
 
-    # initialize outputs
-    x = np.zeros(bins, dtype=DTYPE)
-    avg = np.full((bins, len(data)), np.nan, dtype=DTYPE)
+    # prefill x using the mid point of the bin edges
+    # x[0] = bin_edges[0]
+    # x[1:] = 0.5 * (bin_edges[:-1] + bin_edges[1:])
+
+    # calculate sum of weights
+    # we also append another value at the end of the array
+    # to simplify the loops and avoid nested if's
+    sum_wi = np.zeros(n_bins + 1, dtype=DTYPE)
+    sum_wi2 = np.zeros(n_bins + 1, dtype=DTYPE)
+    for (i, j), bin_idx in np.ndenumerate(bin_indices):
+        if bin_idx >= 0:
+            sum_wi[bin_idx] += wi_corr[i, j]
+            sum_wi2[bin_idx] += wi2_corr[i, j]
+
+    # calculate the azimuthal average
+    for (i, j), bin_idx in np.ndenumerate(bin_indices):
+        if sum_wi[bin_idx] > 0:
+            x[bin_idx] += dist[i, j] * wi_corr[i, j] / sum_wi[bin_idx]
+            avg[bin_idx] += data[:, i, j] * wi_corr[i, j] / sum_wi[bin_idx]
+    # replace missing values from average with nan
+    avg[sum_wi[:-1] == 0] = np.nan
+
+    # replace values in k where sum_wi is 0 with bin edges mid points
+    for bin_idx in np.arange(n_bins):
+        if sum_wi[bin_idx] == 0:
+            if bin_idx > 0:
+                x[bin_idx] = 0.5 * (bin_edges[bin_idx - 1] + bin_edges[bin_idx])
+            else:
+                x[0] = bin_edges[0]
+
+    # calculate the uncertainty
     if eval_err:
-        err = np.full((bins, len(data)), np.nan, dtype=DTYPE)
-    else:
-        err = None
+        # compute the bias factor
+        bias_factor = [
+            swi - (swi2 / swi) if swi > 0 else 0 for (swi, swi2) in zip(sum_wi, sum_wi2)
+        ]
 
-    x[0] = bin_edges[0]
-    x[1:] = 0.5 * (bin_edges[:-1] + bin_edges[1:])
+        # compute variance
+        with np.errstate(divide="ignore", invalid="ignore"):
+            for (i, j), bin_idx in np.ndenumerate(bin_indices):
+                if sum_wi[bin_idx] > 0:
+                    err[bin_idx] += (
+                        wi_corr[i, j]
+                        * (data[:, i, j] - avg[bin_idx]) ** 2
+                        / bias_factor[bin_idx]
+                    )
+        # replace missing values with nan
+        err[sum_wi[:-1] == 0] = np.nan
 
-    for i in np.arange(bins):
-        # get indices
-        idx_y, idx_x = np.where(bin_indices == i)
+        # take square root
+        np.sqrt(err, out=err)
 
-        # sum weights
-        sum_wi = np.sum(wi_corr[idx_y, idx_x])
+    return avg, err, x, bin_edges
 
-        if sum_wi > 0:
-            # compute weighted average
-            x[i] = np.sum(dist[idx_y, idx_x] * wi_corr[idx_y, idx_x]) / sum_wi
-            avg[i] = (
-                np.sum(data[:, idx_y, idx_x] * wi_corr[idx_y, idx_x], axis=1) / sum_wi
-            )
 
-            # compute uncertainty
-            if eval_err:
-                # sum squared weights
-                sum_wi2 = np.sum(wi2_corr[idx_y, idx_x])
+def azimuthal_average_new(
+    img_str_func: ImageStructureFunction,
+    bins: Optional[Union[int, Iterable[float]]] = 10,
+    range: Optional[Tuple[float, float]] = None,
+    mask: Optional[np.ndarray] = None,
+    weights: Optional[np.ndarray] = None,
+    eval_err: Optional[bool] = True,
+) -> AzimuthalAverage:
+    r"""Compute the azimuthal average of the image structure function.
 
-                err_sq = np.sum(
-                    wi_corr[idx_y, idx_x]
-                    * (data[:, idx_y, idx_x] - avg[i, np.newaxis].T) ** 2,
-                    axis=1,
-                )
-                err_sq /= sum_wi - (sum_wi2 / sum_wi)
+    For every (not masked out) :math:`k` wavevector in the :math:`i`-th bin,
+    the average is calculated as
 
-                err[i] = np.sqrt(err_sq)
+    .. math:
 
-    return x, avg, err
+        \bar{x}_i = \frac{\sum_k w_k x_k}{\sum_k w_k} ,
+
+    where :math:`w_k` is the weight given to the wavevector :math:`k`.
+    The uncertainty is calculated as the square root of the variance for
+    weighed measures
+
+    .. math:
+
+        \text{Var}(x_i) = \left( \frac{\sum_k w_k x_k^2}{\sum_k w_k} - \bar{x}_i^2 \right) \frac{N_i}{N_i - 1} ,
+
+    where
+
+    .. math:
+
+        N_i = \frac{(\sum_k w_k)^2}{\sum_k w_k^2} .
+
+    Parameters
+    ----------
+    img_str_func : ImageStructureFunction
+        The image structure function.
+    bins : Union[int, Iterable[float]], optional
+        If `bins` is an int, it defines the number of equal-width bins in the
+        given range (10, by default). If `bins` is a sequence, it defines a
+        monotonically increasing array of bin edges, including the rightmost
+        edge, allowing for non-uniform bin widths.
+    range : Tuple[float, float], optional
+        The lower and upper range of the bins. If not provided, range is simply
+        ``(k.min(), k.max())``, where ``k`` is the vector modulus computed from
+        ``kx`` and ``ky``. Values outside the range are ignored. The first
+        element of the range must be less than or equal to the second.
+    mask : numpy.ndarray, optional
+        If a boolean ``mask`` is given, it is used to exclude grid points from
+        the azimuthal average (where False is set). The array must have the
+        same ``(y, x)`` shape of ``data``. If ``mask`` is not of boolean type,
+        it is cast to booland a ``warning`` is raised.
+    weights : numpy.ndarray, optional
+        An array of weights, of the same ``(y, x)`` shape as ``data``. Each
+        value in ``data`` only contributes its associated weight towards
+        the bin count (instead of 1).
+    eval_err : bool, optional
+        If True, the uncertainty is computed. Default is True.
+
+    Returns
+    -------
+    AzimuthalAverage
+        The azimuthal average.
+    """
+    # get the counts
+    # the first column is counted once
+    # the last column is counted once if the full width is even
+    # the other elements are counted twice
+    counts = np.full(img_str_func.shape[1:], 2)
+    counts[:, 0] = 1
+    counts[:, -1] = 1 if img_str_func.width % 2 == 0 else 2
+
+    # compute the k modulus
+    X, Y = np.meshgrid(img_str_func.kx, img_str_func.ky)
+    k_modulus = np.sqrt(X**2 + Y**2)
+
+    # compute the azimuthal average
+    az_avg, err, k, bin_edges = azimuthal_average_array(
+        img_str_func._data,
+        k_modulus,
+        bins,
+        range,
+        mask,
+        weights,
+        counts,
+        eval_err,
+    )
+
+    return AzimuthalAverage(az_avg, err, k, img_str_func.tau, bin_edges)
 
 
 class AAWriter(Writer):
