@@ -3,7 +3,53 @@
 # Authors: Enrico Lattuada and Fabian Krautgasser
 # Maintainers: Enrico Lattuada and Fabian Krautgasser
 
-"""Image structure function data class."""
+r"""This module contains the image structure function data class.
+
+The :py:class:`ImageStructureFunction` object is used to store and retrieve information
+about the image structure function computed in DDM.
+
+The :py:class:`ImageStructureFunction.data` contains the image structure function
+values in :math:`(\Delta t, k_y, k_x)` order. For instance, the image
+structure function at the 10th delay computed can be accessed via
+
+.. code-block:: python
+
+    dqt.data[9]
+
+.. note::
+   Remember that Python uses zero-based indexing.
+
+The :py:class:`ImageStructureFunction` can then be saved into a binary file by using
+:py:meth:`ImageStructureFunction.save` (it will have a `.sf.ddm` extension)
+and later retrieved from the memory using
+:py:meth:`SFReader.load`, which you can call directly from ``fastddm`` as
+
+.. code-block:: python
+
+    # load image structure function
+    dqt = fastddm.load('path/to/my_dqt_file.sf.ddm')
+
+In order to avoid reading and loading the entire file, we also provide
+a fast reader through the :py:class:`SFReader`, which can be used to
+access directly from the disk the relevant data, for example:
+
+.. code-block:: python
+
+    from fastddm.imagestructurefunction import SFReader
+
+    # open file
+    r = SFReader('path/to/my_dqt_file.sf.ddm')
+
+    # access quantities in full plane representation
+    # access kx array
+    kx = r.get_kx()
+    # access 10th computed delay
+    frame = r.get_frame(index=9)
+
+    # access the same quantities in half plane representation
+    kx_half = r.get_kx(full=False)
+    frame_half = r.get_frame(index=9, full=False)
+"""
 
 from typing import Sequence, Tuple, BinaryIO, Optional
 from dataclasses import dataclass
@@ -28,71 +74,23 @@ class ImageStructureFunction:
 
     Parameters
     ----------
-    _data : np.ndarray
+    _data : numpy.ndarray
         The packed data (2D image structure function, power spectrum,
         and variance).
-    _kx : np.ndarray
-        The array of wavevector values over x.
-    _ky : np.ndarray
-        The array of wavevector values over y.
+    _kx : numpy.ndarray
+        The array of wavevector values over `x`.
+    _ky : numpy.ndarray
+        The array of wavevector values over `y`.
     _width : int
         The width of the full (symmetric) 2D image structure function.
     _height : int
         The height of the full (symmetric) 2D image structure function.
-    _tau : np.ndarray
+    _tau : numpy.ndarray
         The array of time delays.
     _pixel_size : float, optional
         The effective pixel size. Default is 1.
     _delta_t : float, optional
         The time delay between two consecutive frames. Default is 1.
-
-    Attributes
-    ----------
-    data : np.ndarray
-        The 2D image structure function.
-    power_spec: np.ndarray
-        The average 2D power spectrum of the input images.
-    var : np.ndarray
-        The 2D variance (over time) of the Fourier transformed images.
-    kx : np.ndarray
-        The array of wavevector values over x.
-    ky : np.ndarray
-        The array of wavevector values over y.
-    width : int
-        The width of the full (symmetric) 2D image structure function.
-    height : int
-        The height of the full (symmetric) 2D image structure function.
-    tau : np.ndarray
-        The array of time delays.
-    pixel_size : float
-        The effective pixel size.
-    delta_t : float
-        The time delay between to consecutive frames.
-    shape : Tuple[int, int, int]
-        The shape of the 2D image structure function.
-
-    Methods
-    -------
-    set_frame_rate(frame_rate) : None
-        Set the acquisition frame rate. This will propagate also on the values
-        of tau.
-    save(*, fname, protocol) : None
-        Save ImageStructureFunction to binary file.
-    save_as_tiff(seq, fnames) : None
-        Save ImageStructureFunction frames as tiff images.
-    full_shape() : Tuple[int, int, int]
-        The shape of the full (symmetric) 2D image structure function.
-    full_slice(idx) : np.ndarray
-        Get the full (symmetric) 2D image structure function at specific index.
-    full_power_spec() : np.ndarray
-        Get the full (symmetric) average 2D power spectrum of the input images.
-    full_var() : np.ndarray
-        Get the full (symmetric) 2D variance (over time) of the Fourier
-        transformed images.
-    full_kx() : np.ndarray
-        Get the full array of wavevector values over x.
-    full_ky() : np.ndarray
-        Get the full array of wavevector values over y.
     """
 
     _data: np.ndarray
@@ -106,34 +104,35 @@ class ImageStructureFunction:
 
     @property
     def data(self) -> np.ndarray:
-        """The 2D image structure function.
+        """The 2D image structure function
+        (in :math:`(\Delta t, k_y, k_x)` order).
 
         Returns
         -------
-        np.ndarray
+        numpy.ndarray
             The 2D image structure function.
         """
         return self._data[:-2]
 
     @property
     def kx(self) -> np.ndarray:
-        """The array of wave vector values over x.
+        """The array of wave vector values over `x`.
 
         Returns
         -------
-        np.ndarray
-            The array of kx.
+        numpy.ndarray
+            The array of ``kx``.
         """
         return self._kx
 
     @property
     def ky(self) -> np.ndarray:
-        """The array of wave vector values over y.
+        """The array of wave vector values over `y`.
 
         Returns
         -------
-        np.ndarray
-            The array of ky.
+        numpy.ndarray
+            The array of ``ky``.
         """
         return self._ky
 
@@ -165,8 +164,8 @@ class ImageStructureFunction:
 
         Returns
         -------
-        np.ndarray
-            The array of tau.
+        numpy.ndarray
+            The array of ``tau``.
         """
         return self._tau
 
@@ -176,7 +175,7 @@ class ImageStructureFunction:
 
         Returns
         -------
-        np.ndarray
+        numpy.ndarray
             The average 2D power spectrum of the input images.
         """
         return self._data[-2]
@@ -187,7 +186,7 @@ class ImageStructureFunction:
 
         Returns
         -------
-        np.ndarray
+        numpy.ndarray
             The variance (over time) of the Fourier transformed input images.
         """
         return self._data[-1]
@@ -229,7 +228,7 @@ class ImageStructureFunction:
     def pixel_size(self, pixel_size: float) -> None:
         """Set the image effective pixel size.
 
-        This will propagate also on the values of kx and ky.
+        This will propagate also on the values of ``kx`` and ``ky``.
 
         Parameters
         ----------
@@ -244,7 +243,7 @@ class ImageStructureFunction:
     def delta_t(self, delta_t: float) -> None:
         """Set the time delay between two consecutive frames.
 
-        This will propagate also on the values of tau.
+        This will propagate also on the values of ``tau``.
 
         Parameters
         ----------
@@ -268,7 +267,7 @@ class ImageStructureFunction:
     def set_frame_rate(self, frame_rate: float) -> None:
         """Set the acquisition frame rate.
 
-        This will propagate also on the values of tau.
+        This will propagate also on the values of ``tau``.
 
         Parameters
         ----------
@@ -278,7 +277,7 @@ class ImageStructureFunction:
         self.delta_t = 1 / frame_rate
 
     def save(self, fname: str = "analysis_blob") -> None:
-        """Save ImageStructureFunction to binary file.
+        """Save ``ImageStructureFunction`` to binary file.
 
         Parameters
         ----------
@@ -294,7 +293,7 @@ class ImageStructureFunction:
             f.write_obj(self)
 
     def save_as_tiff(self, seq: Sequence[int], fnames: Sequence[str]) -> None:
-        """Save ImageStructureFunction frames as images.
+        """Save ``ImageStructureFunction`` frames as images.
 
         Parameters
         ----------
@@ -306,7 +305,7 @@ class ImageStructureFunction:
         Raises
         ------
         RuntimeError
-            If number of elements in fnames and seq are different.
+            If number of elements in ``fnames`` and ``seq`` are different.
         """
         if len(fnames) != len(seq):
             raise RuntimeError("Number of elements in fnames differs from one in seq.")
@@ -327,7 +326,7 @@ class ImageStructureFunction:
         return dim_t, dim_y, dim_x
 
     def full_slice(self, idx: int) -> np.ndarray:
-        """Get the full (symmetric) 2D image structure function at index `idx`.
+        """Get the full (symmetric) 2D image structure function at index ``idx``.
 
         Parameters
         ----------
@@ -336,13 +335,13 @@ class ImageStructureFunction:
 
         Returns
         -------
-        np.ndarray
+        numpy.ndarray
             The full 2D image structure function slice.
 
         Raises
         ------
         IndexError
-            If `idx` out of bounds.
+            If ``idx`` is out of bounds.
         """
         if idx >= 0 and idx < len(self.data):
             shape = (self.height, self.width)
@@ -357,7 +356,7 @@ class ImageStructureFunction:
 
         Returns
         -------
-        np.ndarray
+        numpy.ndarray
             The full 2D power spectrum.
         """
         shape = (self.height, self.width)
@@ -369,19 +368,19 @@ class ImageStructureFunction:
 
         Returns
         -------
-        np.ndarray
+        numpy.ndarray
             The full 2D variance.
         """
         shape = (self.height, self.width)
         return _reconstruct_full_spectrum(self._data[-1], shape)
 
     def full_kx(self) -> np.ndarray:
-        """Get the full array of wavevector values over x.
+        """Get the full array of wavevector values over `x`.
 
         Returns
         -------
-        np.ndarray
-            The full kx array.
+        numpy.ndarray
+            The full ``kx`` array.
         """
         # initialize output and set dim
         full_kx = np.zeros_like(self.kx, shape=(self.width))
@@ -397,33 +396,28 @@ class ImageStructureFunction:
         return np.fft.fftshift(full_kx)
 
     def full_ky(self) -> np.ndarray:
-        """Get the full array of wavevector values over y.
+        """Get the full array of wavevector values over `y`.
 
         Returns
         -------
-        np.ndarray
-            The full ky array.
+        numpy.ndarray
+            The full ``ky`` array.
         """
         return self.ky
 
 
 class SFWriter(Writer):
     """FastDDM image structure function writer class.
-    Inherits from `Writer`. It adds the following unique methods:
-
-    Methods
-    -------
-    write_obj(obj) : None
-        Write ImageStructureFunction object to binary file.
+    Inherits from ``Writer``.
     """
 
     def write_obj(self, obj: ImageStructureFunction) -> None:
-        """Write ImageStructureFunction object to binary file.
+        """Write ``ImageStructureFunction`` object to binary file.
 
         Parameters
         ----------
         obj : ImageStructureFunction
-            ImageStructureFunction object.
+            ``ImageStructureFunction`` object.
         """
         # get data dtype
         dtype = npdtype2format(obj.data.dtype.name)
@@ -595,24 +589,7 @@ class SFWriter(Writer):
 
 class SFReader(Reader):
     """FastDDM image structure function reader class.
-    Inherits from `Reader`. It adds the following unique parameters and methods:
-
-    Methods
-    -------
-    load() : ImageStructureFunction
-        Load the image structure function.
-    get_kx(full) : np.ndarray
-        Read kx array.
-    get_ky(full) : np.ndarray
-        Read ky array.
-    get_tau() : np.ndarray
-        Read tau array.
-    get_frame(index, full) : np.ndarray
-        Read a data slice.
-    get_power_spec(full) : np.ndarray
-        Read power spectrum.
-    get_var(full) : np.ndarray
-        Read variance.
+    Inherits from ``Reader``.
     """
 
     def __init__(self, file: str):
@@ -626,7 +603,7 @@ class SFReader(Reader):
         Returns
         -------
         ImageStructureFunction
-            The ImageStructureFunction object.
+            ``ImageStructureFunction`` object.
 
         Raises
         ------
@@ -657,17 +634,17 @@ class SFReader(Reader):
         )
 
     def get_kx(self, full: Optional[bool] = True) -> np.ndarray:
-        """Read kx array from file.
+        """Read ``kx`` array from file.
 
         Parameters
         ----------
         full : Optional[bool]
-            If True, return the full (symmetric) kx array. Default is True.
+            If True, return the full (symmetric) ``kx`` array. Default is True.
 
         Returns
         -------
-        np.ndarray
-            The kx array.
+        numpy.ndarray
+            The ``kx`` array.
         """
         offset = self._metadata["kx_offset"]
         Nx = self._metadata["Nx"]
@@ -688,19 +665,19 @@ class SFReader(Reader):
             return kx
 
     def get_ky(self, full: Optional[bool] = True) -> np.ndarray:
-        """Read ky array from file.
+        """Read ``ky`` array from file.
 
         Parameters
         ----------
         full : Optional[bool]
-            If True, return the full (symmetric) ky array. Default is True.
-            This flag has in fact no effect on the output since y is already
+            If True, return the full (symmetric) ``ky`` array. Default is True.
+            This flag has in fact no effect on the output since ``ky`` is already
             full.
 
         Returns
         -------
-        np.ndarray
-            The ky array.
+        numpy.ndarray
+            The ``ky`` array.
         """
         offset = self._metadata["ky_offset"]
         Ny = self._metadata["Ny"]
@@ -708,12 +685,12 @@ class SFReader(Reader):
         return self._parser.read_array(offset, Ny)
 
     def get_tau(self) -> np.ndarray:
-        """Read tau array from file.
+        """Read ``tau`` array from file.
 
         Returns
         -------
-        np.ndarray
-            The tau array.
+        numpy.ndarray
+            The ``tau`` array.
         """
         offset = self._metadata["tau_offset"]
         Nt = self._metadata["Nt"]
@@ -721,7 +698,7 @@ class SFReader(Reader):
         return self._parser.read_array(offset, Nt)
 
     def get_frame(self, index: int, full: Optional[bool] = True) -> np.ndarray:
-        """Read data slice array from file.
+        """Read ``data`` slice array from file.
 
         Parameters
         ----------
@@ -733,13 +710,13 @@ class SFReader(Reader):
 
         Returns
         -------
-        np.ndarray
-            The data slice array.
+        numpy.ndarray
+            The ``data`` slice array.
 
         Raises
         ------
         IndexError
-            If index is out of range.
+            If ``index`` is out of range.
         """
         # check index is in range
         Nt = self._metadata["Nt"]
@@ -772,7 +749,7 @@ class SFReader(Reader):
 
         Returns
         -------
-        np.ndarray
+        numpy.ndarray
             The power spectrum array.
         """
         offset = self._metadata["extra_offset"]
@@ -798,7 +775,7 @@ class SFReader(Reader):
 
         Returns
         -------
-        np.ndarray
+        numpy.ndarray
             The variance array.
         """
         offset = self._metadata["extra_offset"]
@@ -817,12 +794,7 @@ class SFReader(Reader):
 
 class SFParser(Parser):
     """Image structure function file parser class.
-    Inherits from `Parser`. It adds the following unique methods:
-
-    Methods
-    -------
-    read_metadata : dict
-        Returns a dictionary containing the file metadata.
+    Inherits from ``Parser``.
     """
 
     def __init__(self, fh: BinaryIO):

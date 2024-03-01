@@ -26,21 +26,21 @@ typedef float Scalar;
 // *** code ***
 
 /*! \brief Copy src to dest with stride
-    \param src      source vector
-    \param dest     destination array
-    \param start    starting index
-    \param stride   stride between elements in destination
+    \param src      Source vector
+    \param dest     Destination array
+    \param start    Starting index
+    \param stride   Stride between elements in destination
  */
 void copy_vec_with_stride(vector<double> &src,
                           Scalar *dest,
                           unsigned long long start,
                           unsigned long long stride);
 
-/*! \brief Make image structure function from raw output and shift elements
-    \param vec  array
-    \param nx   number of fft nodes in x direction
-    \param ny   number of fft nodes in y direction
-    \param nt   number of frames
+/*! \brief Make structure function from raw output and shift elements
+    \param vec  Array
+    \param nx   Number of fft nodes in x direction
+    \param ny   Number of fft nodes in y direction
+    \param nt   Number of frames
  */
 void make_shifted_isf(Scalar *vec,
                       unsigned long long nx,

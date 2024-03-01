@@ -3,7 +3,85 @@
 # Author: Enrico Lattuada
 # Maintainer: Enrico Lattuada
 
-"""Collection of helper functions for weights of azimuthal average"""
+r"""This module contains the weight functions for azimuthal average.
+
+The weight functions can be used to perform a sector average of the
+image structure function.
+
+For example:
+
+.. code-block:: python
+
+    import fastddm as fddm
+
+    # load your images here and get shape of one image (last 2 entries in the shape property)
+    img_seq = fddm.read_images(...)
+    shape = img_seq.shape[-2:]
+
+    # compute the image structure function
+    dqt = fddm.ddm(img_seq, range(1, len(img_seq)))
+
+    # create a weight 'mask' to be applied to the image structure function
+    weights = fddm.weights.sector_average_weight(
+        full_shape=shape,
+        kx=dqt.kx,
+        ky=dqt.ky,
+        theta_0=90,
+        delta_theta=90,
+        rep=4,
+        kind="uniform"
+    )
+
+    # set bin number and pass the weights to the azimuthal_average function
+    nbins = max(shape) // 2
+    az_avg = fddm.azimuthal_average(dqt, bins=nbins, weights=weights)
+
+
+.. plot::
+
+    import matplotlib.pyplot as plt
+    from fastddm.weights import sector_average_weight
+
+    shape = (128, 128)
+
+    # plot setup
+    fig = plt.figure(figsize=(5, 5))
+    gs = fig.add_gridspec(ncols=2, nrows=2)
+    axs = gs.subplots(sharex=True, sharey=True)
+    ((ax0, ax1), (ax2, ax3)) = axs
+
+    # top left
+    im0 = ax0.imshow(sector_average_weight(shape))
+    cb = plt.colorbar(im0)
+    ax0.set_axis_off()
+    ax0.set_title('default parameters')
+
+    # top right
+    im1 = ax1.imshow(sector_average_weight(shape, theta_0=45, delta_theta=45, rep=4))
+    cb = plt.colorbar(im1)
+    ax1.set_axis_off()
+    ax1.set_title(r"$\theta_0=45,\ \Delta \theta=45,\ \mathrm{rep}=4$")
+
+    # bottom left
+    im2 = ax2.imshow(sector_average_weight(shape, theta_0=90, delta_theta=140, rep=2))
+    cb = plt.colorbar(im2)
+    ax2.set_axis_off()
+    ax2.set_title(r"$\theta_0=90,\ \Delta \theta=140,\ \mathrm{rep}=2$")
+
+    # bottom right
+    im3 = ax3.imshow(sector_average_weight(shape, theta_0=90, delta_theta=140, rep=2, kind="gauss"))
+    cb = plt.colorbar(im3)
+    ax3.set_axis_off()
+    ax3.set_title(
+        r"$\theta_0=45,\ \Delta \theta=45,$" + "\n" + "$\mathrm{rep}=4,\ \mathrm{kind}=\mathrm{gauss}$"
+    )
+
+    # displaying
+    fig.tight_layout()
+    plt.show()
+
+"""
+
 
 from typing import Optional, Tuple
 import numpy as np
@@ -13,50 +91,53 @@ def sector_average_weight(
     full_shape: Tuple[int, int],
     kx: Optional[np.ndarray] = None,
     ky: Optional[np.ndarray] = None,
-    theta_0: Optional[float] = 0.0,
-    delta_theta: Optional[float] = 90.0,
-    rep: Optional[int] = 2,
+    theta_0: float = 0.0,
+    delta_theta: float = 90.0,
+    rep: int = 2,
     kind: Optional[str] = 'uniform'
 ) -> np.ndarray:
     """Evaluate weights for sector azimuthal average.
-    If `kx` or `ky` are not given, the half-plane representation for the 2D
-    image structure function is assumed and
+    If ``kx`` or ``ky`` are not given, the half-plane representation for the 2D
+    image structure function is assumed and we use
 
-    `kx = 2.0 * np.pi * np.fft.fftfreq(full_shape[1])[:shape[1]]`
-    `ky = 2.0 * np.pi * np.fft.fftshift(np.fft.fftfreq(full_shape[0]))`
+    ``kx = 2.0 * np.pi * np.fft.fftfreq(full_shape[1])[:shape[1]]``
 
-    with `shape[1] = full_shape[1] // 2 + 1)`, are used.
+    ``ky = 2.0 * np.pi * np.fft.fftshift(np.fft.fftfreq(full_shape[0]))``
+
+    with ``shape[1] = full_shape[1] // 2 + 1``.
 
     Parameters
     ----------
-    full_shape : (int, int)
+    full_shape : Tuple[int, int]
         Shape of the full 2D image structure function. This is needed in order
         to correctly account for the spare column (Nyquist frequency). The
-        shape of the output will be (full_shape[0], full_shape[1] // 2 + 1),
+        shape of the output will be ``(full_shape[0], full_shape[1] // 2 + 1)``,
         as for the image structure function data.
-    kx : np.ndarray, optional
-        The array of spatial frequencies along axis x. Default is None.
-    ky : np.ndarray, optional
-        The array of spatial frequencies along axis y. Default is None.
+    kx : numpy.ndarray, optional
+        The array of spatial frequencies along axis `x`. Default is None.
+    ky : numpy.ndarray, optional
+        The array of spatial frequencies along axis `y`. Default is None.
     theta_0 : float, optional
         Reference main angle (in degrees). Default is 0.
     delta_theta : float, optional
-        Gaussian width (in degrees). Default is 90.
+        Sector width (in degrees). If ``kind`` is "gauss", it is the
+        standard deviation of the gaussian function over the angles.
+        Default is 90.
     rep : int, optional
         Number of equally-spaced theta angles. Default is 2.
     kind : str, optional
-        Type of weight function. Supported types are 'uniform' and 'gauss'.
-        Default is 'gauss'.
+        Type of weight function. Supported types are "uniform" and "gauss".
+        Default is "uniform".
 
     Returns
     -------
-    weights : np.ndarray
+    numpy.ndarray
         The weights.
 
     Raises
     ------
     RuntimeError
-        If a value for `kind` other than "uniform" and "gauss" is given.
+        If a value for ``kind`` other than "uniform" or "gauss" is given.
     """
     # define gaussian function
     def gauss(x, mu, sigma):
@@ -104,12 +185,12 @@ def sector_average_weight(
 
 
 def sphere_form_factor(
-    shape : Tuple[int,int],
-    kx : Optional[np.ndarray] = None,
-    ky : Optional[np.ndarray] = None,
-    R : Optional[float] = 1.0,
-    contrast : Optional[float] = 1.0,
-    kind : Optional[str] = 'amplitude'
+    shape: Tuple[int, int],
+    kx: Optional[np.ndarray] = None,
+    ky: Optional[np.ndarray] = None,
+    R: float = 1.0,
+    contrast: float = 1.0,
+    kind: Optional[str] = 'amplitude'
 ) -> np.ndarray:
     """Evaluate sphere form factor.
 

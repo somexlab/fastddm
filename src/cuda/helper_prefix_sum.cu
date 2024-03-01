@@ -17,19 +17,27 @@
 // definitions
 #define NUM_BANKS 32ULL
 #define LOG_NUM_BANKS 5ULL
-//#ifdef ZERO_BANK_CONFLICTS
-//#define CONFLICT_FREE_OFFSET(n) \ 
-// ((n) >> NUM_BANKS + (n) >> (2 * LOG_NUM_BANKS))
-//#else
 #define CONFLICT_FREE_OFFSET(n) ((n) >> LOG_NUM_BANKS)
-//#endif
 
 unsigned long long BLOCK_SIZE = 512;
 unsigned long long ELEMENTS_PER_BLOCK = BLOCK_SIZE * 2;
 
 // *** code ***
 
-// See:
+/*!
+    Compute next power of two larger or equal to n
+ */
+unsigned long long nextPowerOfTwo(unsigned long long n)
+{
+    unsigned long long power = 1;
+    while (power < n)
+    {
+        power *= 2;
+    }
+    return power;
+}
+
+// The following implementation is based on:
 // https://developer.download.nvidia.com/compute/cuda/1.1-Beta/x86_website/projects/scan/doc/scan.pdf
 // https://github.com/lxxue/prefix_sum/blob/master/prefix_sum.cu
 
@@ -99,7 +107,7 @@ void scanManyLargeArrays(double *output,
         // sum the last element of the even arrays portion
         // and the first element of the remainder input
         // to the remainder scan
-        add_many_kernel<<<gridSize_copy, remainder>>>(output+length_even,
+        add_many_kernel<<<gridSize_copy, remainder>>>(output + length_even,
                                                       dist,
                                                       1,
                                                       N,
@@ -450,17 +458,4 @@ __global__ void copy_every_kernel(double *output,
     {
         output[blockID] = input[blockID * dist];
     }
-}
-
-/*!
-    Compute next power of two larger or equal to n
- */
-unsigned long long nextPowerOfTwo(unsigned long long n)
-{
-    unsigned long long power = 1;
-    while (power < n)
-    {
-        power *= 2;
-    }
-    return power;
 }

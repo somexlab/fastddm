@@ -1,81 +1,60 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.18)
 
-cmake_policy(SET CMP0054 NEW)
+option(ENABLE_CPP "Set to ON to compile with C++ support" OFF)
+option(ENABLE_CUDA "Set to ON to compile with CUDA support" OFF)
+option(SINGLE_PRECISION "Use single precision math" OFF)
 
 project(fastddm)
 
-option(SINGLE_PRECISION "Use single precision math" OFF)
-
-# The default behavior is to build with optimization
+# The default behavior is to build in Release mode
 set(CMAKE_BUILD_TYPE Release)
 
+# Relative path rettings
 if(APPLE)
-    set(CMAKE_MACOSX_RPATH ON)
-    set(CMAKE_INSTALL_RPATH "@loader_path")
-    set(CMAKE_BUILD_WITH_INSTALL_RPATH ON)
+    # Enable the macOS rpath
+    SET(CMAKE_MACOSX_RPATH ON)
+
+    # Set the install rpath to the loader path
+    SET(CMAKE_INSTALL_RPATH "@loader_path")
+
+    # Build with the install rpath
+    SET(CMAKE_BUILD_WITH_INSTALL_RPATH ON)
 else()
-    set(CMAKE_BUILD_RPATH_USE_ORIGIN TRUE)
+    # Use ORIGIN as the build rpath
+    SET(CMAKE_BUILD_RPATH_USE_ORIGIN TRUE)
 endif()
 
 # The library should be in a folder with the same name to make it easier to use python distutils
 set(FASTDDM_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/src/python/fastddm)
 
+# Enable C++
 if(ENABLE_CPP)
     enable_language(CXX)
 
-    # Build fftw3 as a shared lib
-    add_subdirectory(lib/fftw-3.3.10 ${CMAKE_CURRENT_BINARY_DIR}/fftw3)
+    # Add library subdirectory
+    add_subdirectory(lib)
 
-    if(WIN32)
-        set_target_properties(fftw3 PROPERTIES
-            RUNTIME_OUTPUT_DIRECTORY_RELEASE ${FASTDDM_OUTPUT_DIR}
-        )
-    else()
-        set_target_properties(fftw3 PROPERTIES
-            PREFIX ""
-            SUFFIX ".so"
-            LIBRARY_OUTPUT_DIRECTORY ${FASTDDM_OUTPUT_DIR}
-        )
-    endif(WIN32)
-
-    if(SINGLE_PRECISION)
-        # Build fftw3f as a shared lib
-        set(ENABLE_FLOAT ON CACHE INTERNAL "")
-        add_subdirectory(lib/fftw-3.3.10 ${CMAKE_CURRENT_BINARY_DIR}/fftw3f)
-
-        if(WIN32)
-            set_target_properties(fftw3f PROPERTIES
-                RUNTIME_OUTPUT_DIRECTORY_RELEASE ${FASTDDM_OUTPUT_DIR}
-            )
-        else()
-            set_target_properties(fftw3f PROPERTIES
-                PREFIX ""
-                SUFFIX ".so"
-                LIBRARY_OUTPUT_DIRECTORY ${FASTDDM_OUTPUT_DIR}
-            )
-        endif(WIN32)
-    endif(SINGLE_PRECISION)
-
-    # Build with python3 bindings
-    find_package(PythonInterp 3 REQUIRED)
-    find_package(PythonLibs 3 REQUIRED)
+    # Add python/pybind11 include directories
+    set(PYBIND11_PYTHON_VERSION 3 CACHE STRING "Python version to use for compiling modules")
     add_subdirectory(lib/pybind11)
     include_directories(${PYTHON_INCLUDE_DIRS})
+    include_directories(${PROJECT_SOURCE_DIR}/lib/pybind11/include)
 
     # Set C++ standard
     set(CMAKE_CXX_STANDARD 14)
     set(CMAKE_CXX_STANDARD_REQUIRED ON)
-    set(CMAKE_CXX_EXTENSIONS OFF)
 endif(ENABLE_CPP)
 
-# Build with CUDA
+# Enable CUDA
 if(ENABLE_CUDA)
     enable_language(CUDA)
-    find_package(CUDA REQUIRED)
 
     # Set CUDA C++ standard
     set(CMAKE_CUDA_STANDARD 11)
+
+    # Find CUDA Toolkit
+    find_package(CUDAToolkit REQUIRED)
 endif(ENABLE_CUDA)
 
-# Add project library subdirectory
+# Add source subdirectory
 add_subdirectory(src)

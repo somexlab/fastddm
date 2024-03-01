@@ -5,19 +5,26 @@
 
 """The collection of C++ functions to perform Differential Dynamic Microscopy."""
 
-from typing import List
+from typing import List, Optional
 import itertools
 import math
 import psutil
 import numpy as np
 
 from ._core import ddm_diff, ddm_fft
-from ._config import IS_SINGLE_PRECISION
+from ._config import IS_SINGLE_PRECISION, DTYPE
 
 SCALAR_SIZE = 4 if IS_SINGLE_PRECISION else 8
 
 
-def ddm_diff_cpp(img_seq: np.ndarray, lags: List[int], nx: int, ny: int):
+def ddm_diff_cpp(
+    img_seq: np.ndarray,
+    lags: List[int],
+    nx: int,
+    ny: int,
+    window: np.ndarray,
+    **kwargs
+):
     """Differential Dynamic Microscopy, diff mode
 
     Compute the image structure function using differences.
@@ -32,7 +39,9 @@ def ddm_diff_cpp(img_seq: np.ndarray, lags: List[int], nx: int, ny: int):
         Number of fft nodes in x direction.
     ny : int
         Number of fft nodes in y direction.
-
+    window : np.ndarray
+        A 2D array containing the window function to be applied to the images.
+        If window is empty, no window is applied.
     Returns
     -------
     np.ndarray
@@ -43,7 +52,6 @@ def ddm_diff_cpp(img_seq: np.ndarray, lags: List[int], nx: int, ny: int):
     RuntimeError
         If memory is not sufficient to perform the calculations.
     """
-
     # get available memory
     mem = psutil.virtual_memory().available
     mem_req = 0
@@ -58,10 +66,18 @@ def ddm_diff_cpp(img_seq: np.ndarray, lags: List[int], nx: int, ny: int):
     if int(0.9 * mem) < mem_req:
         raise RuntimeError("Not enough memory")
 
-    return ddm_diff(img_seq, lags, nx, ny)
+    return ddm_diff(img_seq, lags, nx, ny, window)
 
 
-def ddm_fft_cpp(img_seq: np.ndarray, lags: List[int], nx: int, ny: int, nt: int):
+def ddm_fft_cpp(
+    img_seq: np.ndarray,
+    lags: List[int],
+    nx: int,
+    ny: int,
+    nt: int,
+    window: np.ndarray,
+    **kwargs
+):
     """Differential Dynamic Microscopy, fft mode
 
     Compute the image structure function using the Wiener-Khinchin theorem.
@@ -78,6 +94,9 @@ def ddm_fft_cpp(img_seq: np.ndarray, lags: List[int], nx: int, ny: int, nt: int)
         Number of fft nodes in y direction.
     nt : int
         Number of fft nodes in t direction.
+    window : np.ndarray
+        A 2D array containing the window function to be applied to the images.
+        If window is empty, no window is applied.
 
     Returns
     -------
@@ -89,7 +108,6 @@ def ddm_fft_cpp(img_seq: np.ndarray, lags: List[int], nx: int, ny: int, nt: int)
     RuntimeError
         If memory available is not sufficient for calculations.
     """
-
     # get available memory
     mem = psutil.virtual_memory().available
 
@@ -120,7 +138,7 @@ def ddm_fft_cpp(img_seq: np.ndarray, lags: List[int], nx: int, ny: int, nt: int)
         if idx == 0:
             raise RuntimeError("Not enough memory")
 
-    return ddm_fft(img_seq, lags, nx, ny, nt, chunk_size)
+    return ddm_fft(img_seq, lags, nx, ny, nt, chunk_size, window)
 
 
 def primesfrom2to(n: int) -> List[int]:

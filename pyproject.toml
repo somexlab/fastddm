@@ -3,7 +3,7 @@ requires = [
     "setuptools>=47",
     "setuptools_scm",
     "wheel",
-    "cmake",
+    "cmake>=3.18",
 ]
 
 [project]
@@ -27,6 +27,7 @@ dependencies = [
     'scikit-image',
     'tifffile',
     'nd2reader',
-    'pandas'
+    'pandas',
+    'lmfit'
 ]
 dynamic = [ "license", "version" ]
