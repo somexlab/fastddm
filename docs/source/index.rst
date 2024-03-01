@@ -81,3 +81,9 @@ Indices and tables
    developers
 
    open-source
+
+.. toctree::
+   :maxdepth: 2
+   :caption: About us
+
+   credits
