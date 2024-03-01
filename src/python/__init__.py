@@ -35,7 +35,7 @@ if IS_CUDA_ENABLED:
         )
 
 from ._ddm import ddm
-from .azimuthalaverage import azimuthal_average
+from .azimuthalaverage import azimuthal_average, azimuthal_average_array
 from ._io import load
 from ._utils import tiff2numpy, images2numpy, read_images
 from . import lags, mask, weights, window, noise_est
