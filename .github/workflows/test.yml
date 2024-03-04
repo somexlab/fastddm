@@ -32,7 +32,7 @@ jobs:
 
             - name: Install dependencies
               run: |
-                  python -m pip install --upgrade pip wheel setuptools pytest
+                  python -m pip install --upgrade pip wheel setuptools pytest pytest-regtest
 
             - name: Build package and install through pip
               env:
