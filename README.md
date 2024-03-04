@@ -7,56 +7,10 @@
 The features implemented are targeted at the experimental soft matter research community dealing with inert and active/biological samples.
 
 ## Resources
-Links to readthedocs pages...
-
-## Installation
-To install `fastddm` from source, first clone this repository locally (`git clone https://github.com/somexlab/fastddm.git`). It is recommended to use it in a virtual environment of your choice, e.g. `conda` (to create a new virtual environment with conda, do `conda create -n fastddm python=3.10` to create a virtual environment `fastddm`, using python 3.10.* as the interpreter.)
-
-> **_NOTE FOR WINDOWS USERS_** You will need Python (with `python.exe` added to PATH) and a C++ compiler (even if you only need the python core).
-> You can download Python from [the official Python download page](https://www.python.org/downloads/). The option "add python.exe to PATH" will set up the environment variable for you.
-> We suggest to install Visual Studio Community Edition together with the optional "Desktop development with C++" workload.
-> CUDA (optional) can be installed following NVIDIA's [CUDA Installation Guide for Windows](https://docs.nvidia.com/cuda/cuda-installation-guide-microsoft-windows/).
-
-### (i) installing `fastddm` only with python backend
-In your preferred environment, run from the local git clone
-```console
-pip install .
-```
-
-### (ii) installing `fastddm` with additional C++ backend
-In your preferred environment, run from the local git clone
-```console
-export ENABLE_CPP=ON
-pip install .
-```
-### (iii) installing `fastddm` with CUDA support
-Note: this will also install the C++ backend.
-
-In your preferred environment, run from the local git clone
-```console
-export ENABLE_CUDA=ON
-pip install .
-```
-### (iv) installing `fastddm` with single precision
-
-In your preferred environment, run from the local git clone
-```console
-export SINGLE_PRECISION=ON
-pip install .
-```
-### Check your installation of C++ / CUDA is working
-In a python shell run:
-```python
->>> import fastddm as fddm
->>> fddm.IS_CPP_ENABLED
-True
->>> fddm.IS_CUDA_ENABLED
-True
->>> fddm.IS_SINGLE_PRECISION
-True
-```
-## Usage examples
-Check the examples folder for jupyter notebooks!
+- [Documentation](http://fastddm.readthedocs.io/):
+  Python API description, examples, and usage information.
+- [Example notebooks](https://github.com/somexlab/fastddm-tutorials):
+  Jupyter notebooks with practical examples.
 
 ## Contributing to FastDDM
 Contributions are welcome via [pull requests](https://github.com/somexlab/fastddm/pulls).
