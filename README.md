@@ -1,4 +1,4 @@
-![FastDDM](docs/sources/fastddm-logo-horizontal.svg)
+![FastDDM](docs/source/fastddm-logo-horizontal.svg)
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 ![Python](https://img.shields.io/badge/python-3.8%20%7C%203.11-blue)
