@@ -43,14 +43,12 @@ Please, report bugs and suggest features via the [issue tracker](https://github.
 Please, cite this publication in every work that uses FastDDM:
 
     E. Lattuada, F. Krautgasser, F. Giavazzi, and R. Cerbino.
-    The hitchhiker's guide to Differential Dynamic Microscopy.
-    The Journal of Chemical Physics XX: YYYY, ZZZ 2023.
-    `10.1016/j.chem.phys. blablabla <https://...>`
+    The Hitchhiker’s Guide to Differential Dynamic Microscopy.
+    (In preparation.)
 
 ## License
 FastDDM is available under the [GNU GPL-3.0 license](LICENSE).
 
 ## Acknowledgements
-
 * The [fftw-3.3.10](https://www.fftw.org/) and [pybind11 2.10.0](https://github.com/pybind/pybind11) libraries are included in the source tree.
 * This project was funded by the Austrian Science Fund (FWF), Grant Number M 3250-N.
