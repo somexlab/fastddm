@@ -1,8 +1,9 @@
 ![FastDDM](docs/source/fastddm-logo-horizontal.svg)
 
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 ![Python](https://img.shields.io/badge/python-3.8%20%7C%203.11-blue)
-[![docs](https://readthedocs.org/projects/fastddm-test/badge/?version=latest)](https://fastddm-test.readthedocs.io/en/latest/?badge=latest)
+[![GitHub Actions](https://github.com/somexlab/fastddm/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/somexlab/fastddm/actions/workflows/test.yml)
+[![Read the Docs](https://readthedocs.org/projects/fastddm-test/badge/?version=latest)](https://fastddm-test.readthedocs.io/en/latest/?badge=latest)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 
 **FastDDM** is a Python package for the analysis of microscopy image sequences using Differential Dynamic Microscopy on CPU and GPU.
 The features implemented are targeted at the experimental soft matter research community dealing with inert and active/biological samples.
