@@ -6,9 +6,6 @@
 **FastDDM** is a Python package for the analysis of microscopy image sequences using Differential Dynamic Microscopy on CPU and GPU.
 The features implemented are targeted at the experimental soft matter research community dealing with inert and active/biological samples.
 
-## Dependencies
-All necessary dependencies will be installed automatically. However, if you also want to use the `fastddm.fit` module, you have to manually install `lmfit` (e.g. with `pip install lmfit`).
-
 ## Resources
 Links to readthedocs pages...
 
