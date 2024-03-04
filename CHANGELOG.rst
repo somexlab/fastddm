@@ -5,6 +5,23 @@ Change Log
 v0.3
 ----
 
+v0.3.1 (YYYY-MM-DD)
+^^^^^^^^^^^^^^^^^^^
+
+*Added*
+
+* Documentation is now hosted on ReadtheDocs
+* Build and tests
+
+*Changed*
+
+* README file
+
+.. *Fixed*
+
+.. *Deprecated*
+.. *Removed*
+
 v0.3.0 (2024-03-01)
 ^^^^^^^^^^^^^^^^^^^
 
