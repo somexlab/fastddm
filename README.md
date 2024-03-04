@@ -8,7 +8,7 @@ The features implemented are targeted at the experimental soft matter research c
 
 ## Resources
 - [Documentation](http://fastddm.readthedocs.io/):
-  Python API description, examples, and usage information.
+  Python API description, installation, examples, and usage information.
 - [Example notebooks](https://github.com/somexlab/fastddm-tutorials):
   Jupyter notebooks with practical examples.
 
