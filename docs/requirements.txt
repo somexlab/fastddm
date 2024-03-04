@@ -1,0 +1,6 @@
+ipython
+nbsphinx
+sphinx
+sphinx-tabs
+matplotlib
+furo
