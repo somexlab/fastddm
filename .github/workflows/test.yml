@@ -19,10 +19,11 @@ jobs:
         runs-on: ${{ matrix.os }}
         strategy:
             matrix:
-                #os: [ubuntu-latest, windows-latest, macos-latest, ubuntu-20.04, macos-11, macos-14]
-                #python-version: ["3.8", "3.12"]
-                os: [macos-14]
-                python-version: ["3.12"]
+                os: [ubuntu-latest, windows-latest, macos-latest, ubuntu-20.04, macos-11, macos-14]
+                python-version: ["3.8", "3.12"]
+                exclude:
+                    - os: macos-14
+                      python-version: "3.8"
 
         steps:
             - uses: actions/checkout@v4
@@ -34,7 +35,7 @@ jobs:
 
             - name: Install dependencies
               run: |
-                  python -m pip install --upgrade pip wheel setuptools pytest pytest-regtest
+                  python -m pip install --upgrade pip setuptools wheel pytest pytest-regtest
 
             - name: Build package and install through pip
               env:
