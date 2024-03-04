@@ -12,6 +12,29 @@ The features implemented are targeted at the experimental soft matter research c
 - [Example notebooks](https://github.com/somexlab/fastddm-tutorials):
   Jupyter notebooks with practical examples.
 
+## Example scripts
+These examples demonstrate some of the Python API.
+
+Calculation of the image structure function and its azimuthal average:
+
+```python
+import fastddm as fddm
+
+file_names = [...]  # define here your list of image file names 
+images = fddm.read_images(file_names)
+
+pixel_size = 0.3    # um
+frame_rate = 50     # frames per second
+    
+# compute image structure function and set experimental parameters
+dqt = fddm.ddm(img_seq, range(1, len(img_seq)))
+dqt.pixel_size = pixel_size
+dqt.set_frame_rate(frame_rate)
+
+# compute the azimuthal average
+aa = fddm.azimuthal_average(dqt, bins=dqt.shape[-1] - 1, range=(0.0, dqt.ky[-1]))
+```
+
 ## Contributing to FastDDM
 Contributions are welcome via [pull requests](https://github.com/somexlab/fastddm/pulls).
 Please, report bugs and suggest features via the [issue tracker](https://github.com/somexlab/fastddm/issues).
