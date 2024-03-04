@@ -2,6 +2,38 @@
 Change Log
 ==========
 
+v0.3
+----
+
+v0.3.0 (2024-03-01)
+^^^^^^^^^^^^^^^^^^^
+
+*Added*
+
+* Image windowing function can now be used as an input for `ddm` function.
+* Documentation (developer guidelines for contributors, installation, doc-strings, etc.)
+* Noise estimators 
+* Intermediate scattering function
+* Logo
+* support for fixed expression in `fit_multik`
+* general function `azimuthal_average_array`  to perform an azimuthal average on a 3D `ndarray`
+
+*Changed*
+
+* `fit_multik` also returns the standard error of the parameters
+* refactored functions for C++ & CUDA
+* improved azimuthal average (changed behaviour of input bins variable)
+
+*Fixed* 
+
+* mergesort & resample bugs with different dtypes
+* initial fit at reference k value in `fit_multik` was not done properly
+* CUDA compilation works well on various systems
+
+.. *Deprecated*
+.. *Removed*
+
+
 v0.2
 ----
 
