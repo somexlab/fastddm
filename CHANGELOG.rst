@@ -11,14 +11,13 @@ v0.3.1 (YYYY-MM-DD)
 *Added*
 
 * Documentation is now hosted on ReadtheDocs
-* Build and tests
+* Build and tests (currently, only Python and C++; CUDA not possible on GitHub actions)
 
 *Changed*
 
 * README file
 
 .. *Fixed*
-
 .. *Deprecated*
 .. *Removed*
 
