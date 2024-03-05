@@ -9,7 +9,7 @@
 The features implemented are targeted at the experimental soft matter research community dealing with inert and active/biological samples.
 
 ## Resources
-- [Documentation](http://fastddm.readthedocs.io/):
+- [Documentation](https://fastddm.readthedocs.io/):
   Python API description, installation, examples, and usage information.
 - [Example notebooks](https://github.com/somexlab/fastddm-tutorials):
   Jupyter notebooks with practical examples.
@@ -38,7 +38,10 @@ aa = fddm.azimuthal_average(dqt, bins=dqt.shape[-1] - 1, range=(0.0, dqt.ky[-1])
 ```
 
 ## Contributing to FastDDM
-Contributions are welcome via [pull requests](https://github.com/somexlab/fastddm/pulls).
+Contributions are welcome via [pull requests](https://github.com/somexlab/fastddm/pulls) after
+agreeing to the [Contributors' Agreement](https://github.com/somexlab/fastddm/CONTRIBUTING.rst).
+Please, refer to the [Developers'](https://fastddm.readthedocs.io/en/latest/contributing.html) section in the documentation.
+
 Please, report bugs and suggest features via the [issue tracker](https://github.com/somexlab/fastddm/issues).
 
 ## Citing FastDDM
