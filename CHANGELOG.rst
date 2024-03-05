@@ -16,6 +16,7 @@ v0.3.1 (2024-03-05)
 *Changed*
 
 * README file
+* Updates to developers documentation
 
 .. *Fixed*
 .. *Deprecated*
