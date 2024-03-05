@@ -15,7 +15,7 @@ Request features or report bugs
 Feature requests or bug reports should be done through
 `issues <https://github.com/somexlab/fastddm/issues>`__.
 Please, create a new issue following the provided template.
-Also consider adding proper labels, like `bug` or `enhancement`/`task`.
+Also consider adding proper labels, like ``bug`` or ``enhancement`` / ``task``.
 Please, be concise in your description: adding screenshots (or mathematical formulas) may also help!
 The maintainers will then add the assignee and appropriate milestone.
 Or, if you want to contribute yourself, let the **FastDDM** developers know
@@ -31,7 +31,7 @@ Pull requests
 """""""""""""
 
 When opening a pull request, make sure that the source and destination branches are compatible,
-e.g. `<your_branch> -> <latest_milestone_branch>` or `<latest_milestone_branch> -> main`.
+e.g. ``<your_branch> -> <latest_milestone_branch>`` or ``<latest_milestone_branch> -> main``.
 
 If you want to contribute to the project, fork the latest milestone or the main branch.
 When you are done with your modifications, open a pull request.
@@ -45,8 +45,8 @@ If you need advice, add comments or open a discussion, possibly tagging the appr
 Add your Python file to the installer
 """""""""""""""""""""""""""""""""""""
 
-Python modules must be added to the `src/python` directory. To make a module installable,
-add it to the `src/CMakeLists.txt` file.
+Python modules must be added to the ``src/python`` directory. To make a module installable,
+add it to the ``src/CMakeLists.txt`` file.
 Scroll down until you find
 
 .. code:: cmake
@@ -62,24 +62,25 @@ Version control
 ---------------
 
 When working on the issue, create a new branch starting from the latest
-milestone branch or from `main`.
+milestone branch or from ``main``.
 
 Pull requests for new releases
 """"""""""""""""""""""""""""""
 
-After merging the latest release into `main`, open a new WIP release PR. Do so by:
+After merging the latest release into ``main``, open a new WIP release PR. Do so by:
 
-#. creating a new branch `vX.Y.Z` following the convention.
-#. updating the fallback version in `setup.py` and in `src/python/make_install_setup.py`.
-#. commiting to the new branch.
-#. opening a PR with title "WIP: vX.Y.Z" with destination branch `main`.
+#. creating a new branch ``vX.Y.Z`` following the convention.
+#. updating the fallback version in ``setup.py`` and in ``src/python/make_install_setup.py``.
+#. updating the version in ``docs/source/conf.py``
+#. committing to the new branch.
+#. opening a PR with title "WIP: vX.Y.Z" with destination branch ``main``.
 
 Merge release into `main`
 """""""""""""""""""""""""
 
 #. update changelog with the main modifications of the release you want to merge.
-   Follow the convention in the `CHANGELOG.md`.
-#. Merge the PR to main & close the corresponding milestone.
+   Follow the convention in the ``CHANGELOG.md``.
+#. Merge the PR to ``main`` & close the corresponding milestone.
 #. Create a tag via "create draft release" and name it according to the release version.
 
 Propose a minimal set of related changes

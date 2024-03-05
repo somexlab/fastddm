@@ -5,6 +5,23 @@ Change Log
 v0.3
 ----
 
+v0.3.1 (2024-03-05)
+^^^^^^^^^^^^^^^^^^^
+
+*Added*
+
+* Documentation is now hosted on ReadtheDocs
+* Build and tests (currently, only Python and C++; CUDA not possible on GitHub actions)
+
+*Changed*
+
+* README file
+* Updates to developers documentation
+
+.. *Fixed*
+.. *Deprecated*
+.. *Removed*
+
 v0.3.0 (2024-03-01)
 ^^^^^^^^^^^^^^^^^^^
 
