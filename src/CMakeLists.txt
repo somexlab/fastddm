@@ -52,7 +52,7 @@ if(ENABLE_CPP)
 
     # Add fddm library
     add_library(fddm SHARED ${fddm_SOURCES})
-    target_link_libraries(fddm PUBLIC fftw3)
+    target_link_libraries(fddm PUBLIC ${PYTHON_LIBRARIES} fftw3)
 
     if(SINGLE_PRECISION)
         target_link_libraries(fddm PUBLIC fftw3f)
@@ -95,7 +95,7 @@ if(ENABLE_CUDA)
 
     # Add fddm_cuda library
     add_library(fddm_cuda SHARED ${fddm_gpu_SOURCES} ${fddm_gpu_cu_SOURCES})
-    target_link_libraries(fddm_cuda PUBLIC CUDA::cufft CUDA::nvml)
+    target_link_libraries(fddm_cuda PUBLIC ${PYTHON_LIBRARIES} CUDA::cufft CUDA::nvml)
 
     set_target_properties(fddm_cuda PROPERTIES
         CUDA_ARCHITECTURES ${_cuda_min_arch}
