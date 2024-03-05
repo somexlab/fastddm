@@ -12,7 +12,8 @@ project = "FastDDM"
 year = datetime.date.today().year
 copyright = f"2023-{year}, Enrico Lattuada, Fabian Krautgasser, Roberto Cerbino"
 author = "Enrico Lattuada, Fabian Krautgasser, Roberto Cerbino"
-release = "0.3.1"
+version = "0.3.1"
+release = version
 
 pygments_style = "friendly"
 pygments_dark_style = "native"
