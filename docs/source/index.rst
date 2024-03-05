@@ -10,6 +10,8 @@ FastDDM
 
    .. |License| image:: https://img.shields.io/badge/License-GPLv3-blue.svg
        :target: https://fastddm.readthedocs.io/en/latest/license.html
+   .. |GitHub Actions| image:: https://github.com/somexlab/fastddm/actions/workflows/test.yml/badge.svg?branch=main
+        :target: https://github.com/somexlab/fastddm/actions/workflows/test.yml
 
 **FastDDM** is a Python package for the analysis of microscopy image sequences using Differential
 Dynamic Microscopy on CPU and GPU. The features implemented are targeted at the experimental soft
