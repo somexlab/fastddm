@@ -23,6 +23,14 @@ def ddm_baseline():
     return fddm.ddm(imgs, lags, core="cpp", mode="fft")
 
 
+@pytest.fixture
+def azimuthal_avg_baseline(ddm_baseline):
+    bins = len(ddm_baseline.ky) // 2
+    bin_range = (0, ddm_baseline.ky[-1])
+    ccm = fddm.mask.central_cross_mask(ddm_baseline.shape[1:])
+    return fddm.azimuthal_average(ddm_baseline, bins=bins, range=bin_range, mask=ccm)
+
+
 @pytest.mark.skipif(
     IS_SINGLE_PRECISION, reason="installed with SINGLE_PRECISION option"
 )
@@ -162,6 +170,16 @@ def test_ddm_window_error():
         # make window slightly larger
         window = np.ones((dim_y + 1, dim_x), dtype=DTYPE)
         fddm.ddm(imgs, lags, core="cpp", mode="fft", window=window)
+
+
+def test_azimuthal_average_bin_edges(ddm_baseline, azimuthal_avg_baseline):
+    # check bins list input in azimuthal average
+    bins = len(ddm_baseline.ky) // 2
+    bin_edges = np.linspace(0, ddm_baseline.ky[-1], num=bins).tolist()
+    ccm = fddm.mask.central_cross_mask(ddm_baseline.shape[1:])
+    result = fddm.azimuthal_average(ddm_baseline, bins=bin_edges, mask=ccm)
+
+    assert np.isclose(azimuthal_avg_baseline._data, result._data, equal_nan=True).all()
 
 
 @pytest.mark.skipif("cuda" not in CORES, reason="needs CUDA installed")

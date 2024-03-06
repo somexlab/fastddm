@@ -5,6 +5,20 @@ Change Log
 v0.3
 ----
 
+v0.3.2 (2024-03-06)
+^^^^^^^^^^^^^^^^^^^
+
+.. *Added*
+
+.. *Changed*
+
+*Fixed*
+
+* Resolved bug where list input in ``azimuthal_average`` was throwing an error
+
+.. *Deprecated*
+.. *Removed*
+
 v0.3.1 (2024-03-05)
 ^^^^^^^^^^^^^^^^^^^
 
