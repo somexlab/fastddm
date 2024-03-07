@@ -397,7 +397,7 @@ def azimuthal_average_array(
         # check if it is a monotonically increasing array
         if not np.all(bins[1:] >= bins[:-1]):
             raise ValueError("bins must be monotonically increasing.")
-        bin_edges = bins.astype(DTYPE)
+        bin_edges = np.array(bins).astype(DTYPE)
         n_bins = len(bins)
         x_min = bins[0]
     else:

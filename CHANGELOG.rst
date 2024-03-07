@@ -5,6 +5,23 @@ Change Log
 v0.3
 ----
 
+v0.3.2 (2024-03-07)
+^^^^^^^^^^^^^^^^^^^
+
+*Added*
+
+* Build and test badge to documentation
+* Azimuthal average test
+
+.. *Changed*
+
+*Fixed*
+
+* Resolved bug where list input in ``azimuthal_average`` was throwing an error
+
+.. *Deprecated*
+.. *Removed*
+
 v0.3.1 (2024-03-05)
 ^^^^^^^^^^^^^^^^^^^
 

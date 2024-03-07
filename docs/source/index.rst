@@ -7,6 +7,7 @@ FastDDM
 .. only:: html
 
    |License|
+   |GitHub Actions|
 
    .. |License| image:: https://img.shields.io/badge/License-GPLv3-blue.svg
        :target: https://fastddm.readthedocs.io/en/latest/license.html
