@@ -12,7 +12,9 @@ v0.3.3 (YYYY-MM-DD)
 
 .. *Changed*
 
-.. *Fixed*
+*Fixed*
+
+* Small correction to example in docs landing page
 
 .. *Deprecated*
 .. *Removed*
