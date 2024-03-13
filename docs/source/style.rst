@@ -72,29 +72,23 @@ To build the documentation, run from the project root
 C++/CUDA
 --------
 
-* Style is set by **clang-format**
+* Style convention:
 
   * Whitesmith's indentation style.
   * 100 character line width.
   * Indent only with spaces.
   * 4 spaces per indent level.
-  * See :file:`.clang-format` for the full **clang-format** configuration.
 
 * Naming conventions:
 
   * Namespaces: All lowercase ``somenamespace``
   * Class names: ``UpperCamelCase``
-  * Methods: ``lowerCamelCase``
+  * Methods: ``snake_case``
   * Member variables: ``m_`` prefix followed by lowercase with words
     separated by underscores ``m_member_variable``
   * Constants: all upper-case with words separated by underscores
     ``SOME_CONSTANT``
-  * Functions: ``lowerCamelCase``
-
-Tools
-^^^^^
-
-* Autoformatter: `clang-format <https://clang.llvm.org/docs/ClangFormat.html>`_.
+  * Functions: ``snake_case``
 
 Documentation
 ^^^^^^^^^^^^^
