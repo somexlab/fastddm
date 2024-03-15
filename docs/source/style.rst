@@ -5,22 +5,14 @@ Code style
 ==========
 
 All code in FastDDM follows a consistent style to ensure readability. We
-provide configuration files for linters (see below) so that developers can
-automatically validate and format files.
-
-These tools are configured for use with `pre-commit`_ in
-``.pre-commit-config.yaml``. You can install pre-commit hooks to validate your
-code. Checks will run on pull requests. Run checks manually with::
-
-    pre-commit run --all-files
-
-.. _pre-commit: https://pre-commit.com/
+provide VSCode configuration files for linters (see below) so that developers can
+validate and format files.
 
 Python
 ------
 
 Python code in FastDDM should follow `PEP8`_ with the formatting performed by
-`black`_. Code should pass all **flake8** tests and formatted by **black**.
+`black`_.
 
 .. _PEP8: https://www.python.org/dev/peps/pep-0008
 .. _black: https://github.com/psf/black
@@ -39,9 +31,6 @@ Tools
   * Configure flake8 in your editor to see violations on save.
 
 * Autoformatter: `black <https://github.com/psf/black>`_
-
-  * Run: ``pre-commit run --all-files`` to apply style changes to the whole
-    repository.
 
 Documentation
 ^^^^^^^^^^^^^
@@ -81,53 +70,23 @@ C++/CUDA
 
 * Naming conventions:
 
-  * Namespaces: All lowercase ``somenamespace``
+  * Constants: all upper-case with words separated by underscores
+    ``SOME_CONSTANT``
+  * Functions: ``snake_case``
   * Class names: ``UpperCamelCase``
   * Methods: ``snake_case``
   * Member variables: ``m_`` prefix followed by lowercase with words
     separated by underscores ``m_member_variable``
-  * Constants: all upper-case with words separated by underscores
-    ``SOME_CONSTANT``
-  * Functions: ``snake_case``
+  * Namespaces: All lowercase ``somenamespace``
 
 Documentation
 ^^^^^^^^^^^^^
 
-Documentation comments should be in Javadoc format and precede the item they document for
-compatibility with many source code editors. Multi-line documentation comment blocks start with
-``/**`` and single line ones start with
-``///``.
+We are currently not compiling any documentation for the C++/CUDA functions.
+We have not made any decision regarding the documentation style.
+However, we currently use the Qt style, as indicated by the `Doxygen`_ documentation.
 
-.. code:: c++
-
-    /** Describe a class
-     *
-     *  Note the second * above makes this a documentation comment. Some
-     *  editors like to add the additional *'s on each line. These may be
-     * omitted
-    */
-    class SomeClass
-        {
-        public:
-            /// Single line doc comments should have three /'s
-            Trigger() { }
-
-            /** This is a brief description of a method
-
-                This is a longer description.
-
-                @param arg This is an argument.
-                @returns This describes the return value
-            */
-            virtual bool method(int arg)
-                {
-                return false;
-                }
-        private:
-
-            /// This is a member variable
-            int m_var;
-        };
+.. _Doxygen: https://www.doxygen.nl/manual/docblocks.html
 
 Other file types
 ----------------
