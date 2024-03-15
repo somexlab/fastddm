@@ -20,14 +20,31 @@ maintainers = [
 ]
 requires-python = ">=3.8"
 dependencies = [
-    'psutil',
-    'numpy',
-    'scipy',
-    'matplotlib',
-    'scikit-image',
-    'tifffile',
-    'nd2reader',
-    'pandas',
-    'lmfit'
+    "psutil",
+    "numpy",
+    "scipy",
+    "matplotlib",
+    "scikit-image",
+    "tifffile",
+    "nd2reader",
+    "pandas",
+    "lmfit",
 ]
 dynamic = [ "license", "version" ]
+
+[project.optional-dependencies]
+test = [
+    "pytest",
+    "pytest-regtest",
+]
+doc = [
+    "sphinx",
+    "sphinx-tabs",
+    "nbsphinx",
+    "furo",
+    "ipython",
+]
+
+[project.urls]
+Source = "https://github.com/somexlab/fastddm",
+Documentation = "https://fastddm.readthedocs.io",
