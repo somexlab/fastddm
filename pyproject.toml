@@ -46,5 +46,5 @@ doc = [
 ]
 
 [project.urls]
-Source = "https://github.com/somexlab/fastddm",
-Documentation = "https://fastddm.readthedocs.io",
+Source = "https://github.com/somexlab/fastddm"
+Documentation = "https://fastddm.readthedocs.io"
