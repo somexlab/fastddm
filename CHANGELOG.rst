@@ -8,9 +8,14 @@ v0.3
 v0.3.3 (YYYY-MM-DD)
 ^^^^^^^^^^^^^^^^^^^
 
-.. *Added*
+*Added*
 
-.. *Changed*
+* Optional dependencies can be used during installation
+
+*Changed*
+
+* Code style for C++/CUDA source
+* Build instructions have been updated
 
 *Fixed*
 
