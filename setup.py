@@ -179,6 +179,7 @@ setup(
     },
     packages=find_packages(),
     url="https://github.com/somexlab/fastddm",
+    description="A Python/C++ library for the analysis of Differential Dynamic Microscopy experiments",
     long_description=open("./README.md", "r").read(),
     long_description_content_type="text/markdown",
     license="GNU GPL 3.0",
@@ -195,7 +196,9 @@ setup(
         "Intended Audience :: Science/Research",
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
         "Operating System :: OS Independent",
+        "Programming Language :: Python :: 3",
         "Programming Language :: C++",
+        "Topic :: Scientific/Engineering :: Image Processing",
         "Topic :: Scientific/Engineering :: Physics",
     ],
 )
