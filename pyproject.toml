@@ -11,12 +11,12 @@ name = "fastddm"
 description = "A Python/C++ library for the analysis of Differential Dynamic Microscopy experiments"
 readme = "README.md"
 authors = [
-    { name ="Enrico Lattuada", email = "lattuada.enrico@gmail.com" },
+    { name = "Enrico Lattuada", email = "lattuada.enrico@gmail.com" },
     { name = "Fabian Krautgasser" },
     { name = "Roberto Cerbino" },
 ]
 maintainers = [
-    { name ="Enrico Lattuada", email = "lattuada.enrico@gmail.com" },
+    { name = "Enrico Lattuada", email = "lattuada.enrico@gmail.com" },
 ]
 requires-python = ">=3.8"
 dependencies = [
@@ -30,8 +30,14 @@ dependencies = [
     "pandas",
     "lmfit",
 ]
-dynamic = [ "license", "version" ]
-keywords = ["cuda", "gpu", "image-analysis", "microscopy", "python"]
+dynamic = [ "version" ]
+keywords = [
+    "cuda",
+    "gpu",
+    "image-analysis",
+    "microscopy",
+    "python",
+]
 classifiers=[
     "Development Status :: 4 - Beta",
     "Environment :: Console",
