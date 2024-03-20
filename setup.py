@@ -147,7 +147,7 @@ class CMakeBuild(build_ext):
             except:
                 cpu_cores = int(multiprocessing.cpu_count() / 2)
 
-            if self.cmake_version < "3.14.0":
+            if self.cmake_version < Version("3.14.0"):
                 native_generator_args += [f"-j{cpu_cores}"]
             else:
                 build_args += [f"-j {cpu_cores}"]
