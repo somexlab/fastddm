@@ -30,7 +30,7 @@ dependencies = [
     "pandas",
     "lmfit",
 ]
-dynamic = [ "version" ]
+dynamic = [ "license", "version" ]
 keywords = [
     "cuda",
     "gpu",
