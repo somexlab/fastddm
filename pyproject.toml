@@ -68,3 +68,5 @@ Source = "https://github.com/somexlab/fastddm"
 Documentation = "https://fastddm.readthedocs.io"
 Issues = "https://github.com/somexlab/fastddm/issues"
 Changelog = "https://github.com/somexlab/fastddm/blob/main/CHANGELOG.rst"
+
+[tool.setuptools_scm]
