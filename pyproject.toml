@@ -5,6 +5,7 @@ requires = [
     "wheel",
     "cmake>=3.18",
 ]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "fastddm"

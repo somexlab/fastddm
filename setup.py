@@ -178,8 +178,14 @@ setup(
         "fallback_version": "0.3.2",
     },
     packages=find_packages(),
+    setup_requires=[
+        "setuptools_scm",
+    ],
     url="https://github.com/somexlab/fastddm",
-    description="A Python/C++ library for the analysis of Differential Dynamic Microscopy experiments",
+    description=(
+        "A Python/C++ library for the analysis of "
+        "Differential Dynamic Microscopy experiments"
+    ),
     long_description=open("./README.md", "r").read(),
     long_description_content_type="text/markdown",
     license="GNU GPL 3.0",
