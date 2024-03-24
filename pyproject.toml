@@ -64,6 +64,9 @@ doc = [
     "furo",
     "ipython",
 ]
+dev = [
+    "fastddm[test,doc]",
+]
 
 [project.urls]
 Source = "https://github.com/somexlab/fastddm"
