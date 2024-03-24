@@ -1,0 +1,98 @@
+name: Bug Report
+description: Report a problem with FastDDM
+title: '[BUG]: '
+labels: ["triage", "bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please do your best to make the issue as easy to act on as possible. Only submit here
+        if there is clearly a problem with FastDDM.
+  - type: textarea
+    attributes:
+      label: Description
+      description: A clear and concise description of what the bug is.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Reproducible example code
+      description: |
+        The *minimal* script that demonstrates the problem. The script should depend only on
+        FastDDM and its dependencies so that developers can run it.
+      placeholder: |
+        import fastddm
+        ...
+      render: python
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Input files
+      description: Describe any input files used to run the script.
+  - type: textarea
+    attributes:
+      label: Output
+      description: |
+        What output did you get?
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Expected output
+      description: What output do you expect?
+  - type: dropdown
+    attributes:
+      label: Platform
+      description: What platform are you using? Select all that apply.
+      multiple: true
+      options:
+        - Python-only
+        - C++
+        - CUDA
+        - Windows
+        - Linux
+        - macOS
+    validations:
+      required: true
+  - type: dropdown
+    attributes:
+      label: Installation method
+      description: How did you install FastDDM?
+      options:
+        - Compiled from source
+        - Pip
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: FastDDM version
+      description: What version of FastDDM are you using?
+      placeholder: 0.0.0
+    validations:
+      required: true
+  - type: markdown
+    attributes:
+      value: |
+        Run `python3 -c "import fastddm; print(fastddm.__version__)"` to find your FastDDM version.
+  - type: input
+    attributes:
+      label: Python version
+      description: What version of Python are you using?
+      placeholder: 3.11.3
+    validations:
+      required: true
+  - type: markdown
+    attributes:
+      value: |
+        Run `python3 --version` to find your Python version.
+  - type: textarea
+    attributes:
+      label: Additional context
+      description: Add any other context about the problem here.
+  - type: input
+    attributes:
+      label: Is this a regression? Put the last known working version here if it is.
+      description: Put the last known working version here if this is a regression.
+      value: Not a regression
