@@ -104,6 +104,8 @@ Follow the instructions below to obtain the compiler for your system.
 
 - `NVIDIA CUDA Toolkit`_ >= 9.0
 
+First and foremost, you will need a CUDA-capable GPU.
+Check your hardware compatibility on the `NVIDIA website <https://developer.nvidia.com/cuda-gpus>`_.
 Follow the `instructions <https://docs.nvidia.com/cuda/>`_ available from the website specific to your OS.
 Notice that CUDA is not available for MacOS.
 
