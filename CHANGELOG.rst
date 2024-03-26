@@ -5,6 +5,26 @@ Change Log
 v0.3
 ----
 
+v0.3.3 (YYYY-MM-DD)
+^^^^^^^^^^^^^^^^^^^
+
+*Added*
+
+* Optional dependencies can be used during installation
+* Instructions for Conda environment
+
+*Changed*
+
+* Code style for C++/CUDA source
+* Build instructions have been updated
+
+*Fixed*
+
+* Small correction to example in docs landing page
+
+.. *Deprecated*
+.. *Removed*
+
 v0.3.2 (2024-03-07)
 ^^^^^^^^^^^^^^^^^^^
 

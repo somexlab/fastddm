@@ -9,3 +9,4 @@ Getting started
 
     features
     build
+    conda

@@ -1,6 +1,8 @@
 .. Copyright (c) 2023-2023 University of Vienna, Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino.
 .. Part of FastDDM, released under the GNU GPL-3.0 License.
 
+.. _build:
+
 Building from source
 ====================
 
@@ -104,6 +106,8 @@ Follow the instructions below to obtain the compiler for your system.
 
 - `NVIDIA CUDA Toolkit`_ >= 9.0
 
+First and foremost, you will need a CUDA-capable GPU.
+Check your hardware compatibility on the `NVIDIA website <https://developer.nvidia.com/cuda-gpus>`_.
 Follow the `instructions <https://docs.nvidia.com/cuda/>`_ available from the website specific to your OS.
 Notice that CUDA is not available for MacOS.
 
@@ -115,6 +119,11 @@ Notice that CUDA is not available for MacOS.
 - ipython
 - matplotlib
 - furo
+
+**To run the unit-tests:**
+
+- pytest
+- pytest-regtest
 
 .. _virtual environment: https://docs.python.org/3/library/venv.html
 .. _NVIDIA CUDA Toolkit: https://developer.nvidia.com/cuda-downloads
@@ -207,6 +216,27 @@ source directory:
 
     $ pip3 install .
 
+
+To install also the dependencies for ``test``, run this command instead:
+
+.. code-block:: bash
+
+    $ pip3 install .[test]
+
+.. warning::
+     
+   In some cases, notably on Windows and using Z shell on other systems as well, you need to run
+   alternatively::
+
+     $ pip3 install ."[test]"
+
+To install the optional dependencies to build the documentation, use the option ``doc``.
+If you want to install both, separate the options using a comma, for example:
+
+.. code-block:: bash
+
+    $ pip3 install .[test,doc]
+
 .. _Test the package:
 
 Test the package
@@ -218,6 +248,13 @@ To test the installation, start python and try importing the package:
 
     import fastddm
     fastddm.__version__
+
+To run the unit-tests, run the following command from within the source directory
+(**NOTICE**: you need to install the test dependencies):
+
+.. code-block:: bash
+
+    $ pytest -v
 
 .. _Build the documentation:
 
