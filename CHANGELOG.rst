@@ -11,6 +11,7 @@ v0.3.3 (YYYY-MM-DD)
 *Added*
 
 * Optional dependencies can be used during installation
+* Instructions for Conda environment
 
 *Changed*
 
