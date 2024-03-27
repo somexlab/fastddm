@@ -1,6 +1,8 @@
 .. Copyright (c) 2023-2023 University of Vienna, Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino.
 .. Part of FastDDM, released under the GNU GPL-3.0 License.
 
+.. _build:
+
 Building from source
 ====================
 
@@ -104,6 +106,8 @@ Follow the instructions below to obtain the compiler for your system.
 
 - `NVIDIA CUDA Toolkit`_ >= 9.0
 
+First and foremost, you will need a CUDA-capable GPU.
+Check your hardware compatibility on the `NVIDIA website <https://developer.nvidia.com/cuda-gpus>`_.
 Follow the `instructions <https://docs.nvidia.com/cuda/>`_ available from the website specific to your OS.
 Notice that CUDA is not available for MacOS.
 
