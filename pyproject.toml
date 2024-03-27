@@ -12,9 +12,9 @@ name = "fastddm"
 description = "A Python/C++ library for the analysis of Differential Dynamic Microscopy experiments"
 readme = "README.md"
 authors = [
-    { name = "Enrico Lattuada", email = "lattuada.enrico@gmail.com" },
+    { name = "Enrico Lattuada" },
     { name = "Fabian Krautgasser" },
-    { name = "Roberto Cerbino" },
+    { name = "Roberto Cerbino", email = "cerbino@gmail.com" },
 ]
 maintainers = [
     { name = "Enrico Lattuada", email = "lattuada.enrico@gmail.com" },
