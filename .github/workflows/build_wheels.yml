@@ -1,0 +1,79 @@
+name: Build wheels
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  # Trigger on request
+  workflow_dispatch:
+
+  # Trigger on new published release
+  release:
+    types:
+      - published
+
+  # Trigger on pushes to the mainline branches and version tags. This prevents building commits
+  # twice when the pull request source branch is in the same repository.
+  #push:
+  #    branches:
+  #        - main
+  #    tags:
+  #        - "v*"
+
+  # trigger on pull requests to main
+  #pull_request:
+  #    branches:
+  #        - main
+
+jobs:
+  build_sdist:
+    name: Build source distribution
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build SDist
+        run: pipx run build --sdist
+
+      - name: Check README rendering for PyPI
+        run: pipx run twine check --strict dist/*
+
+      - name: Upload sdist artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cibw-sdist
+          path: dist/*.tar.gz
+          if-no-files-found: error
+
+  upload_pypi:
+    name: Publish [PyPI]
+    needs: [build_sdist]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release' && github.event.action == 'published'
+
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: cibw-*
+          path: dist
+          merge-multiple: true
+
+      - name: Check files
+        run: ls -lR dist
+
+      - name: Upload release to TestPyPI
+        uses: pypa/gh-action-pypi-publish@v1
+        with:
+          user: __token__
+          password: ${{ secrets.TESTPYPI_API_TOKEN }}
+          repository_url: https://test.pypi.org/legacy/
+          skip_existing: true
+          verbose: true

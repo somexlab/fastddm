@@ -12,6 +12,7 @@ v0.3.3 (YYYY-MM-DD)
 
 * Optional dependencies can be used during installation
 * Instructions for Conda environment
+* Prepare project for release to PyPI
 
 *Changed*
 
@@ -20,6 +21,7 @@ v0.3.3 (YYYY-MM-DD)
 
 *Fixed*
 
+* Installation in conda environments and on systems with multiple compilers and Python versions
 * Small correction to example in docs landing page
 
 .. *Deprecated*

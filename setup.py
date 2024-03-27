@@ -6,7 +6,7 @@ import platform
 import subprocess
 import multiprocessing
 
-from distutils.version import LooseVersion
+from packaging.version import Version
 from setuptools import setup, find_packages, Extension
 from setuptools.command.build_ext import build_ext
 from setuptools.command.install_lib import install_lib
@@ -90,12 +90,12 @@ class CMakeBuild(build_ext):
                 + ", ".join(e.name for e in self.extensions)
             )
 
-        self.cmake_version = LooseVersion(
+        self.cmake_version = Version(
             re.search(r"version\s*([\d.]+)", out.decode()).group(1)
         )
 
         if platform.system() == "Windows":
-            if self.cmake_version < "3.1.0":
+            if self.cmake_version < Version("3.1.0"):
                 raise RuntimeError("CMake >= 3.1.0 is required on Windows")
 
         for ext in self.extensions:
@@ -147,7 +147,7 @@ class CMakeBuild(build_ext):
             except:
                 cpu_cores = int(multiprocessing.cpu_count() / 2)
 
-            if self.cmake_version < "3.14.0":
+            if self.cmake_version < Version("3.14.0"):
                 native_generator_args += [f"-j{cpu_cores}"]
             else:
                 build_args += [f"-j {cpu_cores}"]
@@ -178,7 +178,14 @@ setup(
         "fallback_version": "0.3.2",
     },
     packages=find_packages(),
+    setup_requires=[
+        "setuptools_scm",
+    ],
     url="https://github.com/somexlab/fastddm",
+    description=(
+        "A Python/C++ library for the analysis of "
+        "Differential Dynamic Microscopy experiments"
+    ),
     long_description=open("./README.md", "r").read(),
     long_description_content_type="text/markdown",
     license="GNU GPL 3.0",
@@ -189,13 +196,4 @@ setup(
         "install_lib": InstallCMakeLibs,
     },
     zip_safe=False,
-    classifiers=[
-        "Development Status :: 4 - Beta",
-        "Environment :: Console",
-        "Intended Audience :: Science/Research",
-        "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
-        "Operating System :: OS Independent",
-        "Programming Language :: C++",
-        "Topic :: Scientific/Engineering :: Physics",
-    ],
 )
