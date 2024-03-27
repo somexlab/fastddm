@@ -1,20 +1,59 @@
 name: Build wheels
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
-    # Trigger on pushes to the mainline branches and version tags. This prevents building commits
-    # twice when the pull request source branch is in the same repository.
-    #push:
-    #    branches:
-    #        - main
-    #    tags:
-    #        - "v*"
+  # Trigger on request
+  workflow_dispatch:
 
-    # trigger on pull requests to main
-    #pull_request:
-    #    branches:
-    #        - main
+  # Trigger on new published release
+  release:
+    types:
+      - published
 
-    # trigger on request
-    workflow_dispatch:
+  # Trigger on pushes to the mainline branches and version tags. This prevents building commits
+  # twice when the pull request source branch is in the same repository.
+  #push:
+  #    branches:
+  #        - main
+  #    tags:
+  #        - "v*"
+
+  # trigger on pull requests to main
+  #pull_request:
+  #    branches:
+  #        - main
 
 jobs:
+  build_sdist:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 🐍
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.8"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip build twine
+
+      - name: Build sdist
+        run: |
+          python -m build --sdist
+
+      - name: Check metadata
+        run: |
+          twine check dist/*
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-sdist
+          path: dist
+
