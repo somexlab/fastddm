@@ -15,16 +15,16 @@ on:
 
   # Trigger on pushes to the mainline branches and version tags. This prevents building commits
   # twice when the pull request source branch is in the same repository.
-  #push:
-  #    branches:
-  #        - main
-  #    tags:
-  #        - "v*"
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
 
   # trigger on pull requests to main
-  #pull_request:
-  #    branches:
-  #        - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
   build_sdist:
