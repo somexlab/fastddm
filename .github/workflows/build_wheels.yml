@@ -1,18 +1,6 @@
 name: Build wheels
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
 on:
-  # Trigger on request
-  workflow_dispatch:
-
-  # Trigger on new published release
-  release:
-    types:
-      - published
-
   # Trigger on pushes to the mainline branches and version tags. This prevents building commits
   # twice when the pull request source branch is in the same repository.
   push:
@@ -52,7 +40,7 @@ jobs:
     name: Publish [PyPI]
     needs: [build_sdist]
     runs-on: ubuntu-latest
-    if: github.event_name == 'release' && github.event.action == 'published'
+    if: github.event_name == 'push' && github.ref_type == 'tag'
 
     steps:
       - uses: actions/setup-python@v5

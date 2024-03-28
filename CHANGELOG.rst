@@ -5,13 +5,57 @@ Change Log
 v0.3
 ----
 
-v0.3.4 (YYYY-MM-DD)
+v0.3.8 (2024-03-28)
+^^^^^^^^^^^^^^^^^^^
+
+*Added*
+
+* PyPI badge to README
+
+.. *Changed*
+.. *Fixed*
+.. *Deprecated*
+.. *Removed*
+
+v0.3.7 (2024-03-28)
 ^^^^^^^^^^^^^^^^^^^
 
 .. *Added*
 
 .. *Changed*
-.. *Fixed*
+
+*Fixed*
+
+* Changed wheel creation trigger behavior
+
+.. *Deprecated*
+.. *Removed*
+
+v0.3.6 (2024-03-28)
+^^^^^^^^^^^^^^^^^^^
+
+.. *Added*
+
+.. *Changed*
+
+*Fixed*
+
+* Explicitly set author-email in pyproject.toml to avoid display issues on PyPI
+
+.. *Deprecated*
+.. *Removed*
+
+v0.3.5 (2024-03-28)
+^^^^^^^^^^^^^^^^^^^
+
+.. *Added*
+
+.. *Changed*
+
+*Fixed*
+
+* Due to PyPI maintainance, ``v0.3.4`` was not published to the package index. It should happen now.
+
 .. *Deprecated*
 .. *Removed*
 
