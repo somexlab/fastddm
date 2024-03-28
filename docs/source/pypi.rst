@@ -4,4 +4,14 @@
 Installing from PyPI
 ====================
 
-This page is under construction...
+Install source distribution
+---------------------------
+
+To install **FastDDM** from the source distribution, check first the section :ref:`build` for the
+prerequisites for your system and the installation options.
+If you are using Anaconda, check also the corresponding section: :ref:`conda`.
+Run the following line in your terminal:
+
+.. code-block:: bash
+
+    $ pip3 install --no-binary fastddm
