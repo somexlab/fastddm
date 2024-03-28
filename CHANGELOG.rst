@@ -5,6 +5,18 @@ Change Log
 v0.3
 ----
 
+v0.3.4 (YYYY-MM-DD)
+^^^^^^^^^^^^^^^^^^^
+
+*Added*
+
+* Source distribution released to PyPI
+
+.. *Changed*
+.. *Fixed*
+.. *Deprecated*
+.. *Removed*
+
 v0.3.3 (2024-03-28)
 ^^^^^^^^^^^^^^^^^^^
 
