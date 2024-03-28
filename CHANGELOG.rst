@@ -5,6 +5,19 @@ Change Log
 v0.3
 ----
 
+v0.3.8 (2024-03-28)
+^^^^^^^^^^^^^^^^^^^
+
+*Added*
+
+* PyPI badge to README
+* Precompiled wheels to PyPI
+
+.. *Changed*
+.. *Fixed*
+.. *Deprecated*
+.. *Removed*
+
 v0.3.7 (2024-03-28)
 ^^^^^^^^^^^^^^^^^^^
 
