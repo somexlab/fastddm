@@ -5,6 +5,16 @@ Change Log
 v0.3
 ----
 
+v0.3.4 (YYYY-MM-DD)
+^^^^^^^^^^^^^^^^^^^
+
+.. *Added*
+
+.. *Changed*
+.. *Fixed*
+.. *Deprecated*
+.. *Removed*
+
 v0.3.4 (2024-03-28)
 ^^^^^^^^^^^^^^^^^^^
 
