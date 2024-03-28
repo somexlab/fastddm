@@ -11,6 +11,7 @@ v0.3.4 (YYYY-MM-DD)
 *Added*
 
 * Source distribution released to PyPI
+* Add instructions to build sdist to documentation
 
 .. *Changed*
 .. *Fixed*
