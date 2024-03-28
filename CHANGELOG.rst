@@ -8,7 +8,10 @@ v0.3
 v0.3.8 (2024-03-28)
 ^^^^^^^^^^^^^^^^^^^
 
-.. *Added*
+*Added*
+
+* PyPI badge to README
+
 .. *Changed*
 .. *Fixed*
 .. *Deprecated*
