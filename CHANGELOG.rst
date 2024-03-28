@@ -5,6 +5,19 @@ Change Log
 v0.3
 ----
 
+v0.3.4 (2024-03-28)
+^^^^^^^^^^^^^^^^^^^
+
+*Added*
+
+* Source distribution released to PyPI
+* Add instructions to build sdist to documentation
+
+.. *Changed*
+.. *Fixed*
+.. *Deprecated*
+.. *Removed*
+
 v0.3.3 (2024-03-28)
 ^^^^^^^^^^^^^^^^^^^
 
