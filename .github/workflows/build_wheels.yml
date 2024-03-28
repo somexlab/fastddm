@@ -52,7 +52,7 @@ jobs:
         uses: pypa/cibuildwheel@v2.17.0
         env:
           # Build with C++ support
-          ENABLE_CPP: ON
+          CIBW_ENVIRONMENT: ENABLE_CPP=ON
 
           # Manually select the python version
           CIBW_PROJECT_REQUIRES_PYTHON: "==${{ matrix.python-version }}.*"
