@@ -5,6 +5,20 @@ Change Log
 v0.3
 ----
 
+v0.3.7 (2024-03-28)
+^^^^^^^^^^^^^^^^^^^
+
+.. *Added*
+
+.. *Changed*
+
+*Fixed*
+
+* Changed wheel creation trigger behavior
+
+.. *Deprecated*
+.. *Removed*
+
 v0.3.6 (2024-03-28)
 ^^^^^^^^^^^^^^^^^^^
 
