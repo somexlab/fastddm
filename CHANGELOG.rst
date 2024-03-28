@@ -5,6 +5,20 @@ Change Log
 v0.3
 ----
 
+v0.3.5 (2024-03-28)
+^^^^^^^^^^^^^^^^^^^
+
+.. *Added*
+
+.. *Changed*
+
+*Fixed*
+
+* Due to PyPI maintainance, ``v0.3.4`` was not published to the package index. It should happen now.
+
+.. *Deprecated*
+.. *Removed*
+
 v0.3.4 (2024-03-28)
 ^^^^^^^^^^^^^^^^^^^
 
