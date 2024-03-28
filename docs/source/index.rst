@@ -38,7 +38,7 @@ Calculation of the image structure function and its azimuthal average:
     import fastddm as fddm
 
     file_names = [...]  # define here your list of image file names 
-    images = fddm.read_images(file_names)
+    img_seq = fddm.read_images(file_names)
 
     pixel_size = 0.3    # um
     frame_rate = 50     # frames per second

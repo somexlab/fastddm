@@ -52,7 +52,12 @@ if(ENABLE_CPP)
 
     # Add fddm library
     add_library(fddm SHARED ${fddm_SOURCES})
-    target_link_libraries(fddm PUBLIC ${PYTHON_LIBRARIES} fftw3)
+    target_link_libraries(fddm PUBLIC fftw3)
+
+    # Explicitly link python libraries only for Windows
+    if(WIN32)
+        target_link_libraries(fddm PUBLIC ${PYTHON_LIBRARIES})
+    endif(WIN32)
 
     if(SINGLE_PRECISION)
         target_link_libraries(fddm PUBLIC fftw3f)
@@ -64,10 +69,21 @@ if(ENABLE_CPP)
     endif(NOT WIN32)
 
     set_target_properties(fddm PROPERTIES
+
+        # Linux and macOS
         LIBRARY_OUTPUT_DIRECTORY ${FASTDDM_OUTPUT_DIR}
+
+        # Windows
         RUNTIME_OUTPUT_DIRECTORY_RELEASE ${FASTDDM_OUTPUT_DIR}
         WINDOWS_EXPORT_ALL_SYMBOLS ON
     )
+
+    # On macOS, allow undefined symbols in shared libraries to be resolved dynamically at runtime.
+    if(APPLE)
+        set_target_properties(fddm PROPERTIES
+            LINK_FLAGS "-undefined dynamic_lookup"
+        )
+    endif(APPLE)
 
     # Add suffix .so for UNIX systems
     if(NOT WIN32)
@@ -77,12 +93,17 @@ if(ENABLE_CPP)
     endif(NOT WIN32)
 
     # Add _core library with Python bindings
-    pybind11_add_module(_core SHARED python/module.cc)
+    pybind11_add_module(_core MODULE python/module.cc)
 
     target_link_libraries(_core PRIVATE fddm)
     set_target_properties(_core PROPERTIES
+
+        # Linux and macOS
         LIBRARY_OUTPUT_DIRECTORY ${FASTDDM_OUTPUT_DIR}
-        RUNTIME_OUTPUT_DIRECTORY_RELEASE ${FASTDDM_OUTPUT_DIR}
+
+        # Windows
+        # For modules, we use the library_output_directory_release
+        LIBRARY_OUTPUT_DIRECTORY_RELEASE ${FASTDDM_OUTPUT_DIR}
         PREFIX "${PYTHON_MODULE_PREFIX}"
         SUFFIX "${PYTHON_MODULE_EXTENSION}"
     )
@@ -95,8 +116,14 @@ if(ENABLE_CUDA)
 
     # Add fddm_cuda library
     add_library(fddm_cuda SHARED ${fddm_gpu_SOURCES} ${fddm_gpu_cu_SOURCES})
-    target_link_libraries(fddm_cuda PUBLIC ${PYTHON_LIBRARIES} CUDA::cufft CUDA::nvml)
+    target_link_libraries(fddm_cuda PUBLIC CUDA::cufft CUDA::nvml)
 
+    # Explicitly link python libraries only for Windows
+    if(WIN32)
+        target_link_libraries(fddm_cuda PUBLIC ${PYTHON_LIBRARIES})
+    endif(WIN32)
+
+    # Set CUDA architectures
     set_target_properties(fddm_cuda PROPERTIES
         CUDA_ARCHITECTURES ${_cuda_min_arch}
     )
@@ -110,10 +137,22 @@ if(ENABLE_CUDA)
     endif(NOT WIN32)
 
     set_target_properties(fddm_cuda PROPERTIES
+
+        # Linux and macOS
         LIBRARY_OUTPUT_DIRECTORY ${FASTDDM_OUTPUT_DIR}
+
+        # Windows
         RUNTIME_OUTPUT_DIRECTORY_RELEASE ${FASTDDM_OUTPUT_DIR}
         WINDOWS_EXPORT_ALL_SYMBOLS ON
     )
+
+    # On macOS, allow undefined symbols in shared libraries to be resolved dynamically at runtime.
+    # This should not be necessary, since CUDA is not supported on macOS, but you never know.
+    if(APPLE)
+        set_target_properties(fddm_cuda PROPERTIES
+            LINK_FLAGS "-undefined dynamic_lookup"
+        )
+    endif(APPLE)
 
     # Add suffix .so for UNIX systems
     if(NOT WIN32)
@@ -123,12 +162,17 @@ if(ENABLE_CUDA)
     endif(NOT WIN32)
 
     # Add _core_cuda library with Python bindings
-    pybind11_add_module(_core_cuda SHARED python/module_cuda.cc)
+    pybind11_add_module(_core_cuda MODULE python/module_cuda.cc)
 
     target_link_libraries(_core_cuda PRIVATE fddm_cuda)
     set_target_properties(_core_cuda PROPERTIES
+
+        # Linux and macOS
         LIBRARY_OUTPUT_DIRECTORY ${FASTDDM_OUTPUT_DIR}
-        RUNTIME_OUTPUT_DIRECTORY_RELEASE ${FASTDDM_OUTPUT_DIR}
+
+        # Windows
+        # For modules, we use the library_output_directory_release
+        LIBRARY_OUTPUT_DIRECTORY_RELEASE ${FASTDDM_OUTPUT_DIR}
         PREFIX "${PYTHON_MODULE_PREFIX}"
         SUFFIX "${PYTHON_MODULE_EXTENSION}"
     )

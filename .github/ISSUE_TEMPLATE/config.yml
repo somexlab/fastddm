@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: FastDDM discussion board
+    url: https://github.com/somexlab/fastddm/discussions/
+    about: Ask the FastDDM user community for help.
+  - name: FastDDM documentation
+    url: https://fastddm.readthedocs.io/
+    about: User documentation.
