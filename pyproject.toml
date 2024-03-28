@@ -5,18 +5,19 @@ requires = [
     "wheel",
     "cmake>=3.18",
 ]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "fastddm"
 description = "A Python/C++ library for the analysis of Differential Dynamic Microscopy experiments"
 readme = "README.md"
 authors = [
-    { name ="Enrico Lattuada", email = "lattuada.enrico@gmail.com" },
+    { name = "Enrico Lattuada" },
     { name = "Fabian Krautgasser" },
-    { name = "Roberto Cerbino" },
+    { name = "Roberto Cerbino", email = "cerbino@gmail.com" },
 ]
 maintainers = [
-    { name ="Enrico Lattuada", email = "lattuada.enrico@gmail.com" },
+    { name = "Enrico Lattuada", email = "lattuada.enrico@gmail.com" },
 ]
 requires-python = ">=3.8"
 dependencies = [
@@ -31,6 +32,25 @@ dependencies = [
     "lmfit",
 ]
 dynamic = [ "license", "version" ]
+keywords = [
+    "cuda",
+    "differential-dynamic-microscopy",
+    "gpu",
+    "image-analysis",
+    "microscopy",
+    "python",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: C++",
+    "Topic :: Scientific/Engineering :: Image Processing",
+    "Topic :: Scientific/Engineering :: Physics",
+]
 
 [project.optional-dependencies]
 test = [
@@ -44,7 +64,14 @@ doc = [
     "furo",
     "ipython",
 ]
+dev = [
+    "fastddm[test,doc]",
+]
 
 [project.urls]
 Source = "https://github.com/somexlab/fastddm"
 Documentation = "https://fastddm.readthedocs.io"
+Issues = "https://github.com/somexlab/fastddm/issues"
+Changelog = "https://github.com/somexlab/fastddm/blob/main/CHANGELOG.rst"
+
+[tool.setuptools_scm]
