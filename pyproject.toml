@@ -15,8 +15,8 @@ authors = [
     { name = "Enrico Lattuada" },
     { name = "Fabian Krautgasser" },
     { name = "Roberto Cerbino" },
+    { email = "cerbino@gmail.com" },
 ]
-author-email = "cerbino@gmail.com"
 maintainers = [
     { name = "Enrico Lattuada", email = "lattuada.enrico@gmail.com" },
 ]
