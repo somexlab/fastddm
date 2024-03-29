@@ -40,7 +40,7 @@ jobs:
           if-no-files-found: error
 
   build_wheels:
-    name: Build wheel for ${{ matrix.os }}, Python ${{ matrix.python-version }}
+    name: Build wheel for ${{ matrix.os }}, Python ${{ matrix.python-version[1] }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -76,7 +76,7 @@ jobs:
       - name: Upload wheel artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: cibw-${{ matrix.os }}-${{ matrix.python-version }}
+          name: cibw-${{ matrix.os }}-${{ matrix.python-version[1] }}
           path: ./wheelhouse/*.whl
 
 
