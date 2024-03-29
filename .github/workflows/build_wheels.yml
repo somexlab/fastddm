@@ -70,6 +70,9 @@ jobs:
           # Configure environment variables
           MACOSX_DEPLOYMENT_TARGET: "10.14"
 
+          # verbosity
+          CIBW_BUILD_VERBOSITY: 1
+
           # Test the wheels
           # TBD
 
