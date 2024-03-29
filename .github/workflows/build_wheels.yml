@@ -14,6 +14,9 @@ on:
     branches:
       - main
 
+  # trigger on request
+  workflow_dispatch:
+
 jobs:
   build_sdist:
     name: Build source distribution
@@ -42,7 +45,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-13, macos-14]
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+        python-version: [["cp38", "3.8"], ["cp39", "3.9"], ["cp310", "3.10"], ["cp311", "3.11"], ["cp312", "3.12"]]
 
     steps:
       - name: Checkout code
@@ -55,7 +58,8 @@ jobs:
           CIBW_ENVIRONMENT: ENABLE_CPP=ON
 
           # Manually select the python version
-          CIBW_PROJECT_REQUIRES_PYTHON: "==${{ matrix.python-version }}.*"
+          CIBW_PROJECT_REQUIRES_PYTHON: "==${{ matrix.python-version[1] }}.*"
+          CIBW_BUILD: "${{ matrix.python-version[0] }}-*"
           CIBW_SKIP: "{pp*,*-musllinux_*}"
 
           # Build only for 64-bit platforms
