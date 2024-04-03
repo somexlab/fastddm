@@ -9,8 +9,14 @@ v0.3.9 (YYYY-MM-DD)
 ^^^^^^^^^^^^^^^^^^^
 
 .. *Added*
-.. *Changed*
-.. *Fixed*
+*Changed*
+
+* Updated minimal example notebook
+
+*Fixed*
+
+* Windows' PyPI wheels
+
 .. *Deprecated*
 .. *Removed*
 
