@@ -73,13 +73,15 @@ jobs:
           CIBW_ARCHS_WINDOWS: auto64
 
           # Configure environment variables
-          MACOSX_DEPLOYMENT_TARGET: "10.14"
+          MACOSX_DEPLOYMENT_TARGET: "10.9"
 
           # verbosity
           CIBW_BUILD_VERBOSITY: 1
 
           # Test the wheels
-          # TBD
+          #CIBW_TEST_REQUIRES: "pytest pytest-regtest"
+          #CIBW_TEST_COMMAND: "pytest -v {project}/tests"
+          #CIBW_TEST_SKIP: 
 
       - name: Upload wheel artifacts
         uses: actions/upload-artifact@v4
