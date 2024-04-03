@@ -45,7 +45,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-13, macos-14]
-        python-version: [["cp38", "3.8"], ["cp39", "3.9"], ["cp310", "3.10"], ["cp311", "3.11"], ["cp312", "3.12"]]
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
 
     steps:
       - name: Checkout code
@@ -54,7 +54,7 @@ jobs:
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version[1] }}
+          python-version: ${{ matrix.python-version }}
         if: runner.os == 'Windows'
 
       - name: Build wheels
@@ -64,8 +64,7 @@ jobs:
           CIBW_ENVIRONMENT: ENABLE_CPP=ON
 
           # Manually select the python version
-          CIBW_PROJECT_REQUIRES_PYTHON: "==${{ matrix.python-version[1] }}.*"
-          CIBW_BUILD: "${{ matrix.python-version[0] }}-*"
+          CIBW_PROJECT_REQUIRES_PYTHON: "==${{ matrix.python-version }}.*"
           CIBW_SKIP: "{pp*,*-musllinux_*}"
 
           # Build only for 64-bit platforms
@@ -74,18 +73,20 @@ jobs:
           CIBW_ARCHS_WINDOWS: auto64
 
           # Configure environment variables
-          MACOSX_DEPLOYMENT_TARGET: "10.14"
+          MACOSX_DEPLOYMENT_TARGET: "10.9"
 
           # verbosity
           CIBW_BUILD_VERBOSITY: 1
 
           # Test the wheels
-          # TBD
+          #CIBW_TEST_REQUIRES: "pytest pytest-regtest"
+          #CIBW_TEST_COMMAND: "pytest -v {project}/tests"
+          #CIBW_TEST_SKIP: 
 
       - name: Upload wheel artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: cibw-${{ matrix.os }}-${{ matrix.python-version[1] }}
+          name: cibw-${{ matrix.os }}-${{ matrix.python-version }}
           path: ./wheelhouse/*.whl
 
 
