@@ -51,6 +51,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version[1] }}
+
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.17.0
         env:
