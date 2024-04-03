@@ -17,9 +17,10 @@ The command below will install **FastDDM**
 
 .. warning::
 
-   If wheels are not available for your system, ``pip`` will fall back to the installation of the
-   source distribution. Refer to the :ref:`build` section for more information.
+    If wheels are not available for your system, ``pip`` will fall back to the installation of the
+    source distribution. Refer to the :ref:`build` section for more information.
 
+.. _install_sdist:
 
 Install source distribution
 ---------------------------
@@ -31,4 +32,4 @@ Run the following line in your terminal:
 
 .. code-block:: bash
 
-    $ pip3 install --no-binary fastddm
+    $ pip3 install --no-binary=:all: fastddm
