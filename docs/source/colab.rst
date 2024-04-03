@@ -25,6 +25,19 @@ To check that the GPU is working, run the following command in a cell
 
     !nvidia-smi
 
+From pip source distribution
+----------------------------
+
+To install the source distribution via ``pip``, run the command below
+
+.. code-block:: python
+
+    !pip3 install --no-binary fastddm fastddm
+
+From GitHub repository source code
+----------------------------------
+
+This is the preferred mode if you want to run the unit tests.
 Clone the source code from the GitHub repository
 
 .. code-block:: python

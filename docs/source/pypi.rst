@@ -32,4 +32,4 @@ Run the following line in your terminal:
 
 .. code-block:: bash
 
-    $ pip3 install --no-binary=:all: fastddm
+    $ pip3 install --no-binary fastddm fastddm
