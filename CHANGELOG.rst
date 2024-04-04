@@ -5,6 +5,19 @@ Change Log
 v0.3
 ----
 
+v0.3.10 (YYYY-MM-DD)
+^^^^^^^^^^^^^^^^^^^^
+
+.. *Added*
+.. *Changed*
+
+*Fixed*
+
+* Documentation build errors
+
+.. *Deprecated*
+.. *Removed*
+
 v0.3.9 (2024-04-04)
 ^^^^^^^^^^^^^^^^^^^
 

@@ -175,7 +175,7 @@ class CMakeBuild(build_ext):
 setup(
     name="fastddm",
     use_scm_version={
-        "fallback_version": "0.3.9",
+        "fallback_version": "0.3.10",
     },
     packages=find_packages(),
     setup_requires=[
