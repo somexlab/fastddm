@@ -21,7 +21,7 @@ Save and go back to your notebook.
 
 To check that the GPU is working, run the following command in a cell
 
-.. code-block:: python
+.. code-block:: bash
 
     !nvidia-smi
 
@@ -30,7 +30,7 @@ From pip source distribution
 
 To install the source distribution via ``pip``, run the command below
 
-.. code-block:: python
+.. code-block:: bash
 
     !pip3 install --no-binary fastddm fastddm
 
@@ -40,31 +40,31 @@ From GitHub repository source code
 This is the preferred mode if you want to run the unit tests.
 Clone the source code from the GitHub repository
 
-.. code-block:: python
+.. code-block:: bash
 
     !git clone --depth 1 --branch <version_name> https://github.com/somexlab/fastddm.git
 
 For example, to clone the version ``v0.3.8``, run
 
-.. code-block:: python
+.. code-block:: bash
 
     !git clone --depth 1 --branch v0.3.8 https://github.com/somexlab/fastddm.git
 
 Change directory to the source code one
 
-.. code-block:: python
+.. code-block:: bash
 
     %cd fastddm
 
 If you want to install the library with C++ support, run the following command in a cell
 
-.. code-block:: python
+.. code-block:: bash
 
     %env ENABLE_CPP=ON
 
 If you want to install the library with GPU (CUDA) support, run the following command in a cell
 
-.. code-block:: python
+.. code-block:: bash
 
     %env ENABLE_CUDA=ON
 
@@ -79,7 +79,7 @@ If you want to install the library with GPU (CUDA) support, run the following co
 
 Finally, install **FastDDM**
 
-.. code-block:: python
+.. code-block:: bash
 
     !python3 -m pip install .
 
@@ -95,6 +95,6 @@ Finally, install **FastDDM**
 
 Now you can go back to your home directory and work with **FastDDM**!
 
-.. code-block:: python
+.. code-block:: bash
 
     %cd ..
