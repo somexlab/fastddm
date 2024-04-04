@@ -8,7 +8,10 @@ v0.3
 v0.3.9 (YYYY-MM-DD)
 ^^^^^^^^^^^^^^^^^^^
 
-.. *Added*
+*Added*
+
+* Instructions for installation via PyPI and on Google Colab
+
 *Changed*
 
 * Updated minimal example notebook
