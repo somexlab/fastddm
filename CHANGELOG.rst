@@ -10,7 +10,10 @@ v0.3.10 (YYYY-MM-DD)
 
 .. *Added*
 .. *Changed*
-.. *Fixed*
+*Fixed*
+
+* Documentation build errors
+
 .. *Deprecated*
 .. *Removed*
 
