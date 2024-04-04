@@ -9,7 +9,7 @@ setup(
     name="fastddm",
     use_scm_version={
         "root": "${CMAKE_SOURCE_DIR}",
-        "fallback_version": "0.3.2",
+        "fallback_version": "0.3.9",
     },
     setup_requires=["setuptools_scm"],
     packages=["fastddm"],

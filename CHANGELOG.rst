@@ -5,6 +5,24 @@ Change Log
 v0.3
 ----
 
+v0.3.9 (2024-04-04)
+^^^^^^^^^^^^^^^^^^^
+
+*Added*
+
+* Instructions for installation via PyPI and on Google Colab
+
+*Changed*
+
+* Updated minimal example notebook
+
+*Fixed*
+
+* Windows' PyPI wheels
+
+.. *Deprecated*
+.. *Removed*
+
 v0.3.8 (2024-03-28)
 ^^^^^^^^^^^^^^^^^^^
 

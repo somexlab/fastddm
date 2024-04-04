@@ -36,6 +36,7 @@ dynamic = [ "license", "version" ]
 keywords = [
     "cuda",
     "differential-dynamic-microscopy",
+    "digital-fourier-microscopy",
     "gpu",
     "image-analysis",
     "microscopy",

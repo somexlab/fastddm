@@ -11,3 +11,4 @@ Getting started
     build
     conda
     pypi
+    colab

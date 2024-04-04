@@ -4,6 +4,24 @@
 Installing from PyPI
 ====================
 
+Install precompiled wheels
+--------------------------
+
+Precompiled wheels are available through `PyPI <https://pypi.org/project/fastddm/>`_ with C++
+support for most OSs and Python versions.
+The command below will install **FastDDM**
+
+.. code-block:: bash
+
+    $ pip3 install fastddm
+
+.. warning::
+
+    If wheels are not available for your system, ``pip`` will fall back to the installation of the
+    source distribution. Refer to the :ref:`build` section for more information.
+
+.. _install_sdist:
+
 Install source distribution
 ---------------------------
 
@@ -14,4 +32,4 @@ Run the following line in your terminal:
 
 .. code-block:: bash
 
-    $ pip3 install --no-binary fastddm
+    $ pip3 install --no-binary fastddm fastddm
