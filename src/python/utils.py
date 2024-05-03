@@ -331,7 +331,7 @@ def chunkify(seq: np.ndarray, chunksize: int, overlap: int = 0) -> List[np.ndarr
     in the latter case, depending on the chunksize and overlap settings the needed amount of memory
     could be very high! (It is recommended to use image sequence indices, see example below.)
 
-    The last chunk may not be of the right size. The chunking will happen along the __first__ axis.
+    The last chunk may not be of the right size. The chunking will happen along the *first* axis.
 
 
     Parameters
