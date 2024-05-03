@@ -28,12 +28,13 @@ def tiff2numpy(
 ) -> np.ndarray:
     """Read a TIFF file (or a sequence inside a multipage TIFF) and return it as a numpy array.
 
-    The tiff file is assumed to be of the shape (T,Y,X). If `color_seq` is given, the order
-    (C,T,Y,X) is assumed, otherwise the option `input_order` needs to be specified. If `input_order`
-    is given, the full tiff file is read into memory, the axes ordered accordingly, and then `seq`
-    and `color_seq` applied (if specified).
+    The tiff file is assumed to be of the shape (T,Y,X). If ``color_seq`` is given, the order
+    (C,T,Y,X) is assumed, otherwise the option ``input_order`` needs to be specified. If
+    ``input_order`` is given, the full tiff file is read into memory, the axes ordered accordingly,
+    and then ``seq`` and ``color_seq`` applied (if specified).
 
-    If a non-tiff file is given, it is opened with skimage.io.imread using only default parameters.
+    If a non-tiff file is given, it is opened with ``skimage.io.imread()`` using only default
+    parameters.
 
     It will be reshaped into (T,Y,X) (or (C,T,Y,X) if color channels are present) before it is
     returned.
@@ -43,17 +44,18 @@ def tiff2numpy(
     src : str
         The path to the TIFF file.
     seq : Sequence[int], optional
-        A sequence, e.g. `range(5, 10)`, to describe a specific range within
+        A sequence, e.g. ``range(5, 10)``, to describe a specific range within
         a multipage TIFF, by default None.
     color_seq : Sequence[int], optional
-        A sequence, e.g. `range(2)`, to describe a specific color sequence to be selected, by
-        default None
+        A sequence, e.g. ``range(2)``, to describe a specific color sequence to be selected, by
+        default None.
     input_order : str, optional
-        The order of input dimensions. Currently only supports up to 4 dimensions, "CTYX", be default None
+        The order of input dimensions. Currently only supports up to 4 dimensions, "CTYX",
+        by default None.
 
     Returns
     -------
-    np.ndarray
+    numpy.ndarray
         The array containing the image information.
         Coordinate convention is (T,Y,X) (or (C,T,Y,X)).
     """
@@ -127,14 +129,14 @@ def images2numpy(
         A sequence of file names.
     color_seq : Sequence[int], optional
         A sequence, e.g. `range(2)`, to describe a specific color sequence to be selected, by
-        default None
+        default None.
 
     Returns
     -------
-    np.ndarray
+    numpy.ndarray
         The image sequence as a numpy array.
-        Coordinate convention is (z,y,x).
-        If color images are imported, convention is (c,z,y,x).
+        Coordinate convention is ``(z,y,x)``.
+        If color images are imported, convention is ``(c,z,y,x)``.
     """
     # open first image
     tmp = io.imread(fnames[0])
@@ -211,8 +213,8 @@ def read_images(
 ) -> np.ndarray:
     """Read a single image file or a list of image files.
 
-    The single image file can itself be a sequence of images, like multipage tiff or nd2. If `seq`
-    is given, e.g. with `seq=range(10)` or `seq=(10, 11, 12)` it will only be applied to single
+    The single image file can itself be a sequence of images, like multipage tiff or nd2. If ``seq``
+    is given, e.g. with ``seq=range(10)`` or ``seq=(10, 11, 12)`` it will only be applied to single
     image files, again, like e.g. multipage tiff or nd2.
 
     Parameters
@@ -220,23 +222,23 @@ def read_images(
     src : Union[str, List[str]]
         File path to a single image file or a list of file paths.
     seq : Optional[Sequence[int]], optional
-        A subset of a multi-image file, can be set e.g. via a `range` object, by default None
+        A subset of a multi-image file, can be set e.g. via a ``range`` object, by default None.
     color_seq : Sequence[int], optional
-        A sequence, e.g. `range(2)`, to describe a specific color sequence to be selected, by
-        default None
+        A sequence, e.g. ``range(2)``, to describe a specific color sequence to be selected, by
+        default None.
     input_order : str, optional
-        The order of input dimensions. Currently only supports up to 4 dimensions "CTYX", only used
-        for TIFF files, be default None
+        The order of input dimensions. Currently only supports up to 4 dimensions ``"CTYX"``,
+        only used for TIFF files, be default None.
 
     Returns
     -------
-    np.ndarray
+    numpy.ndarray
         The images in array form.
 
     Raises
     ------
     RuntimeError
-        If the `src` type is not supported (e.g. generator expressions).
+        If the ``src`` type is not supported (e.g. generator expressions).
     """
     if isinstance(src, list):
         return images2numpy(src, color_seq=color_seq)
@@ -321,11 +323,11 @@ def read_metadata(src: str) -> Metadata:
 
 
 def chunkify(seq: np.ndarray, chunksize: int, overlap: int = 0) -> List[np.ndarray]:
-    """Takes a sequence `seq` and chunks it into smaller portions of size `chunksize`, with a given
-    `overlap` with the previous chunk.
+    """Takes a sequence ``seq`` and chunks it into smaller portions of size ``chunksize``, with a
+    given ``overlap`` with the previous chunk.
 
     The sequence could be e.g. image indices, or an image sequence itself. However, be aware that
-    in the latter case, depending on the chunksize & overlap settings the needed amount of memory
+    in the latter case, depending on the chunksize and overlap settings the needed amount of memory
     could be very high! (It is recommended to use image sequence indices, see example below.)
 
     The last chunk may not be of the right size. The chunking will happen along the __first__ axis.
@@ -333,16 +335,17 @@ def chunkify(seq: np.ndarray, chunksize: int, overlap: int = 0) -> List[np.ndarr
 
     Parameters
     ----------
-    seq : np.ndarray
-        A numpy array of to be chunked content
+    seq : numpy.ndarray
+        A numpy array of to be chunked content.
     chunksize : int
         The size of the output chunks.
     overlap : int, optional
-        Give a number > 0 by how much the chunks should overlap, i.e. overlap=2 would result in [[1 2 3], [2 3 4], [3 4 5], ...], by default 0
+        Give a number > 0 by how much the chunks should overlap, i.e. ``overlap=2`` would result in
+        ``[[1 2 3], [2 3 4], [3 4 5], ...]``, by default 0.
 
     Returns
     -------
-    List[np.ndarray]
+    List[numpy.ndarray]
         The list of chunks.
 
     Examples

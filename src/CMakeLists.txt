@@ -193,7 +193,7 @@ set(python_SOURCES
     python/window.py
     python/mask.py
     python/weights.py
-    python/_utils.py
+    python/utils.py
     python/fit.py
     python/fit_models.py
     python/noise_est.py
