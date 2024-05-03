@@ -50,7 +50,7 @@ def tiff2numpy(
         A sequence, e.g. ``range(2)``, to describe a specific color sequence to be selected, by
         default None.
     input_order : str, optional
-        The order of input dimensions. Currently only supports up to 4 dimensions, "CTYX",
+        The order of input dimensions. Currently only supports up to 4 dimensions, ``"CTYX"``,
         by default None.
 
     Returns
@@ -183,11 +183,12 @@ def _read_nd2(src: str, seq: Optional[Sequence[int]] = None) -> np.ndarray:
     src : str
         Path to ND2 file.
     seq : Optional[Sequence[int]], optional
-        A (sub)sequence of images to be selected from the movie, e.g. list(range(1, 200)), by default None
+        A (sub)sequence of images to be selected from the movie, e.g. ``list(range(1, 200))``,
+        by default None.
 
     Returns
     -------
-    np.ndarray
+    numpy.ndarray
         The image sequence as numpy array.
     """
 
