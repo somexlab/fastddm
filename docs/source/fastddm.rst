@@ -21,5 +21,6 @@ fastddm
    lags
    mask
    noise_est
+   utils
    weights
    window
