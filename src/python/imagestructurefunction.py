@@ -20,7 +20,7 @@ structure function at the 10th delay computed can be accessed via
    Remember that Python uses zero-based indexing.
 
 The :py:class:`ImageStructureFunction` can then be saved into a binary file by using
-:py:meth:`ImageStructureFunction.save` (it will have a `.sf.ddm` extension)
+:py:meth:`ImageStructureFunction.save` (it will have a ``.sf.ddm`` extension)
 and later retrieved from the memory using
 :py:meth:`SFReader.load`, which you can call directly from ``fastddm`` as
 
@@ -407,12 +407,51 @@ class ImageStructureFunction:
 
 
 class SFWriter(Writer):
-    """FastDDM image structure function writer class.
-    Inherits from ``Writer``.
+    """Image structure function writer class. Inherits from ``Writer``.
+
+    It adds the unique method ``write_obj``.
+
+    Defines the functions to write :py:class:`ImageStructureFunction` object to binary file.
+
+    The structure of the binary file is the following:
+
+    Header:
+
+    - bytes 0-1: endianness (``"LL"`` = 'little'; ``"BB"`` = 'big'), utf-8 encoding
+    - bytes 2-3: file identifier (73), ``H`` (unsigned short)
+    - bytes 4-5: file version as (major_version, minor_version), ``BB`` (unsigned char)
+    - byte 6: dtype (``d`` = float64; ``f`` = float32), utf-8 encoding
+    - bytes 7-14: data length, ``Q`` (unsigned long long)
+    - bytes 15-22: data height, ``Q`` (unsigned long long)
+    - bytes 23-30: data width, ``Q`` (unsigned long long)
+    - bytes 31-38: extra slices, ``Q`` (unsigned long long)
+    - bytes 39-46: full width, ``Q`` (unsigned long long)
+    - bytes 47-54: full height, ``Q`` (unsigned long long)
+
+    The data is stored in 'C' order and ``dtype`` format as follows:
+
+    - from ``data_offset``: ``_data``
+    - from ``extra_offset``: extra data
+    - from ``kx_offset``: ``kx`` array
+    - from ``ky_offset``: ``ky`` array
+    - from ``tau_offset``: ``tau`` array
+    - from ``pixel_size_offset``: ``pixel_size`` value
+    - from ``delta_t_offset``: ``delta_t`` value
+
+    From the end of the file,
+    the byte offsets are stored in ``Q`` (unsigned long long) format in this order:
+
+    - ``data_offset``
+    - ``kx_offset``
+    - ``ky_offset``
+    - ``tau_offset``
+    - ``pixel_size_offset``
+    - ``delta_t_offset``
+    - ``extra_offset``
     """
 
     def write_obj(self, obj: ImageStructureFunction) -> None:
-        """Write ``ImageStructureFunction`` object to binary file.
+        """Write :py:class:`ImageStructureFunction` object to binary file.
 
         Parameters
         ----------

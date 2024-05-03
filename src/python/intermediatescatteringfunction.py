@@ -25,8 +25,8 @@ The :py:class:`IntermediateScatteringFunction.data` contains the ISF values in
    Remember that Python uses zero-based indexing.
 
 The :py:class:`IntermediateScatteringFunction` can then be saved into a binary file by using
-:py:meth:`IntermediateScatteringFunction.save` (by default called `analysis_blob`, with the
-extension `.isf.ddm`) and later retrieved from the memory using
+:py:meth:`IntermediateScatteringFunction.save` (by default called ``analysis_blob``, with the
+extension ``.isf.ddm``) and later retrieved from the memory using
 :py:meth:`ISFReader.load`, which you can call directly from ``fastddm`` as
 
 .. code-block:: python
@@ -66,8 +66,7 @@ import numpy as np
 from scipy.interpolate import interp1d
 
 from ._config import DTYPE
-from ._io_common import (Parser, Reader, Writer, calculate_format_size,
-                         npdtype2format)
+from ._io_common import Parser, Reader, Writer, calculate_format_size, npdtype2format
 from .azimuthalaverage import AzimuthalAverage
 from .noise_est import estimate_camera_noise
 
@@ -206,13 +205,48 @@ class IntermediateScatteringFunction:
         k = self.k.astype(DTYPE)
         bin_edges = self.bin_edges.astype(DTYPE)
 
-        return IntermediateScatteringFunction(_data, _err, k, tau.astype(DTYPE), bin_edges)
+        return IntermediateScatteringFunction(
+            _data, _err, k, tau.astype(DTYPE), bin_edges
+        )
 
 
 class ISFWriter(Writer):
-    """FastDDM intermediate scattering function writer class.
+    """Intermediate scattering function writer class. Inherits from ``Writer``.
 
-    Inherits from `Writer`. It adds the unique method `write_obj`.
+    It adds the unique method ``write_obj``.
+
+    Defines the functions to write :py:class:`IntermediateScatteringFunction` object to binary file.
+
+    The structure of the binary file is the following:
+
+    Header:
+
+    * bytes 0-1: endianness (``"LL"`` = 'little'; ``"BB"`` = 'big'), utf-8 encoding
+    * bytes 2-3: file identifier (43), ``H`` (unsigned short)
+    * bytes 4-5: file version as (major_version, minor_version), ``BB`` (unsigned char)
+    * byte 6: dtype (``d`` = float64; ``f`` = float32), utf-8 encoding
+    * bytes 7-14: data height, ``Q`` (unsigned long long)
+    * bytes 15-22: data width, ``Q`` (unsigned long long)
+    * bytes 23-30: extra slices, ``Q`` (unsigned long long)
+    * byte 31: 0 if error is None, 1 otherwise, ``B`` (unsigned char)
+
+    The data is stored in 'C' order and `dtype` format as follows:
+
+    * from ``data_offset``: ``_data``
+    * from ``err_offset``: ``_err``
+    * from ``k_offset``: ``k`` array
+    * from ``tau_offset``: ``tau`` array
+    * from ``bin_edges_offset``: ``bin_edges`` array
+
+    From the end of the file,
+    the byte offsets are stored in ``Q`` (unsigned long long) format in this
+    order:
+
+    * ``data_offset``
+    * ``err_offset``
+    * ``k_offset``
+    * ``tau_offset``
+    * ``bin_edges_offset``
     """
 
     def write_obj(self, obj: IntermediateScatteringFunction) -> None:
@@ -589,9 +623,8 @@ class ISFParser(Parser):
 
 
 def melt(
-        isf1: IntermediateScatteringFunction,
-        isf2: IntermediateScatteringFunction
-        ) -> IntermediateScatteringFunction:
+    isf1: IntermediateScatteringFunction, isf2: IntermediateScatteringFunction
+) -> IntermediateScatteringFunction:
     """Melt two intermediate scattering functions into one object.
 
     Parameters
@@ -641,11 +674,11 @@ def melt(
 
             # scale fast on slow
             data[i] = np.append(
-                fast.data[i, :idx] * alpha, slow.data[i, Nt // 2 + 1:]
+                fast.data[i, :idx] * alpha, slow.data[i, Nt // 2 + 1 :]
             ).astype(DTYPE)
             if err is not None:
                 err[i] = np.append(
-                    fast.err[i, :idx] * alpha, slow.err[i, Nt // 2 + 1:]  # type: ignore
+                    fast.err[i, :idx] * alpha, slow.err[i, Nt // 2 + 1 :]  # type: ignore
                 ).astype(DTYPE)
 
     # ensure DTYPE for all IntermediateScatteringFunction args
@@ -656,9 +689,8 @@ def melt(
 
 
 def mergesort(
-        isf1: IntermediateScatteringFunction,
-        isf2: IntermediateScatteringFunction
-        ) -> IntermediateScatteringFunction:
+    isf1: IntermediateScatteringFunction, isf2: IntermediateScatteringFunction
+) -> IntermediateScatteringFunction:
     """Merge the values of two intermediate scattering functions.
     Values will then be sorted based on tau.
 
@@ -686,9 +718,7 @@ def mergesort(
         err = np.zeros(shape=(dim_k, len(tau)), dtype=DTYPE)
 
     # populate data
-    data = np.append(isf1.data, isf2.data, axis=1)[:, sortidx].astype(
-        DTYPE
-    )
+    data = np.append(isf1.data, isf2.data, axis=1)[:, sortidx].astype(DTYPE)
     if err is not None:
         err = np.append(isf1.err, isf2.err, axis=1)[:, sortidx].astype(  # type: ignore
             DTYPE
@@ -702,15 +732,15 @@ def mergesort(
 
 
 def azavg2isf_estimate(
-        az_avg: AzimuthalAverage,
-        noise_est: str = 'polyfit',
-        plateau_est: str = 'var',
-        noise: Optional[np.ndarray] = None,
-        noise_err: Optional[np.ndarray] = None,
-        plateau: Optional[np.ndarray] = None,
-        plateau_err: Optional[np.ndarray] = None,
-        **kwargs
-        ) -> IntermediateScatteringFunction:
+    az_avg: AzimuthalAverage,
+    noise_est: str = "polyfit",
+    plateau_est: str = "var",
+    noise: Optional[np.ndarray] = None,
+    noise_err: Optional[np.ndarray] = None,
+    plateau: Optional[np.ndarray] = None,
+    plateau_err: Optional[np.ndarray] = None,
+    **kwargs,
+) -> IntermediateScatteringFunction:
     """Convert AzimuthalAverage to IntermediateScatteringFunction
 
     Parameters
@@ -755,13 +785,13 @@ def azavg2isf_estimate(
     dim_k, dim_t = az_avg.shape
 
     # estimate noise (B)
-    if noise_est == 'custom':
+    if noise_est == "custom":
         # sanity check on size of noise
         if noise is not None and len(noise) != dim_k:
             err_msg = (
-                'Custom noise array dimension not compatible'
-                ' with given azimuthal average.\n'
-                f'Size of noise should be {dim_k}.'
+                "Custom noise array dimension not compatible"
+                " with given azimuthal average.\n"
+                f"Size of noise should be {dim_k}."
             )
             raise RuntimeError(err_msg)
 
@@ -770,9 +800,9 @@ def azavg2isf_estimate(
         # sanity check on size of noise_err
         if noise_err is not None and len(noise_err) != dim_k:
             err_msg = (
-                'Custom noise_err array dimension not compatible'
-                ' with given azimuthal average.\n'
-                f'Size of noise_err should be {dim_k}.'
+                "Custom noise_err array dimension not compatible"
+                " with given azimuthal average.\n"
+                f"Size of noise_err should be {dim_k}."
             )
             raise RuntimeError(err_msg)
     else:
@@ -782,13 +812,13 @@ def azavg2isf_estimate(
     noise_err = noise_err.astype(DTYPE)  # type: ignore
 
     # estimate plateau (A+B)
-    if plateau_est == 'custom':
+    if plateau_est == "custom":
         # sanity check on size of plateau
         if plateau is not None and len(plateau) != dim_k:
             err_msg = (
-                'Custom plateau array dimension not compatible'
-                ' with given azimuthal average.\n'
-                f'Size of plateau should be {dim_k}.'
+                "Custom plateau array dimension not compatible"
+                " with given azimuthal average.\n"
+                f"Size of plateau should be {dim_k}."
             )
             raise RuntimeError(err_msg)
 
@@ -797,28 +827,28 @@ def azavg2isf_estimate(
         # sanity check on size of plateau_err
         if plateau_err is not None and len(plateau_err) != dim_k:
             err_msg = (
-                'Custom plateau_err array dimension not compatible'
-                ' with given azimuthal average.\n'
-                f'Size of plateau_err should be {dim_k}.'
+                "Custom plateau_err array dimension not compatible"
+                " with given azimuthal average.\n"
+                f"Size of plateau_err should be {dim_k}."
             )
             raise RuntimeError(err_msg)
-    elif plateau_est == 'var':
+    elif plateau_est == "var":
         plateau = 2 * az_avg.var
         if az_avg.var_err is None:
             plateau_err = 2 * az_avg.var
         else:
             plateau_err = 2 * az_avg.var_err
-    elif plateau_est == 'power_spec':
+    elif plateau_est == "power_spec":
         plateau = 2 * az_avg.power_spec
         if az_avg.power_spec_err is None:
             plateau_err = 2 * az_avg.power_spec
         else:
             plateau_err = 2 * az_avg.power_spec_err
     else:
-        plateau_est_modes = ['custom', 'power_spec', 'var']
+        plateau_est_modes = ["custom", "power_spec", "var"]
         err_msg = (
-            f'Unsupported plateau_est mode {plateau_est}.'
-            f' Possible values are {plateau_est_modes}'
+            f"Unsupported plateau_est mode {plateau_est}."
+            f" Possible values are {plateau_est_modes}"
         )
         raise RuntimeError(err_msg)
     # enforce dtype
@@ -829,9 +859,9 @@ def azavg2isf_estimate(
     data = np.zeros((dim_k, dim_t), dtype=DTYPE)
     err = np.zeros((dim_k, dim_t), dtype=DTYPE)
     for idx_k in range(dim_k):
-        ApB = plateau[idx_k]    # A+B
-        B = noise[idx_k]        # B
-        A = ApB - B             # A
+        ApB = plateau[idx_k]  # A+B
+        B = noise[idx_k]  # B
+        A = ApB - B  # A
 
         sigma_ApB = plateau_err[idx_k]
         sigma_B = noise_err[idx_k]

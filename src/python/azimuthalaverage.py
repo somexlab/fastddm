@@ -565,8 +565,41 @@ def azimuthal_average(
 
 
 class AAWriter(Writer):
-    """FastDDM azimuthal average writer class.
-    Inherits from ``Writer``.
+    """Azimuthal average writer class. Inherits from ``Writer``.
+
+    It adds the unique method ``write_obj``.
+
+    Defines the functions to write :py:class:`AzimuthalAverage` object to binary file.
+
+    The structure of the binary file is the following:
+
+    Header:
+
+    * bytes 0-1: endianness (``"LL"`` = 'little'; ``"BB"`` = 'big'), utf-8 encoding
+    * bytes 2-3: file identifier (22), ``H`` (unsigned short)
+    * bytes 4-5: file version as (major_version, minor_version), ``BB`` (unsigned char)
+    * byte 6: dtype (``d`` = float64; ``f`` = float32), utf-8 encoding
+    * bytes 7-14: data height, ``Q`` (unsigned long long)
+    * bytes 15-22: data width, ``Q`` (unsigned long long)
+    * bytes 23-30: extra slices, ``Q`` (unsigned long long)
+    * byte 31: 0 if error is None, 1 otherwise, ``B`` (unsigned char)
+
+    The data is stored in 'C' order and ``dtype`` format as follows:
+
+    * from ``data_offset``: ``_data``
+    * from ``err_offset``: ``_err``
+    * from ``k_offset``: ``k`` array
+    * from ``tau_offset``: ``tau`` array
+    * from ``bin_edges_offset``: ``bin_edges`` array
+
+    From the end of the file,
+    the byte offsets are stored in ``Q`` (unsigned long long) format in this order:
+
+    * ``data_offset``
+    * ``err_offset``
+    * ``k_offset``
+    * ``tau_offset``
+    * ``bin_edges_offset``
     """
 
     def write_obj(self, obj: AzimuthalAverage) -> None:
