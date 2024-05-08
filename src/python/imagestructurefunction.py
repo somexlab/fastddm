@@ -417,29 +417,29 @@ class SFWriter(Writer):
 
     Header:
 
-    - bytes 0-1: endianness (``"LL"`` = 'little'; ``"BB"`` = 'big'), utf-8 encoding
-    - bytes 2-3: file identifier (73), ``H`` (unsigned short)
-    - bytes 4-5: file version as (major_version, minor_version), ``BB`` (unsigned char)
-    - byte 6: dtype (``d`` = float64; ``f`` = float32), utf-8 encoding
-    - bytes 7-14: data length, ``Q`` (unsigned long long)
-    - bytes 15-22: data height, ``Q`` (unsigned long long)
-    - bytes 23-30: data width, ``Q`` (unsigned long long)
-    - bytes 31-38: extra slices, ``Q`` (unsigned long long)
-    - bytes 39-46: full width, ``Q`` (unsigned long long)
-    - bytes 47-54: full height, ``Q`` (unsigned long long)
+    - bytes 0-1: endianness, string, utf-8 encoding [``"LL"`` = 'little', ``"BB"`` = 'big']
+    - bytes 2-3: file identifier, 16-bit integer, unsigned short [``73`` for image structure function]
+    - bytes 4-5: file version, pair of 8-bit integers as (major_version, minor_version), unsigned char
+    - byte 6: dtype, string, utf-8 encoding [``"d"`` = float64, ``"f"`` = float32]
+    - bytes 7-14: data length, 64-bit integer, unsigned long long
+    - bytes 15-22: data height, 64-bit integer, unsigned long long
+    - bytes 23-30: data width, 64-bit integer, unsigned long long
+    - bytes 31-38: extra slices, 64-bit integer, unsigned long long
+    - bytes 39-46: full width, 64-bit integer, unsigned long long
+    - bytes 47-54: full height, 64-bit integer, unsigned long long
 
     The data is stored in 'C' order and ``dtype`` format as follows:
 
-    - from ``data_offset``: ``_data``
-    - from ``extra_offset``: extra data
-    - from ``kx_offset``: ``kx`` array
-    - from ``ky_offset``: ``ky`` array
-    - from ``tau_offset``: ``tau`` array
-    - from ``pixel_size_offset``: ``pixel_size`` value
-    - from ``delta_t_offset``: ``delta_t`` value
+    - from byte ``data_offset``: ``_data``
+    - from byte ``extra_offset``: extra data
+    - from byte ``kx_offset``: ``kx`` array
+    - from byte ``ky_offset``: ``ky`` array
+    - from byte ``tau_offset``: ``tau`` array
+    - from byte ``pixel_size_offset``: ``pixel_size`` value
+    - from byte ``delta_t_offset``: ``delta_t`` value
 
     From the end of the file,
-    the byte offsets are stored in ``Q`` (unsigned long long) format in this order:
+    the byte offsets are stored as unsigned long long 64-bit integers in this order:
 
     - ``data_offset``
     - ``kx_offset``

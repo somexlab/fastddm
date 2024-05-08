@@ -221,26 +221,25 @@ class ISFWriter(Writer):
 
     Header:
 
-    * bytes 0-1: endianness (``"LL"`` = 'little'; ``"BB"`` = 'big'), utf-8 encoding
-    * bytes 2-3: file identifier (43), ``H`` (unsigned short)
-    * bytes 4-5: file version as (major_version, minor_version), ``BB`` (unsigned char)
-    * byte 6: dtype (``d`` = float64; ``f`` = float32), utf-8 encoding
-    * bytes 7-14: data height, ``Q`` (unsigned long long)
-    * bytes 15-22: data width, ``Q`` (unsigned long long)
-    * bytes 23-30: extra slices, ``Q`` (unsigned long long)
-    * byte 31: 0 if error is None, 1 otherwise, ``B`` (unsigned char)
+    * bytes 0-1: endianness, string, utf-8 encoding [``"LL"`` = 'little'; ``"BB"`` = 'big']
+    * bytes 2-3: file identifier, 16-bit integer, unsigned short [``43`` for intermediate scattering function]
+    * bytes 4-5: file version, pair of 8-bit integers as (major_version, minor_version), unsigned char
+    * byte 6: dtype, string, utf-8 encoding [``"d"`` = float64, ``"f"`` = float32]
+    * bytes 7-14: data height, 64-bit integer, unsigned long long
+    * bytes 15-22: data width, 64-bit integer, unsigned long long
+    * bytes 23-30: extra slices, 64-bit integer, unsigned long long
+    * byte 31: error flag, 8-bit integer,unsigned char [``0`` if error is None, ``1`` otherwise]
 
     The data is stored in 'C' order and `dtype` format as follows:
 
-    * from ``data_offset``: ``_data``
-    * from ``err_offset``: ``_err``
-    * from ``k_offset``: ``k`` array
-    * from ``tau_offset``: ``tau`` array
-    * from ``bin_edges_offset``: ``bin_edges`` array
+    * from byte ``data_offset``: ``_data``
+    * from byte ``err_offset``: ``_err``
+    * from byte ``k_offset``: ``k`` array
+    * from byte ``tau_offset``: ``tau`` array
+    * from byte ``bin_edges_offset``: ``bin_edges`` array
 
     From the end of the file,
-    the byte offsets are stored in ``Q`` (unsigned long long) format in this
-    order:
+    the byte offsets are stored as unsigned long long 64-bit integers in this order:
 
     * ``data_offset``
     * ``err_offset``
