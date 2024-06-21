@@ -228,7 +228,7 @@ class ISFWriter(Writer):
     * bytes 7-14: data height, 64-bit integer, unsigned long long
     * bytes 15-22: data width, 64-bit integer, unsigned long long
     * bytes 23-30: extra slices, 64-bit integer, unsigned long long
-    * byte 31: error flag, 8-bit integer,unsigned char [``0`` if error is None, ``1`` otherwise]
+    * byte 31: flag for standard deviation of data, 8-bit integer, unsigned char [``0`` if ``err`` is None, ``1`` if it is stored in the dataclass]
 
     The data is stored in 'C' order and `dtype` format as follows:
 
