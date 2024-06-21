@@ -565,8 +565,41 @@ def azimuthal_average(
 
 
 class AAWriter(Writer):
-    """FastDDM azimuthal average writer class.
-    Inherits from ``Writer``.
+    """Azimuthal average writer class. Inherits from ``Writer``.
+
+    It adds the unique method ``write_obj``.
+
+    Defines the functions to write :py:class:`AzimuthalAverage` object to binary file.
+
+    The structure of the binary file is the following:
+
+    Header:
+
+    * bytes 0-1: endianness, string, utf-8 encoding [``"LL"`` = 'little', ``"BB"`` = 'big']
+    * bytes 2-3: file identifier, 16-bit integer, unsigned short [``22`` for azimuthal average]
+    * bytes 4-5: file version, pair of 8-bit integers as (major_version, minor_version), unsigned char
+    * byte 6: dtype, string, utf-8 encoding [``"d"`` = float64, ``"f"`` = float32]
+    * bytes 7-14: data height, 64-bit integer, unsigned long long
+    * bytes 15-22: data width, 64-bit integer, unsigned long long
+    * bytes 23-30: extra slices, 64-bit integer, unsigned long long
+    * byte 31: flag for standard deviation of data, 8-bit integer, unsigned char [``0`` if ``err`` is None, ``1`` if it is stored in the dataclass]
+
+    The data is stored in 'C' order and ``dtype`` format as follows:
+
+    * from byte ``data_offset``: ``_data``
+    * from byte ``err_offset``: ``_err``
+    * from byte ``k_offset``: ``k`` array
+    * from byte ``tau_offset``: ``tau`` array
+    * from byte ``bin_edges_offset``: ``bin_edges`` array
+
+    From the end of the file,
+    the byte offsets are stored as unsigned long long 64-bit integers in this order:
+
+    * ``data_offset``
+    * ``err_offset``
+    * ``k_offset``
+    * ``tau_offset``
+    * ``bin_edges_offset``
     """
 
     def write_obj(self, obj: AzimuthalAverage) -> None:
