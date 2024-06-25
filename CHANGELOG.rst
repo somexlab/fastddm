@@ -5,6 +5,19 @@ Change Log
 v0.3
 ----
 
+v0.3.12 (2024-06-25)
+^^^^^^^^^^^^^^^^^^^^
+
+.. *Added*
+.. *Changed*
+
+*Fixed*
+
+* Fixed parameter in documentation configuration file for new ``furo`` version
+
+.. *Deprecated*
+.. *Removed*
+
 v0.3.11 (2024-06-25)
 ^^^^^^^^^^^^^^^^^^^^
 
