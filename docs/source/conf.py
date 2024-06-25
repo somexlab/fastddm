@@ -58,7 +58,7 @@ html_static_path = ["_static"]
 html_logo = "fastddm-logo-vertical.svg"
 html_theme_options = {
     "sidebar_hide_name": True,
-    "top_of_page_button": None,
+    "top_of_page_buttons": [],
     "dark_css_variables": {
         "color-brand-primary": "#5187b2",
         "color-brand-content": "#5187b2",
