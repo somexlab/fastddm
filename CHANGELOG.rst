@@ -5,6 +5,25 @@ Change Log
 v0.3
 ----
 
+v0.3.11 (2024-06-25)
+^^^^^^^^^^^^^^^^^^^^
+
+*Added*
+
+* Added to documentation an explanation of the structure of binary files saved by the library
+
+*Changed*
+
+* Updated pybind11 version to 2.12.0 (to support NumPy 2.x)
+* Renamed the ``_utils`` module to ``utils`` to make it publicly accessible
+
+*Fixed*
+
+* Fixed links and other small issues in the documentation
+
+.. *Deprecated*
+.. *Removed*
+
 v0.3.10 (2024-04-04)
 ^^^^^^^^^^^^^^^^^^^^
 

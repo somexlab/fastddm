@@ -1,9 +1,10 @@
 """Testing the _utils.py file."""
+
 from pathlib import Path
 import pytest
 import numpy as np
 
-from fastddm._utils import read_metadata, read_images
+from fastddm.utils import read_metadata, read_images
 
 ND2_TEST = "tests/test-imgs/nikon/test.nd2"
 ND2_DIMS = (15000, 256, 256)

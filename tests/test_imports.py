@@ -15,7 +15,7 @@ def test_init_import():
         lags,
         mask,
         weights,
-        window
+        window,
     )
 
 
@@ -44,7 +44,7 @@ def test_fit_import():
 
 
 def test_utils_import():
-    from fastddm._utils import (  # noqa: F401
+    from fastddm.utils import (  # noqa: F401
         read_metadata,
         read_images,
         images2numpy,
@@ -59,5 +59,5 @@ def test_io_common_import():
         Writer,
         Reader,
         Parser,
-        _save_as_tiff
+        _save_as_tiff,
     )

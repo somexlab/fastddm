@@ -9,7 +9,7 @@ Differential Dynamic Microscopy
 
 FastDDM can perform the analysis of image sequences using Differential Dynamic Microscopy.
 It provides means to load images on disk in various formats, namely the ones available from the
-`scikit-image <https://scikit-image.org/>` package and the Nikon ``nd2`` files.
+`scikit-image <https://scikit-image.org/>`_ package and the Nikon ``nd2`` files.
 It efficiently computes then image structure function and the azimuthal average and provides tools
 for the fit and analysis.
 
