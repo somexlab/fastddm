@@ -105,6 +105,8 @@ class CMakeBuild(build_ext):
         self.announce("Preparing the build environment", level=3)
 
         cmake_args = []
+        # Workaround since fftw not using the corect version of cmake
+        cmake_args += ["-DCMAKE_POLICY_VERSION_MINIMUM=4.0.0"]
 
         cfg = "Debug" if self.debug else "Release"
         build_args = ["--config", cfg]

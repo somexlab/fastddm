@@ -5,6 +5,13 @@ Change Log
 v0.3
 ----
 
+v0.3.13 (2025-05-09)
+
+*Fixed*
+
+* Installation issues on Ubuntu due to CMake versions &lt; 3.5 being deprecated.
+* Fixed documentation with cuda packages name changes
+
 v0.3.12 (2024-06-25)
 ^^^^^^^^^^^^^^^^^^^^
 

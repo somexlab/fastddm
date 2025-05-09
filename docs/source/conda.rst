@@ -1,4 +1,4 @@
-.. Copyright (c) 2023-2023 University of Vienna, Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino.
+.. Copyright (c) 2023-2025 University of Vienna, Enrico Lattuada, Fabian Krautgasser, Maxime Lavaud and Roberto Cerbino.
 .. Part of FastDDM, released under the GNU GPL-3.0 License.
 
 .. _conda:
@@ -43,8 +43,9 @@ system).
           name: fddm-env
           channels:
             - defaults
+            - conda-forge
           dependencies:
-            - gcc
+            - gcc=14
             - g++
             - python>=3.8
             - pip
@@ -73,6 +74,18 @@ system).
       .. code-block:: bash
 
           $ conda env config vars set ENABLE_CPP=ON
+
+      To compile the CUDA core, set the corresponding flag
+
+      .. code-block:: bash
+
+          $ conda env config vars set ENABLE_CUDA=ON
+    
+      Path to the CUDA Toolkit should also be exported
+
+      .. code-block:: bash
+
+          $ conda env config vars set CUDACXX=/usr/local/cuda_version/bin/nvcc
 
       Deactivate and reactivate the environment to make the changes effective
 
