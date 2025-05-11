@@ -46,7 +46,7 @@ system).
           dependencies:
             - gcc
             - g++
-            - python>=3.8
+            - python>=3.9
             - pip
 
       Create the environment by running the following command in your terminal
@@ -104,7 +104,7 @@ system).
           dependencies:
             - clang
             - clangxx
-            - python>=3.8
+            - python>=3.9
             - pip
 
       Create the environment by running the following command in your terminal
@@ -160,7 +160,7 @@ system).
           channels:
             - defaults
           dependencies:
-            - python>=3.8
+            - python>=3.9
             - pip
 
       For Windows, you will still need to install Visual Studio Community Edition with the
