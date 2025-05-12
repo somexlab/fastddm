@@ -1,0 +1,97 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": { "major": 3, "minor": 19, "patch": 0 },
+  "configurePresets": [
+    {
+      "name": "default",
+      "displayName": "Default Config",
+      "description": "Default build configuration (no C++/CUDA, no single precision)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "ENABLE_CPP": "OFF",
+        "ENABLE_CUDA": "OFF",
+        "SINGLE_PRECISION": "OFF"
+      }
+    },
+    {
+      "name": "cpp",
+      "displayName": "C++ Build",
+      "description": "Build with C++ support",
+      "inherits": "default",
+      "cacheVariables": {
+        "ENABLE_CPP": "ON"
+      }
+    },
+    {
+      "name": "cuda",
+      "displayName": "CUDA Build",
+      "description": "Build with CUDA support (implies C++)",
+      "inherits": "default",
+      "cacheVariables": {
+        "ENABLE_CPP": "ON",
+        "ENABLE_CUDA": "ON"
+      }
+    },
+    {
+      "name": "single-precision",
+      "displayName": "Single Precision",
+      "description": "Build with single precision math",
+      "inherits": "default",
+      "cacheVariables": {
+        "SINGLE_PRECISION": "ON"
+      }
+    },
+    {
+      "name": "cpp-single-precision",
+      "displayName": "Single Precision",
+      "description": "Build with C++ and single precision math",
+      "inherits": "cpp",
+      "cacheVariables": {
+        "SINGLE_PRECISION": "ON"
+      }
+    },
+    {
+      "name": "cuda-single-precision",
+      "displayName": "CUDA with Single Precision",
+      "description": "Build with CUDA and single precision math (implies C++)",
+      "inherits": "cuda",
+      "cacheVariables": {
+        "SINGLE_PRECISION": "ON"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "default",
+      "configurePreset": "default",
+      "jobs": 4
+    },
+    {
+      "name": "cpp",
+      "configurePreset": "cpp",
+      "jobs": 4
+    },
+    {
+      "name": "cuda",
+      "configurePreset": "cuda",
+      "jobs": 4
+    },
+    {
+      "name": "single-precision",
+      "configurePreset": "single-precision",
+      "jobs": 4
+    },
+    {
+      "name": "cpp-single-precision",
+      "configurePreset": "cpp-single-precision",
+      "jobs": 4
+    },
+    {
+      "name": "cuda-single-precision",
+      "configurePreset": "cuda-single-precision",
+      "jobs": 4
+    }
+  ]
+}
