@@ -1,11 +1,6 @@
 [build-system]
-requires = [
-    "setuptools>=47",
-    "setuptools_scm",
-    "wheel",
-    "cmake>=3.19",
-]
-build-backend = "setuptools.build_meta"
+requires = ["scikit-build-core>=0.10", "pybind11>=2.10.0"]
+build-backend = "scikit_build_core.build"
 
 [project]
 name = "fastddm"
@@ -76,4 +71,11 @@ Documentation = "https://fastddm.readthedocs.io"
 Issues = "https://github.com/somexlab/fastddm/issues"
 Changelog = "https://github.com/somexlab/fastddm/blob/main/CHANGELOG.rst"
 
-[tool.setuptools_scm]
+[tool.scikit-build]
+wheel.expand-macos-universal-tags = true
+minimum-version = "build-system.requires"
+
+[tool.scikit-build.cmake.define]
+ENABLE_CPP = "OFF"
+ENABLE_CUDA = "OFF"
+SINGLE_PRECISION = "OFF"
