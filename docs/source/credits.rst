@@ -12,6 +12,7 @@ The following is a list of contributors:
 - Enrico Lattuada
 - Fabian Krautgasser
 - MoYuan Chen
+- Maxime Lavaud
 
 We also thank all who have reported bugs, commented on proposed changes, or otherwise contributed
 to FastDDM's development and usefulness:
