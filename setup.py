@@ -95,8 +95,8 @@ class CMakeBuild(build_ext):
         )
 
         if platform.system() == "Windows":
-            if self.cmake_version < Version("3.1.0"):
-                raise RuntimeError("CMake >= 3.1.0 is required on Windows")
+            if self.cmake_version < Version("3.5.0"):
+                raise RuntimeError("CMake >= 3.5.0 is required on Windows")
 
         for ext in self.extensions:
             self.build_extension(ext)
@@ -105,9 +105,6 @@ class CMakeBuild(build_ext):
         self.announce("Preparing the build environment", level=3)
 
         cmake_args = []
-        # Workaround since fftw not using the corect version of cmake
-        cmake_args += ["-DCMAKE_POLICY_VERSION_MINIMUM=4.0.0"]
-
         cfg = "Debug" if self.debug else "Release"
         build_args = ["--config", cfg]
         native_generator_args = ["--"]

@@ -45,11 +45,15 @@ system).
             - defaults
             - conda-forge
           dependencies:
-            - gcc=14
+            - gcc
             - g++
             - python>=3.8
             - pip
 
+      .. warning::
+          For now the latest version of gcc is not supported by NVCC compilers, if you consider
+          using CUDA change the ``fastddm-env.yml`` by restraining the gcc version : `gcc=14`
+      
       Create the environment by running the following command in your terminal
 
       .. code-block:: bash
