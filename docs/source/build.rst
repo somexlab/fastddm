@@ -45,7 +45,7 @@ The options ``ENABLE_CPP`` and ``ENABLE_CUDA`` each require additional softwares
 
 **General requirements:**
 
-- Python >= 3.8
+- Python >= 3.9
 - Pip
 - C++14 capable compiler (tested with ``gcc`` [Ubuntu], ``clang`` [MacOS], and ``msvc`` [Windows])
 
