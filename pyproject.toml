@@ -27,7 +27,7 @@ dependencies = [
     "pandas",
     "lmfit",
 ]
-dynamic = [ "license", "version" ]
+dynamic = ["license", "version"]
 keywords = [
     "cuda",
     "differential-dynamic-microscopy",
@@ -50,20 +50,9 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
-test = [
-    "pytest",
-    "pytest-regtest",
-]
-doc = [
-    "sphinx",
-    "sphinx-tabs",
-    "nbsphinx",
-    "furo",
-    "ipython",
-]
-dev = [
-    "fastddm[test,doc]",
-]
+test = ["pytest", "pytest-regtest"]
+doc = ["sphinx", "sphinx-tabs", "nbsphinx", "furo", "ipython"]
+dev = ["fastddm[test,doc]"]
 
 [project.urls]
 Source = "https://github.com/somexlab/fastddm"
