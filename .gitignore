@@ -1,17 +1,17 @@
 # IDE and editor files
-.vs                 # Visual Studio directory
-**/.DS_Store        # macOS folder attribute files
+.vs
+**/.DS_Store
 
 # Build and distribution directories
-build               # Build output directory
-dist                # Distribution output directory
-*.egg*              # Python egg files
+build
+dist
+*.egg*
 
 # Python cache files
-tests/__pycache__   # Python cache directory from tests
+**/__pycache__
 
 # Jupyter Notebook files
-examples/.ipynb_checkpoints     # Jupyter Notebook checkpoints
+examples/.ipynb_checkpoints
 
 # Large test files
-tests/test-imgs/nikon/test.nd2  # Large test file
+tests/test-imgs/nikon/test.nd2
