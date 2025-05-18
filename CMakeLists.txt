@@ -7,6 +7,11 @@ option(ENABLE_CPP "Enable C++ support" OFF)
 option(ENABLE_CUDA "Enable CUDA support" OFF)
 option(SINGLE_PRECISION "Enable single precision math" OFF)
 
+# If CUDA is enabled, force ENABLE_CPP to ON
+if(ENABLE_CUDA)
+    set(ENABLE_CPP ON CACHE BOOL "Build the core C++ library" FORCE)
+endif()
+
 # The default behavior is to build in Release mode
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
