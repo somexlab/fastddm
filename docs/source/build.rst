@@ -111,10 +111,12 @@ Check your hardware compatibility on the `NVIDIA website <https://developer.nvid
 Follow the `instructions <https://docs.nvidia.com/cuda/>`_ available from the website specific to your OS.
 Notice that CUDA is not available for MacOS.
 
-**To build the CUDA core:**
+If you have several NVCC compilers installed and face issues while building wheels you might have to
+set the ``CUDACXX`` environment variable with the path of the  ``nvcc`` compiler.
 
-Please set the ``CUDACXX`` environment variable with the path of the  ``nvcc`` compiler.
-
+.. codeblock:: bash
+    $ export CUDACXX=/path/to/nvcc
+    
 **To build the documentation:**
 
 - sphinx
