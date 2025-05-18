@@ -46,13 +46,19 @@ system).
             - conda-forge
           dependencies:
             - gcc
-            - g++
+            - gxx
             - python>=3.8
             - pip
 
       .. warning::
-          For now the latest version of gcc is not supported by NVCC compilers, if you consider
-          using CUDA change the ``fastddm-env.yml`` by restraining the gcc version : `gcc=14`
+          If you install with CUDA support, ensure that your ``gcc`` and ``g++`` versions are 
+          compatible with your CUDA Toolkit. Refer to the `official CUDA documentation <https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#host-compiler-support-policy>`_ 
+          for the supported compiler versions.
+
+          When using a conda environment, you can specify the compatible versions in your 
+          ``fastddm-env.yml`` file. For example, for CUDA 12.9, the maximum supported GCC version is 
+          14. Set both ``gcc=14`` and ``gxx=14`` in your environment file if needed.
+      
       
       Create the environment by running the following command in your terminal
 
