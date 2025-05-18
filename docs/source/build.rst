@@ -113,7 +113,7 @@ Notice that CUDA is not available for MacOS.
 
 **To build the CUDA core:**
 
-Please set the ``CUDAXCC`` environment variable with the path of the  ``nvcc`` compiler.
+Please set the ``CUDACXX`` environment variable with the path of the  ``nvcc`` compiler.
 
 **To build the documentation:**
 
