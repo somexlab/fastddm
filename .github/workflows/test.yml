@@ -2,9 +2,10 @@ name: Build and test
 
 on:
   # trigger on all commits to main
-  #push:
-  #    branches:
-  #        - main
+  # NOTE: pushes to main should be protected by branch protection rules
+  push:
+    branches:
+      - main
 
   # trigger on pull requests to main
   pull_request:
