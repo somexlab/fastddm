@@ -68,12 +68,6 @@ system).
           $ conda env config vars set CC=$CONDA_PREFIX/bin/gcc
           $ conda env config vars set CXX=$CONDA_PREFIX/bin/g++
 
-      To compile the C++ core, also set the corresponding flag
-
-      .. code-block:: bash
-
-          $ conda env config vars set ENABLE_CPP=ON
-
       Deactivate and reactivate the environment to make the changes effective
 
       .. code-block:: bash
@@ -126,12 +120,6 @@ system).
           $ conda env config vars set CC=$CONDA_PREFIX/bin/clang
           $ conda env config vars set CXX=$CONDA_PREFIX/bin/clang++
 
-      To compile the C++ core, also set the corresponding flag
-
-      .. code-block:: bash
-
-          $ conda env config vars set ENABLE_CPP=ON
-
       Deactivate and reactivate the environment to make the changes effective
 
       .. code-block:: bash
@@ -178,12 +166,6 @@ system).
 
           $ conda activate fddm-env
 
-      To compile the C++ core, set the corresponding flag
-
-      .. code-block:: bash
-
-          $ conda env config vars set ENABLE_CPP=ON
-
       Deactivate and reactivate the environment to make the changes effective
 
       .. code-block:: bash
@@ -203,6 +185,13 @@ system).
       .. code-block:: bash
 
           $ pytest -v
+
+.. note::
+
+    To enable the installation options, refer to the :ref:`build` documentation.
+    For example, to enable the C++ core and single precision math, run::
+
+        $ pip3 install ."[test]" --config-settings=cmake.define.ENABLE_CPP=ON --config-settings=cmake.define.SINGLE_PRECISION=ON
 
 .. _Notes on CUDA:
 

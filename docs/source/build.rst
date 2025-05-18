@@ -109,7 +109,15 @@ Follow the instructions below to obtain the compiler for your system.
 First and foremost, you will need a CUDA-capable GPU.
 Check your hardware compatibility on the `NVIDIA website <https://developer.nvidia.com/cuda-gpus>`_.
 Follow the `instructions <https://docs.nvidia.com/cuda/>`_ available from the website specific to your OS.
-Notice that CUDA is not available for MacOS.
+
+.. warning::
+
+   Check the compatibility of your compiler with the CUDA Toolkit version you are installing.
+
+.. note::
+
+   The CUDA Toolkit is not available for MacOS.
+   If you are using a Mac, you can skip this step.
 
 **To build the documentation:**
 
@@ -142,67 +150,6 @@ Release tarballs are also available as `GitHub release`_ assets.
 .. _GitHub release: https://github.com/somexlab/fastddm/releases
 .. _Git: https://git-scm.com/
 
-.. _Configure:
-
-Configure
----------
-
-**FastDDM**'s cmake configuration accepts a number of options that you can use to customize your
-installation.
-For example, you can enable the C++ and/or CUDA core, or select single precision calculation.
-These options must be set before installation.
-
-- ``ENABLE_CPP`` - When enabled, build the core C++ library (default: ``OFF``).
-- ``ENABLE_CUDA`` - When enabled, build the core CUDA library (default: ``OFF``).
-  If ``ON``, ``ENABLE_CPP`` will be set to ``ON`` automatically.
-- ``SINGLE_PRECISION`` - Enable single precision output (default: ``OFF``).
-
-``ENABLE_CUDA`` is available for Linux and Windows only.
-``SINGLE_PRECISION`` can give advantages on laptops or systems with small RAM size.
-
-.. tabs::
-
-   .. group-tab:: Ubuntu
-
-      Options can be set through the terminal by running the following command:
-
-      .. code-block:: bash
-
-        $ export <variable>=<value>
-
-      For example, to set ``ENABLE_CPP`` use:
-
-      .. code-block:: bash
-
-        $ export ENABLE_CPP=ON
-
-   .. group-tab:: Mac OSX
-
-      Options can be set through the terminal by running the following command:
-
-      .. code-block:: bash
-
-        $ export <variable>=<value>
-
-      For example, to set ``ENABLE_CPP`` use:
-
-      .. code-block:: bash
-
-        $ export ENABLE_CPP=ON
-
-   .. group-tab:: Windows
-
-      Options can be set through the PowerShell by running the following command:
-
-      .. code-block:: shell
-
-          > $env:<variable> = '<value>'
-
-      For example, to set ``ENABLE_CPP`` use:
-
-      .. code-block:: shell
-
-          > $env:ENABLE_CPP = 'ON'
 
 .. _Build and install the package:
 
@@ -215,7 +162,6 @@ source directory:
 .. code-block:: bash
 
     $ pip3 install .
-
 
 To install also the dependencies for ``test``, run this command instead:
 
@@ -237,6 +183,41 @@ If you want to install both, separate the options using a comma, for example:
 
     $ pip3 install .[test,doc]
 
+.. _Configure:
+
+Configure
+---------
+
+**FastDDM**'s cmake configuration accepts a number of options that you can use to customize your
+installation from source:
+
+- ``ENABLE_CPP`` - When enabled, build the core C++ library (default: ``OFF``).
+- ``ENABLE_CUDA`` - When enabled, build the core CUDA library (default: ``OFF``). If ``ON``, ``ENABLE_CPP`` is also enabled automatically.
+- ``SINGLE_PRECISION`` - Enable single precision output (default: ``OFF``).
+
+.. note::
+
+   ``ENABLE_CUDA`` is available for Linux and Windows only.
+
+.. tip::
+
+   ``SINGLE_PRECISION`` can give advantages on laptops or systems with small RAM size.
+
+Options can be set by giving extra arguments to the ``pip`` command.
+To enable any of the options, add ``--config-settings=cmake.define.<OPTION>=<VALUE>``.
+For example, to enable the C++ core and single precision math, run:
+
+.. code-block:: bash
+
+    $ pip3 install . --config-settings=cmake.define.ENABLE_CPP=ON --config-settings=cmake.define.SINGLE_PRECISION=ON
+
+To enable the CUDA core, run:
+
+.. code-block:: bash
+
+    $ pip3 install . --config-settings=cmake.define.ENABLE_CUDA=ON
+
+
 .. _Test the package:
 
 Test the package
@@ -249,12 +230,15 @@ To test the installation, start python and try importing the package:
     import fastddm
     fastddm.__version__
 
-To run the unit-tests, run the following command from within the source directory
-(**NOTICE**: you need to install the test dependencies):
+To run the unit-tests, run the following command from within the source directory:
 
 .. code-block:: bash
 
     $ pytest -v
+
+.. warning::
+
+   If you want to run the tests, you need to install the test dependencies.
 
 .. _Build the documentation:
 
