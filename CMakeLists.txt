@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 4.0.0)
+cmake_minimum_required(VERSION 3.18)
 
 option(ENABLE_CPP "Set to ON to compile with C++ support" OFF)
 option(ENABLE_CUDA "Set to ON to compile with CUDA support" OFF)
