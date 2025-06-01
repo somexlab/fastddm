@@ -57,10 +57,8 @@ if(ENABLE_CUDA)
     set(CMAKE_CUDA_STANDARD 11)
     # Find CUDA Toolkit
     find_package(CUDAToolkit REQUIRED)
-    # If not set by user, let CMake try to auto-detect the architectures
-    if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
-        set(CMAKE_CUDA_ARCHITECTURES "native" CACHE STRING "CUDA architectures")
-    endif()
+    # Use native CUDA architecture
+    set(CMAKE_CUDA_ARCHITECTURES native)
 endif(ENABLE_CUDA)
 
 # Add source subdirectory
