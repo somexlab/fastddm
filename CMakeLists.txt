@@ -23,19 +23,25 @@ set(CONFIGURED_FILES_STAGING_DIR ${CMAKE_CURRENT_BINARY_DIR}/src/python/fastddm)
 # Relative path rettings
 if(APPLE)
     # Enable the macOS rpath
-    SET(CMAKE_MACOSX_RPATH ON)
+    set(CMAKE_MACOSX_RPATH ON)
+
     # Set the install rpath to the loader path
-    SET(CMAKE_INSTALL_RPATH "@loader_path")
-    # Build with the install rpath
-    SET(CMAKE_BUILD_WITH_INSTALL_RPATH ON)
+    set(CMAKE_INSTALL_RPATH "@loader_path")
 else()
     # Use ORIGIN as the build rpath
-    SET(CMAKE_BUILD_RPATH_USE_ORIGIN TRUE)
+    set(CMAKE_BUILD_RPATH_USE_ORIGIN TRUE)
+
+    # Set the install rpath to $ORIGIN for Linux
+    set(CMAKE_INSTALL_RPATH "$ORIGIN")
 endif()
+
+# Build with the install rpath
+set(CMAKE_BUILD_WITH_INSTALL_RPATH ON)
 
 # Enable C++
 if(ENABLE_CPP)
     enable_language(CXX)
+
     # Add library subdirectory
     add_subdirectory(lib)
 endif(ENABLE_CPP)
@@ -44,6 +50,7 @@ if(ENABLE_CPP OR ENABLE_CUDA)
     # Set C++ standard
     set(CMAKE_CXX_STANDARD 14)
     set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
     # Find pybind11
     set(PYBIND11_FINDPYTHON ON)
     find_package(pybind11 CONFIG REQUIRED)
@@ -53,10 +60,13 @@ endif()
 # Enable CUDA
 if(ENABLE_CUDA)
     enable_language(CUDA)
+
     # Set CUDA C++ standard
     set(CMAKE_CUDA_STANDARD 11)
+
     # Find CUDA Toolkit
     find_package(CUDAToolkit REQUIRED)
+
     # Use native CUDA architecture
     set(CMAKE_CUDA_ARCHITECTURES native)
 endif(ENABLE_CUDA)
