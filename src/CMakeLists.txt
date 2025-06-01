@@ -116,10 +116,7 @@ if(ENABLE_CUDA)
     if(WIN32)
         target_link_libraries(fddm_cuda PUBLIC ${PYTHON_LIBRARIES})
     endif(WIN32)
-    # Set CUDA architectures
-    set_target_properties(fddm_cuda PROPERTIES
-        CUDA_ARCHITECTURES ${_cuda_min_arch}
-    )
+    # Note: CUDA architectures are set in the root CMakeLists, so there is no need to set them here.
     # Add the SINGLE_PRECISION flag if enabled
     if(SINGLE_PRECISION)
         target_compile_definitions(fddm_cuda PUBLIC SINGLE_PRECISION)
