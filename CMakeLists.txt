@@ -46,8 +46,22 @@ if(ENABLE_CPP)
     add_subdirectory(lib)
 endif(ENABLE_CPP)
 
+# Enable CUDA
+if(ENABLE_CUDA)
+    enable_language(CUDA)
+    set(CMAKE_CUDA_STANDARD 11)
+    find_package(CUDAToolkit REQUIRED)
+
+    # Set CUDA architectures
+    if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
+        message(STATUS "CMAKE_CUDA_ARCHITECTURES not defined, using native architecture")
+        set(CMAKE_CUDA_ARCHITECTURES native)
+    else()
+        message(STATUS "Using user-defined CMAKE_CUDA_ARCHITECTURES: ${CMAKE_CUDA_ARCHITECTURES}")
+    endif()
+endif(ENABLE_CUDA)
+
 if(ENABLE_CPP OR ENABLE_CUDA)
-    # Set C++ standard
     set(CMAKE_CXX_STANDARD 14)
     set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -56,20 +70,6 @@ if(ENABLE_CPP OR ENABLE_CUDA)
     find_package(pybind11 CONFIG REQUIRED)
     find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
 endif()
-
-# Enable CUDA
-if(ENABLE_CUDA)
-    enable_language(CUDA)
-
-    # Set CUDA C++ standard
-    set(CMAKE_CUDA_STANDARD 11)
-
-    # Find CUDA Toolkit
-    find_package(CUDAToolkit REQUIRED)
-
-    # Use native CUDA architecture
-    set(CMAKE_CUDA_ARCHITECTURES native)
-endif(ENABLE_CUDA)
 
 # Add source subdirectory
 add_subdirectory(src)
