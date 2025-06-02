@@ -61,7 +61,7 @@ Issues = "https://github.com/somexlab/fastddm/issues"
 Changelog = "https://github.com/somexlab/fastddm/blob/main/CHANGELOG.rst"
 
 [tool.setuptools_scm]
-fallback_version = "0.3.12"
+fallback_version = "0.3.14"
 
 [tool.scikit-build]
 wheel.expand-macos-universal-tags = true
