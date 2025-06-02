@@ -1,46 +1,52 @@
 name: Build and test
 
 on:
-    # trigger on all commits to main
-    #push:
-    #    branches:
-    #        - main
-  
-    # trigger on pull requests to main
-    pull_request:
-        branches:
-            - main
-  
-    # trigger on request
-    workflow_dispatch:
+  # trigger on all commits to main
+  # NOTE: pushes to main should be protected by branch protection rules
+  push:
+    branches:
+      - main
+
+  # trigger on pull requests to main
+  pull_request:
+    branches:
+      - main
+
+  # trigger on request
+  workflow_dispatch:
 
 jobs:
-    build:
-        runs-on: ${{ matrix.os }}
-        strategy:
-            matrix:
-                os: [ubuntu-latest, windows-latest, macos-latest, ubuntu-22.04, macos-13, macos-14]
-                python-version: ["3.9", "3.13"]
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+          [
+            ubuntu-latest,
+            windows-latest,
+            macos-latest,
+            ubuntu-22.04,
+            macos-13,
+            macos-14,
+          ]
+        python-version: ["3.9", "3.13"]
 
-        steps:
-            - uses: actions/checkout@v4
+    steps:
+      - uses: actions/checkout@v4
 
-            - name: Set up Python ${{ matrix.python-version }}
-              uses: actions/setup-python@v5
-              with:
-                  python-version: ${{ matrix.python-version }}
+      - name: 🐍 Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
 
-            - name: Install dependencies
-              run: |
-                  python -m pip install --upgrade pip setuptools wheel pytest pytest-regtest
+      - name: 📦 Install dependencies
+        run: |
+          python -m pip install --upgrade pip
 
-            - name: Build package and install through pip
-              env:
-                  ENABLE_CPP: ON
-              run: |
-                  pip install --verbose .
+      - name: 🏗️ Build package and install through pip
+        run: |
+          pip install --verbose .[test] --config-settings=cmake.define.ENABLE_CPP=ON
 
-            - name: Run tests
-              run: |
-                  pytest -v
-
+      - name: 🧪 Run tests
+        run: |
+          pytest -v
