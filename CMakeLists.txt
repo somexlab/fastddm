@@ -18,24 +18,18 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 # Define the staging directory for the files and libraries
-set(CONFIGURED_FILES_STAGING_DIR ${CMAKE_CURRENT_BINARY_DIR}/src/python/fastddm)
+set(PACKAGE_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/fastddm)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PACKAGE_OUTPUT_DIR})
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PACKAGE_OUTPUT_DIR})
 
 # Relative path rettings
 if(APPLE)
-    # Enable the macOS rpath
     set(CMAKE_MACOSX_RPATH ON)
-
-    # Set the install rpath to the loader path
     set(CMAKE_INSTALL_RPATH "@loader_path")
-else()
-    # Use ORIGIN as the build rpath
+else(UNIX)
     set(CMAKE_BUILD_RPATH_USE_ORIGIN TRUE)
-
-    # Set the install rpath to $ORIGIN for Linux
     set(CMAKE_INSTALL_RPATH "$ORIGIN")
 endif()
-
-# Build with the install rpath
 set(CMAKE_BUILD_WITH_INSTALL_RPATH ON)
 
 # Enable C++
