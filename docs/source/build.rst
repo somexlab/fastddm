@@ -217,6 +217,65 @@ To enable the CUDA core, run:
 
     $ pip3 install . --config-settings=cmake.define.ENABLE_CUDA=ON
 
+.. tip::
+
+   To speed up the installation, we recommend to use ``uv``. Install it with:
+
+   .. code-block:: bash
+
+      $ pip3 install uv
+
+   Then, use ``uv`` instead of ``pip3`` to install the package:
+
+   .. code-block:: bash
+
+      $ uv pip install .
+
+
+Using the install script
+------------------------
+
+FastDDM provides a convenience script, ``install.py``, to simplify installation and configuration. This script wraps the standard pip (or uv) install process and allows you to easily enable advanced features, extras, and CMake options without lengthy command lines.
+
+.. note::
+
+   The install script is recommended for most users, especially when enabling advanced features or extras.
+
+To enable the C++ core with the install script, the command is:
+
+
+.. tabs::
+
+   .. group-tab:: Ubuntu
+
+      .. code-block:: bash
+
+         $ python3 install.py --cpp
+
+   .. group-tab:: Mac OSX
+
+      .. code-block:: bash
+
+         $ python3 install.py --cpp
+
+   .. group-tab:: Windows
+
+      Basic install:
+
+      .. code-block:: shell
+
+         > python install.py --cpp
+
+.. tip::
+
+   To see all available and up-to-date options, run:
+
+   .. code-block:: bash
+
+      $ python3 install.py --help
+
+   (or ``python install.py --help`` on Windows).
+
 
 .. _Test the package:
 
