@@ -42,14 +42,18 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: 📦 Install dependencies
+      - name: 🔧 Create and activate venv
         run: |
-          uv pip install --upgrade pip
+          uv venv .venv
+          source .venv/bin/activate
 
       - name: 🏗️ Build package and install through uv
         run: |
+          source .venv/bin/activate
+          uv pip install --upgrade pip
           uv pip install --verbose .[test] --config-settings=cmake.define.ENABLE_CPP=ON
 
       - name: 🧪 Run tests
         run: |
+          source .venv/bin/activate
           uv run pytest -v
