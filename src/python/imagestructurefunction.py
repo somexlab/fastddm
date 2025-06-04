@@ -104,7 +104,7 @@ class ImageStructureFunction:
 
     @property
     def data(self) -> np.ndarray:
-        """The 2D image structure function
+        r"""The 2D image structure function
         (in :math:`(\Delta t, k_y, k_x)` order).
 
         Returns

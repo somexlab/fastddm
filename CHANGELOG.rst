@@ -5,6 +5,18 @@ Change Log
 v0.3
 ----
 
+v0.3.14 (2025-MM-DD)
+^^^^^^^^^^^^^^^^^^^^
+
+*Changed*
+
+- Migrated build system from ``setup.py``/``setup.cfg`` to [PEP 517/518] ``pyproject.toml`` standard.
+- ``pybind11`` is now a build dependency and is no longer included as a static copy in the external lib directory.
+
+*Removed*
+
+- Removed statically saved ``pybind11`` from the external lib directory 
+
 v0.3.12 (2024-06-25)
 ^^^^^^^^^^^^^^^^^^^^
 
