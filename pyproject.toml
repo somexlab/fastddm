@@ -52,7 +52,15 @@ classifiers = [
 [project.optional-dependencies]
 test = ["pytest", "pytest-regtest"]
 doc = ["sphinx", "sphinx-tabs", "nbsphinx", "furo", "ipython"]
-dev = ["fastddm[test,doc]"]
+dev = [
+    "fastddm[test,doc]",
+    "black",
+    "ruff",
+    "mypy",
+    "isort",
+    "pre-commit",
+    "debugpy",
+]
 
 [project.urls]
 Source = "https://github.com/somexlab/fastddm"
