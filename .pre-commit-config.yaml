@@ -1,0 +1,30 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+exclude: "lib"
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+        files: '^.*\.(h|c|cpp|hpp|cc|cs|md|py|pyi)$'
+      - id: end-of-file-fixer
+        files: '^.*\.(h|c|cpp|hpp|cc|cs|md|py|pyi)$'
+      - id: fix-byte-order-marker
+        files: '^.*\.(h|c|cpp|hpp|cc|cs|py|pyi)$'
+      - id: check-toml
+      - id: check-yaml
+        args: [--allow-multiple-documents]
+      - id: check-json
+      - id: check-added-large-files
+      - id: check-merge-conflict
+      - id: check-symlinks
+      - id: detect-private-key
+  - repo: https://github.com/doublify/pre-commit-clang-format
+    rev: 62302476d0da01515660132d76902359bed0f782
+    hooks:
+      - id: clang-format
+        args: ["-style=file"]
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: v0.11.5
+    hooks:
+      - id: ruff
