@@ -24,6 +24,16 @@ repos:
     hooks:
       - id: clang-format
         args: ["-style=file"]
+  - repo: https://github.com/ambv/black
+    rev: 25.1.0
+    hooks:
+      - id: black
+        args: ["--line-length=100"]
+  - repo: https://github.com/adamchainz/blacken-docs
+    rev: 1.19.0
+    hooks:
+      - id: blacken-docs
+        args: ["--line-length=100"]
   - repo: https://github.com/charliermarsh/ruff-pre-commit
     rev: v0.11.5
     hooks:

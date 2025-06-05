@@ -76,3 +76,13 @@ SINGLE_PRECISION = "OFF"
 [tool.ruff]
 line-length = 100
 select = ["F", "E", "W", "I001", "D"]
+
+[tool.black]
+exclude = '''
+/(
+    \.git
+  | \.mypy_cache
+  | \.vscode
+  | venv
+)/
+'''
