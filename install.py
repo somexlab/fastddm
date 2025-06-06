@@ -13,6 +13,39 @@ import sys
 import logging
 from dataclasses import dataclass, field
 
+
+def run_command(
+    cmd: list[str],
+    cwd: Path | None = None,
+    check: bool = True,
+    msg: str | None = None,
+):
+    logger = logging.getLogger(__name__)
+    display_cmd = ' '.join(shlex.quote(arg) for arg in cmd)
+    if msg is not None:
+        logger.debug(msg)
+    else:
+        logger.debug("Executing command: %s", display_cmd)
+    
+    try:
+        ret = subprocess.run(cmd, cwd=cwd, check=check)
+        returncode = ret.returncode
+        logger.debug(f"Command returned with code: {returncode}")
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Command failed with error: {e}")
+        if e.stdout:
+            logger.error(f"Standard output:\n{e.stdout.strip()}")
+        if e.stderr:
+            logger.error(f"Standard error:\n{e.stderr.strip()}")
+        sys.exit(e.returncode)
+    except FileNotFoundError:
+        logger.error(f"Command not found: {cmd[0]}. Full command: {display_cmd}")
+        sys.exit(-1)
+    except Exception as e:
+        logger.error(f"An unexpected error occurred: {e}")
+        logger.debug("Full command: %s", display_cmd)
+        sys.exit(999)
+
 def parse_args() -> argparse.Namespace:
     """Parse command line arguments for the installer.
 
