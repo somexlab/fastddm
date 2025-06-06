@@ -217,16 +217,6 @@ class Installer:
                 f"This might indicate a corrupted installation or an unexpected '{cmd}' version."
             )
             return False
-    
-    def hooks_install(self):
-        pre_commit_files = glob.glob("**/.pre-commit-config.yaml", recursive=True)
-        for file in pre_commit_files:
-            self._logger.debug(f"Installing pre-commit hooks for {file}")
-            directory = Path(file).parent.resolve()
-            command = ["pre-commit", "install"]
-            self._logger.debug(f"Running pre-commit install command: {' '.join(command)} in {directory}")
-            ret = subprocess.run(command, cwd=directory)
-            self._logger.debug(f"Pre-commit install returned with code: {ret.returncode}")
 
     def _extras(self) -> list[str]:
         """
@@ -294,22 +284,23 @@ class Installer:
 
     def run(self) -> None:
         """Run the installation command."""
-        cmd = self.build_command()
+        build_cmd = self.build_command()
         if self.args.dry_run:
-            dry_run_cmd = ' '.join(shlex.quote(arg) for arg in cmd)
+            dry_run_cmd = ' '.join(shlex.quote(arg) for arg in build_cmd)
             self._logger.info(f"Dry run: The following command would be executed:\n{dry_run_cmd}")
             return
-        try:
-            self._logger.debug("Running command: %s", ' '.join(shlex.quote(arg) for arg in cmd))
-            project_dir = Path(__file__).parent.resolve()
-            ret = subprocess.run(cmd, cwd=project_dir, check=True)
-            self._logger.debug(f"Command returned with code: {ret.returncode}")
-        except subprocess.CalledProcessError as e:
-            self._logger.error(f"Installation failed with error: {e}")
-            sys.exit(e.returncode)
+        self._logger.info("Running installation command.")
+        run_command(
+            cmd=build_cmd,
+            cwd=Path(__file__).parent.resolve(),
+        )
         if self.args.pre_commit:
             self._logger.info("Installing pre-commit hooks.")
-            self.hooks_install()
+            pre_commit_cmd = ["pre-commit", "install"]
+            run_command(
+                cmd=pre_commit_cmd,
+                cwd=Path(__file__).parent.resolve(),
+            )
 
 def main(args: argparse.Namespace) -> None:
     # Step 1: Build config-settings arguments for CMake options using dataclass
