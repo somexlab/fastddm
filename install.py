@@ -4,6 +4,7 @@ Removes the need to use lengthy command line options.
 """
 
 import argparse
+import glob
 from pathlib import Path
 import shlex
 import subprocess
@@ -56,6 +57,11 @@ def parse_args() -> argparse.Namespace:
         "--no-cache-dir",
         action="store_true",
         help="Disable cache during installation."
+    )
+    parser.add_argument(
+        "--pre-commit",
+        action="store_true",
+        help="Install pre-commit hooks",
     )
     parser.add_argument(
         "--extras",
@@ -127,6 +133,16 @@ class Installer:
     args: argparse.Namespace
     cmake_settings: CMakeConfigSettings
     _logger: logging.Logger = field(init=False, default_factory=lambda: logging.getLogger(__name__))
+
+    def hooks_install(self):
+        pre_commit_files = glob.glob("**/.pre-commit-config.yaml", recursive=True)
+        for file in pre_commit_files:
+            self._logger.debug(f"Installing pre-commit hooks for {file}")
+            directory = Path(file).parent.resolve()
+            command = ["pre-commit", "install"]
+            self._logger.debug(f"Running pre-commit install command: {' '.join(command)} in {directory}")
+            ret = subprocess.run(command, cwd=directory)
+            self._logger.debug(f"Pre-commit install returned with code: {ret.returncode}")
 
     def _extras(self) -> list[str]:
         """
@@ -207,6 +223,9 @@ class Installer:
         except subprocess.CalledProcessError as e:
             self._logger.error(f"Installation failed with error: {e}")
             sys.exit(e.returncode)
+        if self.args.pre_commit:
+            self._logger.info("Installing pre-commit hooks.")
+            self.hooks_install()
 
 def main(args: argparse.Namespace) -> None:
     # Step 1: Build config-settings arguments for CMake options using dataclass
