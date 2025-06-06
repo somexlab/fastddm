@@ -4,6 +4,7 @@ Removes the need to use lengthy command line options.
 """
 
 import argparse
+from pathlib import Path
 import shlex
 import subprocess
 import sys
@@ -200,7 +201,8 @@ class Installer:
             return
         try:
             self._logger.debug("Running command: %s", ' '.join(shlex.quote(arg) for arg in cmd))
-            ret = subprocess.run(cmd, check=True)
+            project_dir = Path(__file__).parent.resolve()
+            ret = subprocess.run(cmd, cwd=project_dir, check=True)
             self._logger.debug(f"Command returned with code: {ret.returncode}")
         except subprocess.CalledProcessError as e:
             self._logger.error(f"Installation failed with error: {e}")
