@@ -7,6 +7,7 @@ import argparse
 import glob
 from pathlib import Path
 import shlex
+import shutil
 import subprocess
 import sys
 import logging
@@ -134,6 +135,56 @@ class Installer:
     cmake_settings: CMakeConfigSettings
     _logger: logging.Logger = field(init=False, default_factory=lambda: logging.getLogger(__name__))
 
+    def __post_init__(self):
+        """Pre-installation checks."""
+        self._logger.debug("Running pre-installation checks.")
+        if self.args.uv:
+            # Check if 'uv' is installed and executable
+            if not self._check_command_is_available("uv"):
+                self._logger.error(
+                    "'uv' is not installed. "
+                    "Please install it with 'pip install uv'."
+                )
+                sys.exit(1)
+        if self.args.pre_commit:
+            # Check if 'pre-commit' is installed and executable
+            if not (self._check_command_is_available("pre-commit") or "dev" in self._extras()):
+                self._logger.error(
+                    "'pre-commit' is not installed. "
+                    "Please install it with 'pip install pre-commit' or enable dev extra dependencies."
+                )
+                sys.exit(1)
+
+    def _check_command_is_available(self, cmd: str) -> bool:
+        """Check if given command 'cmd' is installed and executable.
+
+        The command should implement the '--version' option to verify its availability.
+
+        Parameters
+        ----------
+        cmd : str
+            The command to check for availability (e.g., 'uv' or 'pre-commit').
+
+        Returns
+        -------
+        bool
+            True if command is installed and executable, False otherwise.
+        """
+        self._logger.debug(f"Checking if '{cmd}' is installed.")
+        if shutil.which(cmd) is None:
+            self._logger.debug(f"'{cmd}' command not found in PATH.")
+            return False
+        try:
+            subprocess.run([cmd, "--version"], check=True, capture_output=True)
+            self._logger.debug(f"'{cmd}' is installed and functional.")
+            return True
+        except subprocess.CalledProcessError:
+            self._logger.warning(
+                f"'{cmd}' was found in PATH, but '{cmd} --version' failed. "
+                f"This might indicate a corrupted installation or an unexpected '{cmd}' version."
+            )
+            return False
+    
     def hooks_install(self):
         pre_commit_files = glob.glob("**/.pre-commit-config.yaml", recursive=True)
         for file in pre_commit_files:
