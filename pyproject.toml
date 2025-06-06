@@ -84,6 +84,7 @@ SINGLE_PRECISION = "OFF"
 [tool.ruff]
 line-length = 100
 select = ["F", "E", "W", "I001", "D"]
+exclude = [".git", ".mypy_cache", ".vscode", "venv"]
 
 [tool.black]
 exclude = '''
@@ -94,3 +95,20 @@ exclude = '''
   | venv
 )/
 '''
+
+[tool.mypy]
+check_untyped_defs = true
+exclude = ['\.git', '\.mypy_cache', '\.vscode', 'venv']
+namespace_packages = true
+no_implicit_optional = true
+plugins = ['numpy.typing.mypy_plugin']
+strict_optional = true
+warn_no_return = true
+warn_redundant_casts = true
+warn_return_any = true
+warn_unreachable = true
+warn_unused_ignores = true
+
+[[tool.mypy.overrides]]
+ignore_missing_imports = true
+module = ['matplotlib.*', 'scipy.*', 'setuptools.*', 'skbuild.*', 'sklearn.*']
