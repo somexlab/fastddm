@@ -13,4 +13,3 @@ SortIncludes: true
 IncludeBlocks: Regroup
 AttributeMacros: ["__global__", "__device__", "__host__"]
 CompactNamespaces: true
-Standard: Cpp14
