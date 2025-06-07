@@ -287,6 +287,7 @@ To test the installation, start python and try importing the package:
 .. code-block:: python
 
     import fastddm
+
     fastddm.__version__
 
 To run the unit-tests, run the following command from within the source directory:
