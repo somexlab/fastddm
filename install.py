@@ -1,17 +1,29 @@
-"""
-Simple script to handle the installation of the package and its dependencies.
-Removes the need to use lengthy command line options.
+"""Simple script to handle the installation of the package and its dependencies.
+
+This installation script removes the need to use lengthy command line options.
+It is designed to be run from the root directory of the package, although some effort has been made
+to ensure it can be run from other directories as well.
+
+Note
+----
+    This script supports installation with `uv`, which needs to be installed separately.
+    This script also supports installation of pre-commit hooks.
+    The `pre-commit` package must be installed separately or through the `dev` extra dependencies.
+
+Example
+-------
+    To check the available options, run:
+        python3 install.py --help
 """
 
 import argparse
-import glob
-from pathlib import Path
+import logging
 import shlex
 import shutil
 import subprocess
 import sys
-import logging
 from dataclasses import dataclass, field
+from pathlib import Path
 
 
 def run_command(
@@ -19,14 +31,30 @@ def run_command(
     cwd: Path | None = None,
     check: bool = True,
     msg: str | None = None,
-):
+) -> None:
+    """Run a command in a subprocess with error handling and logging.
+
+    Parameters
+    ----------
+    cmd : list[str]
+        The command to run as a list of arguments.
+    cwd : Path | None, optional
+        The working directory to run the command in. If None, uses the current directory.
+    check : bool, optional
+        If True, raises an exception if the command returns a non-zero exit code.
+    msg : str | None, optional
+        An optional message to log before executing the command.
+        If None, a default message will be logged.
+    """
+    if cwd is None:
+        cwd = Path.cwd()
     logger = logging.getLogger(__name__)
-    display_cmd = ' '.join(shlex.quote(arg) for arg in cmd)
+    display_cmd = " ".join(shlex.quote(arg) for arg in cmd)
     if msg is not None:
         logger.debug(msg)
     else:
         logger.debug("Executing command: %s", display_cmd)
-    
+
     try:
         ret = subprocess.run(cmd, cwd=cwd, check=check)
         returncode = ret.returncode
@@ -46,6 +74,7 @@ def run_command(
         logger.debug("Full command: %s", display_cmd)
         sys.exit(999)
 
+
 def parse_args() -> argparse.Namespace:
     """Parse command line arguments for the installer.
 
@@ -58,39 +87,25 @@ def parse_args() -> argparse.Namespace:
         description="Install the fastddm package with custom build and dependency options."
     )
     parser.add_argument(
-        "--cpp",
-        action="store_true",
-        help="Enable C++ backend (sets ENABLE_CPP=ON)."
+        "--cpp", action="store_true", help="Enable C++ backend (sets ENABLE_CPP=ON)."
     )
     parser.add_argument(
         "--gpu",
         action="store_true",
-        help="Enable CUDA GPU backend (sets ENABLE_CUDA=ON)."
+        help="Enable CUDA GPU backend (sets ENABLE_CUDA=ON).",
     )
     parser.add_argument(
         "--single-prec",
         action="store_true",
-        help="Enable single precision (sets SINGLE_PRECISION=ON)."
+        help="Enable single precision (sets SINGLE_PRECISION=ON).",
     )
     parser.add_argument(
-        "--uv",
-        action="store_true",
-        help="Use 'uv' as the installer instead of pip."
+        "--uv", action="store_true", help="Use 'uv' as the installer instead of pip."
     )
+    parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose output.")
+    parser.add_argument("-e", "--editable", action="store_true", help="Install in editable mode.")
     parser.add_argument(
-        "-v", "--verbose",
-        action="store_true",
-        help="Enable verbose output."
-    )
-    parser.add_argument(
-        "-e", "--editable",
-        action="store_true",
-        help="Install in editable mode."
-    )
-    parser.add_argument(
-        "--no-cache-dir",
-        action="store_true",
-        help="Disable cache during installation."
+        "--no-cache-dir", action="store_true", help="Disable cache during installation."
     )
     parser.add_argument(
         "--pre-commit",
@@ -100,19 +115,20 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--extras",
         type=str,
-        help="Comma-separated list of extra dependencies to install."
+        help="Comma-separated list of extra dependencies to install.",
     )
     parser.add_argument(
         "--log-to-file",
         action="store_true",
-        help="Log output to a file named 'install.log'."
+        help="Log output to a file named 'install.log'.",
     )
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Print the install command without executing it."
+        help="Print the install command without executing it.",
     )
     return parser.parse_args()
+
 
 @dataclass(kw_only=True)
 class CMakeConfigSettings:
@@ -128,6 +144,7 @@ class CMakeConfigSettings:
     single_precision : bool
         Indicates if single precision mode is enabled. Default is False.
     """
+
     enable_cpp: bool = False
     enable_cuda: bool = False
     single_precision: bool = False
@@ -135,7 +152,7 @@ class CMakeConfigSettings:
 
     def as_config_args(self) -> list[str]:
         """Convert the dataclass fields to a list of config settings for CMake.
-        
+
         Returns
         -------
         list[str]
@@ -153,6 +170,7 @@ class CMakeConfigSettings:
             args.append("--config-settings=cmake.define.SINGLE_PRECISION=ON")
         return args
 
+
 @dataclass(kw_only=True)
 class Installer:
     """Installer class to handle the installation of the package.
@@ -164,6 +182,7 @@ class Installer:
     cmake_settings : CMakeConfigSettings
         Configuration settings for CMake build options.
     """
+
     args: argparse.Namespace
     cmake_settings: CMakeConfigSettings
     _logger: logging.Logger = field(init=False, default_factory=lambda: logging.getLogger(__name__))
@@ -175,8 +194,7 @@ class Installer:
             # Check if 'uv' is installed and executable
             if not self._check_command_is_available("uv"):
                 self._logger.error(
-                    "'uv' is not installed. "
-                    "Please install it with 'pip install uv'."
+                    "'uv' is not installed. Please install it with 'pip install uv'."
                 )
                 sys.exit(1)
         if self.args.pre_commit:
@@ -184,7 +202,8 @@ class Installer:
             if not (self._check_command_is_available("pre-commit") or "dev" in self._extras()):
                 self._logger.error(
                     "'pre-commit' is not installed. "
-                    "Please install it with 'pip install pre-commit' or enable dev extra dependencies."
+                    "Please install it with 'pip install pre-commit' "
+                    "or enable dev extra dependencies."
                 )
                 sys.exit(1)
 
@@ -219,8 +238,7 @@ class Installer:
             return False
 
     def _extras(self) -> list[str]:
-        """
-        A list of extras to install.
+        """Return a list of extras to install.
 
         Returns
         -------
@@ -265,7 +283,7 @@ class Installer:
         if self.args.editable:
             self._logger.info("Installing in editable mode.")
             cmd.append("-e")
-        
+
         target = self._target()
         self._logger.debug(f"Target for installation: {target}")
         cmd.append(target)
@@ -286,7 +304,7 @@ class Installer:
         """Run the installation command."""
         build_cmd = self.build_command()
         if self.args.dry_run:
-            dry_run_cmd = ' '.join(shlex.quote(arg) for arg in build_cmd)
+            dry_run_cmd = " ".join(shlex.quote(arg) for arg in build_cmd)
             self._logger.info(f"Dry run: The following command would be executed:\n{dry_run_cmd}")
             return
         self._logger.info("Running installation command.")
@@ -302,7 +320,9 @@ class Installer:
                 cwd=Path(__file__).parent.resolve(),
             )
 
+
 def main(args: argparse.Namespace) -> None:
+    """Handle the main installation process."""
     # Step 1: Build config-settings arguments for CMake options using dataclass
     cmake_settings = CMakeConfigSettings(
         enable_cpp=args.cpp,
@@ -313,10 +333,11 @@ def main(args: argparse.Namespace) -> None:
     installer = Installer(args=args, cmake_settings=cmake_settings)
     installer.run()
 
+
 if __name__ == "__main__":
     args = parse_args()
     # Set up logging
-    logger_handlers = [logging.StreamHandler()]
+    logger_handlers: list[logging.Handler] = [logging.StreamHandler()]
     if args.log_to_file:
         logger_handlers.append(logging.FileHandler("install.log", mode="w"))
     logging.basicConfig(
