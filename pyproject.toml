@@ -106,7 +106,6 @@ check_untyped_defs = true
 exclude = ['\.git', '\.mypy_cache', '\.vscode', 'venv']
 namespace_packages = true
 no_implicit_optional = true
-plugins = ['numpy.typing.mypy_plugin']
 strict_optional = true
 warn_no_return = true
 warn_redundant_casts = true
