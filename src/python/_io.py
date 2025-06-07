@@ -1,13 +1,15 @@
-# Copyright (c) 2023-2023 University of Vienna, Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino.
+# Copyright (c) 2023-2025 University of Vienna.
 # Part of FastDDM, released under the GNU GPL-3.0 License.
+
 # Authors: Enrico Lattuada and Fabian Krautgasser
 # Maintainers: Enrico Lattuada and Fabian Krautgasser
 
 """Collection of functions to write and read binary files."""
 
 from typing import Any
-from .imagestructurefunction import SFReader
+
 from .azimuthalaverage import AAReader
+from .imagestructurefunction import SFReader
 from .intermediatescatteringfunction import ISFReader
 
 
@@ -33,4 +35,4 @@ def load(fname: str) -> Any:
     if fname.endswith(".isf.ddm"):
         with ISFReader(fname) as f:
             return f.load()
-    raise RuntimeError('File extension not recognized.')
+    raise RuntimeError("File extension not recognized.")

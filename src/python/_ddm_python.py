@@ -1,11 +1,12 @@
-# Copyright (c) 2023-2023 University of Vienna, Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino.
+# Copyright (c) 2023-2025 University of Vienna.
 # Part of FastDDM, released under the GNU GPL-3.0 License.
+
 # Author: Fabian Krautgasser
 # Maintainer: Fabian Krautgasser
 
 """The collection of python functions to perform Differential Dynamic Microscopy."""
 
-from typing import Optional, Tuple, Callable, Dict
+from typing import Callable, Dict
 
 import numpy as np
 import scipy.fft as scifft
@@ -90,9 +91,7 @@ def _diff_image_structure_function(
     shifted_abs_square = rfft2_square_mod[shift]
     cropped_abs_square = rfft2_square_mod[crop]
 
-    sum_of_parts = (
-        shifted_abs_square + cropped_abs_square - 2 * (cropped_conj * shifted).real
-    )
+    sum_of_parts = shifted_abs_square + cropped_abs_square - 2 * (cropped_conj * shifted).real
     dqt = np.mean(sum_of_parts, axis=0)
 
     return dqt
@@ -145,9 +144,7 @@ def image_structure_function(
     autocorrelation = autocorrelation[lag].real
 
     offset = lag + 1
-    sum_of_parts = (
-        sq_mod_cumsum[-offset] + sq_mod_cumsum_rev[-offset] - 2 * autocorrelation
-    )
+    sum_of_parts = sq_mod_cumsum[-offset] + sq_mod_cumsum_rev[-offset] - 2 * autocorrelation
     sum_of_parts /= length - lag  # normalization
 
     return sum_of_parts  # half plane
@@ -164,7 +161,7 @@ def _py_image_structure_function(
     workers: int = 2,
     **kwargs,
 ) -> np.ndarray:
-    """The handler function for the python image structure function backend.
+    """Return handler function for the python image structure function backend.
 
     Parameters
     ----------
@@ -180,7 +177,8 @@ def _py_image_structure_function(
         A 2D array containing the window function to be applied to the images.
         If window is empty, no window is applied.
     mode : str, optional
-        Calculate the autocorrelation function with Wiener-Khinchin theorem ('fft') or classically ('diff'), by default "fft"
+        Calculate the autocorrelation function with Wiener-Khinchin theorem ('fft')
+        or classically ('diff'), by default "fft"
     workers : int, optional
         Number of workers to be used by scipy.fft, by default 2
 
@@ -228,9 +226,7 @@ def _py_image_structure_function(
         # autocorrelation for fft mode
         autocorr = autocorrelation(rfft2, workers=workers)
         cumsum = np.cumsum(square_mod.astype(np.float64), axis=0).astype(DTYPE)
-        cumsum_rev = np.cumsum(square_mod[::-1].astype(np.float64), axis=0).astype(
-            DTYPE
-        )
+        cumsum_rev = np.cumsum(square_mod[::-1].astype(np.float64), axis=0).astype(DTYPE)
 
         args = (cumsum, cumsum_rev, autocorr)
 

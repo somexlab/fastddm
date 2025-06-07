@@ -1,16 +1,16 @@
-# Copyright (c) 2023-2023 University of Vienna, Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino.
+# Copyright (c) 2023-2025 University of Vienna.
 # Part of FastDDM, released under the GNU GPL-3.0 License.
+
 # Author: Enrico Lattuada
 # Maintainer: Enrico Lattuada
 
 """The collection of CUDA functions to perform Differential Dynamic Microscopy."""
 
 from typing import List, Optional
+
 import numpy as np
 
-from ._core_cuda import set_device
-from ._core_cuda import ddm_diff_cuda, ddm_fft_cuda
-from ._config import DTYPE
+from ._core_cuda import ddm_diff_cuda, ddm_fft_cuda, set_device
 
 
 def ddm_diff_gpu(
@@ -22,7 +22,7 @@ def ddm_diff_gpu(
     gpu_id: Optional[int] = 0,
     **kwargs,
 ) -> np.ndarray:
-    """Differential Dynamic Microscopy, diff mode on GPU
+    """Differential Dynamic Microscopy, diff mode on GPU.
 
     Compute the image structure function using differences on the GPU.
 
