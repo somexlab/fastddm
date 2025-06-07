@@ -86,6 +86,9 @@ line-length = 100
 select = ["F", "E", "W", "I001", "D"]
 exclude = [".git", ".mypy_cache", ".vscode", "venv"]
 
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
+
 [tool.black]
 exclude = '''
 /(
