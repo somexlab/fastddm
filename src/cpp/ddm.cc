@@ -44,8 +44,8 @@ py::array_t<Scalar> PYBIND11_EXPORT ddm_diff(py::array_t<T, py::array::c_style> 
     // ***Get input array and dimensions
     unsigned long long length = img_seq.shape()[0]; // get length of original input
     unsigned long long height = img_seq.shape()[1]; // get height of original input
-    unsigned long long width = img_seq.shape()[2]; // get width of original input
-    auto p_img_seq = img_seq.data(); // get input data
+    unsigned long long width = img_seq.shape()[2];  // get width of original input
+    auto p_img_seq = img_seq.data();                // get input data
 
     // ***Get window array
     unsigned long long window_length = window.shape()[0]; // get length of window array
@@ -250,8 +250,8 @@ py::array_t<Scalar> PYBIND11_EXPORT ddm_fft(py::array_t<T, py::array::c_style> i
     // ***Get input array and dimensions
     unsigned long long length = img_seq.shape()[0]; // get length of original input
     unsigned long long height = img_seq.shape()[1]; // get height of original input
-    unsigned long long width = img_seq.shape()[2]; // get width of original input
-    auto p_img_seq = img_seq.data(); // get input data
+    unsigned long long width = img_seq.shape()[2];  // get width of original input
+    auto p_img_seq = img_seq.data();                // get input data
 
     // ***Get window array
     unsigned long long window_length = window.shape()[0]; // get length of window array
@@ -345,7 +345,7 @@ py::array_t<Scalar> PYBIND11_EXPORT ddm_fft(py::array_t<T, py::array::c_style> i
             double a = workspace[2 * j];
             double b = workspace[2 * j + 1];
             workspace[2 * j] = a * a + b * b; // real
-            workspace[2 * j + 1] = 0.0; // imag
+            workspace[2 * j + 1] = 0.0;       // imag
         }
 
         // copy value in 0
@@ -364,10 +364,10 @@ py::array_t<Scalar> PYBIND11_EXPORT ddm_fft(py::array_t<T, py::array::c_style> i
         unsigned long long idx = 0;
         for (unsigned long long t = 0; t < length; t++) {
             for (unsigned long long q = 0; q < chunk_size; q++) {
-                double a = p_out[2 * (t * _nx * ny + i * chunk_size + q)]; // real
+                double a = p_out[2 * (t * _nx * ny + i * chunk_size + q)];     // real
                 double b = p_out[2 * (t * _nx * ny + i * chunk_size + q) + 1]; // imag
                 tmp[q] += a * a + b * b;
-                a = p_out[2 * ((length - t - 1) * _nx * ny + i * chunk_size + q)]; // real
+                a = p_out[2 * ((length - t - 1) * _nx * ny + i * chunk_size + q)];     // real
                 b = p_out[2 * ((length - t - 1) * _nx * ny + i * chunk_size + q) + 1]; // imag
                 tmp[q] += a * a + b * b;
             }

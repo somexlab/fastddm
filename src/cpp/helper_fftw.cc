@@ -49,17 +49,17 @@ fftwf_plan (*Fftw_Plan_Many_Dft_r2c)(int,
 FFTW_PLAN fft2_create_plan(Scalar* input, size_t nx, size_t ny, size_t nt)
 {
     // Define parameters
-    int rank = 2; // The rank of the fft (2 = fft2)
-    int n[2] = { (int)ny, (int)nx }; // Dimensions
-    int howmany = (int)nt; // Number of fft2 to be computed
-    int* inembed = NULL; // NULL is equivalent to passing n
-    int istride = 1; // Distance between two elements in the input
+    int rank = 2;                             // The rank of the fft (2 = fft2)
+    int n[2] = { (int)ny, (int)nx };          // Dimensions
+    int howmany = (int)nt;                    // Number of fft2 to be computed
+    int* inembed = NULL;                      // NULL is equivalent to passing n
+    int istride = 1;                          // Distance between two elements in the input
     int idist = (int)(2 * ny * (nx / 2 + 1)); // Distance between k-th and (k+1)-th input elements
-    int* onembed = NULL; // NULL is equivalent to passing n
-    int ostride = 1; // Distance between two elements in the output
-    int odist = (int)(ny * (nx / 2 + 1)); // Distance between k-th and (k+1)-th output elements
-    unsigned int flags = FFTW_ESTIMATE; // bitwise OR ('|') of zero or more planner flags (see
-                                        // http://www.fftw.org/fftw3.pdf)
+    int* onembed = NULL;                      // NULL is equivalent to passing n
+    int ostride = 1;                          // Distance between two elements in the output
+    int odist = (int)(ny * (nx / 2 + 1));     // Distance between k-th and (k+1)-th output elements
+    unsigned int flags = FFTW_ESTIMATE;       // bitwise OR ('|') of zero or more planner flags (see
+                                              // http://www.fftw.org/fftw3.pdf)
 
     // Create the fft2 plan
     FFTW_PLAN plan = Fftw_Plan_Many_Dft_r2c(rank,
@@ -83,15 +83,15 @@ FFTW_PLAN fft2_create_plan(Scalar* input, size_t nx, size_t ny, size_t nt)
 fftw_plan fft_create_plan(vector<double>& input, size_t nt, size_t N)
 {
     // Define parameters
-    int rank = 1; // The rank of the fft (1 = fft)
-    int n[1] = { (int)nt }; // Dimensions
-    int howmany = (int)N; // Number of fft2 to be computed
-    int* inembed = NULL; // NULL is equivalent to passing n
-    int istride = 1; // Distance between two elements in the input
-    int idist = (int)nt; // Distance between k-th and (k+1)-th input elements
-    int* onembed = NULL; // NULL is equivalent to passing n
-    int ostride = 1; // Distance between two elements in the output
-    int odist = (int)nt; // Distance between k-th and (k+1)-th output elements
+    int rank = 1;                       // The rank of the fft (1 = fft)
+    int n[1] = { (int)nt };             // Dimensions
+    int howmany = (int)N;               // Number of fft2 to be computed
+    int* inembed = NULL;                // NULL is equivalent to passing n
+    int istride = 1;                    // Distance between two elements in the input
+    int idist = (int)nt;                // Distance between k-th and (k+1)-th input elements
+    int* onembed = NULL;                // NULL is equivalent to passing n
+    int ostride = 1;                    // Distance between two elements in the output
+    int odist = (int)nt;                // Distance between k-th and (k+1)-th output elements
     unsigned int flags = FFTW_ESTIMATE; // bitwise OR ('|') of zero or more planner flags (see
                                         // http://www.fftw.org/fftw3.pdf)
 
