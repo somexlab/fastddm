@@ -1,10 +1,10 @@
-# Copyright (c) 2023-2023 University of Vienna, Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino.
+# Copyright (c) 2023-2025 University of Vienna.
 # Part of FastDDM, released under the GNU GPL-3.0 License.
+
 # Authors: Enrico Lattuada
 # Maintainers: Enrico Lattuada
 
-r"""This module contains the intermediate scattering function data class, and auxiliary classes &
-methods.
+r"""Intermediate scattering function data class, and auxiliary classes and methods.
 
 The :py:class:`IntermediateScatteringFunction` object is used to store and retrieve information
 about the intermediate scattering function (ISF). The ISF can be estimated from the azimuthally
@@ -14,8 +14,8 @@ provides this functionality, by assuming a basic functional shape of the image s
 :math:`D(q,\Delta t) = A(q)\left[ 1 - ISF(q, \Delta t) \right] + B(q)`. For more information see
 the docstring.
 
-The :py:class:`IntermediateScatteringFunction.data` contains the ISF values in
-:math:`(k, \Delta t)` order. For instance, the ISF computed at the 10th k vector bin can be accessed via
+The :py:class:`IntermediateScatteringFunction.data` contains the ISF values in :math:`(k, \Delta t)`
+order. For instance, the ISF computed at the 10th k vector bin can be accessed via
 
 .. code-block:: python
 
@@ -32,7 +32,7 @@ extension ``.isf.ddm``) and later retrieved from the memory using
 .. code-block:: python
 
     # load intermediate scattering function
-    isf = fastddm.load('path/to/my_isf_file.isf.ddm')
+    isf = fastddm.load("path/to/my_isf_file.isf.ddm")
 
 In order to avoid reading and loading the entire file, we also provide
 a fast reader through the :py:class:`ISFReader`, which can be used to
@@ -43,7 +43,7 @@ access directly from the disk the relevant data, for example:
     from fastddm.intermediatescatteringfunction import ISFReader
 
     # open file
-    r = ISFReader('path/to/my_isf_file.isf.ddm')
+    r = ISFReader("path/to/my_isf_file.isf.ddm")
 
     # access quantities
     # access k array
@@ -110,8 +110,7 @@ class IntermediateScatteringFunction:
 
     @property
     def err(self) -> Optional[np.ndarray]:
-        """The uncertainty (standard deviation) in the intermediate scattering
-        function.
+        """The uncertainty (standard deviation) in the intermediate scattering function.
 
         Returns
         -------
@@ -151,8 +150,7 @@ class IntermediateScatteringFunction:
             f.write_obj(self)
 
     def resample(self, tau: np.ndarray) -> "IntermediateScatteringFunction":
-        """Resample with new tau values and return a new
-        IntermediateScatteringFunction.
+        """Resample with new tau values and return a new IntermediateScatteringFunction.
 
         Parameters
         ----------
@@ -205,9 +203,7 @@ class IntermediateScatteringFunction:
         k = self.k.astype(DTYPE)
         bin_edges = self.bin_edges.astype(DTYPE)
 
-        return IntermediateScatteringFunction(
-            _data, _err, k, tau.astype(DTYPE), bin_edges
-        )
+        return IntermediateScatteringFunction(_data, _err, k, tau.astype(DTYPE), bin_edges)
 
 
 class ISFWriter(Writer):
@@ -222,13 +218,16 @@ class ISFWriter(Writer):
     Header:
 
     * bytes 0-1: endianness, string, utf-8 encoding [``"LL"`` = 'little'; ``"BB"`` = 'big']
-    * bytes 2-3: file identifier, 16-bit integer, unsigned short [``43`` for intermediate scattering function]
-    * bytes 4-5: file version, pair of 8-bit integers as (major_version, minor_version), unsigned char
+    * bytes 2-3: file identifier, 16-bit integer, unsigned short [``43`` for intermediate scattering
+      function]
+    * bytes 4-5: file version, pair of 8-bit integers as (major_version, minor_version), unsigned
+      char
     * byte 6: dtype, string, utf-8 encoding [``"d"`` = float64, ``"f"`` = float32]
     * bytes 7-14: data height, 64-bit integer, unsigned long long
     * bytes 15-22: data width, 64-bit integer, unsigned long long
     * bytes 23-30: extra slices, 64-bit integer, unsigned long long
-    * byte 31: flag for standard deviation of data, 8-bit integer, unsigned char [``0`` if ``err`` is None, ``1`` if it is stored in the dataclass]
+    * byte 31: flag for standard deviation of data, 8-bit integer, unsigned char [``0`` if ``err``
+      is None, ``1`` if it is stored in the dataclass]
 
     The data is stored in 'C' order and `dtype` format as follows:
 
@@ -271,9 +270,7 @@ class ISFWriter(Writer):
         # write data
         self._write_data(obj)
 
-    def _write_header(
-        self, Nk: int, Nt: int, Nextra: int, is_err: bool, dtype: str
-    ) -> None:
+    def _write_header(self, Nk: int, Nt: int, Nextra: int, is_err: bool, dtype: str) -> None:
         """Write intermediate scattering function file header.
 
         In version 0.2, the header is structured as follows:
@@ -511,9 +508,7 @@ class ISFReader(Reader):
         # check index is in range
         Nk = self._metadata["Nk"]
         if k_index < 0 or k_index >= Nk:
-            raise IndexError(
-                f"Index out of range. Choose an index between 0 and {Nk-1}."
-            )
+            raise IndexError(f"Index out of range. Choose an index between 0 and {Nk-1}.")
 
         offset = self._metadata["data_offset"]
         Nt = self._metadata["Nt"]
@@ -543,9 +538,7 @@ class ISFReader(Reader):
         # check index is in range
         Nk = self._metadata["Nk"]
         if k_index < 0 or k_index >= Nk:
-            raise IndexError(
-                f"Index out of range. Choose an index between 0 and {Nk-1}."
-            )
+            raise IndexError(f"Index out of range. Choose an index between 0 and {Nk-1}.")
 
         offset = self._metadata["err_offset"]
         Nt = self._metadata["Nt"]
@@ -599,21 +592,13 @@ class ISFParser(Parser):
             metadata["is_err"] = False
 
         # byte offsets start from end of file, written as unsigned long long ('Q')
-        metadata["data_offset"] = self.read_value(
-            -calculate_format_size("Q"), "Q", whence=2
-        )
+        metadata["data_offset"] = self.read_value(-calculate_format_size("Q"), "Q", whence=2)
         if version > (0, 1):
-            metadata["err_offset"] = self.read_value(
-                -2 * calculate_format_size("Q"), "Q", whence=1
-            )
+            metadata["err_offset"] = self.read_value(-2 * calculate_format_size("Q"), "Q", whence=1)
         else:
             metadata["err_offset"] = 0
-        metadata["k_offset"] = self.read_value(
-            -2 * calculate_format_size("Q"), "Q", whence=1
-        )
-        metadata["tau_offset"] = self.read_value(
-            -2 * calculate_format_size("Q"), "Q", whence=1
-        )
+        metadata["k_offset"] = self.read_value(-2 * calculate_format_size("Q"), "Q", whence=1)
+        metadata["tau_offset"] = self.read_value(-2 * calculate_format_size("Q"), "Q", whence=1)
         metadata["bin_edges_offset"] = self.read_value(
             -2 * calculate_format_size("Q"), "Q", whence=1
         )
@@ -638,7 +623,6 @@ def melt(
     IntermediateScatteringFunction
         The two IntermediateScatteringFunction objects, merged into a new one.
     """
-
     # assign fast and slow acquisition
     if isf1.tau[0] < isf2.tau[0]:
         fast, slow = isf1, isf2
@@ -672,9 +656,9 @@ def melt(
             alpha = sum_xiyi / sum_xi2
 
             # scale fast on slow
-            data[i] = np.append(
-                fast.data[i, :idx] * alpha, slow.data[i, Nt // 2 + 1 :]
-            ).astype(DTYPE)
+            data[i] = np.append(fast.data[i, :idx] * alpha, slow.data[i, Nt // 2 + 1 :]).astype(
+                DTYPE
+            )
             if err is not None:
                 err[i] = np.append(
                     fast.err[i, :idx] * alpha, slow.err[i, Nt // 2 + 1 :]  # type: ignore
@@ -691,6 +675,7 @@ def mergesort(
     isf1: IntermediateScatteringFunction, isf2: IntermediateScatteringFunction
 ) -> IntermediateScatteringFunction:
     """Merge the values of two intermediate scattering functions.
+
     Values will then be sorted based on tau.
 
     Parameters
@@ -719,9 +704,7 @@ def mergesort(
     # populate data
     data = np.append(isf1.data, isf2.data, axis=1)[:, sortidx].astype(DTYPE)
     if err is not None:
-        err = np.append(isf1.err, isf2.err, axis=1)[:, sortidx].astype(  # type: ignore
-            DTYPE
-        )
+        err = np.append(isf1.err, isf2.err, axis=1)[:, sortidx].astype(DTYPE)  # type: ignore
 
     # ensure DTYPE for all IntermediateScatteringFunction args
     k = isf1.k.astype(DTYPE)
@@ -740,7 +723,7 @@ def azavg2isf_estimate(
     plateau_err: Optional[np.ndarray] = None,
     **kwargs,
 ) -> IntermediateScatteringFunction:
-    """Convert AzimuthalAverage to IntermediateScatteringFunction
+    """Convert AzimuthalAverage to IntermediateScatteringFunction.
 
     Parameters
     ----------

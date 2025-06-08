@@ -1,14 +1,15 @@
-# Copyright (c) 2023-2023 University of Vienna, Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino.
+# Copyright (c) 2023-2025 University of Vienna.
 # Part of FastDDM, released under the GNU GPL-3.0 License.
+
 # Author: Fabian Krautgasser
 # Maintainer: Fabian Krautgasser
 
 """Collection of helper functions."""
 
+import warnings
+from enum import Enum
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Sequence, Union
-from enum import Enum
-import warnings
 
 import numpy as np
 import skimage.io as io
@@ -60,9 +61,7 @@ def tiff2numpy(
         Coordinate convention is (T,Y,X) (or (C,T,Y,X)).
     """
     if not src.endswith(".tif"):  # read anything but tif files with io.imread
-        warnings.warn(
-            "Non-tiff file, returning array opened with default settings only."
-        )
+        warnings.warn("Non-tiff file, returning array opened with default settings only.")
         return io.imread(src)
 
     if input_order is not None:  # read whole array first
@@ -118,9 +117,7 @@ def tiff2numpy(
     return data
 
 
-def images2numpy(
-    fnames: Sequence[str], color_seq: Optional[Sequence[int]] = None
-) -> np.ndarray:
+def images2numpy(fnames: Sequence[str], color_seq: Optional[Sequence[int]] = None) -> np.ndarray:
     """Read a sequence of image files and return it as a numpy array.
 
     Parameters
@@ -191,7 +188,6 @@ def _read_nd2(src: str, seq: Optional[Sequence[int]] = None) -> np.ndarray:
     numpy.ndarray
         The image sequence as numpy array.
     """
-
     mov = ND2Reader(src)
     length, dim_y, dim_x = mov.shape  # what about color channels?
     length = len(seq) if seq is not None else length
@@ -249,16 +245,14 @@ def read_images(
             return _read_nd2(src, seq=seq)
 
         else:
-            return tiff2numpy(
-                src, seq=seq, color_seq=color_seq, input_order=input_order
-            )
+            return tiff2numpy(src, seq=seq, color_seq=color_seq, input_order=input_order)
 
     else:
         raise RuntimeError(f"Failed to open {src}.")
 
 
 def _read_tiff_metadata(src: str) -> Metadata:
-    """Reads the raw metadata of the first page of a tiff file and returns it as a dictionary.
+    """Read the raw metadata of the first page of a tiff file and return it as a dictionary.
 
     Parameters
     ----------
@@ -279,7 +273,7 @@ def _read_tiff_metadata(src: str) -> Metadata:
 
 
 def read_metadata(src: str) -> Metadata:
-    """Reads an images metadata and returns it as a dictionary.
+    """Read an images metadata and return it as a dictionary.
 
     Currently only supports .nd2 files and raw metadata for tiff files.
 
@@ -324,7 +318,9 @@ def read_metadata(src: str) -> Metadata:
 
 
 def chunkify(seq: np.ndarray, chunksize: int, overlap: int = 0) -> List[np.ndarray]:
-    """Takes a sequence ``seq`` and chunks it into smaller portions of size ``chunksize``, with a
+    """Chunkify a sequence into smaller portions.
+
+    Takes a sequence ``seq`` and chunks it into smaller portions of size ``chunksize``, with a
     given ``overlap`` with the previous chunk.
 
     The sequence could be e.g. image indices, or an image sequence itself. However, be aware that
@@ -332,7 +328,6 @@ def chunkify(seq: np.ndarray, chunksize: int, overlap: int = 0) -> List[np.ndarr
     could be very high! (It is recommended to use image sequence indices, see example below.)
 
     The last chunk may not be of the right size. The chunking will happen along the *first* axis.
-
 
     Parameters
     ----------

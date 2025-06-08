@@ -1,9 +1,10 @@
-# Copyright (c) 2023-2023 University of Vienna, Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino.
+# Copyright (c) 2023-2025 University of Vienna.
 # Part of FastDDM, released under the GNU GPL-3.0 License.
+
 # Author: Enrico Lattuada
 # Maintainer: Enrico Lattuada
 
-r"""This module contains the weight functions for azimuthal average.
+r"""Weight functions for azimuthal average.
 
 The weight functions can be used to perform a sector average of the
 image structure function.
@@ -23,13 +24,7 @@ For example:
 
     # create a weight 'mask' to be applied to the image structure function
     weights = fddm.weights.sector_average_weight(
-        full_shape=shape,
-        kx=dqt.kx,
-        ky=dqt.ky,
-        theta_0=90,
-        delta_theta=90,
-        rep=4,
-        kind="uniform"
+        full_shape=shape, kx=dqt.kx, ky=dqt.ky, theta_0=90, delta_theta=90, rep=4, kind="uniform"
     )
 
     # set bin number and pass the weights to the azimuthal_average function
@@ -73,7 +68,10 @@ For example:
     cb = plt.colorbar(im3)
     ax3.set_axis_off()
     ax3.set_title(
-        r"$\theta_0=45,\ \Delta \theta=45,$" + "\n" + "$\mathrm{rep}=4,\ \mathrm{kind}=\mathrm{gauss}$"
+        (
+            r"$\theta_0=45,\ \Delta \theta=45,$" + "\n"
+            "$\mathrm{rep}=4,\ \mathrm{kind}=\mathrm{gauss}$"
+        )
     )
 
     # displaying
@@ -84,6 +82,7 @@ For example:
 
 
 from typing import Optional, Tuple
+
 import numpy as np
 
 
@@ -94,9 +93,10 @@ def sector_average_weight(
     theta_0: float = 0.0,
     delta_theta: float = 90.0,
     rep: int = 2,
-    kind: Optional[str] = 'uniform'
+    kind: Optional[str] = "uniform",
 ) -> np.ndarray:
-    """Evaluate weights for sector azimuthal average.
+    """Weights for sector azimuthal average.
+
     If ``kx`` or ``ky`` are not given, the half-plane representation for the 2D
     image structure function is assumed and we use
 
@@ -139,18 +139,18 @@ def sector_average_weight(
     RuntimeError
         If a value for ``kind`` other than "uniform" or "gauss" is given.
     """
+
     # define gaussian function
     def gauss(x, mu, sigma):
         A = 1 / (sigma * np.sqrt(2 * np.pi))
         _x = ((x - mu + np.pi) % (2 * np.pi) - np.pi) / sigma
-        return A * np.exp(- 0.5 * _x ** 2)
+        return A * np.exp(-0.5 * _x**2)
 
     # available sectors
-    kinds = ['uniform', 'gauss']
+    kinds = ["uniform", "gauss"]
     if kind not in kinds:
         raise RuntimeError(
-            f"Unknown kind '{kind}' selected. " +
-            f"Only possible options are {kinds}."
+            f"Unknown kind '{kind}' selected. " + f"Only possible options are {kinds}."
         )
 
     # compute actual shape
@@ -158,7 +158,7 @@ def sector_average_weight(
 
     # compute kx and ky if not given
     if kx is None or ky is None:
-        kx = 2 * np.pi * np.fft.fftfreq(full_shape[1])[:shape[1]]
+        kx = 2 * np.pi * np.fft.fftfreq(full_shape[1])[: shape[1]]
         ky = 2 * np.pi * np.fft.fftshift(np.fft.fftfreq(shape[0]))
 
     # convert theta_0 and delta_theta
@@ -173,13 +173,13 @@ def sector_average_weight(
     ang = np.angle(X + 1j * Y)
 
     for i in range(rep):
-        if kind == 'gauss':
+        if kind == "gauss":
             theta_ref = theta_0 + i * 2 * np.pi / rep
             weights += gauss(ang, theta_ref, delta_theta / 2)
         else:
             theta_ref = theta_0 + i * 2 * np.pi / rep
             x = ((ang - theta_ref + np.pi) % (2 * np.pi) - np.pi) / delta_theta
-            weights[x ** 2 < 0.25] += 1
+            weights[x**2 < 0.25] += 1
 
     return weights
 
@@ -190,7 +190,7 @@ def sphere_form_factor(
     ky: Optional[np.ndarray] = None,
     R: float = 1.0,
     contrast: float = 1.0,
-    kind: Optional[str] = 'amplitude'
+    kind: Optional[str] = "amplitude",
 ) -> np.ndarray:
     """Evaluate sphere form factor.
 
@@ -225,16 +225,15 @@ def sphere_form_factor(
 
     def sphere_factor(k, R):
         sf = np.zeros_like(k)
-        with np.errstate(divide='ignore', invalid='ignore'):
+        with np.errstate(divide="ignore", invalid="ignore"):
             sf = (np.sin(k * R) - k * R * np.cos(k * R)) / (k * R) ** 3
         sf[k == 0] = 1 / 3
         return sf
 
-    kinds = ['amplitude', 'intensity']
+    kinds = ["amplitude", "intensity"]
     if kind not in kinds:
         raise RuntimeError(
-            f"Unknown kind '{kind}' selected. " +
-            f"Only possible options are {kinds}."
+            f"Unknown kind '{kind}' selected. " + f"Only possible options are {kinds}."
         )
 
     if kx is None:
@@ -244,15 +243,15 @@ def sphere_form_factor(
         ky = 2 * np.pi * np.fft.fftshift(np.fft.fftfreq(shape[0]))
 
     X, Y = np.meshgrid(kx, ky)
-    k_modulus = np.sqrt(X ** 2 + Y ** 2)
+    k_modulus = np.sqrt(X**2 + Y**2)
 
     form_fact = np.zeros_like(k_modulus, dtype=np.float64)
 
-    V = 4 * np.pi * (R ** 3) / 3
+    V = 4 * np.pi * (R**3) / 3
 
     A = contrast * V
     form_fact = A * sphere_factor(k_modulus, R)
-    if kind == 'intensity':
-        form_fact = 4 * np.pi * form_fact ** 2
+    if kind == "intensity":
+        form_fact = 4 * np.pi * form_fact**2
 
     return form_fact

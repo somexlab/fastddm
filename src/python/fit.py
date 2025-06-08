@@ -1,9 +1,10 @@
-# Copyright (c) 2023-2023 University of Vienna, Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino.
+# Copyright (c) 2023-2025 University of Vienna.
 # Part of FastDDM, released under the GNU GPL-3.0 License.
+
 # Author: Fabian Krautgasser
 # Maintainer: Fabian Krautgasser
 
-r"""This module contains a collection of helper fit functions.
+r"""Collection of helper fit functions.
 
 The functions extensively use the `lmfit <https://lmfit.github.io/lmfit-py/>`_ package.
 
@@ -22,16 +23,12 @@ To fit the azimuthal average of the image structure function:
 
     # set the initial estimates for the reference k vector
     k_ref = 20  # this is the k index
-    B_est, _ = fddm.noise_est.estimate_camera_noise(aa, mode='polyfit')
-    model.set_param_hint('A', value=2.0 * aa.var[k_ref] - B_est[k_ref])
-    model.set_param_hint('B', value=B_est[k_ref])
-    model.set_param_hint('Gamma', value=...)
+    B_est, _ = fddm.noise_est.estimate_camera_noise(aa, mode="polyfit")
+    model.set_param_hint("A", value=2.0 * aa.var[k_ref] - B_est[k_ref])
+    model.set_param_hint("B", value=B_est[k_ref])
+    model.set_param_hint("Gamma", value=...)
 
-    result, model_results = fit_multik(aa,
-                                       model,
-                                       k_ref,
-                                       use_err=True,
-                                       return_model_results=True)
+    result, model_results = fit_multik(aa, model, k_ref, use_err=True, return_model_results=True)
 
 You can fix the parameters fit boundaries to some value, for instance:
 
@@ -40,23 +37,18 @@ You can fix the parameters fit boundaries to some value, for instance:
     A_max = 2.0 * aa.power_spec - B_est
     A_min = 2.0 * aa.var - B_est
 
-    result, model_results = fit_multik(aa,
-                                       model,
-                                       k_ref,
-                                       fixed_params_min={'A': A_min},
-                                       fixed_params_max={'A': A_max})
+    result, model_results = fit_multik(
+        aa, model, k_ref, fixed_params_min={"A": A_min}, fixed_params_max={"A": A_max}
+    )
 
 Or you can fix the parameter directly, for instance:
 
 .. code-block:: python
 
-    result, model_results = fit_multik(aa,
-                                       model,
-                                       k_ref,
-                                       fixed_params={'B': B_est})
+    result, model_results = fit_multik(aa, model, k_ref, fixed_params={"B": B_est})
 """
 
-from typing import Any, Optional, Union, Dict, List, Tuple, Sequence
+from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
 import lmfit as lm
 import numpy as np
@@ -69,10 +61,10 @@ from .intermediatescatteringfunction import IntermediateScatteringFunction
 def _simple_exp(
     dt: Union[np.ndarray, float, int], tau: float, amplitude: float
 ) -> Union[np.ndarray, float]:
-    """A simple exponential of the shape
-    simple_exp(dt, tau, amplitude) = amplitude * exp(-dt/tau)
-    """
+    """Return a simple exponential.
 
+    A simple exponential of the shape simple_exp(dt, tau, amplitude) = amplitude * exp(-dt/tau).
+    """
     return amplitude * np.exp(-dt / tau)
 
 
@@ -83,10 +75,8 @@ simple_exp_model.set_param_hint(
 )  # max value of 1 possibly causes artifacts
 
 
-def _simple_image_structure_function(
-    dt: np.ndarray, A: float, B: float, tau: float
-) -> np.ndarray:
-    """Basic image structure function shape with a simple exponential."""
+def _simple_image_structure_function(dt: np.ndarray, A: float, B: float, tau: float) -> np.ndarray:
+    """Return a basic image structure function shape with a simple exponential."""
     return A * (1 - _simple_exp(dt, tau, 1.0)) + B  # type: ignore
 
 
@@ -130,12 +120,12 @@ def fit(
     verbose: bool = False,
     **fitargs: Any,
 ) -> lm.model.ModelResult:
-    """A wrapper for fitting a given model to given data.
+    """Fit a given model to given data.
 
     It is highly recommended to pass the ``weights`` argument for very noisy data. All keyword
     arguments in ``fitargs`` will directly be passed to the :py:meth:`lmfit.model.Model.fit`
-    method (like weights). If ``params`` is presented and ``estimate_simple_parameters`` is set to True,
-    first the simple parameters are estimated and the default model parameters updated, then
+    method (like weights). If ``params`` is presented and ``estimate_simple_parameters`` is set to
+    True, first the simple parameters are estimated and the default model parameters updated, then
     the resulting parameters are updated with the presented parameters again.
 
     Parameters
@@ -207,7 +197,7 @@ def fit_multik(
     fixed_params_expr: Optional[Dict[str, Sequence[str]]] = None,
     **fitargs: Any,
 ) -> Tuple[pd.DataFrame, Optional[List[lm.model.ModelResult]]]:
-    r"""A wrapper for fitting a given model to given data for multiple :math:`k` vectors.
+    r"""Fit a given model to given data for multiple :math:`k` vectors.
 
     The initial parameters estimated for ``ref`` index should be set in the model
     or passed to the function (via ``ref_params`` or as keyword arguments). All
@@ -281,15 +271,9 @@ def fit_multik(
     # create deep copies of passed parameters:
     ref_params = deepcopy(ref_params) if ref_params is not None else None
     fixed_params = deepcopy(fixed_params) if fixed_params is not None else None
-    fixed_params_min = (
-        deepcopy(fixed_params_min) if fixed_params_min is not None else None
-    )
-    fixed_params_max = (
-        deepcopy(fixed_params_max) if fixed_params_max is not None else None
-    )
-    fixed_params_expr = (
-        deepcopy(fixed_params_expr) if fixed_params_expr is not None else None
-    )
+    fixed_params_min = deepcopy(fixed_params_min) if fixed_params_min is not None else None
+    fixed_params_max = deepcopy(fixed_params_max) if fixed_params_max is not None else None
+    fixed_params_expr = deepcopy(fixed_params_expr) if fixed_params_expr is not None else None
 
     # we require the models to have one and one only independent variable
     indep_var = model.independent_vars[0]
@@ -325,7 +309,7 @@ def fit_multik(
 
     # initialize outputs
     results = {p: np.zeros(len(data.k)) for p in model.param_names}
-    results.update({f'{p}_stderr': np.zeros(len(data.k)) for p in model.param_names})
+    results.update({f"{p}_stderr": np.zeros(len(data.k)) for p in model.param_names})
     results["success"] = np.zeros(len(data.k), dtype=bool)
     results["k"] = data.k
 
@@ -337,7 +321,7 @@ def fit_multik(
     result = model.fit(data.data[ref], params=model_params, **fitargs)
     for p in model.param_names:
         results[p][ref] = result.params[p].value
-        results[f'{p}_stderr'][ref] = result.params[p].stderr
+        results[f"{p}_stderr"][ref] = result.params[p].stderr
 
     results["success"][ref] = result.success
     if model_results is not None:
@@ -358,7 +342,7 @@ def fit_multik(
             if np.isnan(data.data[idx, 0]):
                 for p in model.param_names:
                     results[p][idx] = np.nan
-                    results[f'{p}_stderr'][idx] = np.nan
+                    results[f"{p}_stderr"][idx] = np.nan
             else:
                 # is use_err, set weights using error
                 if use_err and data.err is not None:
@@ -381,7 +365,7 @@ def fit_multik(
                 # update results and model_params
                 for p in model.param_names:
                     results[p][idx] = result.params[p].value
-                    results[f'{p}_stderr'][idx] = result.params[p].stderr
+                    results[f"{p}_stderr"][idx] = result.params[p].stderr
                     model_params[p].value = result.params[p].value
                 results["success"][idx] = result.success
                 if model_results is not None:

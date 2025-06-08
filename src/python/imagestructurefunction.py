@@ -1,9 +1,10 @@
-# Copyright (c) 2023-2023 University of Vienna, Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino.
+# Copyright (c) 2023-2025 University of Vienna.
 # Part of FastDDM, released under the GNU GPL-3.0 License.
+
 # Authors: Enrico Lattuada and Fabian Krautgasser
 # Maintainers: Enrico Lattuada and Fabian Krautgasser
 
-r"""This module contains the image structure function data class.
+r"""Image structure function data class.
 
 The :py:class:`ImageStructureFunction` object is used to store and retrieve information
 about the image structure function computed in DDM.
@@ -27,7 +28,7 @@ and later retrieved from the memory using
 .. code-block:: python
 
     # load image structure function
-    dqt = fastddm.load('path/to/my_dqt_file.sf.ddm')
+    dqt = fastddm.load("path/to/my_dqt_file.sf.ddm")
 
 In order to avoid reading and loading the entire file, we also provide
 a fast reader through the :py:class:`SFReader`, which can be used to
@@ -38,7 +39,7 @@ access directly from the disk the relevant data, for example:
     from fastddm.imagestructurefunction import SFReader
 
     # open file
-    r = SFReader('path/to/my_dqt_file.sf.ddm')
+    r = SFReader("path/to/my_dqt_file.sf.ddm")
 
     # access quantities in full plane representation
     # access kx array
@@ -51,20 +52,21 @@ access directly from the disk the relevant data, for example:
     frame_half = r.get_frame(index=9, full=False)
 """
 
-from typing import Sequence, Tuple, BinaryIO, Optional
-from dataclasses import dataclass
 import os
-from sys import byteorder
 import struct
+from dataclasses import dataclass
+from sys import byteorder
+from typing import BinaryIO, Optional, Sequence, Tuple
+
 import numpy as np
 
 from ._io_common import (
+    Parser,
+    Reader,
+    Writer,
     _save_as_tiff,
     calculate_format_size,
     npdtype2format,
-    Writer,
-    Reader,
-    Parser,
 )
 
 
@@ -104,8 +106,7 @@ class ImageStructureFunction:
 
     @property
     def data(self) -> np.ndarray:
-        r"""The 2D image structure function
-        (in :math:`(\Delta t, k_y, k_x)` order).
+        r"""The 2D image structure function (in :math:`(\Delta t, k_y, k_x)` order).
 
         Returns
         -------
@@ -254,8 +255,7 @@ class ImageStructureFunction:
         self._delta_t = delta_t
 
     def __len__(self):
-        """The length of the image structure function data.
-        It coincides with the number of lags.
+        """Length of the image structure function data. It coincides with the number of lags.
 
         Returns
         -------
@@ -314,7 +314,7 @@ class ImageStructureFunction:
             _save_as_tiff(data=self.full_slice(i), labels=[f])
 
     def full_shape(self) -> Tuple[int, int, int]:
-        """The shape of the full (symmetric) 2D image structure function.
+        """Shape of the full (symmetric) 2D image structure function.
 
         Returns
         -------
@@ -347,9 +347,7 @@ class ImageStructureFunction:
             shape = (self.height, self.width)
             return _reconstruct_full_spectrum(self._data[idx], shape)
         else:
-            raise IndexError(
-                f"Index out of range. Choose an index between 0 and {len(self.data)}."
-            )
+            raise IndexError(f"Index out of range. Choose an index between 0 and {len(self.data)}.")
 
     def full_power_spec(self) -> np.ndarray:
         """Get the full (symmetric) average 2D power spectrum of the input images.
@@ -363,8 +361,7 @@ class ImageStructureFunction:
         return _reconstruct_full_spectrum(self._data[-2], shape)
 
     def full_var(self) -> np.ndarray:
-        """Get the full (symmetric) 2D variance (over time) of the Fourier
-        transformed images.
+        """Get the full (symmetric) 2D variance (over time) of the Fourier transformed images.
 
         Returns
         -------
@@ -407,10 +404,10 @@ class ImageStructureFunction:
 
 
 class SFWriter(Writer):
-    """Image structure function writer class. Inherits from ``Writer``.
+    """Image structure function writer class.
 
+    Inherits from ``Writer``.
     It adds the unique method ``write_obj``.
-
     Defines the functions to write :py:class:`ImageStructureFunction` object to binary file.
 
     The structure of the binary file is the following:
@@ -418,8 +415,10 @@ class SFWriter(Writer):
     Header:
 
     - bytes 0-1: endianness, string, utf-8 encoding [``"LL"`` = 'little', ``"BB"`` = 'big']
-    - bytes 2-3: file identifier, 16-bit integer, unsigned short [``73`` for image structure function]
-    - bytes 4-5: file version, pair of 8-bit integers as (major_version, minor_version), unsigned char
+    - bytes 2-3: file identifier, 16-bit integer, unsigned short
+      [``73`` for image structure function]
+    - bytes 4-5: file version, pair of 8-bit integers as (major_version, minor_version), unsigned
+      char
     - byte 6: dtype, string, utf-8 encoding [``"d"`` = float64, ``"f"`` = float32]
     - bytes 7-14: data length, 64-bit integer, unsigned long long
     - bytes 15-22: data height, 64-bit integer, unsigned long long
@@ -628,6 +627,7 @@ class SFWriter(Writer):
 
 class SFReader(Reader):
     """FastDDM image structure function reader class.
+
     Inherits from ``Reader``.
     """
 
@@ -760,9 +760,7 @@ class SFReader(Reader):
         # check index is in range
         Nt = self._metadata["Nt"]
         if index < 0 or index >= Nt:
-            raise IndexError(
-                f"Index out of range. Choose an index between 0 and {Nt-1}."
-            )
+            raise IndexError(f"Index out of range. Choose an index between 0 and {Nt-1}.")
 
         Nx = self._metadata["Nx"]
         Ny = self._metadata["Ny"]
@@ -771,9 +769,7 @@ class SFReader(Reader):
 
         if full:
             shape = (self._metadata["height"], self._metadata["width"])
-            return _reconstruct_full_spectrum(
-                self._parser.read_array(offset, (Ny, Nx)), shape
-            )
+            return _reconstruct_full_spectrum(self._parser.read_array(offset, (Ny, Nx)), shape)
         else:
             return self._parser.read_array(offset, (Ny, Nx))
 
@@ -797,9 +793,7 @@ class SFReader(Reader):
 
         if full:
             shape = (self._metadata["height"], self._metadata["width"])
-            return _reconstruct_full_spectrum(
-                self._parser.read_array(offset, (Ny, Nx)), shape
-            )
+            return _reconstruct_full_spectrum(self._parser.read_array(offset, (Ny, Nx)), shape)
         else:
             return self._parser.read_array(offset, (Ny, Nx))
 
@@ -824,15 +818,14 @@ class SFReader(Reader):
 
         if full:
             shape = (self._metadata["height"], self._metadata["width"])
-            return _reconstruct_full_spectrum(
-                self._parser.read_array(offset, (Ny, Nx)), shape
-            )
+            return _reconstruct_full_spectrum(self._parser.read_array(offset, (Ny, Nx)), shape)
         else:
             return self._parser.read_array(offset, (Ny, Nx))
 
 
 class SFParser(Parser):
     """Image structure function file parser class.
+
     Inherits from ``Parser``.
     """
 
@@ -884,17 +877,13 @@ class SFParser(Parser):
         return metadata
 
 
-def _reconstruct_full_spectrum(
-    halfplane: np.ndarray, shape: Tuple[int, int]
-) -> np.ndarray:
-    """Reconstruct the full (symmetric) 2D image structure function from the
-    half plane representation.
+def _reconstruct_full_spectrum(halfplane: np.ndarray, shape: Tuple[int, int]) -> np.ndarray:
+    """Reconstruct the full (symmetric) 2D image structure function from the half plane one.
 
-    We keep half plane to save memory while computing. The result is the same as
-    one would get by doing all calculations using scipy.fft.fft2 (or similar)
-    and fftshift. The input is assumed to have the same format of the output of
-    scipy.fft.rfft (or similar). The final `shape` must be given in order to
-    correctly reconstruct the full representation.
+    We keep half plane to save memory while computing. The result is the same as one would get by
+    doing all calculations using scipy.fft.fft2 (or similar) and fftshift. The input is assumed to
+    have the same format of the output of scipy.fft.rfft (or similar). The final `shape` must be
+    given in order to correctly reconstruct the full representation.
 
     Parameters
     ----------
@@ -908,7 +897,6 @@ def _reconstruct_full_spectrum(
     np.ndarray
         The full-plane 2D spectrum.
     """
-
     # setup of dtype and dimensions
     dtype = halfplane.dtype
     height, width = shape
