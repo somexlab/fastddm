@@ -1,5 +1,6 @@
-// Copyright (c) 2023-2023 University of Vienna, Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino.
-// Part of FastDDM, released under the GNU GPL-3.0 License.
+// SPDX-FileCopyrightText: 2023-present University of Vienna
+// SPDX-FileCopyrightText: 2023-present Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino
+// SPDX-License-Identifier: GPL-3.0-or-later
 
 // Author: Enrico Lattuada
 // Maintainer: Enrico Lattuada
@@ -19,7 +20,7 @@
 /*! \brief Export ddm functions to python
     \param m    Module
  */
-void export_ddm(py::module &m)
+void export_ddm(py::module& m)
 {
     // Difference algorithm
     m.def("ddm_diff", &ddm_diff<uint8_t>, py::return_value_policy::take_ownership);
