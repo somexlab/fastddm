@@ -1,5 +1,5 @@
-// Copyright (c) 2023-2023 University of Vienna, Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino.
-// Part of FastDDM, released under the GNU GPL-3.0 License.
+// Copyright (c) 2023-2023 University of Vienna, Enrico Lattuada, Fabian Krautgasser, and Roberto
+// Cerbino. Part of FastDDM, released under the GNU GPL-3.0 License.
 
 // Author: Enrico Lattuada
 // Maintainer: Enrico Lattuada
@@ -14,7 +14,6 @@
 
 // *** headers ***
 #include "../python_defs.h"
-
 #include "data_struct.h"
 
 using namespace std;
@@ -71,8 +70,7 @@ bool PYBIND11_EXPORT check_host_memory_diff_py(unsigned long long nx,
     \param sf_data       Structure holding the structure function parameters
     \return true if host memory is sufficient, false otherwise
 */
-bool check_host_memory_diff(ImageData &img_data,
-                            StructureFunctionData &sf_data);
+bool check_host_memory_diff(ImageData& img_data, StructureFunctionData& sf_data);
 
 /*! \brief Check if host memory is sufficient to execute the "fft" mode (Python interface)
     \param nx       Number of grid points in x
@@ -91,7 +89,6 @@ bool PYBIND11_EXPORT check_host_memory_fft_py(unsigned long long nx,
     \param sf_data       Structure holding the structure function parameters
     \return true if host memory is sufficient, false otherwise
 */
-bool check_host_memory_fft(ImageData &img_data,
-                           StructureFunctionData &sf_data);
+bool check_host_memory_fft(ImageData& img_data, StructureFunctionData& sf_data);
 
 #endif // __MEMCHK_GPU_H__
