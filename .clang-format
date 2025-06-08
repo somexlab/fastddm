@@ -18,3 +18,4 @@ BinPackArguments: false
 AllowAllArgumentsOnNextLine: false
 AllowAllParametersOfDeclarationOnNextLine: false
 AlignAfterOpenBracket: Align
+AlignTrailingComments: true
