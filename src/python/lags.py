@@ -1,9 +1,11 @@
-# Copyright (c) 2023-2023 University of Vienna, Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino.
-# Part of FastDDM, released under the GNU GPL-3.0 License.
+# SPDX-FileCopyrightText: 2023-present University of Vienna
+# SPDX-FileCopyrightText: 2023-present Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # Author: Enrico Lattuada
 # Maintainer: Enrico Lattuada
 
-"""This module contains the functions for lag time array creation.
+"""Functions for lag time array creation.
 
 Lag time arrays can be used to speed-up the computation of the
 image structure function (when computed using the differences
@@ -13,7 +15,7 @@ scheme) or to reduce its size:
 
     import fastddm as fddm
 
-    img_seq = ...   # load your images here
+    img_seq = ...  # load your images here
 
     # use an array of quasi logspaced int indices
     lags = fddm.lags.logspace_int(len(img_seq), num=100)
@@ -27,7 +29,7 @@ They can also be used to resample an azimuthal average:
 
     # compute azimuthal average aa
     # resample the azimuthal average
-    # use a fibonacci array of delay times 
+    # use a fibonacci array of delay times
     new_taus = fddm.lags.fibonacci(len(aa)) * aa.tau[0]
     aa_res = aa.resample(new_taus)
 """
@@ -35,9 +37,7 @@ They can also be used to resample an azimuthal average:
 import numpy as np
 
 
-def logspace_int(stop: int,
-                 num: int = 50,
-                 endpoint: bool = False) -> np.ndarray:
+def logspace_int(stop: int, num: int = 50, endpoint: bool = False) -> np.ndarray:
     """
     Return quasi-evenly log-spaced integers over a specified interval.
 
@@ -74,9 +74,9 @@ def logspace_int(stop: int,
 
     # compute ratio
     if endpoint:
-        ratio = (stop)**(1./num)
+        ratio = (stop) ** (1.0 / num)
     else:
-        ratio = (stop)**(1./(num+1))
+        ratio = (stop) ** (1.0 / (num + 1))
 
     if not endpoint:
         num += 1
@@ -86,16 +86,16 @@ def logspace_int(stop: int,
 
     for i in range(1, len(samples)):
         # compute next value
-        next_val = samples[i-1] * ratio
+        next_val = samples[i - 1] * ratio
 
         # check round
-        if next_val - samples[i-1] >= 1.:
+        if next_val - samples[i - 1] >= 1.0:
             samples[i] = next_val
         else:
             # force +1
-            samples[i] = samples[i-1] + 1
+            samples[i] = samples[i - 1] + 1
             # update the ratio
-            ratio = (stop/samples[i])**(1/(num-i-1))
+            ratio = (stop / samples[i]) ** (1 / (num - i - 1))
 
     # now round the values to integers
     samples = np.round(samples).astype(int)
@@ -103,8 +103,7 @@ def logspace_int(stop: int,
     return samples
 
 
-def fibonacci(stop: int,
-              endpoint: bool = False) -> np.ndarray:
+def fibonacci(stop: int, endpoint: bool = False) -> np.ndarray:
     """
     Return fibonacci sequence over a specified interval.
 

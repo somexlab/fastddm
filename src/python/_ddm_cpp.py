@@ -1,31 +1,29 @@
-# Copyright (c) 2023-2023 University of Vienna, Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino.
-# Part of FastDDM, released under the GNU GPL-3.0 License.
+# SPDX-FileCopyrightText: 2023-present University of Vienna
+# SPDX-FileCopyrightText: 2023-present Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # Author: Enrico Lattuada
 # Maintainer: Enrico Lattuada
 
 """The collection of C++ functions to perform Differential Dynamic Microscopy."""
 
-from typing import List, Optional
 import itertools
 import math
-import psutil
-import numpy as np
+from typing import List
 
+import numpy as np
+import psutil
+
+from ._config import IS_SINGLE_PRECISION
 from ._core import ddm_diff, ddm_fft
-from ._config import IS_SINGLE_PRECISION, DTYPE
 
 SCALAR_SIZE = 4 if IS_SINGLE_PRECISION else 8
 
 
 def ddm_diff_cpp(
-    img_seq: np.ndarray,
-    lags: List[int],
-    nx: int,
-    ny: int,
-    window: np.ndarray,
-    **kwargs
+    img_seq: np.ndarray, lags: List[int], nx: int, ny: int, window: np.ndarray, **kwargs
 ):
-    """Differential Dynamic Microscopy, diff mode
+    """Differential Dynamic Microscopy, diff mode.
 
     Compute the image structure function using differences.
 
@@ -42,6 +40,7 @@ def ddm_diff_cpp(
     window : np.ndarray
         A 2D array containing the window function to be applied to the images.
         If window is empty, no window is applied.
+
     Returns
     -------
     np.ndarray
@@ -76,9 +75,9 @@ def ddm_fft_cpp(
     ny: int,
     nt: int,
     window: np.ndarray,
-    **kwargs
+    **kwargs,
 ):
-    """Differential Dynamic Microscopy, fft mode
+    """Differential Dynamic Microscopy, fft mode.
 
     Compute the image structure function using the Wiener-Khinchin theorem.
 
@@ -122,9 +121,7 @@ def ddm_fft_cpp(
         # calculations are done in double precision
         # we need:
         #  workspace1 -- 2 * (nx/2 + 1) * ny * max(len(img_seq), len(lags)+2) * (SCALAR_SIZE)bytes
-        mem_req += SCALAR_SIZE * (
-            2 * (nx // 2 + 1) * ny * max(len(img_seq), len(lags) + 2)
-        )
+        mem_req += SCALAR_SIZE * (2 * (nx // 2 + 1) * ny * max(len(img_seq), len(lags) + 2))
         #  workspace2 -- 2 * chunk_size * nt * 8 bytes
         mem_req += 8 * (2 * chunk_size * nt)
         #  tmp --------- chunk_size * 8 bytes
@@ -142,7 +139,7 @@ def ddm_fft_cpp(
 
 
 def primesfrom2to(n: int) -> List[int]:
-    """Returns a list of primes, 2 <= p < n
+    """Return a list of primes, 2 <= p < n.
 
     Parameters
     ----------
@@ -165,7 +162,7 @@ def primesfrom2to(n: int) -> List[int]:
 
 
 def find_divisors(n):
-    """Find the divisors of n
+    """Find the divisors of n.
 
     Parameters
     ----------
@@ -190,9 +187,7 @@ def find_divisors(n):
             else:
                 break
 
-    powers = [
-        [factor**i for i in range(count + 1)] for factor, count in factors.items()
-    ]
+    powers = [[factor**i for i in range(count + 1)] for factor, count in factors.items()]
 
     divisors = [math.prod(i) for i in itertools.product(*powers)]
     divisors.sort()

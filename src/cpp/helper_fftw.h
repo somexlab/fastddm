@@ -1,5 +1,6 @@
-// Copyright (c) 2023-2023 University of Vienna, Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino.
-// Part of FastDDM, released under the GNU GPL-3.0 License.
+// SPDX-FileCopyrightText: 2023-present University of Vienna
+// SPDX-FileCopyrightText: 2023-present Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino
+// SPDX-License-Identifier: GPL-3.0-or-later
 
 // Author: Enrico Lattuada
 // Maintainer: Enrico Lattuada
@@ -13,8 +14,8 @@
 */
 
 // *** headers ***
-#include <vector>
 #include <fftw3.h>
+#include <vector>
 
 using namespace std;
 
@@ -36,18 +37,13 @@ typedef fftwf_complex FFTW_COMPLEX;
     \param ny       Number of fft nodes in y direction
     \param nt       Number of elements (in t direction)
  */
-FFTW_PLAN fft2_create_plan(Scalar *input,
-                           size_t nx,
-                           size_t ny,
-                           size_t nt);
+FFTW_PLAN fft2_create_plan(Scalar* input, size_t nx, size_t ny, size_t nt);
 
 /*! \brief Create fftw plan for the complex to complex fft
     \param input    Input vector
     \param nt       Number of fft nodes in t direction
     \param N        Number of elements
  */
-fftw_plan fft_create_plan(vector<double> &input,
-                          size_t nt,
-                          size_t N);
+fftw_plan fft_create_plan(vector<double>& input, size_t nt, size_t N);
 
 #endif // __HELPER_FFTW_H__

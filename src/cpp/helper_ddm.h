@@ -1,5 +1,6 @@
-// Copyright (c) 2023-2023 University of Vienna, Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino.
-// Part of FastDDM, released under the GNU GPL-3.0 License.
+// SPDX-FileCopyrightText: 2023-present University of Vienna
+// SPDX-FileCopyrightText: 2023-present Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino
+// SPDX-License-Identifier: GPL-3.0-or-later
 
 // Author: Enrico Lattuada
 // Maintainer: Enrico Lattuada
@@ -31,8 +32,8 @@ typedef float Scalar;
     \param start    Starting index
     \param stride   Stride between elements in destination
  */
-void copy_vec_with_stride(vector<double> &src,
-                          Scalar *dest,
+void copy_vec_with_stride(vector<double>& src,
+                          Scalar* dest,
                           unsigned long long start,
                           unsigned long long stride);
 
@@ -42,7 +43,7 @@ void copy_vec_with_stride(vector<double> &src,
     \param ny   Number of fft nodes in y direction
     \param nt   Number of frames
  */
-void make_shifted_isf(Scalar *vec,
+void make_shifted_isf(Scalar* vec,
                       unsigned long long nx,
                       unsigned long long ny,
                       unsigned long long nt);

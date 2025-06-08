@@ -5,13 +5,12 @@ Author: Fabian Krautgasser | fkrautgasser@posteo.org
 
 from pathlib import Path
 
-import pytest
 import fastddm as fddm
 import numpy as np
+import pytest
+from fastddm import DTYPE, IS_SINGLE_PRECISION
 
-from fastddm import IS_SINGLE_PRECISION, DTYPE
-
-impath = Path("tests/test-imgs/confocal/")
+impath = Path(__file__).parent / "test-imgs" / "confocal"
 imgs = fddm.read_images([p for p in sorted(impath.glob("*.tif"))][:20])
 lags = np.arange(1, 10)
 
@@ -20,21 +19,22 @@ CORES = list(fddm._ddm._backend.keys())
 
 @pytest.fixture
 def ddm_baseline():
+    """Fixture for the baseline DDM."""
     return fddm.ddm(imgs, lags, core="cpp", mode="fft")
 
 
 @pytest.fixture
 def azimuthal_avg_baseline(ddm_baseline):
+    """Fixture for azimuthal average of the baseline DDM."""
     bins = len(ddm_baseline.ky) // 2
     bin_range = (0, ddm_baseline.ky[-1])
     ccm = fddm.mask.central_cross_mask(ddm_baseline.shape[1:])
     return fddm.azimuthal_average(ddm_baseline, bins=bins, range=bin_range, mask=ccm)
 
 
-@pytest.mark.skipif(
-    IS_SINGLE_PRECISION, reason="installed with SINGLE_PRECISION option"
-)
+@pytest.mark.skipif(IS_SINGLE_PRECISION, reason="installed with SINGLE_PRECISION option")
 def test_ddm_cpp_fft(regtest, ddm_baseline):
+    """Test C++ DDM with fft mode."""
     # recreate full spectrum to check against regression file
     full_shape = ddm_baseline.full_shape()
     full = np.zeros((full_shape[0] + 2, *full_shape[1:]))
@@ -47,57 +47,51 @@ def test_ddm_cpp_fft(regtest, ddm_baseline):
         print(full, file=regtest)
 
 
-@pytest.mark.skipif(
-    IS_SINGLE_PRECISION, reason="installed with SINGLE_PRECISION option"
-)
+@pytest.mark.skipif(IS_SINGLE_PRECISION, reason="installed with SINGLE_PRECISION option")
 def test_ddm_cpp_diff(ddm_baseline):
+    """Test C++ DDM with diff mode."""
     result = fddm.ddm(imgs, lags, core="cpp", mode="diff")
 
     assert np.isclose(result._data, ddm_baseline._data).all()
 
 
-@pytest.mark.skipif(
-    IS_SINGLE_PRECISION, reason="installed with SINGLE_PRECISION option"
-)
+@pytest.mark.skipif(IS_SINGLE_PRECISION, reason="installed with SINGLE_PRECISION option")
 def test_ddm_py_fft(ddm_baseline):
+    """Test Python DDM with fft mode."""
     result = fddm.ddm(imgs, lags, core="py", mode="fft")
 
     assert np.isclose(result._data, ddm_baseline._data).all()
 
 
-@pytest.mark.skipif(
-    IS_SINGLE_PRECISION, reason="installed with SINGLE_PRECISION option"
-)
+@pytest.mark.skipif(IS_SINGLE_PRECISION, reason="installed with SINGLE_PRECISION option")
 def test_ddm_py_diff(ddm_baseline):
+    """Test Python DDM with diff mode."""
     result = fddm.ddm(imgs, lags, core="py", mode="diff")
 
     assert np.isclose(result._data, ddm_baseline._data).all()
 
 
-@pytest.mark.skipif(
-    IS_SINGLE_PRECISION, reason="installed with SINGLE_PRECISION option"
-)
+@pytest.mark.skipif(IS_SINGLE_PRECISION, reason="installed with SINGLE_PRECISION option")
 @pytest.mark.skipif("cuda" not in CORES, reason="needs CUDA installed")
 def test_ddm_cuda_fft(ddm_baseline):
+    """Test CUDA DDM with fft mode."""
     result = fddm.ddm(imgs, lags, core="cuda", mode="fft")
 
     assert np.isclose(result._data, ddm_baseline._data).all()
 
 
-@pytest.mark.skipif(
-    IS_SINGLE_PRECISION, reason="installed with SINGLE_PRECISION option"
-)
+@pytest.mark.skipif(IS_SINGLE_PRECISION, reason="installed with SINGLE_PRECISION option")
 @pytest.mark.skipif("cuda" not in CORES, reason="needs CUDA installed")
 def test_ddm_cuda_diff(ddm_baseline):
+    """Test CUDA DDM with diff mode."""
     result = fddm.ddm(imgs, lags, core="cuda", mode="diff")
 
     assert np.isclose(result._data, ddm_baseline._data).all()
 
 
-@pytest.mark.skipif(
-    not IS_SINGLE_PRECISION, reason="installed with SINGLE_PRECISION option OFF"
-)
+@pytest.mark.skipif(not IS_SINGLE_PRECISION, reason="installed with SINGLE_PRECISION option OFF")
 def test_ddm_cpp_fft_single(regtest, ddm_baseline):
+    """Test C++ DDM with fft mode in single precision."""
     # recreate full spectrum to check against regression file
     full_shape = ddm_baseline.full_shape()
     full = np.zeros((full_shape[0] + 2, *full_shape[1:]))
@@ -110,60 +104,57 @@ def test_ddm_cpp_fft_single(regtest, ddm_baseline):
         print(full, file=regtest)
 
 
-@pytest.mark.skipif(
-    not IS_SINGLE_PRECISION, reason="installed with SINGLE_PRECISION option OFF"
-)
+@pytest.mark.skipif(not IS_SINGLE_PRECISION, reason="installed with SINGLE_PRECISION option OFF")
 def test_ddm_cpp_diff_single(ddm_baseline):
+    """Test C++ DDM with diff mode in single precision."""
     result = fddm.ddm(imgs, lags, core="cpp", mode="diff")
 
     assert np.isclose(result._data, ddm_baseline._data, atol=0.0, rtol=1e-3).all()
 
 
-@pytest.mark.skipif(
-    not IS_SINGLE_PRECISION, reason="installed with SINGLE_PRECISION option OFF"
-)
+@pytest.mark.skipif(not IS_SINGLE_PRECISION, reason="installed with SINGLE_PRECISION option OFF")
 def test_ddm_py_fft_single(ddm_baseline):
+    """Test Python DDM with fft mode in single precision."""
     result = fddm.ddm(imgs, lags, core="py", mode="fft")
 
     assert np.isclose(result._data, ddm_baseline._data, atol=0.0, rtol=1e-3).all()
 
 
-@pytest.mark.skipif(
-    not IS_SINGLE_PRECISION, reason="installed with SINGLE_PRECISION option OFF"
-)
+@pytest.mark.skipif(not IS_SINGLE_PRECISION, reason="installed with SINGLE_PRECISION option OFF")
 def test_ddm_py_diff_single(ddm_baseline):
+    """Test Python DDM with diff mode in single precision."""
     result = fddm.ddm(imgs, lags, core="py", mode="diff")
 
     assert np.isclose(result._data, ddm_baseline._data, atol=0.0, rtol=1e-3).all()
 
 
-@pytest.mark.skipif(
-    not IS_SINGLE_PRECISION, reason="installed with SINGLE_PRECISION option OFF"
-)
+@pytest.mark.skipif(not IS_SINGLE_PRECISION, reason="installed with SINGLE_PRECISION option OFF")
 @pytest.mark.skipif("cuda" not in CORES, reason="needs CUDA installed")
 def test_ddm_cuda_fft_single(ddm_baseline):
+    """Test CUDA DDM with fft mode in single precision."""
     result = fddm.ddm(imgs, lags, core="cuda", mode="fft")
 
     assert np.isclose(result._data, ddm_baseline._data, atol=0.0, rtol=1e-3).all()
 
 
-@pytest.mark.skipif(
-    not IS_SINGLE_PRECISION, reason="installed with SINGLE_PRECISION option OFF"
-)
+@pytest.mark.skipif(not IS_SINGLE_PRECISION, reason="installed with SINGLE_PRECISION option OFF")
 @pytest.mark.skipif("cuda" not in CORES, reason="needs CUDA installed")
 def test_ddm_cuda_diff_single(ddm_baseline):
+    """Test CUDA DDM with diff mode in single precision."""
     result = fddm.ddm(imgs, lags, core="cuda", mode="diff")
 
     assert np.isclose(result._data, ddm_baseline._data, atol=0.0, rtol=1e-3).all()
 
 
 def test_ddm_lags_errors():
+    """Test that an error is raised when invalid lags are given."""
     # check error when negative lags are given
     with pytest.raises(RuntimeError):
         fddm.ddm(imgs, [-1], core="py", mode="diff")
 
 
 def test_ddm_window_error():
+    """Test that an error is raised when the window is incompatible."""
     # check error when window and lags are incompatible
     with pytest.raises(RuntimeError):
         dim_t, dim_y, dim_x = imgs.shape
@@ -173,6 +164,7 @@ def test_ddm_window_error():
 
 
 def test_azimuthal_average_bin_edges(ddm_baseline, azimuthal_avg_baseline):
+    """Test azimuthal average with bin edges."""
     # check bins list input in azimuthal average
     bins = len(ddm_baseline.ky) // 2
     bin_edges = np.linspace(0, ddm_baseline.ky[-1], num=bins).tolist()
@@ -184,18 +176,21 @@ def test_azimuthal_average_bin_edges(ddm_baseline, azimuthal_avg_baseline):
 
 @pytest.mark.skipif("cuda" not in CORES, reason="needs CUDA installed")
 def test_get_num_devices():
+    """Test that the number of CUDA devices is greater than zero."""
     # Check that at least one CUDA device is available
     assert fddm._core_cuda.get_num_devices() > 0
 
 
 @pytest.mark.skipif("cuda" not in CORES, reason="needs CUDA installed")
 def test_set_device_valid_gpu_id():
-    # Replace 0 with the actual valid GPU ID
+    """Test that setting a valid GPU ID does not raise an error."""
+    # TODO: Replace 0 with the actual valid GPU ID
     fddm._core_cuda.set_device(0)
 
 
 @pytest.mark.skipif("cuda" not in CORES, reason="needs CUDA installed")
 def test_get_device_id_used():
+    """Test that the device ID used is the same as the one set."""
     # Check that the device we get with get_device()
     # is the same as the one we set with set_device()
     fddm._core_cuda.set_device(0)
@@ -204,20 +199,15 @@ def test_get_device_id_used():
 
 @pytest.mark.skipif("cuda" not in CORES, reason="needs CUDA installed")
 def test_free_device_memory():
+    """Test that the free device memory is correctly reported."""
     # Get available memory on device
     import subprocess as sp
 
     # retrieve free gpu memory
     command = "nvidia-smi --query-gpu=memory.free --format=csv"
-    memory_free_info = (
-        sp.check_output(command.split()).decode("ascii").split("\n")[:-1][1:]
-    )
+    memory_free_info = sp.check_output(command.split()).decode("ascii").split("\n")[:-1][1:]
 
     # convert memory from MB to bytes and create list
-    memory_free_values = [
-        1048576 * int(x.split()[0]) for i, x in enumerate(memory_free_info)
-    ]
+    memory_free_values = [1048576 * int(x.split()[0]) for i, x in enumerate(memory_free_info)]
 
-    assert np.isclose(
-        memory_free_values[0], fddm._core_cuda.get_free_device_memory(), rtol=1e-3
-    )
+    assert np.isclose(memory_free_values[0], fddm._core_cuda.get_free_device_memory(), rtol=1e-3)

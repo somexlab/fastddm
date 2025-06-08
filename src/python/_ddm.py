@@ -1,5 +1,7 @@
-# Copyright (c) 2023-2023 University of Vienna, Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino.
-# Part of FastDDM, released under the GNU GPL-3.0 License.
+# SPDX-FileCopyrightText: 2023-present University of Vienna
+# SPDX-FileCopyrightText: 2023-present Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # Authors: Enrico Lattuada and Fabian Krautgasser
 # Maintainers: Enrico Lattuada and Fabian Krautgasser
 
@@ -37,15 +39,16 @@ This is just the variance over time of the 2D Fourier transformed image
 sequence.
 """
 
-from typing import Dict, Callable, Iterable, Optional
 import warnings
 from functools import partial
+from typing import Callable, Dict, Iterable, Optional
+
 import numpy as np
 
-from ._config import IS_CPP_ENABLED, IS_CUDA_ENABLED, DTYPE
-from .imagestructurefunction import ImageStructureFunction
+from ._config import DTYPE, IS_CPP_ENABLED, IS_CUDA_ENABLED
 from ._ddm_python import _py_image_structure_function
 from ._fftopt import next_fast_len
+from .imagestructurefunction import ImageStructureFunction
 
 ## setup of backend dictionary, initially only with py backend
 _backend: Dict[str, Dict[str, Callable]] = {
@@ -84,6 +87,7 @@ def ddm(
     **kwargs,
 ) -> ImageStructureFunction:
     """Perform Differential Dynamic Microscopy analysis on given image sequence.
+
     Returns the full image structure function.
 
     Parameters
@@ -118,7 +122,6 @@ def ddm(
     RuntimeError
         If negative ``lags`` are given.
     """
-
     # renaming for convenience
     backend = _backend
     cores = list(backend.keys())
@@ -126,14 +129,10 @@ def ddm(
 
     # sanity checks
     if core not in cores:
-        raise RuntimeError(
-            f"Unknown core '{core}' selected. Only possible options are {cores}."
-        )
+        raise RuntimeError(f"Unknown core '{core}' selected. Only possible options are {cores}.")
 
     if mode not in modes:
-        raise RuntimeError(
-            f"Unknown mode '{mode}' selected. Only possible options are {modes}."
-        )
+        raise RuntimeError(f"Unknown mode '{mode}' selected. Only possible options are {modes}.")
 
     # throw out duplicates and sort lags in ascending order
     lags = np.array(sorted(set(lags)))
@@ -147,15 +146,11 @@ def ddm(
         raise RuntimeError("Negative lags are not possible.")
     # large lags
     if np.max(lags) > dim_t - 1:  # maximum lag cna only go up to dim_t - 1 (included)
-        raise RuntimeError(
-            f"Lags larger than len(img_seq) - 1 = {dim_t - 1} are not possible."
-        )
+        raise RuntimeError(f"Lags larger than len(img_seq) - 1 = {dim_t - 1} are not possible.")
     # lag == 0
     # lags are sorted, 0 can only be in 0th position if no negative values are present
     if lags[0] == 0:
-        warnings.warn(
-            "Found 0 in lags. Removed for compatibility with other functions."
-        )
+        warnings.warn("Found 0 in lags. Removed for compatibility with other functions.")
         lags = lags[1:]
 
     # sanity check on window

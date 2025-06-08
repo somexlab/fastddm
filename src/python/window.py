@@ -1,9 +1,11 @@
-# Copyright (c) 2023-2023 University of Vienna, Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino.
-# Part of FastDDM, released under the GNU GPL-3.0 License.
+# SPDX-FileCopyrightText: 2023-present University of Vienna
+# SPDX-FileCopyrightText: 2023-present Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # Author: Enrico Lattuada
 # Maintainer: Enrico Lattuada
 
-"""This module contains the window functions for image preprocessing.
+"""Window functions for image preprocessing.
 
 The window functions can be used to preprocess the input images before
 calculating the image structure function.
@@ -46,6 +48,7 @@ For example:
 """
 
 from typing import Tuple
+
 import numpy as np
 
 from ._config import DTYPE
@@ -112,7 +115,7 @@ def blackman_harris(shape: Tuple[int, ...]) -> np.ndarray:
     window of length `N` reads:
 
     .. math::
-    
+
         w(x) = \sum_{j=0}^3 (-1)^j a_j \cos{\left( \frac{2 \pi j x}{N} \right)}
 
     where :math:`0 \le x < N` and:

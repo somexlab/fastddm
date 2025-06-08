@@ -1,5 +1,7 @@
-# Copyright (c) 2023-2023 University of Vienna, Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino.
-# Part of FastDDM, released under the GNU GPL-3.0 License.
+# SPDX-FileCopyrightText: 2023-present University of Vienna
+# SPDX-FileCopyrightText: 2023-present Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # Authors: Enrico Lattuada and Fabian Krautgasser
 # Maintainers: Enrico Lattuada and Fabian Krautgasser
 
@@ -19,7 +21,13 @@ except PackageNotFoundError:
     # package is not installed
     pass
 
-from ._config import *
+from ._config import (
+    CUDA_VERSION,
+    DTYPE,
+    IS_CPP_ENABLED,
+    IS_CUDA_ENABLED,
+    IS_SINGLE_PRECISION,
+)
 
 if IS_CUDA_ENABLED:
     import sys
@@ -35,8 +43,28 @@ if IS_CUDA_ENABLED:
             os.path.join(os.environ[f"CUDA_PATH_V{cuda_v_major}_{cuda_v_minor}"], "bin")
         )
 
+from . import lags, mask, noise_est, weights, window
 from ._ddm import ddm
-from .azimuthalaverage import azimuthal_average, azimuthal_average_array
 from ._io import load
-from .utils import tiff2numpy, images2numpy, read_images
-from . import lags, mask, weights, window, noise_est
+from .azimuthalaverage import azimuthal_average, azimuthal_average_array
+from .utils import images2numpy, read_images, tiff2numpy
+
+__all__ = [
+    "ddm",
+    "lags",
+    "mask",
+    "noise_est",
+    "weights",
+    "window",
+    "load",
+    "azimuthal_average",
+    "azimuthal_average_array",
+    "images2numpy",
+    "read_images",
+    "tiff2numpy",
+    "IS_CPP_ENABLED",
+    "IS_CUDA_ENABLED",
+    "IS_SINGLE_PRECISION",
+    "CUDA_VERSION",
+    "DTYPE",
+]

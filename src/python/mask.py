@@ -1,9 +1,11 @@
-# Copyright (c) 2023-2023 University of Vienna, Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino.
-# Part of FastDDM, released under the GNU GPL-3.0 License.
+# SPDX-FileCopyrightText: 2023-present University of Vienna
+# SPDX-FileCopyrightText: 2023-present Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # Author: Enrico Lattuada
 # Maintainer: Enrico Lattuada
 
-"""This module contains the helper functions for masks.
+"""Helper functions for masks.
 
 The functions should be used when computing the azimuthal average of the
 image structure function.
@@ -12,26 +14,26 @@ image structure function.
 
     # compute image structure function dqt
     import fastddm as fddm
+
     ...
 
     # compute azimuthal average and mask central cross
     mask = fddm.mask.central_cross_mask(dqt.full_shape()[1:])
-    aa = fddm.azimuthal_average(dqt,
-                                bins=bins,
-                                range=(kmin,kmax),
-                                mask=mask)
+    aa = fddm.azimuthal_average(dqt, bins=bins, range=(kmin, kmax), mask=mask)
 """
 
 from typing import Optional, Tuple
+
 import numpy as np
 
 
 def central_cross_mask(
     shape: Tuple[int, int],
     kx: Optional[np.ndarray] = None,
-    ky: Optional[np.ndarray] = None
+    ky: Optional[np.ndarray] = None,
 ) -> np.ndarray:
     """Evaluate mask to remove central cross from azimuthal average.
+
     If ``kx`` or ``ky`` are not given, the half-plane representation for the 2D
     image structure function is assumed (i.e., the 0th column and the row at
     ``shape[0] // 2`` are masked out).

@@ -1,0 +1,21 @@
+---
+Language: Cpp
+BasedOnStyle: WebKit
+ColumnLimit: 100
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+PointerAlignment: Left
+AllowShortFunctionsOnASingleLine: Inline
+BreakConstructorInitializers: BeforeColon
+ConstructorInitializerIndentWidth: 4
+SortIncludes: true
+IncludeBlocks: Regroup
+AttributeMacros: ["__global__", "__device__", "__host__"]
+CompactNamespaces: true
+BinPackParameters: false
+BinPackArguments: false
+AllowAllArgumentsOnNextLine: false
+AllowAllParametersOfDeclarationOnNextLine: false
+AlignAfterOpenBracket: Align
+AlignTrailingComments: true

@@ -1,11 +1,6 @@
 [build-system]
-requires = [
-    "setuptools>=47",
-    "setuptools_scm",
-    "wheel",
-    "cmake>=3.18",
-]
-build-backend = "setuptools.build_meta"
+requires = ["scikit-build-core>=0.11", "pybind11>=2.13.3"]
+build-backend = "scikit_build_core.build"
 
 [project]
 name = "fastddm"
@@ -21,6 +16,8 @@ maintainers = [
     { name = "Enrico Lattuada", email = "lattuada.enrico@gmail.com" },
 ]
 requires-python = ">=3.9"
+license = "GPL-3.0-or-later"
+license-files = ["LICENSE", "CONTRIBUTORS.md"]
 dependencies = [
     "psutil",
     "numpy",
@@ -32,7 +29,7 @@ dependencies = [
     "pandas",
     "lmfit",
 ]
-dynamic = [ "license", "version" ]
+dynamic = ["version"]
 keywords = [
     "cuda",
     "differential-dynamic-microscopy",
@@ -46,7 +43,6 @@ classifiers = [
     "Development Status :: 4 - Beta",
     "Environment :: Console",
     "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: C++",
@@ -55,19 +51,16 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
-test = [
-    "pytest",
-    "pytest-regtest",
-]
-doc = [
-    "sphinx",
-    "sphinx-tabs",
-    "nbsphinx",
-    "furo",
-    "ipython",
-]
+test = ["pytest", "pytest-regtest"]
+doc = ["sphinx", "sphinx-tabs", "nbsphinx", "furo", "ipython", "myst-parser"]
 dev = [
     "fastddm[test,doc]",
+    "black",
+    "ruff",
+    "mypy",
+    "isort",
+    "pre-commit",
+    "debugpy",
 ]
 
 [project.urls]
@@ -77,3 +70,50 @@ Issues = "https://github.com/somexlab/fastddm/issues"
 Changelog = "https://github.com/somexlab/fastddm/blob/main/CHANGELOG.rst"
 
 [tool.setuptools_scm]
+fallback_version = "0.3.14"
+
+[tool.scikit-build]
+wheel.expand-macos-universal-tags = true
+minimum-version = "build-system.requires"
+metadata.version.provider = "scikit_build_core.metadata.setuptools_scm"
+
+[tool.scikit-build.cmake.define]
+ENABLE_CPP = "OFF"
+ENABLE_CUDA = "OFF"
+SINGLE_PRECISION = "OFF"
+
+[tool.ruff]
+line-length = 100
+exclude = [".git", ".mypy_cache", ".vscode", "venv"]
+
+[tool.ruff.lint]
+select = ["F", "E", "W", "I001", "D"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
+
+[tool.black]
+exclude = '''
+/(
+    \.git
+  | \.mypy_cache
+  | \.vscode
+  | venv
+)/
+'''
+
+[tool.mypy]
+check_untyped_defs = true
+exclude = ['\.git', '\.mypy_cache', '\.vscode', 'venv']
+namespace_packages = true
+no_implicit_optional = true
+strict_optional = true
+warn_no_return = true
+warn_redundant_casts = true
+warn_return_any = true
+warn_unreachable = true
+warn_unused_ignores = true
+
+[[tool.mypy.overrides]]
+ignore_missing_imports = true
+module = ['matplotlib.*', 'scipy.*', 'setuptools.*', 'skbuild.*', 'sklearn.*']

@@ -1,5 +1,5 @@
-# Configuration file for the Sphinx documentation builder.
-#
+"""Configuration file for the Sphinx documentation builder."""
+
 # For the full list of built-in configuration values, see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
@@ -12,7 +12,7 @@ project = "FastDDM"
 year = datetime.date.today().year
 copyright = f"2023-{year}, Enrico Lattuada, Fabian Krautgasser, Roberto Cerbino"
 author = "Enrico Lattuada, Fabian Krautgasser, Roberto Cerbino"
-version = "0.3.12"
+version = "0.3.14"
 release = version
 
 pygments_style = "friendly"
@@ -33,6 +33,7 @@ extensions = [
     "sphinx_tabs.tabs",
     "IPython.sphinxext.ipython_console_highlighting",
     "matplotlib.sphinxext.plot_directive",
+    "myst_parser",
 ]
 
 napoleon_include_special_with_doc = True

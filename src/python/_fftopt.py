@@ -1,13 +1,17 @@
-# Copyright (c) 2023-2023 University of Vienna, Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino.
-# Part of FastDDM, released under the GNU GPL-3.0 License.
+# SPDX-FileCopyrightText: 2023-present University of Vienna
+# SPDX-FileCopyrightText: 2023-present Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # Author: Enrico Lattuada
 # Maintainer: Enrico Lattuada
 
-from typing import List, Optional
 import itertools
 import math
+from typing import List, Optional
+
 import numpy as np
 from scipy import fft
+
 
 def next_power_of_2(target: int) -> int:
     """
@@ -23,12 +27,13 @@ def next_power_of_2(target: int) -> int:
     int
         Next power of 2.
     """
-    return 1<<(target-1).bit_length()
+    return 1 << (target - 1).bit_length()
 
 
-def next_fast_len(target: int, core: Optional[str]='py', force_even: Optional[bool]=False) -> int:
-    """
-    Returns the next fast size of input data to fft, for zero-padding.
+def next_fast_len(
+    target: int, core: Optional[str] = "py", force_even: Optional[bool] = False
+) -> int:
+    """Return the next fast size of input data to fft, for zero-padding.
 
     SciPy's FFT is efficient for small prime factors of the input length. Thus,
     the transforms are fastest when using composites of the prime factors
@@ -64,21 +69,20 @@ def next_fast_len(target: int, core: Optional[str]='py', force_even: Optional[bo
     ValueError
         If mode is not supported.
     """
-
     # maximum value is next power of 2
     max_val = next_power_of_2(target)
 
     if target == max_val:
         return max_val
-    if core.upper() == 'PY':
+    if core.upper() == "PY":
         return fft.next_fast_len(target)
-    if core.upper() == 'CPP':
+    if core.upper() == "CPP":
         fast_len = max_val
         # find range of exponents
         N2 = target.bit_length()
-        N3 = int(math.log(max_val)/math.log(3))+1
-        N5 = int(math.log(max_val)/math.log(5))+1
-        N7 = int(math.log(max_val)/math.log(7))+1
+        N3 = int(math.log(max_val) / math.log(3)) + 1
+        N5 = int(math.log(max_val) / math.log(5)) + 1
+        N7 = int(math.log(max_val) / math.log(7)) + 1
 
         for i in range(N2):
             pow2 = 2**i
@@ -113,17 +117,17 @@ def next_fast_len(target: int, core: Optional[str]='py', force_even: Optional[bo
                 continue
             break
         return fast_len
-    if core.upper() == 'CUDA':
+    if core.upper() == "CUDA":
         fast_len = max_val
         # find range of exponents
         N2 = target.bit_length()
-        N3 = int(math.log(max_val)/math.log(3))+1
-        N5 = int(math.log(max_val)/math.log(5))+1
-        N7 = int(math.log(max_val)/math.log(7))+1
+        N3 = int(math.log(max_val) / math.log(3)) + 1
+        N5 = int(math.log(max_val) / math.log(5)) + 1
+        N7 = int(math.log(max_val) / math.log(7)) + 1
 
         start2 = 1 if force_even else 0
 
-        for i in range(start2,N2):
+        for i in range(start2, N2):
             pow2 = 2**i
             for j in range(N3):
                 pow3 = 3**j
@@ -147,11 +151,11 @@ def next_fast_len(target: int, core: Optional[str]='py', force_even: Optional[bo
             break
         return fast_len
 
-    raise ValueError('Mode not supported in `next_fast_len`.')
+    raise ValueError("Mode not supported in `next_fast_len`.")
 
 
 def primesfrom2to(n: int) -> List[int]:
-    """Returns a list of primes, 2 <= p < n
+    """Return a list of primes, 2 <= p < n.
 
     Parameters
     ----------
@@ -164,17 +168,17 @@ def primesfrom2to(n: int) -> List[int]:
         Primes up to n (excluded).
     """
     # https://stackoverflow.com/questions/2068372/fastest-way-to-list-all-primes-below-n-in-python/3035188#3035188
-    sieve = np.ones(n//3 + (n%6 == 2), dtype=bool)
-    for i in range(1, int(n**0.5)//3 + 1):
+    sieve = np.ones(n // 3 + (n % 6 == 2), dtype=bool)
+    for i in range(1, int(n**0.5) // 3 + 1):
         if sieve[i]:
-            k = 3*i + 1|1
-            sieve[       k*k//3     ::2*k] = False
-            sieve[k*(k-2*(i&1)+4)//3::2*k] = False
-    return np.r_[2,3,((3*np.nonzero(sieve)[0][1:]+1)|1)]
+            k = 3 * i + 1 | 1
+            sieve[k * k // 3 :: 2 * k] = False
+            sieve[k * (k - 2 * (i & 1) + 4) // 3 :: 2 * k] = False
+    return np.r_[2, 3, ((3 * np.nonzero(sieve)[0][1:] + 1) | 1)]
 
 
 def find_divisors(n: int) -> List[int]:
-    """Find the divisors of n
+    """Find the divisors of n.
 
     Parameters
     ----------
@@ -186,22 +190,20 @@ def find_divisors(n: int) -> List[int]:
     divisors : List[int]
         List of divisors of n.
     """
-    primes = primesfrom2to(n+1).tolist()  # list of primes
+    primes = primesfrom2to(n + 1).tolist()  # list of primes
     primes = map(int, primes)
     factors = {}
     for prime in primes:
         factor = 0
         while True:
-            if n%prime == 0:
+            if n % prime == 0:
                 factor += 1
                 n /= prime
                 factors[prime] = factor
-            else: break
+            else:
+                break
 
-    powers = [
-        [factor ** i for i in range(count + 1)]
-        for factor, count in factors.items()
-    ]
+    powers = [[factor**i for i in range(count + 1)] for factor, count in factors.items()]
 
     divisors = [math.prod(i) for i in itertools.product(*powers)]
     divisors.sort()
