@@ -55,7 +55,7 @@ if(ENABLE_CUDA)
 endif(ENABLE_CUDA)
 
 # Configure Python files in the list and install them in the project directory
-set(CONFIGURED_PYTHON_DIR ${CMAKE_CURRENT_BINARY_DIR}/configured_python_files)
+set(CONFIGURED_PYTHON_DIR ${PACKAGE_OUTPUT_DIR}/configured_python_files)
 # Define the macro
 macro(configure_and_install_py_files_to_package_root FILE_LIST_VARNAME)
     foreach(py_source_file ${${FILE_LIST_VARNAME}})
