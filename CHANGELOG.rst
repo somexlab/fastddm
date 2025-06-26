@@ -5,6 +5,13 @@ Change Log
 v0.3
 ----
 
+v0.3.14 (2025-06-26)
+^^^^^^^^^^^^^^^^^^^^
+
+*Fixed*
+
+* Fixed typo that caused the documentation to not build properly.
+
 v0.3.13 (2025-06-26)
 ^^^^^^^^^^^^^^^^^^^^
 
