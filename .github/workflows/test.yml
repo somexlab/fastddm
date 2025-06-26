@@ -1,45 +1,44 @@
 name: Build and test
 
 on:
-    # trigger on all commits to main
-    #push:
-    #    branches:
-    #        - main
-  
-    # trigger on pull requests to main
-    pull_request:
-        branches:
-            - main
-  
-    # trigger on request
-    workflow_dispatch:
+  # trigger on all commits to main
+  #push:
+  #    branches:
+  #        - main
+
+  # trigger on pull requests to main
+  pull_request:
+    branches:
+      - main
+
+  # trigger on request
+  workflow_dispatch:
 
 jobs:
-    build:
-        runs-on: ${{ matrix.os }}
-        strategy:
-            matrix:
-                os: [ubuntu-latest, windows-latest, macos-latest, macos-13]
-                python-version: ["3.9", "3.12"]
-        steps:
-            - uses: actions/checkout@v4
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ["3.9", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
 
-            - name: Set up Python ${{ matrix.python-version }}
-              uses: actions/setup-python@v5
-              with:
-                  python-version: ${{ matrix.python-version }}
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
 
-            - name: Install dependencies
-              run: |
-                  python -m pip install --upgrade pip setuptools wheel pytest pytest-regtest
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel pytest pytest-regtest
 
-            - name: Build package and install through pip
-              env:
-                  ENABLE_CPP: ON
-              run: |
-                  pip install --verbose .
+      - name: Build package and install through pip
+        env:
+          ENABLE_CPP: ON
+        run: |
+          pip install --verbose .
 
-            - name: Run tests
-              run: |
-                  pytest -v
-
+      - name: Run tests
+        run: |
+          pytest -v
