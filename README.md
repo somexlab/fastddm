@@ -1,6 +1,6 @@
 ![FastDDM](docs/source/fastddm-logo-horizontal.svg)
 
-![Python](https://img.shields.io/badge/python-3.8%20%7C%203.12-blue)
+![Python](https://img.shields.io/badge/python-3.9%20|%203.12-blue)
 [![GitHub Actions](https://github.com/somexlab/fastddm/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/somexlab/fastddm/actions/workflows/test.yml)
 [![PyPI Version](https://badge.fury.io/py/fastddm.svg)](https://pypi.org/project/fastddm/)
 [![Read the Docs](https://readthedocs.org/projects/fastddm/badge/?version=latest)](https://fastddm.readthedocs.io/en/latest/?badge=latest)

@@ -2,14 +2,14 @@ from setuptools import setup
 
 import sys
 
-if sys.version_info < (3, 8):
-    sys.exit("Error, Python < 3.8 is not supported.")
+if sys.version_info < (3, 9):
+    sys.exit("Error, Python < 3.9 is not supported.")
 
 setup(
     name="fastddm",
     use_scm_version={
         "root": "${CMAKE_SOURCE_DIR}",
-        "fallback_version": "0.3.12",
+        "fallback_version": "0.3.13",
     },
     setup_requires=["setuptools_scm"],
     packages=["fastddm"],

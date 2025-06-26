@@ -5,6 +5,20 @@ Change Log
 v0.3
 ----
 
+v0.3.13 (2025-06-26)
+
+*Fixed*
+
+* Fixed installation issues due to CMake versions <= 3.5 being deprecated.
+
+*Added*
+
+* Added documentation comment when installing FastDDM when several cudatoolkit versions are available.
+
+*Deprecated*
+
+* Deprecated python 3.8 support, now minimum supported version is 3.9
+
 v0.3.12 (2024-06-25)
 ^^^^^^^^^^^^^^^^^^^^
 

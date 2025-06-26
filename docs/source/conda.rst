@@ -1,4 +1,4 @@
-.. Copyright (c) 2023-2023 University of Vienna, Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino.
+.. Copyright (c) 2023-2025 University of Vienna, Enrico Lattuada, Fabian Krautgasser, Maxime Lavaud and Roberto Cerbino.
 .. Part of FastDDM, released under the GNU GPL-3.0 License.
 
 .. _conda:
@@ -43,12 +43,23 @@ system).
           name: fddm-env
           channels:
             - defaults
+            - conda-forge
           dependencies:
             - gcc
-            - g++
+            - gxx
             - python>=3.8
             - pip
 
+      .. warning::
+          If you install with CUDA support, ensure that your ``gcc`` and ``g++`` versions are 
+          compatible with your CUDA Toolkit. Refer to the `official CUDA documentation <https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#host-compiler-support-policy>`_ 
+          for the supported compiler versions.
+
+          When using a conda environment, you can specify the compatible versions in your 
+          ``fastddm-env.yml`` file. For example, for CUDA 12.9, the maximum supported GCC version is 
+          14. Set both ``gcc=14`` and ``gxx=14`` in your environment file if needed.
+      
+      
       Create the environment by running the following command in your terminal
 
       .. code-block:: bash
@@ -73,6 +84,18 @@ system).
       .. code-block:: bash
 
           $ conda env config vars set ENABLE_CPP=ON
+
+      To compile the CUDA core, set the corresponding flag
+
+      .. code-block:: bash
+
+          $ conda env config vars set ENABLE_CUDA=ON
+    
+      Path to the CUDA Toolkit should also be exported
+
+      .. code-block:: bash
+
+          $ conda env config vars set CUDACXX=/usr/local/cuda_version/bin/nvcc
 
       Deactivate and reactivate the environment to make the changes effective
 
