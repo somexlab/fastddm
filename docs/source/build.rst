@@ -114,7 +114,8 @@ Notice that CUDA is not available for MacOS.
 If you have several NVCC compilers installed and face issues while building wheels you might have to
 set the ``CUDACXX`` environment variable with the path of the  ``nvcc`` compiler.
 
-.. codeblock:: bash
+.. code-block:: bash
+
     $ export CUDACXX=/path/to/nvcc
     
 **To build the documentation:**
