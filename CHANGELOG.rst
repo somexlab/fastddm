@@ -11,6 +11,7 @@ v0.3.15 (2025-07-05)
 *Changed*
 
 * Changed example link in the documentation to point to the correct repository
+* Changed gitignore to exclude the tutorials' checkpoints
 
 *Added*
 
