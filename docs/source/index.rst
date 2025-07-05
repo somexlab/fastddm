@@ -23,7 +23,7 @@ Resources
 
 - `GitHub repository <https://github.com/somexlab/fastddm>`_:
   Source code and issue tracker.
-- `Example notebooks <https://github.com/somexlab/fastddm-tutorials>`_:
+- `Example notebooks <https://github.com/somexlab/fastddm/tree/main/tutorials>`_:
   Jupyter notebooks with practical examples.
 
 Example scripts
