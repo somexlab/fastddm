@@ -14,7 +14,7 @@ copyright = (
     f"2023-{year}, Enrico Lattuada, Fabian Krautgasser, Maxime Lavaud, Roberto Cerbino"
 )
 author = "Enrico Lattuada, Fabian Krautgasser, Maxime Lavaud, Roberto Cerbino"
-version = "0.3.14"
+version = "0.3.15"
 release = version
 
 pygments_style = "friendly"
