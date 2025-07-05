@@ -48,7 +48,7 @@ Please, report bugs and suggest features via the [issue tracker](https://github.
 ## Citing FastDDM
 Please, cite this publication in every work that uses FastDDM:
 
-    E. Lattuada, F. Krautgasser, F. Giavazzi, and R. Cerbino.
+    E. Lattuada, F. Krautgasser, M. Lavaud, F. Giavazzi, and R. Cerbino.
     The Hitchhiker’s Guide to Differential Dynamic Microscopy.
     (In preparation.)
 
