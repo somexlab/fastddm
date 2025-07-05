@@ -5,6 +5,24 @@ Change Log
 v0.3
 ----
 
+v0.3.15 (2025-07-05)
+^^^^^^^^^^^^^^^^^^^^
+
+*Changed*
+
+* Changed example link in the documentation to point to the correct repository
+
+*Added*
+
+* Added the FastDDM tutorials
+
+*Removed*
+
+* Removed the old FastDDM example
+
+.. *Deprecated*
+.. *Fixed*
+
 v0.3.14 (2025-06-26)
 ^^^^^^^^^^^^^^^^^^^^
 
