@@ -10,6 +10,7 @@ import sys
 import logging
 from dataclasses import dataclass, field
 
+
 def parse_args() -> argparse.Namespace:
     """Parse command line arguments for the installer.
 
@@ -24,54 +25,58 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--cpp",
         action="store_true",
-        help="Enable C++ backend (sets ENABLE_CPP=ON)."
+        help="Enable C++ backend (sets ENABLE_CPP=ON).",
     )
     parser.add_argument(
         "--gpu",
         action="store_true",
-        help="Enable CUDA GPU backend (sets ENABLE_CUDA=ON)."
+        help="Enable CUDA GPU backend (sets ENABLE_CUDA=ON).",
     )
     parser.add_argument(
         "--single-prec",
         action="store_true",
-        help="Enable single precision (sets SINGLE_PRECISION=ON)."
+        help="Enable single precision (sets SINGLE_PRECISION=ON).",
     )
     parser.add_argument(
         "--uv",
         action="store_true",
-        help="Use 'uv' as the installer instead of pip."
+        help="Use 'uv' as the installer instead of pip.",
     )
     parser.add_argument(
-        "-v", "--verbose",
+        "-v",
+        "--verbose",
         action="store_true",
-        help="Enable verbose output."
+        help="Enable verbose output.",
     )
     parser.add_argument(
-        "-e", "--editable",
+        "-e",
+        "--editable",
         action="store_true",
-        help="Install in editable mode."
+        help="Install in editable mode.",
     )
     parser.add_argument(
         "--no-cache-dir",
         action="store_true",
-        help="Disable cache during installation."
+        help="Disable cache during installation.",
     )
     parser.add_argument(
         "--extras",
         type=str,
-        help="Comma-separated list of extra dependencies to install."
+        nargs="*",
+        help="Sequence of extra dependencies to install.",
     )
     parser.add_argument(
         "--log-to-file",
         action="store_true",
-        help="Log output to a file named 'install.log'."
+        help="Log output to a file named 'install.log'.",
     )
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Print the install command without executing it."
+        help="Print the install command without executing it.",
     )
     return parser.parse_args()
+
 
 @dataclass(kw_only=True)
 class CMakeConfigSettings:
@@ -87,14 +92,17 @@ class CMakeConfigSettings:
     single_precision : bool
         Indicates if single precision mode is enabled. Default is False.
     """
+
     enable_cpp: bool = False
     enable_cuda: bool = False
     single_precision: bool = False
-    _logger: logging.Logger = field(init=False, default_factory=lambda: logging.getLogger(__name__))
+    _logger: logging.Logger = field(
+        init=False, default_factory=lambda: logging.getLogger(__name__)
+    )
 
     def as_config_args(self) -> list[str]:
         """Convert the dataclass fields to a list of config settings for CMake.
-        
+
         Returns
         -------
         list[str]
@@ -112,6 +120,7 @@ class CMakeConfigSettings:
             args.append("--config-settings=cmake.define.SINGLE_PRECISION=ON")
         return args
 
+
 @dataclass(kw_only=True)
 class Installer:
     """Installer class to handle the installation of the package.
@@ -123,9 +132,12 @@ class Installer:
     cmake_settings : CMakeConfigSettings
         Configuration settings for CMake build options.
     """
+
     args: argparse.Namespace
     cmake_settings: CMakeConfigSettings
-    _logger: logging.Logger = field(init=False, default_factory=lambda: logging.getLogger(__name__))
+    _logger: logging.Logger = field(
+        init=False, default_factory=lambda: logging.getLogger(__name__)
+    )
 
     def _extras(self) -> list[str]:
         """
@@ -174,7 +186,7 @@ class Installer:
         if self.args.editable:
             self._logger.info("Installing in editable mode.")
             cmd.append("-e")
-        
+
         target = self._target()
         self._logger.debug(f"Target for installation: {target}")
         cmd.append(target)
@@ -195,16 +207,21 @@ class Installer:
         """Run the installation command."""
         cmd = self.build_command()
         if self.args.dry_run:
-            dry_run_cmd = ' '.join(shlex.quote(arg) for arg in cmd)
-            self._logger.info(f"Dry run: The following command would be executed:\n{dry_run_cmd}")
+            dry_run_cmd = " ".join(shlex.quote(arg) for arg in cmd)
+            self._logger.info(
+                f"Dry run: The following command would be executed:\n{dry_run_cmd}"
+            )
             return
         try:
-            self._logger.debug("Running command: %s", ' '.join(shlex.quote(arg) for arg in cmd))
+            self._logger.debug(
+                "Running command: %s", " ".join(shlex.quote(arg) for arg in cmd)
+            )
             ret = subprocess.run(cmd, check=True)
             self._logger.debug(f"Command returned with code: {ret.returncode}")
         except subprocess.CalledProcessError as e:
             self._logger.error(f"Installation failed with error: {e}")
             sys.exit(e.returncode)
+
 
 def main(args: argparse.Namespace) -> None:
     # Step 1: Build config-settings arguments for CMake options using dataclass
@@ -216,6 +233,7 @@ def main(args: argparse.Namespace) -> None:
     # Step 2: Build and run install command
     installer = Installer(args=args, cmake_settings=cmake_settings)
     installer.run()
+
 
 if __name__ == "__main__":
     args = parse_args()
