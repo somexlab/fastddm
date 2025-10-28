@@ -48,9 +48,10 @@ Please, report bugs and suggest features via the [issue tracker](https://github.
 ## Citing FastDDM
 Please, cite this publication in every work that uses FastDDM:
 
-    E. Lattuada, F. Krautgasser, M. Lavaud, F. Giavazzi, and R. Cerbino.
-    The Hitchhiker’s Guide to Differential Dynamic Microscopy.
-    (In preparation.)
+    Enrico Lattuada, Fabian Krautgasser, Maxime Lavaud, Fabio Giavazzi, Roberto Cerbino
+    The Hitchhiker’s guide to differential dynamic microscopy
+    J. Chem. Phys. 28 October 2025; 163 (16): 161501
+    https://doi.org/10.1063/5.0289471
 
 ## License
 FastDDM is available under the [GNU GPL-3.0 license](LICENSE).
