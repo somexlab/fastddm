@@ -93,6 +93,7 @@ select = ["F", "E", "W", "I001", "D"]
 convention = "numpy"
 
 [tool.black]
+line-length = 100
 exclude = '''
 /(
     \.git
