@@ -1,9 +1,5 @@
 # SPDX-FileCopyrightText: 2023-present University of Vienna
-# SPDX-FileCopyrightText: 2023-present Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino
 # SPDX-License-Identifier: GPL-3.0-or-later
-
-# Authors: Enrico Lattuada
-# Maintainers: Enrico Lattuada
 
 r"""Intermediate scattering function data class, and auxiliary classes and methods.
 

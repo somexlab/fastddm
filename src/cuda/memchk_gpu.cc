@@ -1,9 +1,5 @@
 // SPDX-FileCopyrightText: 2023-present University of Vienna
-// SPDX-FileCopyrightText: 2023-present Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino
 // SPDX-License-Identifier: GPL-3.0-or-later
-
-// Author: Enrico Lattuada
-// Maintainer: Enrico Lattuada
 
 /*! \file memchk_gpu.cc
     \brief Definition of C++ functions for memory check and optimization for GPU routines

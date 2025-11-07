@@ -1,7 +1,4 @@
-"""Testing all imports and check if they work.
-
-Author: Fabian Krautgasser | fkrautgasser@posteo.org
-"""
+"""Testing all imports and check if they work."""
 
 
 def test_init_import():

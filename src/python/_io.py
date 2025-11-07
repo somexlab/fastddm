@@ -1,9 +1,5 @@
 # SPDX-FileCopyrightText: 2023-present University of Vienna
-# SPDX-FileCopyrightText: 2023-present Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino
 # SPDX-License-Identifier: GPL-3.0-or-later
-
-# Authors: Enrico Lattuada and Fabian Krautgasser
-# Maintainers: Enrico Lattuada and Fabian Krautgasser
 
 """Collection of functions to write and read binary files."""
 

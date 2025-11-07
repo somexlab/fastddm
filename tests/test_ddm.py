@@ -1,7 +1,4 @@
-"""Test the different implementations of ddm.
-
-Author: Fabian Krautgasser | fkrautgasser@posteo.org
-"""
+"""Test the different implementations of ddm."""
 
 from pathlib import Path
 
