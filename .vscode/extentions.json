@@ -12,6 +12,7 @@
         "ms-vscode.cpptools-extension-pack",
         "ms-vscode.cpptools-themes",
         "adpyke.codesnap",
-        "catppuccin.catppuccin-vsc"
+        "catppuccin.catppuccin-vsc",
+        "charliermarsh.ruff"
     ]
 }

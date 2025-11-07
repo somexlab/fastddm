@@ -1,14 +1,15 @@
 {
     "files.autoSave": "onFocusChange",
     "editor.formatOnSave": true,
-    "editor.defaultFormatter": "ms-python.black-formatter",
     "editor.rulers": [
         100
     ],
     "[python]": {
+        "editor.defaultFormatter": "ms-python.black-formatter",
         "editor.codeActionsOnSave": {
             "source.organizeImports": "explicit"
         }
     },
-    "git.autofetch": "all"
+    "git.autofetch": "all",
+    "ruff.enable": true
 }
