@@ -31,9 +31,13 @@ if IS_CUDA_ENABLED:
         # Get the CUDA Toolkit version
         cuda_version = CUDA_VERSION.split(".")
         cuda_v_major, cuda_v_minor = cuda_version[:2]
-        os.add_dll_directory(
-            os.path.join(os.environ[f"CUDA_PATH_V{cuda_v_major}_{cuda_v_minor}"], "bin")
-        )
+        cuda_bin_path = os.path.join(os.environ[f"CUDA_PATH_V{cuda_v_major}_{cuda_v_minor}"], "bin")
+        os.add_dll_directory(cuda_bin_path)
+
+        # From CUDA Toolkit 13.0 onwards, the DLLs are in the 'bin/x64' subfolder
+        cuda_bin_x64_path = os.path.join(cuda_bin_path, "x64")
+        if os.path.exists(cuda_bin_x64_path):
+            os.add_dll_directory(cuda_bin_x64_path)
 
 from ._ddm import ddm
 from .azimuthalaverage import azimuthal_average, azimuthal_average_array
