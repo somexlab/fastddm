@@ -13,7 +13,6 @@ on:
   pull_request:
     branches:
       - main
-      - develop
 
   # trigger on request
   workflow_dispatch:
@@ -62,7 +61,7 @@ jobs:
         uses: pypa/cibuildwheel@v2.23.3
         env:
           # Build with C++ support
-          CIBW_BUILD_FRONTEND_ARGS: "--config-settings=cmake.define.ENABLE_CPP=ON"
+          CIBW_CONFIG_SETTINGS: "cmake.define.ENABLE_CPP=ON"
 
           # Manually select the python version
           CIBW_PROJECT_REQUIRES_PYTHON: "==${{ matrix.python-version }}.*"
