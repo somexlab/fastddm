@@ -1,16 +1,18 @@
 name: Build and test
 
 on:
-  # trigger on all commits to main
+  # trigger on all commits to main and develop
   # NOTE: pushes to main should be protected by branch protection rules
   push:
     branches:
       - main
+      - develop
 
-  # trigger on pull requests to main
+  # trigger on pull requests to main and develop
   pull_request:
     branches:
       - main
+      - develop
 
   # trigger on request
   workflow_dispatch:

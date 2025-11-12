@@ -9,10 +9,11 @@ on:
     tags:
       - "v*"
 
-  # trigger on pull requests to main
+  # trigger on pull requests to main and develop
   pull_request:
     branches:
       - main
+      - develop
 
   # trigger on request
   workflow_dispatch:
