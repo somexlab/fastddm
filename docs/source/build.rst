@@ -1,4 +1,4 @@
-.. Copyright (c) 2023-2023 University of Vienna, Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino.
+.. Copyright (c) 2023-2025 University of Vienna, Enrico Lattuada, Fabian Krautgasser, Maxime Lavaud and Roberto Cerbino.
 .. Part of FastDDM, released under the GNU GPL-3.0 License.
 
 .. _build:
@@ -111,6 +111,13 @@ Check your hardware compatibility on the `NVIDIA website <https://developer.nvid
 Follow the `instructions <https://docs.nvidia.com/cuda/>`_ available from the website specific to your OS.
 Notice that CUDA is not available for MacOS.
 
+If you have several NVCC compilers installed and face issues while building wheels you might have to
+set the ``CUDACXX`` environment variable with the path of the  ``nvcc`` compiler.
+
+.. code-block:: bash
+
+    $ export CUDACXX=/path/to/nvcc
+    
 **To build the documentation:**
 
 - sphinx

@@ -81,14 +81,13 @@ jobs:
           # Test the wheels
           #CIBW_TEST_REQUIRES: "pytest pytest-regtest"
           #CIBW_TEST_COMMAND: "pytest -v {project}/tests"
-          #CIBW_TEST_SKIP: 
+          #CIBW_TEST_SKIP:
 
       - name: Upload wheel artifacts
         uses: actions/upload-artifact@v4
         with:
           name: cibw-${{ matrix.os }}-${{ matrix.python-version }}
           path: ./wheelhouse/*.whl
-
 
   upload_pypi:
     name: Publish [PyPI]
