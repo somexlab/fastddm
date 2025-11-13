@@ -50,7 +50,7 @@ jobs:
       - name: 🏗️ Build package and install through uv
         run: |
           uv pip install --upgrade pip
-          uv pip install --verbose .[test] --config-settings=cmake.define.ENABLE_CPP=ON
+          python install.py -v --uv --cpu --extras=test
 
       - name: 🧪 Run tests
         run: |
