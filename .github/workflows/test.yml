@@ -31,7 +31,7 @@ jobs:
             macos-13,
             macos-14,
           ]
-        python-version: ["3.9", "3.13"]
+        python-version: ["3.9", "3.14"]
 
     steps:
       - uses: actions/checkout@v4

@@ -63,5 +63,5 @@ FastDDM is available under the [GNU GPL-3.0 license](LICENSE).
 
 ## Acknowledgements
 
-- The [fftw-3.3.10](https://www.fftw.org/) and [pybind11 2.12.0](https://github.com/pybind/pybind11) libraries are included in the source tree.
+- The [fftw-3.3.10](https://www.fftw.org/) library is included in the source tree.
 - This project was funded by the Austrian Science Fund (FWF), Grant Number M 3250-N.
