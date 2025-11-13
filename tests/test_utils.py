@@ -6,11 +6,11 @@ import numpy as np
 
 from fastddm.utils import read_metadata, read_images
 
-ND2_TEST = "tests/test-imgs/nikon/test.nd2"
+ND2_TEST = Path(__file__).parent / "test-imgs" / "nikon" / "test.nd2"
 ND2_DIMS = (15000, 256, 256)
 ND2_DTYPE = np.uint16
 
-TIFF_TEST = "tests/test-imgs/confocal/0000.tif"
+TIFF_TEST = Path(__file__).parent / "test-imgs" / "confocal" / "0000.tif"
 
 
 @pytest.fixture
@@ -31,7 +31,7 @@ def test_read_metadata_errors():
 
     # check folder behaviour
     with pytest.raises(NotImplementedError):
-        read_metadata("tests/test-imgs/confocal/")
+        read_metadata(Path(__file__).parent / "test-imgs" / "confocal/" )
 
 
 @pytest.mark.skipif(not Path(ND2_TEST).exists(), reason="ND2 testfile not available.")

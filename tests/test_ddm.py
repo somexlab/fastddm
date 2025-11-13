@@ -11,7 +11,7 @@ import numpy as np
 
 from fastddm import IS_SINGLE_PRECISION, DTYPE
 
-impath = Path("tests/test-imgs/confocal/")
+impath = Path(__file__).parent / "test-imgs" / "confocal"
 imgs = fddm.read_images([p for p in sorted(impath.glob("*.tif"))][:20])
 lags = np.arange(1, 10)
 
