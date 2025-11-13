@@ -111,13 +111,13 @@ class CMakeConfigSettings:
         args = []
         if self.enable_cpp:
             self._logger.info("C++ backend enabled.")
-            args.append("--config-settings=scikit_build_core.build:cmake.define.ENABLE_CPP=ON")
+            args.append("--config-settings=cmake.define.ENABLE_CPP=ON")
         if self.enable_cuda:
             self._logger.info("CUDA GPU backend enabled.")
-            args.append("--config-settings=scikit_build_core.build:cmake.define.ENABLE_CUDA=ON")
+            args.append("--config-settings=cmake.define.ENABLE_CUDA=ON")
         if self.single_precision:
             self._logger.info("Single precision enabled.")
-            args.append("--config-settings=scikit_build_core.build:cmake.define.SINGLE_PRECISION=ON")
+            args.append("--config-settings=cmake.define.SINGLE_PRECISION=ON")
         return args
 
 
@@ -178,7 +178,7 @@ class Installer:
         """
         if self.args.uv:
             self._logger.info("Using 'uv' as the installer.")
-            cmd = ["uv", "pip", "install"]
+            cmd = ["uv", "run", "pip", "install"]
         else:
             self._logger.info("Using 'pip' as the installer.")
             cmd = [sys.executable, "-m", "pip", "install"]
