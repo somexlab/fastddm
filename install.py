@@ -78,7 +78,7 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-@dataclass(kw_only=True)
+@dataclass
 class CMakeConfigSettings:
     """
     Configuration settings for CMake build options.
