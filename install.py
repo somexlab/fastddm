@@ -111,13 +111,13 @@ class CMakeConfigSettings:
         args = []
         if self.enable_cpp:
             self._logger.info("C++ backend enabled.")
-            args.append("--config-settings=cmake.define.ENABLE_CPP=ON")
+            args.append("--config-settings=skbuild.cmake.define.ENABLE_CPP=ON")
         if self.enable_cuda:
             self._logger.info("CUDA GPU backend enabled.")
-            args.append("--config-settings=cmake.define.ENABLE_CUDA=ON")
+            args.append("--config-settings=skbuild.cmake.define.ENABLE_CUDA=ON")
         if self.single_precision:
             self._logger.info("Single precision enabled.")
-            args.append("--config-settings=cmake.define.SINGLE_PRECISION=ON")
+            args.append("--config-settings=skbuild.cmake.define.SINGLE_PRECISION=ON")
         return args
 
 
