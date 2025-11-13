@@ -121,7 +121,7 @@ class CMakeConfigSettings:
         return args
 
 
-@dataclass(kw_only=True)
+@dataclass
 class Installer:
     """Installer class to handle the installation of the package.
 
