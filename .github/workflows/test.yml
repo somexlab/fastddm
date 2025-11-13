@@ -50,7 +50,7 @@ jobs:
       - name: 🏗️ Build package and install through uv
         run: |
           uv pip install --upgrade pip
-          python install.py -v --uv --cpu --extras=test
+          python install.py -v --uv --cpp --extras=test
 
       - name: 🧪 Run tests
         run: |
