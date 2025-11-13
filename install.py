@@ -152,7 +152,7 @@ class Installer:
         if not self.args.extras or self.args.extras is None:
             self._logger.debug("No extras specified, returning empty list.")
             return []
-        extras = [e.strip() for e in self.args.extras.split(",") if e.strip()]
+        extras = [e.strip() for e in self.args.extras if e.strip()]
         self._logger.info(f"Extras to install: {extras}")
         return extras
 
