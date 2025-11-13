@@ -4,7 +4,6 @@ Removes the need to use lengthy command line options.
 """
 
 import argparse
-import os
 import shlex
 import subprocess
 import sys
@@ -65,16 +64,6 @@ def parse_args() -> argparse.Namespace:
         type=str,
         nargs="*",
         help="Sequence of extra dependencies to install.",
-    )
-    parser.add_argument(
-        "-j",
-        "--jobs",
-        type=int,
-        help=(
-            "Number of parallel jobs to use during build. "
-            "If not specified, uses all available CPU cores. "
-            "Must be a positive integer."
-        ),
     )
     parser.add_argument(
         "--log-to-file",
@@ -178,41 +167,6 @@ class Installer:
         self._logger.debug("Building target string for installation.")
         extras = self._extras()
         return f".[{','.join(extras)}]" if extras else "."
-    
-    def _capped_jobs(self) -> int:
-        """Determine the number of jobs to use, capped by available CPU count.
-
-        Returns
-        -------
-        int
-            The number of jobs to use for the build.
-        """
-        available_cpus = os.cpu_count() or 1
-        if self.args.jobs is None:
-            self._logger.debug(
-                f"No jobs argument specified, using available CPU count {available_cpus}."
-            )
-            return available_cpus
-        if self.args.jobs < 1:
-            self._logger.error(
-                f"Invalid number of jobs specified: {self.args.jobs}. Must be a positive integer."
-            )
-            raise ValueError(f"Number of jobs must be 1 or more, got {self.args.jobs}.")
-        jobs = min(self.args.jobs, available_cpus)
-        self._logger.debug(f"Requested jobs: {jobs}")
-        return jobs
-    
-    def _jobs(self) -> str:
-        """Build the jobs argument for the installation command.
-        
-        Returns
-        -------
-        str
-            The jobs argument for the installation command.
-        """
-        jobs = self._capped_jobs()
-        jobs_cmd = f"--config-settings=cmake.define.CMAKE_BUILD_PARALLEL_LEVEL={jobs}"
-        return jobs_cmd
 
     def build_command(self) -> list[str]:
         """Build the command to run the installer.
@@ -236,10 +190,6 @@ class Installer:
         target = self._target()
         self._logger.debug(f"Target for installation: {target}")
         cmd.append(target)
-
-        jobs = self._jobs()
-        self._logger.debug(f"Jobs argument for installation: {jobs}")
-        cmd.append(jobs)
 
         if self.args.no_cache_dir:
             self._logger.info("Disabling cache during installation.")
