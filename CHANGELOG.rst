@@ -8,10 +8,16 @@ v0.3
 v0.3.xx (2025-MM-DD)
 ^^^^^^^^^^^^^^^^^^^^
 
+*Added*
+
+- Citation metadata in ``CITATION.bib`` and ``README.md``.
+- Installation script with support for ``uv`` to simplify setting optional arguments.
+
 *Changed*
 
 - Migrated build system from ``setup.py``/``setup.cfg`` to [PEP 517/518] ``pyproject.toml`` standard.
 - ``pybind11`` is now a build dependency and is no longer included as a static copy in the external lib directory.
+- Maximum supported Python version is now 3.14.
 
 *Removed*
 

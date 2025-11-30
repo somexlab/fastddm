@@ -51,7 +51,7 @@ Scroll down until you find
 
 .. code:: cmake
     
-    set(python_SOURCES
+    set(PYTHON_SOURCES
         python/__init__.py
         ...
     )

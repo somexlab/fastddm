@@ -2,10 +2,11 @@
 .vs
 **/.DS_Store
 
-# Build and distribution directories
+# Build and distribution directories and files
 build
 dist
 *.egg*
+install.log
 
 # Python cache files
 **/__pycache__
