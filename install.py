@@ -24,13 +24,14 @@ import subprocess
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Optional
 
 
 def run_command(
     cmd: list[str],
-    cwd: Path | None = None,
+    cwd: Optional[Path] = None,
     check: bool = True,
-    msg: str | None = None,
+    msg: Optional[str] = None,
 ) -> None:
     """Run a command in a subprocess with error handling and logging.
 
@@ -38,11 +39,11 @@ def run_command(
     ----------
     cmd : list[str]
         The command to run as a list of arguments.
-    cwd : Path | None, optional
+    cwd : Optional[Path], optional
         The working directory to run the command in. If None, uses the current directory.
     check : bool, optional
         If True, raises an exception if the command returns a non-zero exit code.
-    msg : str | None, optional
+    msg : Optional[str], optional
         An optional message to log before executing the command.
         If None, a default message will be logged.
     """
