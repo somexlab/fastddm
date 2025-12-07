@@ -2,8 +2,6 @@
     "recommendations": [
         "charliermarsh.ruff",
         "eamodio.gitlens",
-        "github.copilot",
-        "github.copilot-chat",
         "ms-python.python",
         "ms-python.black-formatter",
         "ms-python.debugpy",
