@@ -1,16 +1,18 @@
 name: Build and test
 
 on:
-  # trigger on all commits to main
+  # trigger on all commits to main and develop
   # NOTE: pushes to main should be protected by branch protection rules
   push:
     branches:
       - main
+      - develop
 
-  # trigger on pull requests to main
+  # trigger on pull requests to main and develop
   pull_request:
     branches:
       - main
+      - develop
 
   # trigger on request
   workflow_dispatch:
@@ -32,7 +34,7 @@ jobs:
             macos-13,
             macos-14,
           ]
-        python-version: ["3.9", "3.13"]
+        python-version: ["3.9", "3.14"]
 
     steps:
       - uses: actions/checkout@v4
@@ -48,7 +50,7 @@ jobs:
       - name: 🏗️ Build package and install through uv
         run: |
           uv pip install --upgrade pip
-          uv pip install --verbose .[test] --config-settings=cmake.define.ENABLE_CPP=ON
+          python install.py -v --uv --cpp --extras=test
 
       - name: 🧪 Run tests
         run: |

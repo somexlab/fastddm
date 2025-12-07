@@ -9,11 +9,13 @@ readme = "README.md"
 authors = [
     { name = "Enrico Lattuada" },
     { name = "Fabian Krautgasser" },
+    { name = "Maxime Lavaudd"},
     { name = "Roberto Cerbino" },
     { email = "cerbino@gmail.com" },
 ]
 maintainers = [
     { name = "Enrico Lattuada", email = "lattuada.enrico@gmail.com" },
+    { name = "Maxime Lavaud", email = "lavaudmaxime.ml@gmail.com" },
 ]
 requires-python = ">=3.9"
 license = "GPL-3.0-or-later"

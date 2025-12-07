@@ -1,6 +1,6 @@
 ![FastDDM](docs/source/fastddm-logo-horizontal.svg)
 
-![Python](https://img.shields.io/badge/python-3.9%20%7C%203.13-blue)
+![Python](https://img.shields.io/badge/python-3.9%20%7C%203.14-blue)
 [![GitHub Actions](https://github.com/somexlab/fastddm/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/somexlab/fastddm/actions/workflows/test.yml)
 [![PyPI Version](https://badge.fury.io/py/fastddm.svg)](https://pypi.org/project/fastddm/)
 [![Read the Docs](https://readthedocs.org/projects/fastddm/badge/?version=latest)](https://fastddm.readthedocs.io/en/latest/?badge=latest)
@@ -10,12 +10,14 @@
 The features implemented are targeted at the experimental soft matter research community dealing with inert and active/biological samples.
 
 ## Resources
+
 - [Documentation](https://fastddm.readthedocs.io/):
   Python API description, installation, examples, and usage information.
 - [Example notebooks](https://github.com/somexlab/fastddm-tutorials):
   Jupyter notebooks with practical examples.
 
 ## Example scripts
+
 These examples demonstrate some of the Python API.
 
 Calculation of the image structure function and its azimuthal average:
@@ -39,6 +41,7 @@ aa = fddm.azimuthal_average(dqt, bins=dqt.shape[-1] - 1, range=(0.0, dqt.ky[-1])
 ```
 
 ## Contributing to FastDDM
+
 Contributions are welcome via [pull requests](https://github.com/somexlab/fastddm/pulls) after
 agreeing to the [Contributors' Agreement](https://github.com/somexlab/fastddm/CONTRIBUTING.rst).
 Please, refer to the [Developers'](https://fastddm.readthedocs.io/en/latest/contributing.html) section in the documentation.
@@ -46,15 +49,19 @@ Please, refer to the [Developers'](https://fastddm.readthedocs.io/en/latest/cont
 Please, report bugs and suggest features via the [issue tracker](https://github.com/somexlab/fastddm/issues).
 
 ## Citing FastDDM
+
 Please, cite this publication in every work that uses FastDDM:
 
-    E. Lattuada, F. Krautgasser, F. Giavazzi, and R. Cerbino.
-    The Hitchhiker’s Guide to Differential Dynamic Microscopy.
-    (In preparation.)
+    Enrico Lattuada, Fabian Krautgasser, Maxime Lavaud, Fabio Giavazzi, Roberto Cerbino
+    The Hitchhiker’s guide to differential dynamic microscopy
+    J. Chem. Phys. 28 October 2025; 163 (16): 161501
+    https://doi.org/10.1063/5.0289471
 
 ## License
+
 FastDDM is available under the [GNU GPL-3.0 license](LICENSE).
 
 ## Acknowledgements
-* The [fftw-3.3.10](https://www.fftw.org/) is included in the source tree.
-* This project was funded by the Austrian Science Fund (FWF), Grant Number M 3250-N.
+
+- The [fftw-3.3.10](https://www.fftw.org/) is included in the source tree.
+- This project was funded by the Austrian Science Fund (FWF), Grant Number M 3250-N.

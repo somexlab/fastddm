@@ -10,8 +10,8 @@ import datetime
 
 project = "FastDDM"
 year = datetime.date.today().year
-copyright = f"2023-{year}, Enrico Lattuada, Fabian Krautgasser, Roberto Cerbino"
-author = "Enrico Lattuada, Fabian Krautgasser, Roberto Cerbino"
+copyright = f"2023-{year}, Enrico Lattuada, Fabian Krautgasser, Maxime Lavaud, Roberto Cerbino"
+author = "Enrico Lattuada, Fabian Krautgasser, Maxime Lavaud, Roberto Cerbino"
 version = "0.3.14"
 release = version
 

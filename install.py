@@ -87,7 +87,9 @@ def parse_args() -> argparse.Namespace:
         description="Install the fastddm package with custom build and dependency options."
     )
     parser.add_argument(
-        "--cpp", action="store_true", help="Enable C++ backend (sets ENABLE_CPP=ON)."
+        "--cpp",
+        action="store_true",
+        help="Enable C++ backend (sets ENABLE_CPP=ON).",
     )
     parser.add_argument(
         "--gpu",
@@ -100,12 +102,26 @@ def parse_args() -> argparse.Namespace:
         help="Enable single precision (sets SINGLE_PRECISION=ON).",
     )
     parser.add_argument(
-        "--uv", action="store_true", help="Use 'uv' as the installer instead of pip."
+        "--uv",
+        action="store_true",
+        help="Use 'uv' as the installer instead of pip.",
     )
-    parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose output.")
-    parser.add_argument("-e", "--editable", action="store_true", help="Install in editable mode.")
     parser.add_argument(
-        "--no-cache-dir", action="store_true", help="Disable cache during installation."
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="Enable verbose output.",
+    )
+    parser.add_argument(
+        "-e",
+        "--editable",
+        action="store_true",
+        help="Install in editable mode.",
+    )
+    parser.add_argument(
+        "--no-cache-dir",
+        action="store_true",
+        help="Disable cache during installation.",
     )
     parser.add_argument(
         "--pre-commit",
@@ -115,7 +131,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--extras",
         type=str,
-        help="Comma-separated list of extra dependencies to install.",
+        nargs="*",
+        help="Sequence of extra dependencies to install.",
     )
     parser.add_argument(
         "--log-to-file",
@@ -130,7 +147,7 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-@dataclass(kw_only=True)
+@dataclass
 class CMakeConfigSettings:
     """
     Configuration settings for CMake build options.
@@ -171,7 +188,7 @@ class CMakeConfigSettings:
         return args
 
 
-@dataclass(kw_only=True)
+@dataclass
 class Installer:
     """Installer class to handle the installation of the package.
 
@@ -249,7 +266,7 @@ class Installer:
         if not self.args.extras or self.args.extras is None:
             self._logger.debug("No extras specified, returning empty list.")
             return []
-        extras = [e.strip() for e in self.args.extras.split(",") if e.strip()]
+        extras = [e.strip() for e in self.args.extras if e.strip()]
         self._logger.info(f"Extras to install: {extras}")
         return extras
 
@@ -275,7 +292,7 @@ class Installer:
         """
         if self.args.uv:
             self._logger.info("Using 'uv' as the installer.")
-            cmd = ["uv", "pip", "install"]
+            cmd = ["uv", "run", "pip", "install"]
         else:
             self._logger.info("Using 'pip' as the installer.")
             cmd = [sys.executable, "-m", "pip", "install"]
