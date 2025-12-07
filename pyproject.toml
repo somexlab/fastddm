@@ -9,7 +9,7 @@ readme = "README.md"
 authors = [
     { name = "Enrico Lattuada" },
     { name = "Fabian Krautgasser" },
-    { name = "Maxime Lavaudd"},
+    { name = "Maxime Lavaudd" },
     { name = "Roberto Cerbino" },
     { email = "cerbino@gmail.com" },
 ]
