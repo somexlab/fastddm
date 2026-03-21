@@ -55,3 +55,43 @@ jobs:
       - name: 🧪 Run tests
         run: |
           pytest -v
+
+  build-cuda:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubu24_T4, win11_x64_T4]
+        python-version: ["3.9", "3.14"]
+        cuda-version: ["12.8.0"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 🧑‍💻 Set up CUDA ${{ matrix.cuda-version }}
+        id: cuda-toolkit
+        uses: Jimver/cuda-toolkit@v0.2.30
+        with:
+          cuda: ${{ matrix.cuda-version }}
+
+      - name: ✅ Verify CUDA installation
+        run: |
+          echo "CUDA_PATH: ${{ steps.cuda-toolkit.outputs.cuda }}"
+          echo "NVCC_PATH: ${{ steps.cuda-toolkit.outputs.nvcc }}"
+          nvcc -V
+
+      - name: 📦 Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: 🐍 Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: 🏗️ Build package and install through uv with CUDA support
+        run: |
+          uv pip install --upgrade pip
+          python install.py -v --uv --gpu --extras=test
+
+      - name: 🧪 Run tests with CUDA support
+        run: |
+          pytest -v
