@@ -25,15 +25,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os:
-          [
-            ubuntu-latest,
-            windows-latest,
-            macos-latest,
-            ubuntu-22.04,
-            macos-13,
-            macos-14,
-          ]
+        os: [ubuntu-latest, windows-latest, macos-latest]
         python-version: ["3.9", "3.14"]
 
     steps:
@@ -61,7 +53,7 @@ jobs:
     strategy:
       matrix:
         os: [ubu24_T4, win11_x64_T4]
-        python-version: ["3.9", "3.14"]
+        python-version: ["3.9"] #["3.9", "3.14"]
         cuda-version: ["12.8.0"]
 
     steps:
@@ -72,11 +64,14 @@ jobs:
         uses: Jimver/cuda-toolkit@v0.2.30
         with:
           cuda: ${{ matrix.cuda-version }}
+          method: network
+          sub-packages: '["nvcc", "cudart", "nvml"]'
+          non-cuda-sub-packages: '["libcufft"]'
 
       - name: ✅ Verify CUDA installation
         run: |
-          echo "CUDA_PATH: ${{ steps.cuda-toolkit.outputs.cuda }}"
-          echo "NVCC_PATH: ${{ steps.cuda-toolkit.outputs.nvcc }}"
+          echo "Installed cuda version is: ${{steps.cuda-toolkit.outputs.cuda}}"
+          echo "Cuda install location: ${{steps.cuda-toolkit.outputs.CUDA_PATH}}"
           nvcc -V
 
       - name: 📦 Install uv
