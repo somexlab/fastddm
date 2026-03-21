@@ -52,7 +52,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubu24_T4, win11_x64_T4]
+        os: [ubu24_T4] #, win11_x64_T4]
         python-version: ["3.9"] #["3.9", "3.14"]
         cuda-version: ["12.8.0"]
 
@@ -65,8 +65,8 @@ jobs:
         with:
           cuda: ${{ matrix.cuda-version }}
           method: network
-          sub-packages: '["nvcc", "cudart", "nvml"]'
-          non-cuda-sub-packages: '["libcufft"]'
+          sub-packages: '["nvcc", "cudart"]'
+          non-cuda-sub-packages: '["libcufft", "libnvidia-ml"]'
 
       - name: ✅ Verify CUDA installation
         run: |
