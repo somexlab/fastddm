@@ -59,20 +59,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: 🧑‍💻 Set up CUDA ${{ matrix.cuda-version }}
-        id: cuda-toolkit
-        uses: Jimver/cuda-toolkit@v0.2.30
-        with:
-          cuda: ${{ matrix.cuda-version }}
-          method: network
-          sub-packages: '["nvcc", "cudart"]'
-          non-cuda-sub-packages: '["libcufft", "libnvidia-ml"]'
+      # - name: 🧑‍💻 Set up CUDA ${{ matrix.cuda-version }}
+      #   id: cuda-toolkit
+      #   uses: Jimver/cuda-toolkit@v0.2.30
+      #   with:
+      #     cuda: ${{ matrix.cuda-version }}
+      #     method: network
+      #     sub-packages: '["nvcc", "cudart"]'
+      #     non-cuda-sub-packages: '["libcufft", "libnvidia-ml"]'
 
       - name: ✅ Verify CUDA installation
         run: |
-          echo "Installed cuda version is: ${{steps.cuda-toolkit.outputs.cuda}}"
-          echo "Cuda install location: ${{steps.cuda-toolkit.outputs.CUDA_PATH}}"
           nvcc -V
+          nvidia-smi
 
       - name: 📦 Install uv
         uses: astral-sh/setup-uv@v5
