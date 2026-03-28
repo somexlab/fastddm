@@ -65,7 +65,7 @@ jobs:
         with:
           cuda: ${{ matrix.cuda-version }}
           method: network
-          sub-packages: '["nvcc", "cudart"]'
+          sub-packages: '["nvcc", "cudart", "nvml-dev"]'
           non-cuda-sub-packages: '["libcufft", "libcufft-dev"]'
 
       - name: ✅ Verify CUDA installation
