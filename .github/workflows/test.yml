@@ -60,7 +60,7 @@ jobs:
             cuda-sub-packages: '["nvcc", "cudart", "nvml-dev"]'
             cuda-non-cuda-sub-packages: '["libcufft", "libcufft-dev"]'
           - os: win11_x64_T4
-            cuda-sub-packages: '["nvcc", "cudart", "cufft", "cufft_dev", "nvml", "nvml_dev", "visual_studio_integration"]'
+            cuda-sub-packages: '["nvcc", "cudart", "cufft", "cufft_dev", "nvml_dev", "visual_studio_integration"]'
             cuda-non-cuda-sub-packages: "[]"
 
     steps:
