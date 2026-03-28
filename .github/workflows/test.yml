@@ -52,7 +52,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [uwin11_x64_T44] #[ubu24_T4, win11_x64_T4]
+        os: [win11_x64_T4] #[ubu24_T4, win11_x64_T4]
         python-version: ["3.9"] #["3.9", "3.14"]
         cuda-version: ["12.8.0"]
         include:
@@ -68,7 +68,7 @@ jobs:
 
       - name: 🧑‍💻 Set up CUDA ${{ matrix.cuda-version }}
         id: cuda-toolkit
-        uses: Jimver/cuda-toolkit@v0.2.30
+        uses: Jimver/cuda-toolkit@v0.2.34
         with:
           cuda: ${{ matrix.cuda-version }}
           method: network
