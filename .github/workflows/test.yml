@@ -52,15 +52,15 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [win11_x64_T4] #[ubu24_T4, win11_x64_T4]
+        os: [ubu24_T4, win11_x64_T4]
         python-version: ["3.9"] #["3.9", "3.14"]
         cuda-version: ["12.8.0"]
         include:
-          # - os: ubu24_T4
-          #   cuda-sub-packages: '["nvcc", "cudart", "nvml-dev"]'
-          #   cuda-non-cuda-sub-packages: '["libcufft", "libcufft-dev"]'
+          - os: ubu24_T4
+            cuda-sub-packages: '["nvcc", "cudart", "nvml-dev"]'
+            cuda-non-cuda-sub-packages: '["libcufft", "libcufft-dev"]'
           - os: win11_x64_T4
-            cuda-sub-packages: "[]" #'["nvcc", "cudart", "cufft", "cufft_dev", "nvml_dev", "visual_studio_integration"]'
+            cuda-sub-packages: "[]"
             cuda-non-cuda-sub-packages: "[]"
 
     steps:
@@ -80,13 +80,6 @@ jobs:
         run: |
           nvcc -V
           nvidia-smi
-
-      - name: 🔍 Debug DLL paths
-        run: |
-          python -c "import os; [print(k,v) for k,v in os.environ.items() if 'CUDA' in k]"
-          dir "$env:CUDA_PATH\bin\*.dll"
-          Get-ChildItem "C:\Program Files\NVIDIA Corporation\NVSMI\*.dll" -ErrorAction SilentlyContinue
-          python -c "import os; [print('Found nvml.dll in:', p) for p in os.environ.get('PATH','').split(os.pathsep) if os.path.isfile(os.path.join(p,'nvml.dll'))]"
 
       - name: 📦 Install uv
         uses: astral-sh/setup-uv@v5
