@@ -60,7 +60,7 @@ jobs:
           #   cuda-sub-packages: '["nvcc", "cudart", "nvml-dev"]'
           #   cuda-non-cuda-sub-packages: '["libcufft", "libcufft-dev"]'
           - os: win11_x64_T4
-            cuda-sub-packages: '["nvcc", "cudart", "cufft", "cufft_dev", "nvml_dev", "visual_studio_integration"]'
+            cuda-sub-packages: "[]" #'["nvcc", "cudart", "cufft", "cufft_dev", "nvml_dev", "visual_studio_integration"]'
             cuda-non-cuda-sub-packages: "[]"
 
     steps:
@@ -85,14 +85,8 @@ jobs:
         run: |
           python -c "import os; [print(k,v) for k,v in os.environ.items() if 'CUDA' in k]"
           dir "$env:CUDA_PATH\bin\*.dll"
-          # Check if nvml.dll is in System32
-          dir "C:\Windows\System32\nvml.dll" 2>$null
-          # Check NVIDIA NVSMI directory
-          dir "C:\Program Files\NVIDIA Corporation\NVSMI\nvml.dll" 2>$null
-          # Search for nvml.dll anywhere on the system
-          where.exe nvml.dll 2>$null
-          # Show PATH for reference
-          $env:PATH -split ';' | Select-String -Pattern 'NVIDIA'
+          Get-ChildItem "C:\Program Files\NVIDIA Corporation\NVSMI\*.dll" -ErrorAction SilentlyContinue
+          python -c "import os; [print('Found nvml.dll in:', p) for p in os.environ.get('PATH','').split(os.pathsep) if os.path.isfile(os.path.join(p,'nvml.dll'))]"
 
       - name: 📦 Install uv
         uses: astral-sh/setup-uv@v5
