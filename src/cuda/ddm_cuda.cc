@@ -88,10 +88,13 @@ py::array_t<Scalar> PYBIND11_EXPORT ddm_diff_cuda(py::array_t<T, py::array::c_st
     unsigned long long dim_t = max(img_data.length, sf_data.length);
     // Create the output array and get the buffer info
     py::array_t<Scalar> result = py::array_t<Scalar>(dim_t * sf_data.ny * sf_data.nx_half * 2ULL);
-    py::buffer_info result_info = result.request();
 
     // Get pointer to the output array
-    Scalar *result_ptr = static_cast<Scalar *>(result_info.ptr);
+    Scalar *result_ptr; 
+    {
+        py::buffer_info result_info = result.request();
+        result_ptr = static_cast<Scalar *>(result_info.ptr);
+    }
 
     // Compute the FFT2 on the GPU
     compute_fft2(img_seq_ptr,
@@ -246,10 +249,13 @@ py::array_t<Scalar> PYBIND11_EXPORT ddm_fft_cuda(py::array_t<T, py::array::c_sty
     unsigned long long dim_t = max(img_data.length, sf_data.length);
     // Create the output array and get the buffer info
     py::array_t<Scalar> result = py::array_t<Scalar>(dim_t * sf_data.ny * sf_data.nx_half * 2ULL);
-    py::buffer_info result_info = result.request();
 
     // Get pointer to the output array
-    Scalar *result_ptr = static_cast<Scalar *>(result_info.ptr);
+    Scalar *result_ptr; 
+    {
+        py::buffer_info result_info = result.request();
+        result_ptr = static_cast<Scalar *>(result_info.ptr);
+    }
 
     // Compute the FFT2 on the GPU
     compute_fft2(img_seq_ptr,
