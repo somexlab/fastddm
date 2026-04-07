@@ -81,7 +81,7 @@ jobs:
       matrix:
         os: [ubu24_T4, win11_x64_T4]
         python-version: ["3.14"]
-        cuda-version: ["13.2.0"]
+        cuda-version: ["12.8.0"]
         include:
           - os: ubu24_T4
             cuda-method: network
