@@ -13,6 +13,11 @@ on:
     branches:
       - main
       - develop
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
 
   # trigger on request
   workflow_dispatch:
@@ -22,6 +27,7 @@ env:
 
 jobs:
   changes:
+    if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     outputs:
       gpu: ${{ steps.filter.outputs.gpu }}
@@ -40,6 +46,7 @@ jobs:
               - "pyproject.toml"
 
   build:
+    if: github.event.pull_request.draft == false
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -68,7 +75,7 @@ jobs:
 
   build-cuda:
     needs: [build, changes]
-    if: needs.changes.outputs.gpu == 'true'
+    if: github.event.pull_request.draft == false && needs.changes.outputs.gpu == 'true'
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
