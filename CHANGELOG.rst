@@ -5,17 +5,45 @@ Change Log
 v0.3
 ----
 
-v0.3.14 (2025-MM-DD)
+v0.3.xx (2025-MM-DD)
 ^^^^^^^^^^^^^^^^^^^^
+
+*Added*
+
+- Citation metadata in ``CITATION.bib`` and ``README.md``.
+- Installation script with support for ``uv`` to simplify setting optional arguments.
 
 *Changed*
 
 - Migrated build system from ``setup.py``/``setup.cfg`` to [PEP 517/518] ``pyproject.toml`` standard.
 - ``pybind11`` is now a build dependency and is no longer included as a static copy in the external lib directory.
+- Maximum supported Python version is now 3.14.
 
 *Removed*
 
-- Removed statically saved ``pybind11`` from the external lib directory 
+- Removed statically saved ``pybind11`` from the external lib directory.
+
+v0.3.14 (2025-06-26)
+^^^^^^^^^^^^^^^^^^^^
+
+*Fixed*
+
+* Fixed typo that caused the documentation to not build properly.
+
+v0.3.13 (2025-06-26)
+^^^^^^^^^^^^^^^^^^^^
+
+*Fixed*
+
+* Fixed installation issues due to CMake versions <= 3.5 being deprecated.
+
+*Added*
+
+* Added documentation comment when installing FastDDM when several cudatoolkit versions are available.
+
+*Deprecated*
+
+* Deprecated python 3.8 support, now minimum supported version is 3.9
 
 v0.3.12 (2024-06-25)
 ^^^^^^^^^^^^^^^^^^^^
