@@ -83,10 +83,10 @@ py::array_t<Scalar> PYBIND11_EXPORT ddm_diff_cuda(py::array_t<T, py::array::c_st
     py::array_t<Scalar> result = py::array_t<Scalar>(dim_t * sf_data.ny * sf_data.nx_half * 2ULL);
 
     // Get pointer to the output array
-    Scalar *result_ptr; 
+    Scalar* result_ptr;
     {
         py::buffer_info result_info = result.request();
-        result_ptr = static_cast<Scalar *>(result_info.ptr);
+        result_ptr = static_cast<Scalar*>(result_info.ptr);
     }
 
     // Compute the FFT2 on the GPU
@@ -233,10 +233,10 @@ py::array_t<Scalar> PYBIND11_EXPORT ddm_fft_cuda(py::array_t<T, py::array::c_sty
     py::array_t<Scalar> result = py::array_t<Scalar>(dim_t * sf_data.ny * sf_data.nx_half * 2ULL);
 
     // Get pointer to the output array
-    Scalar *result_ptr; 
+    Scalar* result_ptr;
     {
         py::buffer_info result_info = result.request();
-        result_ptr = static_cast<Scalar *>(result_info.ptr);
+        result_ptr = static_cast<Scalar*>(result_info.ptr);
     }
 
     // Compute the FFT2 on the GPU
