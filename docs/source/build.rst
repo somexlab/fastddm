@@ -1,5 +1,5 @@
-.. Copyright (c) 2023-2025 University of Vienna, Enrico Lattuada, Fabian Krautgasser, Maxime Lavaud and Roberto Cerbino.
-.. Part of FastDDM, released under the GNU GPL-3.0 License.
+.. SPDX-FileCopyrightText: 2023-present University of Vienna
+.. SPDX-License-Identifier: GPL-3.0-or-later
 
 .. _build:
 
@@ -294,6 +294,7 @@ To test the installation, start python and try importing the package:
 .. code-block:: python
 
     import fastddm
+
     fastddm.__version__
 
 To run the unit-tests, run the following command from within the source directory:

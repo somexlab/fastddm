@@ -1,5 +1,5 @@
-.. Copyright (c) 2023-2023 University of Vienna, Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino.
-.. Part of FastDDM, released under the GNU GPL-3.0 License.
+.. SPDX-FileCopyrightText: 2023-present University of Vienna
+.. SPDX-License-Identifier: GPL-3.0-or-later
 
 FastDDM
 =======
@@ -37,12 +37,12 @@ Calculation of the image structure function and its azimuthal average:
 
     import fastddm as fddm
 
-    file_names = [...]  # define here your list of image file names 
+    file_names = [...]  # define here your list of image file names
     img_seq = fddm.read_images(file_names)
 
-    pixel_size = 0.3    # um
-    frame_rate = 50     # frames per second
-    
+    pixel_size = 0.3  # um
+    frame_rate = 50  # frames per second
+
     # compute image structure function and set experimental parameters
     dqt = fddm.ddm(img_seq, range(1, len(img_seq)))
     dqt.pixel_size = pixel_size

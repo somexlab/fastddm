@@ -1,12 +1,11 @@
-# Copyright (c) 2023-2023 University of Vienna, Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino.
-# Part of FastDDM, released under the GNU GPL-3.0 License.
-# Author: Enrico Lattuada
-# Maintainer: Enrico Lattuada
+# SPDX-FileCopyrightText: 2023-present University of Vienna
+# SPDX-License-Identifier: GPL-3.0-or-later
 
 import psutil
 
+
 def get_free_mem() -> int:
-    """Get available memory
+    """Return the available memory.
 
     Returns
     -------

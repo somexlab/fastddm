@@ -1,14 +1,79 @@
-"""
-Simple script to handle the installation of the package and its dependencies.
-Removes the need to use lengthy command line options.
+"""Simple script to handle the installation of the package and its dependencies.
+
+This installation script removes the need to use lengthy command line options.
+It is designed to be run from the root directory of the package, although some effort has been made
+to ensure it can be run from other directories as well.
+
+Note
+----
+    This script supports installation with `uv`, which needs to be installed separately.
+    This script also supports installation of pre-commit hooks.
+    The `pre-commit` package must be installed separately or through the `dev` extra dependencies.
+
+Example
+-------
+    To check the available options, run:
+        python3 install.py --help
 """
 
 import argparse
+import logging
 import shlex
+import shutil
 import subprocess
 import sys
-import logging
 from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Optional
+
+
+def run_command(
+    cmd: list[str],
+    cwd: Optional[Path] = None,
+    check: bool = True,
+    msg: Optional[str] = None,
+) -> None:
+    """Run a command in a subprocess with error handling and logging.
+
+    Parameters
+    ----------
+    cmd : list[str]
+        The command to run as a list of arguments.
+    cwd : Optional[Path], optional
+        The working directory to run the command in. If None, uses the current directory.
+    check : bool, optional
+        If True, raises an exception if the command returns a non-zero exit code.
+    msg : Optional[str], optional
+        An optional message to log before executing the command.
+        If None, a default message will be logged.
+    """
+    if cwd is None:
+        cwd = Path.cwd()
+    logger = logging.getLogger(__name__)
+    display_cmd = " ".join(shlex.quote(arg) for arg in cmd)
+    if msg is not None:
+        logger.debug(msg)
+    else:
+        logger.debug("Executing command: %s", display_cmd)
+
+    try:
+        ret = subprocess.run(cmd, cwd=cwd, check=check)
+        returncode = ret.returncode
+        logger.debug(f"Command returned with code: {returncode}")
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Command failed with error: {e}")
+        if e.stdout:
+            logger.error(f"Standard output:\n{e.stdout.strip()}")
+        if e.stderr:
+            logger.error(f"Standard error:\n{e.stderr.strip()}")
+        sys.exit(e.returncode)
+    except FileNotFoundError:
+        logger.error(f"Command not found: {cmd[0]}. Full command: {display_cmd}")
+        sys.exit(-1)
+    except Exception as e:
+        logger.error(f"An unexpected error occurred: {e}")
+        logger.debug("Full command: %s", display_cmd)
+        sys.exit(999)
 
 
 def parse_args() -> argparse.Namespace:
@@ -60,6 +125,11 @@ def parse_args() -> argparse.Namespace:
         help="Disable cache during installation.",
     )
     parser.add_argument(
+        "--pre-commit",
+        action="store_true",
+        help="Install pre-commit hooks",
+    )
+    parser.add_argument(
         "--extras",
         type=str,
         nargs="*",
@@ -96,9 +166,7 @@ class CMakeConfigSettings:
     enable_cpp: bool = False
     enable_cuda: bool = False
     single_precision: bool = False
-    _logger: logging.Logger = field(
-        init=False, default_factory=lambda: logging.getLogger(__name__)
-    )
+    _logger: logging.Logger = field(init=False, default_factory=lambda: logging.getLogger(__name__))
 
     def as_config_args(self) -> list[str]:
         """Convert the dataclass fields to a list of config settings for CMake.
@@ -135,13 +203,60 @@ class Installer:
 
     args: argparse.Namespace
     cmake_settings: CMakeConfigSettings
-    _logger: logging.Logger = field(
-        init=False, default_factory=lambda: logging.getLogger(__name__)
-    )
+    _logger: logging.Logger = field(init=False, default_factory=lambda: logging.getLogger(__name__))
+
+    def __post_init__(self):
+        """Pre-installation checks."""
+        self._logger.debug("Running pre-installation checks.")
+        if self.args.uv:
+            # Check if 'uv' is installed and executable
+            if not self._check_command_is_available("uv"):
+                self._logger.error(
+                    "'uv' is not installed. Please install it with 'pip install uv'."
+                )
+                sys.exit(1)
+        if self.args.pre_commit:
+            # Check if 'pre-commit' is installed and executable
+            if not (self._check_command_is_available("pre-commit") or "dev" in self._extras()):
+                self._logger.error(
+                    "'pre-commit' is not installed. "
+                    "Please install it with 'pip install pre-commit' "
+                    "or enable dev extra dependencies."
+                )
+                sys.exit(1)
+
+    def _check_command_is_available(self, cmd: str) -> bool:
+        """Check if given command 'cmd' is installed and executable.
+
+        The command should implement the '--version' option to verify its availability.
+
+        Parameters
+        ----------
+        cmd : str
+            The command to check for availability (e.g., 'uv' or 'pre-commit').
+
+        Returns
+        -------
+        bool
+            True if command is installed and executable, False otherwise.
+        """
+        self._logger.debug(f"Checking if '{cmd}' is installed.")
+        if shutil.which(cmd) is None:
+            self._logger.debug(f"'{cmd}' command not found in PATH.")
+            return False
+        try:
+            subprocess.run([cmd, "--version"], check=True, capture_output=True)
+            self._logger.debug(f"'{cmd}' is installed and functional.")
+            return True
+        except subprocess.CalledProcessError:
+            self._logger.warning(
+                f"'{cmd}' was found in PATH, but '{cmd} --version' failed. "
+                f"This might indicate a corrupted installation or an unexpected '{cmd}' version."
+            )
+            return False
 
     def _extras(self) -> list[str]:
-        """
-        A list of extras to install.
+        """Return a list of extras to install.
 
         Returns
         -------
@@ -205,25 +320,27 @@ class Installer:
 
     def run(self) -> None:
         """Run the installation command."""
-        cmd = self.build_command()
+        build_cmd = self.build_command()
         if self.args.dry_run:
-            dry_run_cmd = " ".join(shlex.quote(arg) for arg in cmd)
-            self._logger.info(
-                f"Dry run: The following command would be executed:\n{dry_run_cmd}"
-            )
+            dry_run_cmd = " ".join(shlex.quote(arg) for arg in build_cmd)
+            self._logger.info(f"Dry run: The following command would be executed:\n{dry_run_cmd}")
             return
-        try:
-            self._logger.debug(
-                "Running command: %s", " ".join(shlex.quote(arg) for arg in cmd)
+        self._logger.info("Running installation command.")
+        run_command(
+            cmd=build_cmd,
+            cwd=Path(__file__).parent.resolve(),
+        )
+        if self.args.pre_commit:
+            self._logger.info("Installing pre-commit hooks.")
+            pre_commit_cmd = ["pre-commit", "install"]
+            run_command(
+                cmd=pre_commit_cmd,
+                cwd=Path(__file__).parent.resolve(),
             )
-            ret = subprocess.run(cmd, check=True)
-            self._logger.debug(f"Command returned with code: {ret.returncode}")
-        except subprocess.CalledProcessError as e:
-            self._logger.error(f"Installation failed with error: {e}")
-            sys.exit(e.returncode)
 
 
 def main(args: argparse.Namespace) -> None:
+    """Handle the main installation process."""
     # Step 1: Build config-settings arguments for CMake options using dataclass
     cmake_settings = CMakeConfigSettings(
         enable_cpp=args.cpp,
@@ -238,7 +355,7 @@ def main(args: argparse.Namespace) -> None:
 if __name__ == "__main__":
     args = parse_args()
     # Set up logging
-    logger_handlers = [logging.StreamHandler()]
+    logger_handlers: list[logging.Handler] = [logging.StreamHandler()]
     if args.log_to_file:
         logger_handlers.append(logging.FileHandler("install.log", mode="w"))
     logging.basicConfig(

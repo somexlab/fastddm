@@ -1,8 +1,5 @@
-// Copyright (c) 2023-2023 University of Vienna, Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino.
-// Part of FastDDM, released under the GNU GPL-3.0 License.
-
-// Author: Enrico Lattuada
-// Maintainer: Enrico Lattuada
+// SPDX-FileCopyrightText: 2023-present University of Vienna
+// SPDX-License-Identifier: GPL-3.0-or-later
 
 // inclusion guard
 #ifndef __DDM_CUDA_BINDINGS_H__
@@ -13,15 +10,15 @@
 */
 
 // *** headers ***
-#include "../../python_defs.h"
+#include "../../cuda/ddm_cuda.h"
 #include "../../cuda/gpu_utils.cuh"
 #include "../../cuda/memchk_gpu.h"
-#include "../../cuda/ddm_cuda.h"
+#include "../../python_defs.h"
 
 /*! \brief Export ddm CUDA functions to Python
     \param m    Module
  */
-void export_ddm_cuda(py::module &m)
+void export_ddm_cuda(py::module& m)
 {
     // Misc
     m.def("get_num_devices", &get_num_devices);

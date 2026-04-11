@@ -4,3 +4,4 @@ sphinx
 sphinx-tabs
 matplotlib
 furo
+myst-parser

@@ -1,6 +1,16 @@
 {
     "recommendations": [
+        "charliermarsh.ruff",
+        "eamodio.gitlens",
         "ms-python.python",
-        "ms-vscode.cpptools"
+        "ms-python.black-formatter",
+        "ms-python.debugpy",
+        "ms-python.mypy-type-checker",
+        "ms-vscode.cpptools",
+        "ms-vscode.cpptools-extension-pack",
+        "ms-vscode.cpptools-themes",
+        "adpyke.codesnap",
+        "catppuccin.catppuccin-vsc",
+        "charliermarsh.ruff"
     ]
 }

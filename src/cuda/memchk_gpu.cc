@@ -1,8 +1,5 @@
-// Copyright (c) 2023-2023 University of Vienna, Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino.
-// Part of FastDDM, released under the GNU GPL-3.0 License.
-
-// Author: Enrico Lattuada
-// Maintainer: Enrico Lattuada
+// SPDX-FileCopyrightText: 2023-present University of Vienna
+// SPDX-License-Identifier: GPL-3.0-or-later
 
 /*! \file memchk_gpu.cc
     \brief Definition of C++ functions for memory check and optimization for GPU routines
@@ -43,8 +40,7 @@ unsigned long long PYBIND11_EXPORT get_free_host_memory()
 
     MEMORYSTATUSEX memoryStatus;
     memoryStatus.dwLength = sizeof(memoryStatus);
-    if (!GlobalMemoryStatusEx(&memoryStatus))
-    {
+    if (!GlobalMemoryStatusEx(&memoryStatus)) {
         throw std::runtime_error("Failed to retrieve memory status.\n");
         return 0;
     }
@@ -54,8 +50,7 @@ unsigned long long PYBIND11_EXPORT get_free_host_memory()
 #elif APPLE // APPLE not supported for CUDA core at the moment...
 
     struct sysinfo info;
-    if (sysinfo(&info) != 0)
-    {
+    if (sysinfo(&info) != 0) {
         throw std::runtime_error("Failed to retrieve system information.\n");
         return 0;
     }
@@ -67,8 +62,7 @@ unsigned long long PYBIND11_EXPORT get_free_host_memory()
     // https://github.com/doleron/cpp-linux-system-stats/blob/main/include/linux-system-usage.hpp
     std::ifstream proc_meminfo("/proc/meminfo");
 
-    if (!proc_meminfo.good())
-    {
+    if (!proc_meminfo.good()) {
         throw std::runtime_error("Failed to retrieve memory information.\n");
         return 0;
     }
@@ -162,13 +156,9 @@ bool PYBIND11_EXPORT check_host_memory_diff_py(unsigned long long nx,
 /*!
     Check if host memory is sufficient to execute the "diff" mode
 */
-bool check_host_memory_diff(ImageData &img_data,
-                            StructureFunctionData &sf_data)
+bool check_host_memory_diff(ImageData& img_data, StructureFunctionData& sf_data)
 {
-    return check_host_memory_diff_py(sf_data.nx,
-                                     sf_data.ny,
-                                     img_data.length,
-                                     sf_data.num_lags);
+    return check_host_memory_diff_py(sf_data.nx, sf_data.ny, img_data.length, sf_data.num_lags);
 }
 
 /*!
@@ -192,11 +182,7 @@ bool PYBIND11_EXPORT check_host_memory_fft_py(unsigned long long nx,
 /*!
     Check if host memory is sufficient to execute the "fft" mode
 */
-bool check_host_memory_fft(ImageData &img_data,
-                           StructureFunctionData &sf_data)
+bool check_host_memory_fft(ImageData& img_data, StructureFunctionData& sf_data)
 {
-    return check_host_memory_fft_py(sf_data.nx,
-                                    sf_data.ny,
-                                    img_data.length,
-                                    sf_data.num_lags);
+    return check_host_memory_fft_py(sf_data.nx, sf_data.ny, img_data.length, sf_data.num_lags);
 }
