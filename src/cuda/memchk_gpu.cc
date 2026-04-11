@@ -8,8 +8,11 @@
 // *** headers ***
 #include "memchk_gpu.h"
 
+#include <algorithm>
+
 // system includes
 #ifdef WIN32
+#define NOMINMAX
 #include <windows.h>
 #elif APPLE
 #include <sys/sysinfo.h>
@@ -57,21 +60,22 @@ unsigned long long PYBIND11_EXPORT get_free_host_memory()
 #else
 
     // https://github.com/doleron/cpp-linux-system-stats/blob/main/include/linux-system-usage.hpp
-    ifstream proc_meminfo("/proc/meminfo");
+    std::ifstream proc_meminfo("/proc/meminfo");
 
     if (!proc_meminfo.good()) {
         throw std::runtime_error("Failed to retrieve memory information.\n");
         return 0;
     }
 
-    string content((istreambuf_iterator<char>(proc_meminfo)), istreambuf_iterator<char>());
-    string target = "MemAvailable:";
+    std::string content((std::istreambuf_iterator<char>(proc_meminfo)), std::istreambuf_iterator<char>());
+    std::string target = "MemAvailable:";
     size_t start = content.find(target);
-    if (start != string::npos) {
+    if (start != std::string::npos)
+    {
         int begin = start + target.length();
         size_t end = content.find("kB", start);
-        string substr = content.substr(begin, end - begin);
-        free_mem = stoull(substr) * 1024;
+        std::string substr = content.substr(begin, end - begin);
+        free_mem = std::stoull(substr) * 1024;
     }
 
 #endif
@@ -100,7 +104,7 @@ unsigned long long PYBIND11_EXPORT get_host_memory_diff(unsigned long long nx,
      */
     unsigned long long mem_required = 0;
 
-    unsigned long long dim_t = max(length * 2, num_lags + 2);
+    unsigned long long dim_t = std::max(length * 2, num_lags + 2);
     mem_required += (nx / 2ULL + 1ULL) * ny * dim_t * SCALAR_SIZE;
 
     return mem_required;

@@ -23,29 +23,6 @@ const unsigned long long BLOCK_ROWS = 8; // leave this unchanged!
 /*!
     Convert array from T to double on device and prepare for fft2
 */
-template <typename T>
-__global__ void copy_convert_kernel(T *d_in,
-                                    double *d_out,
-                                    unsigned long long width,
-                                    unsigned long long height,
-                                    unsigned long long length,
-                                    unsigned long long ipitch,
-                                    unsigned long long idist,
-                                    unsigned long long opitch,
-                                    unsigned long long odist)
-{
-    for (unsigned long long t = blockIdx.x; t < length; t += gridDim.x)
-    {
-        for (unsigned long long y = blockIdx.y; y < height; y += gridDim.y)
-        {
-            for (unsigned long long x = threadIdx.x; x < width; x += blockDim.x)
-            {
-                d_out[t * odist + y * opitch + x] = (double)d_in[t * idist + y * ipitch + x];
-            }
-        }
-    }
-}
-
 template __global__ void copy_convert_kernel<uint8_t>(uint8_t *d_in, double *d_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long ipitch, unsigned long long idist, unsigned long long opitch, unsigned long long odist);
 template __global__ void copy_convert_kernel<int16_t>(int16_t *d_in, double *d_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long ipitch, unsigned long long idist, unsigned long long opitch, unsigned long long odist);
 template __global__ void copy_convert_kernel<uint16_t>(uint16_t *d_in, double *d_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long ipitch, unsigned long long idist, unsigned long long opitch, unsigned long long odist);
