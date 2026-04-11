@@ -46,7 +46,19 @@ __global__ void copy_convert_kernel(T *d_in,
                                     unsigned long long ipitch,
                                     unsigned long long idist,
                                     unsigned long long opitch,
-                                    unsigned long long odist);
+                                    unsigned long long odist)
+{
+    for (unsigned long long t = blockIdx.x; t < length; t += gridDim.x)
+    {
+        for (unsigned long long y = blockIdx.y; y < height; y += gridDim.y)
+        {
+            for (unsigned long long x = threadIdx.x; x < width; x += blockDim.x)
+            {
+                d_out[t * odist + y * opitch + x] = (double)d_in[t * idist + y * ipitch + x];
+            }
+        }
+    }
+}
 
 /*! \brief Apply window function to image sequence
     \param d_in     Image sequence array

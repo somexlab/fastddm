@@ -17,8 +17,6 @@
 
 #include "data_struct.h"
 
-using namespace std;
-
 #ifndef SINGLE_PRECISION
 typedef double Scalar;
 #else

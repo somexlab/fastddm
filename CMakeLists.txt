@@ -43,7 +43,7 @@ endif(ENABLE_CPP)
 # Enable CUDA
 if(ENABLE_CUDA)
     enable_language(CUDA)
-    set(CMAKE_CUDA_STANDARD 11)
+    set(CMAKE_CUDA_STANDARD 17)
     find_package(CUDAToolkit REQUIRED)
 
     # Set CUDA architectures
@@ -56,7 +56,7 @@ if(ENABLE_CUDA)
 endif(ENABLE_CUDA)
 
 if(ENABLE_CPP OR ENABLE_CUDA)
-    set(CMAKE_CXX_STANDARD 14)
+    set(CMAKE_CXX_STANDARD 17)
     set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
     # Find pybind11

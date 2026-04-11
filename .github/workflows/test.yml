@@ -13,6 +13,11 @@ on:
     branches:
       - main
       - develop
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
 
   # trigger on request
   workflow_dispatch:
@@ -21,7 +26,27 @@ env:
   UV_SYSTEM_PYTHON: 1
 
 jobs:
+  changes:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    outputs:
+      gpu: ${{ steps.filter.outputs.gpu }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v4.0.1
+        id: filter
+        with:
+          filters: |
+            gpu:
+              - "src/cuda/**"
+              - "src/python/**"
+              - "**/CMakeLists.txt"
+              - "tests/**"
+              - "install.py"
+              - "pyproject.toml"
+
   build:
+    if: github.event.pull_request.draft == false
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -49,11 +74,13 @@ jobs:
           pytest -v
 
   build-cuda:
+    needs: [build, changes]
+    if: github.event.pull_request.draft == false && needs.changes.outputs.gpu == 'true'
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubu24_T4, win11_x64_T4]
-        python-version: ["3.9"] #["3.9", "3.14"]
+        python-version: ["3.14"]
         cuda-version: ["12.8.0"]
         include:
           - os: ubu24_T4
