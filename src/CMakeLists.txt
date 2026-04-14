@@ -36,12 +36,14 @@ set(PYTHON_SOURCES
     python/fit.py
     python/fit_models.py
     python/noise_est.py
+    python/py.typed
 )
 
 # Append C++ specific modules
 if(ENABLE_CPP)
     list(APPEND PYTHON_SOURCES
         python/_ddm_cpp.py
+        python/_core.pyi
     )
 endif(ENABLE_CPP)
 
@@ -51,6 +53,7 @@ if(ENABLE_CUDA)
         python/_ddm_cuda.py
         python/_memchk.py
         python/_gpumemchk.py
+        python/_core_cuda.pyi
     )
 endif(ENABLE_CUDA)
 

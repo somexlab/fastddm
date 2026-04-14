@@ -111,7 +111,7 @@ class IntermediateScatteringFunction:
 
         Returns
         -------
-        numpy.ndarray
+        numpy.ndarray | None
             The uncertainty.
         """
         if self._err is None:
@@ -128,7 +128,7 @@ class IntermediateScatteringFunction:
         Tuple[int, int]
             The shape of the data.
         """
-        return self.data.shape  # type: ignore
+        return self.data.shape
 
     def save(self, fname: str = "analysis_blob") -> None:
         """Save IntermediateScatteringFunction to binary file.
@@ -182,7 +182,7 @@ class IntermediateScatteringFunction:
                     x=np.log(self.tau),
                     y=np.log(self.data[i]),
                     kind="quadratic",
-                    fill_value="extrapolate",  # type: ignore
+                    fill_value="extrapolate",
                 )
                 _data[i] = np.exp(f(_tau))
 
@@ -192,7 +192,7 @@ class IntermediateScatteringFunction:
                         x=np.log(self.tau),
                         y=np.log(self.err[i]),
                         kind="quadratic",
-                        fill_value="extrapolate",  # type: ignore
+                        fill_value="extrapolate",
                     )
                     _err[i] = np.exp(f(_tau))
 
@@ -736,15 +736,15 @@ def azavg2isf_estimate(
         or 'custom'. When 'var' ('power_spec') mode is selected, the plateau is estimated
         as twice the az_avg.var (az_avg.power_spec). When 'custom' is selected, the plateau
         input argument is required.
-    noise : np.ndarray, optional
+    noise : np.ndarray | None, optional
         Custom noise array, by default None. Required if noise_est is 'custom'
-    noise_err : np.ndarray, optional
+    noise_err : np.ndarray | None, optional
         Custom noise array uncertainty, by default None. Used if noise_est is 'custom'.
         If None and noise_est is 'custom', the noise uncertainty is assumed equal to the
         noise input array.
-    plateau : np.ndarray, optional
+    plateau : np.ndarray | None, optional
         Custom plateau array, by default None. Required if plateau_est is 'custom'
-    plateau_err : np.ndarray, optional
+    plateau_err : np.ndarray | None, optional
         Custom plateau array uncertainty, by default None. Used if plateau_est is 'custom'.
         If None and plateau_est is 'custom', the plateau uncertainty is assumed equal to the
         plateau input array.

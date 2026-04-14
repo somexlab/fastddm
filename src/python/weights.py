@@ -90,7 +90,7 @@ def sector_average_weight(
     theta_0: float = 0.0,
     delta_theta: float = 90.0,
     rep: int = 2,
-    kind: Optional[str] = "uniform",
+    kind: str = "uniform",
 ) -> np.ndarray:
     """Weights for sector azimuthal average.
 
@@ -110,9 +110,9 @@ def sector_average_weight(
         to correctly account for the spare column (Nyquist frequency). The
         shape of the output will be ``(full_shape[0], full_shape[1] // 2 + 1)``,
         as for the image structure function data.
-    kx : numpy.ndarray, optional
+    kx : np.ndarray | None, optional
         The array of spatial frequencies along axis `x`. Default is None.
-    ky : numpy.ndarray, optional
+    ky : numpy.ndarray | None, optional
         The array of spatial frequencies along axis `y`. Default is None.
     theta_0 : float, optional
         Reference main angle (in degrees). Default is 0.
@@ -187,7 +187,7 @@ def sphere_form_factor(
     ky: Optional[np.ndarray] = None,
     R: float = 1.0,
     contrast: float = 1.0,
-    kind: Optional[str] = "amplitude",
+    kind: str = "amplitude",
 ) -> np.ndarray:
     """Evaluate sphere form factor.
 
@@ -195,12 +195,12 @@ def sphere_form_factor(
     ----------
     shape : (int, int)
         Shape of the new array, e.g., (128, 256).
-    kx : np.ndarray, optional
+    kx : np.ndarray | None, optional
         The array of spatial frequencies along axis x. If kx is None,
         the frequencies evaluated with
         `2.0 * np.pi * np.fft.fftshift(np.fft.fftfreq(Nx))`
         are used (`Nx = shape[1]`). Default is None.
-    ky : np.ndarray, optional
+    ky : np.ndarray | None, optional
         The array of spatial frequencies along axis y. If ky is None,
         the frequencies evaluated with
         `2.0 * np.pi * np.fft.fftshift(np.fft.fftfreq(Ny))`
@@ -220,12 +220,12 @@ def sphere_form_factor(
         The sphere form factor.
     """
 
-    def sphere_factor(k, R):
+    def sphere_factor(k: np.ndarray, R: float) -> np.ndarray:
         sf = np.zeros_like(k)
         with np.errstate(divide="ignore", invalid="ignore"):
             sf = (np.sin(k * R) - k * R * np.cos(k * R)) / (k * R) ** 3
         sf[k == 0] = 1 / 3
-        return sf
+        return sf  # type: ignore[no-any-return]
 
     kinds = ["amplitude", "intensity"]
     if kind not in kinds:

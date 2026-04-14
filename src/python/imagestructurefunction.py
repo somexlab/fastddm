@@ -176,7 +176,7 @@ class ImageStructureFunction:
         numpy.ndarray
             The average 2D power spectrum of the input images.
         """
-        return self._data[-2]
+        return self._data[-2, ...]
 
     @property
     def var(self) -> np.ndarray:
@@ -187,7 +187,7 @@ class ImageStructureFunction:
         numpy.ndarray
             The variance (over time) of the Fourier transformed input images.
         """
-        return self._data[-1]
+        return self._data[-1, ...]
 
     @property
     def shape(self) -> Tuple[int, int, int]:
@@ -222,7 +222,7 @@ class ImageStructureFunction:
         """
         return self._delta_t
 
-    @pixel_size.setter
+    @pixel_size.setter  # type: ignore[no-redef, attr-defined]
     def pixel_size(self, pixel_size: float) -> None:
         """Set the image effective pixel size.
 
@@ -237,7 +237,7 @@ class ImageStructureFunction:
         self._ky *= self._pixel_size / pixel_size
         self._pixel_size = pixel_size
 
-    @delta_t.setter
+    @delta_t.setter  # type: ignore[no-redef, attr-defined]
     def delta_t(self, delta_t: float) -> None:
         """Set the time delay between two consecutive frames.
 
@@ -271,7 +271,7 @@ class ImageStructureFunction:
         frame_rate : float
             The acquisition frame rate.
         """
-        self.delta_t = 1 / frame_rate
+        self.delta_t = 1 / frame_rate  # type: ignore[misc]
 
     def save(self, fname: str = "analysis_blob") -> None:
         """Save ``ImageStructureFunction`` to binary file.

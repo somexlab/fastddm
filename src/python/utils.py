@@ -12,6 +12,7 @@ import numpy as np
 import skimage.io as io
 import tifffile
 from nd2reader import ND2Reader
+from tifffile import TiffPage
 
 # custom types & constants
 Metadata = Dict[str, Any]
@@ -41,13 +42,13 @@ def tiff2numpy(
     ----------
     src : str
         The path to the TIFF file.
-    seq : Sequence[int], optional
+    seq : Sequence[int] | None, optional
         A sequence, e.g. ``range(5, 10)``, to describe a specific range within
         a multipage TIFF, by default None.
-    color_seq : Sequence[int], optional
+    color_seq : Sequence[int] | None, optional
         A sequence, e.g. ``range(2)``, to describe a specific color sequence to be selected, by
         default None.
-    input_order : str, optional
+    input_order : str | None, optional
         The order of input dimensions. Currently only supports up to 4 dimensions, ``"CTYX"``,
         by default None.
 
@@ -59,7 +60,7 @@ def tiff2numpy(
     """
     if not src.endswith(".tif"):  # read anything but tif files with io.imread
         warnings.warn("Non-tiff file, returning array opened with default settings only.")
-        return io.imread(src)
+        return io.imread(src)  # type: ignore[no-any-return]
 
     if input_order is not None:  # read whole array first
         # read whole array first
@@ -79,7 +80,7 @@ def tiff2numpy(
             )
 
         # enum to match the actual number of dimensions
-        Order = Enum(
+        Order = Enum(  # type: ignore[misc]
             "axes",
             [dim for dim in list(OUTPUT_ORDER) if dim in input_order],
             start=0,
@@ -121,7 +122,7 @@ def images2numpy(fnames: Sequence[str], color_seq: Optional[Sequence[int]] = Non
     ----------
     fnames : Sequence[str]
         A sequence of file names.
-    color_seq : Sequence[int], optional
+    color_seq : Sequence[int] | None, optional
         A sequence, e.g. `range(2)`, to describe a specific color sequence to be selected, by
         default None.
 
@@ -215,12 +216,12 @@ def read_images(
     ----------
     src : Union[str, List[str]]
         File path to a single image file or a list of file paths.
-    seq : Optional[Sequence[int]], optional
+    seq : Sequence[int] | None, optional
         A subset of a multi-image file, can be set e.g. via a ``range`` object, by default None.
-    color_seq : Sequence[int], optional
+    color_seq : Sequence[int] | None, optional
         A sequence, e.g. ``range(2)``, to describe a specific color sequence to be selected, by
         default None.
-    input_order : str, optional
+    input_order : str | None, optional
         The order of input dimensions. Currently only supports up to 4 dimensions ``"CTYX"``,
         only used for TIFF files, be default None.
 
@@ -263,7 +264,11 @@ def _read_tiff_metadata(src: str) -> Metadata:
     """
     metadata = {}
     with tifffile.TiffFile(src) as tif:
-        for tag in tif.pages[0].tags:
+        if len(tif.pages) == 0:
+            raise RuntimeError(f"Given tiff file '{src}' does not contain any pages.")
+        page_or_frame = tif.pages[0]
+        page = page_or_frame if isinstance(page_or_frame, TiffPage) else page_or_frame.aspage()
+        for tag in page.tags:
             metadata[tag.name] = tag.value
 
     return metadata

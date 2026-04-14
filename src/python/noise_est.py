@@ -62,7 +62,7 @@ same quantities.
 """
 
 import warnings
-from typing import Optional, Tuple, Union
+from typing import Callable, Dict, Optional, Tuple, Union
 
 import numpy as np
 from fastddm._config import DTYPE
@@ -136,9 +136,9 @@ def _check_k_range_az_avg(
     ----------
     obj : AzimuthalAverage
         AzimuthalAverage object.
-    k_min : float, optional
+    k_min : float | None, optional
         Lower bound of k range. If None, the maximum `k` is assumed. Default is None.
-    k_max : Optional[float], optional
+    k_max : float | None, optional
         Upper bound of k range. If None, the maximum `k` is assumed. Default is None.
 
     Returns
@@ -173,9 +173,9 @@ def _noise_high_q_az_avg(
     ----------
     obj : AzimuthalAverage
         AzimuthalAverage object.
-    k_min : float, optional
+    k_min : float | None, optional
         Lower bound of k range. If None, the maximum `k` is assumed. Default is None.
-    k_max : float, optional
+    k_max : float | None, optional
         Upper bound of k range. If None, the maximum `k` is assumed. Default is None.
 
     Returns
@@ -223,9 +223,9 @@ def _noise_power_spec_az_avg(
     ----------
     obj : AzimuthalAverage
         AzimuthalAverage object.
-    k_min : float, optional
+    k_min : float | None, optional
         Lower bound of k range. If None, the maximum `k` is assumed. Default is None.
-    k_max : float, optional
+    k_max : float | None, optional
         Upper bound of k range. If None, the maximum `k` is assumed. Default is None.
 
     Returns
@@ -273,9 +273,9 @@ def _noise_var_az_avg(
     ----------
     obj : AzimuthalAverage
         AzimuthalAverage object.
-    k_min : float, optional
+    k_min : float | None, optional
         Lower bound of k range. If None, the maximum `k` is assumed. Default is None.
-    k_max : float, optional
+    k_max : float | None, optional
         Upper bound of k range. If None, the maximum `k` is assumed. Default is None.
 
     Returns
@@ -406,7 +406,7 @@ def _noise_min_img_str_func(
     ----------
     obj : ImageStructureFunction
         ImageStructureFunction object.
-    mask : np.ndarray, optional
+    mask : np.ndarray | None, optional
         If a boolean mask is given, it is used to exclude grid points from
         the azimuthal average (where False is set). The array must have the
         same y,x shape of the data. If mask is not of boolean type, it is cast to bool
@@ -452,9 +452,9 @@ def _check_k_range_img_str_func(
     ----------
     obj : ImageStructureFunction
         ImageStructureFunction object.
-    k_min : Optional[float], optional
+    k_min : float | None, optional
         Lower bound of k range. If None, the maximum of kx and ky is assumed. Default is None.
-    k_max : Optional[float], optional
+    k_max : float | None, optional
         Upper bound of k range. If None, the maximum of kx and ky is assumed. Default is None.
 
     Returns
@@ -495,8 +495,7 @@ def _generate_bool_mask_img_str_func(
         Lower bound of k range. If None, the maximum of kx and ky is assumed. Default is None.
     k_max : float
         Upper bound of k range. If None, the maximum of kx and ky is assumed. Default is None.
-    mask : Optional[np.ndarray], optional
-        mask : np.ndarray, optional
+    mask : np.ndarray | None, optional
         If a boolean mask is given, it is used to exclude grid points from
         the azimuthal average (where False is set). The array must have the
         same y,x shape of the data. If mask is not of boolean type, it is cast to bool
@@ -513,7 +512,7 @@ def _generate_bool_mask_img_str_func(
     # check mask
     if mask is None:
         mask = np.full((dim_y, dim_x), True)
-    elif mask.dtype != bool:
+    if mask.dtype != bool:
         mask = mask.astype(bool)
         warnings.warn("Given mask not of boolean type. Casting to bool.")
 
@@ -522,7 +521,7 @@ def _generate_bool_mask_img_str_func(
     k_modulus = np.sqrt(KX**2 + KY**2)
     bool_mask = (k_modulus >= k_min) & (k_modulus <= k_max) & mask
 
-    return bool_mask
+    return bool_mask  # type: ignore[no-any-return]
 
 
 def _noise_high_q_img_str_func(
@@ -541,11 +540,11 @@ def _noise_high_q_img_str_func(
     ----------
     obj : ImageStructureFunction
         ImageStructureFunction object.
-    k_min : float, optional
+    k_min : float | None, optional
         Lower bound of k range. If None, the maximum of kx and ky is assumed. Default is None.
-    k_max : float, optional
+    k_max : float | None, optional
         Upper bound of k range. If None, the maximum of kx and ky is assumed. Default is None.
-    mask : np.ndarray, optional
+    mask : np.ndarray | None, optional
         If a boolean mask is given, it is used to exclude grid points from
         the azimuthal average (where False is set). The array must have the
         same y,x shape of the data. If mask is not of boolean type, it is cast to bool
@@ -590,11 +589,11 @@ def _noise_power_spec_img_str_func(
     ----------
     obj : ImageStructureFunction
         ImageStructureFunction object.
-    k_min : float, optional
+    k_min : float | None, optional
         Lower bound of k range. If None, the maximum of kx and ky is assumed. Default is None.
-    k_max : float, optional
+    k_max : float | None, optional
         Upper bound of k range. If None, the maximum of kx and ky is assumed. Default is None.
-    mask : np.ndarray, optional
+    mask : np.ndarray | None, optional
         If a boolean mask is given, it is used to exclude grid points from
         the azimuthal average (where False is set). The array must have the
         same y,x shape of the data. If mask is not of boolean type, it is cast to bool
@@ -640,11 +639,11 @@ def _noise_var_img_str_func(
     ----------
     obj : ImageStructureFunction
         ImageStructureFunction object.
-    k_min : float, optional
+    k_min : float | None, optional
         Lower bound of k range. If None, the maximum of kx and ky is assumed. Default is None.
-    k_max : float, optional
+    k_max : float | None, optional
         Upper bound of k range. If None, the maximum of kx and ky is assumed. Default is None.
-    mask : np.ndarray, optional
+    mask : np.ndarray | None, optional
         If a boolean mask is given, it is used to exclude grid points from
         the azimuthal average (where False is set). The array must have the
         same y,x shape of the data. If mask is not of boolean type, it is cast to bool
@@ -727,7 +726,7 @@ def _noise_polyfit_img_str_func(
 
 
 # create functions dictionaries
-_estimate_noise_az_avg = {
+_estimate_noise_az_avg: Dict[str, Callable[..., Tuple[np.ndarray, np.ndarray]]] = {
     "zero": _noise_zero_az_avg,
     "min": _noise_min_az_avg,
     "high_q": _noise_high_q_az_avg,
@@ -736,7 +735,7 @@ _estimate_noise_az_avg = {
     "polyfit": _noise_polyfit_az_avg,
 }
 
-_estimate_noise_img_str_func = {
+_estimate_noise_img_str_func: Dict[str, Callable[..., Tuple[np.ndarray, np.ndarray]]] = {
     "zero": _noise_zero_img_str_func,
     "min": _noise_min_img_str_func,
     "high_q": _noise_high_q_img_str_func,
