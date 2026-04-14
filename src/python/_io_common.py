@@ -6,7 +6,7 @@
 import struct
 from os.path import dirname
 from pathlib import Path
-from typing import Any, BinaryIO, Sequence, Tuple, Union
+from typing import Any, BinaryIO, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import tifffile
@@ -190,7 +190,7 @@ class Parser:
         Reads a ndarray from the file.
     """
 
-    supported_file_versions: dict[tuple[int, int | None], bool] = {
+    supported_file_versions: dict[tuple[int, Optional[int]], bool] = {
         (0, 1): False,
         (0, 2): False,
         (0, 3): True,

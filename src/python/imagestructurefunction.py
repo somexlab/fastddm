@@ -198,7 +198,8 @@ class ImageStructureFunction:
         Tuple[int, int, int]
             The shape of the data.
         """
-        return self.data.shape
+        shape = self.data.shape
+        return shape[0], shape[1], shape[2]
 
     @property
     def pixel_size(self) -> float:

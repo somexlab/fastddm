@@ -128,7 +128,8 @@ class IntermediateScatteringFunction:
         Tuple[int, int]
             The shape of the data.
         """
-        return self.data.shape
+        shape = self.data.shape
+        return shape[0], shape[1]
 
     def save(self, fname: str = "analysis_blob") -> None:
         """Save IntermediateScatteringFunction to binary file.
