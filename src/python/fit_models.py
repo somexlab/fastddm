@@ -549,10 +549,11 @@ def _generic_exponential_isf(
 
     Returns
     -------
-    numpy.ndarray, float
+    numpy.ndarray | float
         Generic exponential intermediate scattering function model.
     """
-    return A * np.exp(-((x * Gamma) ** beta))
+    isf_model: Union[np.ndarray, float] = A * np.exp(-((x * Gamma) ** beta))
+    return isf_model
 
 
 # generic exponential model
@@ -646,12 +647,13 @@ def _double_exponential_isf(
 
     Returns
     -------
-    numpy.ndarray, float
+    numpy.ndarray | float
         Double exponential intermediate scattering function model.
     """
-    return A * (
+    isf_model: Union[np.ndarray, float] = A * (
         alpha * np.exp(-((x * Gamma1) ** beta1)) + (1 - alpha) * np.exp(-((x * Gamma2) ** beta2))
     )
+    return isf_model
 
 
 double_exponential_isf_model = Model(_double_exponential_isf)
