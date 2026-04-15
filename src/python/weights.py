@@ -222,10 +222,11 @@ def sphere_form_factor(
 
     def sphere_factor(k: np.ndarray, R: float) -> np.ndarray:
         sf = np.zeros_like(k)
-        with np.errstate(divide="ignore", invalid="ignore"):
-            sf = (np.sin(k * R) - k * R * np.cos(k * R)) / (k * R) ** 3
-        sf[k == 0] = 1 / 3
-        return sf  # type: ignore[no-any-return]
+        mask = k > 0
+        kR = k[mask] * R
+        sf[mask] = (np.sin(kR) - kR * np.cos(kR)) / (kR) ** 3
+        sf[~mask] = 1 / 3
+        return sf
 
     kinds = ["amplitude", "intensity"]
     if kind not in kinds:
