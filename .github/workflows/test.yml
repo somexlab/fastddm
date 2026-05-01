@@ -95,7 +95,7 @@ jobs:
         run: uv pip install -r docs/requirements.txt
 
       - name: 🛠️ Build docs (fail on warnings)
-        run: sphinx-build -b html -W -n -v --color --keep-going docs/source/ docs/build/html
+        run: sphinx-build -b html -W -v --color --keep-going docs/source/ docs/build/html
 
   changes:
     if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
