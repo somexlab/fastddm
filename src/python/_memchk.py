@@ -12,4 +12,4 @@ def get_free_mem() -> int:
     int
         Available memory on RAM.
     """
-    return psutil.virtual_memory().available
+    return int(psutil.virtual_memory().available)

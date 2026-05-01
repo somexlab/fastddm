@@ -67,11 +67,11 @@ unsigned long long PYBIND11_EXPORT get_free_host_memory()
         return 0;
     }
 
-    std::string content((std::istreambuf_iterator<char>(proc_meminfo)), std::istreambuf_iterator<char>());
+    std::string content((std::istreambuf_iterator<char>(proc_meminfo)),
+                        std::istreambuf_iterator<char>());
     std::string target = "MemAvailable:";
     size_t start = content.find(target);
-    if (start != std::string::npos)
-    {
+    if (start != std::string::npos) {
         int begin = start + target.length();
         size_t end = content.find("kB", start);
         std::string substr = content.substr(begin, end - begin);

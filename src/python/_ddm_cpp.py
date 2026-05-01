@@ -154,10 +154,10 @@ def primesfrom2to(n: int) -> List[int]:
             k = 3 * i + 1 | 1
             sieve[k * k // 3 :: 2 * k] = False
             sieve[k * (k - 2 * (i & 1) + 4) // 3 :: 2 * k] = False
-    return np.r_[2, 3, ((3 * np.nonzero(sieve)[0][1:] + 1) | 1)]
+    return np.r_[2, 3, ((3 * np.nonzero(sieve)[0][1:] + 1) | 1)].tolist()  # type: ignore[no-any-return]
 
 
-def find_divisors(n):
+def find_divisors(n: int) -> List[int]:
     """Find the divisors of n.
 
     Parameters
@@ -170,15 +170,14 @@ def find_divisors(n):
     divisors : List[int]
         List of divisors of n.
     """
-    primes = primesfrom2to(n + 1).tolist()  # list of primes
-    primes = map(int, primes)
+    primes = primesfrom2to(n + 1)  # list of primes
     factors = {}
     for prime in primes:
         factor = 0
         while True:
             if n % prime == 0:
                 factor += 1
-                n /= prime
+                n //= prime
                 factors[prime] = factor
             else:
                 break

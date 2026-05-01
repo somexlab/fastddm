@@ -190,7 +190,11 @@ class Parser:
         Reads a ndarray from the file.
     """
 
-    supported_file_versions = {(0, 1): False, (0, 2): False, (0, 3): True}
+    supported_file_versions: dict[tuple[int, Optional[int]], bool] = {
+        (0, 1): False,
+        (0, 2): False,
+        (0, 3): True,
+    }
 
     def __init__(self, fh: BinaryIO):
         self._fh = fh
@@ -218,7 +222,7 @@ class Parser:
                 + "This might lead to unexpected behavior."
             )
 
-        return supported
+        return bool(supported)
 
     def _read_byteorder(self) -> str:
         """Read byte order flag from binary input file.
@@ -272,7 +276,7 @@ class Parser:
         minor_version = self.read_value(5, "B")
         return major_version, minor_version
 
-    def read_value(self, offset: int, fmt: str, whence: Optional[int] = 0) -> Any:
+    def read_value(self, offset: int, fmt: str, whence: int = 0) -> Any:
         """Read a single value from the binary file.
 
         Parameters
@@ -281,7 +285,7 @@ class Parser:
             Byte offset
         fmt : str
             Format.
-        whence : Optional[int], optional
+        whence : int, optional
             Whence, by default 0 which means absolute file positioning.
             Other values are 1 which means seek relative to the current position
             and 2 means seek relative to the file's end.
@@ -325,7 +329,7 @@ class Parser:
             The file identifier.
         """
         # id is always at bytes 2-3, written as unsigned short ('H')
-        return self.read_value(2, "H")
+        return int(self.read_value(2, "H"))
 
     def _full_fmt(self, fmt: str) -> str:
         """Return full format with byte order flag.
@@ -344,6 +348,7 @@ class Parser:
             return f"<{fmt}"
         if self.byteorder == "big":
             return f">{fmt}"
+        raise RuntimeError(f"Unknown byteorder '{self.byteorder}'.")
 
 
 def _save_as_tiff(data: np.ndarray, labels: Sequence[str]) -> None:

@@ -142,6 +142,6 @@ def fibonacci(stop: int, endpoint: bool = False) -> np.ndarray:
             break
 
     # make numpy array from list
-    samples = np.array(samples, dtype=int)
+    result = np.array(samples, dtype=int)
 
-    return samples
+    return result

@@ -500,7 +500,7 @@ Relaxation rate (:math:`\bar{\Gamma}`)  Gamma   1               :math:`(0, \inft
 ======================================  ======  ==============  ===================
 """
 
-from typing import Union
+from typing import Union, overload
 
 import numpy as np
 from lmfit.model import Model
@@ -512,12 +512,20 @@ EPSILON = np.finfo(float).eps
 # ---------------------------------------------
 
 
+@overload
+def _generic_exponential_isf(x: np.ndarray, A: float, Gamma: float, beta: float) -> np.ndarray: ...
+
+
+@overload
+def _generic_exponential_isf(x: float, A: float, Gamma: float, beta: float) -> float: ...
+
+
 def _generic_exponential_isf(
     x: Union[np.ndarray, float], A: float, Gamma: float, beta: float
 ) -> Union[np.ndarray, float]:
     r"""Exponential (generic) function model for the intermediate scattering function.
 
-    .. math:
+    .. math::
 
         D(t) = A \exp(- (\Gamma t)^{\beta})
 
@@ -530,7 +538,7 @@ def _generic_exponential_isf(
 
     Parameters
     ----------
-    x : numpy.ndarray, float
+    x : numpy.ndarray | float
         Independent variable.
     A : float
         Amplitude.
@@ -541,10 +549,11 @@ def _generic_exponential_isf(
 
     Returns
     -------
-    numpy.ndarray, float
+    numpy.ndarray | float
         Generic exponential intermediate scattering function model.
     """
-    return A * np.exp(-((x * Gamma) ** beta))
+    isf_model: Union[np.ndarray, float] = A * np.exp(-((x * Gamma) ** beta))
+    return isf_model
 
 
 # generic exponential model
@@ -575,6 +584,30 @@ compressed_exponential_isf_model.set_param_hint("Gamma", value=1.0, min=EPSILON,
 compressed_exponential_isf_model.set_param_hint("beta", value=1.0, min=1.0, max=np.inf)
 
 
+@overload
+def _double_exponential_isf(
+    x: np.ndarray,
+    A: float,
+    Gamma1: float,
+    beta1: float,
+    Gamma2: float,
+    beta2: float,
+    alpha: float,
+) -> np.ndarray: ...
+
+
+@overload
+def _double_exponential_isf(
+    x: float,
+    A: float,
+    Gamma1: float,
+    beta1: float,
+    Gamma2: float,
+    beta2: float,
+    alpha: float,
+) -> float: ...
+
+
 # double exponential model
 def _double_exponential_isf(
     x: Union[np.ndarray, float],
@@ -587,7 +620,7 @@ def _double_exponential_isf(
 ) -> Union[np.ndarray, float]:
     r"""Double exponential function model for the intermediate scattering function.
 
-    .. math:
+    .. math::
 
         D(t) = A \left( \alpha \exp(- (\Gamma_1 t)^{\beta_1})
              + (1 - \alpha) \exp(- (\Gamma_2 t)^{\beta_2}) \right)
@@ -614,12 +647,13 @@ def _double_exponential_isf(
 
     Returns
     -------
-    numpy.ndarray, float
+    numpy.ndarray | float
         Double exponential intermediate scattering function model.
     """
-    return A * (
+    isf_model: Union[np.ndarray, float] = A * (
         alpha * np.exp(-((x * Gamma1) ** beta1)) + (1 - alpha) * np.exp(-((x * Gamma2) ** beta2))
     )
+    return isf_model
 
 
 double_exponential_isf_model = Model(_double_exponential_isf)
@@ -637,14 +671,14 @@ def _flory_schulz_isf(
 ) -> Union[np.ndarray, float]:
     r"""Flory-Schulz function model for the intermediate scattering function.
 
-    .. math:
+    .. math::
 
         D(t) = A (1 + \sigma^2 \bar{\Gamma} t)^{-1/\sigma^2}
 
     where :math:`0 \le \sigma \le 1`.
     The decay rates follow a Flory-Schulz distribution
 
-    .. math:
+    .. math::
 
         G(\Gamma) = \frac{1}{\bar{\Gamma}} \frac{(z+1)^{z+1}}{z!} \left(
                     \frac{\Gamma}{\bar{\Gamma}}\right)^z \exp\left(-\frac{\Gamma}{\bar{\Gamma}}(z+1)
@@ -658,7 +692,7 @@ def _flory_schulz_isf(
     Can also be used to define an `exponential_distribution_isf_model`, where the
     decay rates follow an exponential distribution (for :math:`\sigma=1`, i.e., :math:`z=0`)
 
-    .. math:
+    .. math::
 
         G(\Gamma) = \frac{1}{\bar{\Gamma}} \exp\left(-\frac{\Gamma}{\bar{\Gamma}}\right)
 
@@ -705,7 +739,7 @@ def _generic_exponential(
 ) -> Union[np.ndarray, float]:
     r"""Exponential (generic) function model for the structure function.
 
-    .. math:
+    .. math::
 
         D(t) = A \left( 1 - \exp(- (\Gamma t)^{\beta}) \right) + B
 
@@ -781,7 +815,7 @@ def _double_exponential(
 ) -> Union[np.ndarray, float]:
     r"""Double exponential function model for the structure function.
 
-    .. math:
+    .. math::
 
         D(t) = A \left( 1 - \alpha \exp(- (\Gamma_1 t)^{\beta_1}) - (1 - \alpha)
                \exp(- (\Gamma_2 t)^{\beta_2}) \right) + B
@@ -832,14 +866,14 @@ def _flory_schulz(
 ) -> Union[np.ndarray, float]:
     r"""Flory-Schulz function model for the structure function.
 
-    .. math:
+    .. math::
 
         D(t) = A \left( 1 - (1 + \sigma^2 \bar{\Gamma} t)^{-1/\sigma^2} \right) + B
 
     where :math:`0 \le \sigma \le 1`.
     The decay rates follow a Flory-Schulz distribution
 
-    .. math:
+    .. math::
 
         G(\Gamma) = \frac{1}{\bar{\Gamma}} \frac{(z+1)^{z+1}}{z!}
                     \left(\frac{\Gamma}{\bar{\Gamma}}\right)^z
@@ -853,7 +887,7 @@ def _flory_schulz(
     Can also be used to define an `exponential_distribution_model`, where the
     decay rates follow an exponential distribution (for :math:`\sigma=1`, i.e., :math:`z=0`)
 
-    .. math:
+    .. math::
 
         G(\Gamma) = \frac{1}{\bar{\Gamma}} \exp\left(-\frac{\Gamma}{\bar{\Gamma}}\right)
 

@@ -43,7 +43,7 @@ def autocorrelation(spatial_fft: np.ndarray, *, workers: int = 2) -> np.ndarray:
     ifft = scifft.ifft(powerspec, axis=0, workers=workers)
 
     # returning the real part, cropped to original input length
-    return ifft[: len(spatial_fft)].real.astype(DTYPE)
+    return ifft[: len(spatial_fft)].real.astype(DTYPE)  # type: ignore[no-any-return]
 
 
 def _diff_image_structure_function(
@@ -91,7 +91,7 @@ def _diff_image_structure_function(
     sum_of_parts = shifted_abs_square + cropped_abs_square - 2 * (cropped_conj * shifted).real
     dqt = np.mean(sum_of_parts, axis=0)
 
-    return dqt
+    return dqt  # type: ignore[no-any-return]
 
 
 def image_structure_function(
@@ -144,7 +144,8 @@ def image_structure_function(
     sum_of_parts = sq_mod_cumsum[-offset] + sq_mod_cumsum_rev[-offset] - 2 * autocorrelation
     sum_of_parts /= length - lag  # normalization
 
-    return sum_of_parts  # half plane
+    # half plane
+    return sum_of_parts  # type: ignore[no-any-return]
 
 
 def _py_image_structure_function(
@@ -225,7 +226,7 @@ def _py_image_structure_function(
         cumsum = np.cumsum(square_mod.astype(np.float64), axis=0).astype(DTYPE)
         cumsum_rev = np.cumsum(square_mod[::-1].astype(np.float64), axis=0).astype(DTYPE)
 
-        args = (cumsum, cumsum_rev, autocorr)
+        args = (cumsum, cumsum_rev, autocorr)  # type: ignore[assignment]
 
     for i, lag in enumerate(lags):
         dqt[i] = calc_dqt(*args, lag)
@@ -234,7 +235,7 @@ def _py_image_structure_function(
     dqt[-2] = square_mod.mean(axis=0)
     dqt[-1] = rfft2.var(axis=0)
 
-    return scifft.fftshift(dqt, axes=-2)  # only shift in y
+    return scifft.fftshift(dqt, axes=-2)  # type: ignore[no-any-return]  # only shift in y
 
 
 # convenience #####################################################################################
@@ -271,12 +272,9 @@ def normalized_rfft2(
     np.ndarray
         The normalized half-plane spatial fft of the image sequence.
     """
-    if nx is None or ny is None:
-        *_, ny, nx = images.shape
-
     if len(window) > 0:
         rfft2 = scifft.rfft2(images.astype(DTYPE) * window, s=(ny, nx), workers=workers)
     else:
         rfft2 = scifft.rfft2(images.astype(DTYPE), s=(ny, nx), workers=workers)
     norm = np.sqrt(nx * ny)
-    return rfft2 / norm
+    return rfft2 / norm  # type: ignore[no-any-return]

@@ -55,7 +55,7 @@ _backend: Dict[str, Dict[str, Callable]] = {
 }
 
 if IS_CPP_ENABLED:
-    from fastddm._ddm_cpp import ddm_diff_cpp, ddm_fft_cpp
+    from ._ddm_cpp import ddm_diff_cpp, ddm_fft_cpp
 
     # enable cpp support in backends
     _backend["cpp"] = {
@@ -64,7 +64,7 @@ if IS_CPP_ENABLED:
     }
 
 if IS_CUDA_ENABLED:
-    from fastddm._ddm_cuda import ddm_diff_gpu, ddm_fft_gpu
+    from ._ddm_cuda import ddm_diff_gpu, ddm_fft_gpu
 
     # enable cuda support in backends
     _backend["cuda"] = {
@@ -98,7 +98,7 @@ def ddm(
     mode : str, optional
         The mode of calculating the structure function, choose between "diff"
         and "fft". Default is "fft".
-    window : numpy.ndarray, optional
+    window : np.ndarray | None, optional
         A 2D array containing the window function to be applied to the images.
         Default is None.
 

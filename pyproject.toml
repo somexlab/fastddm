@@ -54,7 +54,15 @@ classifiers = [
 
 [project.optional-dependencies]
 test = ["pytest", "pytest-regtest"]
-doc = ["sphinx", "sphinx-tabs", "nbsphinx", "furo", "ipython", "myst-parser"]
+doc = [
+    "sphinx",
+    "sphinx-tabs",
+    "nbsphinx",
+    "furo",
+    "ipython",
+    "myst-parser",
+    "matplotlib",
+]
 dev = [
     "fastddm[test,doc]",
     "black",
@@ -119,4 +127,16 @@ warn_unused_ignores = true
 
 [[tool.mypy.overrides]]
 ignore_missing_imports = true
-module = ['matplotlib.*', 'scipy.*', 'setuptools.*', 'skbuild.*', 'sklearn.*']
+module = [
+    'lmfit.*',
+    'matplotlib.*',
+    'nd2reader.*',
+    'pandas.*',
+    'psutil.*',
+    'scipy.*',
+    'setuptools.*',
+    'skbuild.*',
+    'skimage.*',
+    'sklearn.*',
+    'tifffile.*',
+]

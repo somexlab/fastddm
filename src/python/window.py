@@ -89,19 +89,19 @@ def blackman(shape: Tuple[int, ...]) -> np.ndarray:
     """
     *rest, ydim, xdim = shape
 
-    a = [7938 / 18608, 9240 / 18608, 1430 / 18608]
     x = np.linspace(0, (xdim - 1) / xdim, num=xdim)
     y = np.linspace(0, (ydim - 1) / ydim, num=ydim)
-    Wx = np.zeros(xdim)
-    Wy = np.zeros(ydim)
 
-    for n in range(3):
-        Wx += (-1) ** n * a[n] * np.cos(2.0 * np.pi * n * x)
-        Wy += (-1) ** n * a[n] * np.cos(2.0 * np.pi * n * y)
+    a = [7938 / 18608, 9240 / 18608, 1430 / 18608]
+    n = np.arange(3)
+    coeffs = (-1) ** n * a
+    wx = coeffs @ np.cos(2.0 * np.pi * np.outer(n, x))
+    wy = coeffs @ np.cos(2.0 * np.pi * np.outer(n, y))
+    Wx, Wy = np.meshgrid(wx, wy)
 
-    Wx, Wy = np.meshgrid(Wx, Wy)
+    blackman_window: np.ndarray = (Wx * Wy).astype(DTYPE)
 
-    return (Wx * Wy).astype(DTYPE)
+    return blackman_window
 
 
 def blackman_harris(shape: Tuple[int, ...]) -> np.ndarray:
@@ -145,16 +145,16 @@ def blackman_harris(shape: Tuple[int, ...]) -> np.ndarray:
     """
     *rest, ydim, xdim = shape
 
-    a = [0.3635819, 0.4891775, 0.1365995, 0.0106411]
     x = np.linspace(0, (xdim - 1) / xdim, num=xdim)
     y = np.linspace(0, (ydim - 1) / ydim, num=ydim)
-    Wx = np.zeros(xdim)
-    Wy = np.zeros(ydim)
 
-    for n in range(4):
-        Wx += (-1) ** n * a[n] * np.cos(2.0 * np.pi * n * x)
-        Wy += (-1) ** n * a[n] * np.cos(2.0 * np.pi * n * y)
+    a = [0.3635819, 0.4891775, 0.1365995, 0.0106411]
+    n = np.arange(4)
+    coeffs = (-1) ** n * a
+    wx = coeffs @ np.cos(2.0 * np.pi * np.outer(n, x))
+    wy = coeffs @ np.cos(2.0 * np.pi * np.outer(n, y))
+    Wx, Wy = np.meshgrid(wx, wy)
 
-    Wx, Wy = np.meshgrid(Wx, Wy)
+    blackman_harris_window: np.ndarray = (Wx * Wy).astype(DTYPE)
 
-    return (Wx * Wy).astype(DTYPE)
+    return blackman_harris_window
