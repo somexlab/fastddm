@@ -54,7 +54,15 @@ classifiers = [
 
 [project.optional-dependencies]
 test = ["pytest", "pytest-regtest"]
-doc = ["sphinx", "sphinx-tabs", "nbsphinx", "furo", "ipython", "myst-parser"]
+doc = [
+    "sphinx",
+    "sphinx-tabs",
+    "nbsphinx",
+    "furo",
+    "ipython",
+    "myst-parser",
+    "matplotlib",
+]
 dev = [
     "fastddm[test,doc]",
     "black",

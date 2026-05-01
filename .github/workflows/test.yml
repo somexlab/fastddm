@@ -22,6 +22,10 @@ on:
   # trigger on request
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 env:
   UV_SYSTEM_PYTHON: 1
 
@@ -62,16 +66,39 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: 📥 Install package with dev dependencies
-        run: |
-          uv pip install --upgrade pip
-          python install.py -v --uv --extras=dev
+        run: python install.py -v --uv --extras=dev
 
       - name: 🔍 Run mypy
         run: |
           mypy src/python/
 
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 📦 Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 📦 Install pandoc
+        run: sudo apt-get update && sudo apt-get install -y pandoc
+
+      - name: 📥 Install package
+        run: python install.py -v --uv --extras=doc
+
+      - name: 📚 Install docs requirements
+        run: uv pip install -r docs/requirements.txt
+
+      - name: 🛠️ Build docs (fail on warnings)
+        run: sphinx-build -b html -W -n -v --color --keep-going docs/source/ docs/build/html
+
   changes:
-    if: github.event.pull_request.draft == false
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     outputs:
       gpu: ${{ steps.filter.outputs.gpu }}
@@ -90,7 +117,7 @@ jobs:
               - "pyproject.toml"
 
   build:
-    needs: [pre-commit, mypy]
+    needs: [pre-commit, mypy, docs]
     if: github.event.pull_request.draft == false
     runs-on: ${{ matrix.os }}
     strategy:
@@ -110,16 +137,14 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: 🏗️ Build package and install through uv
-        run: |
-          uv pip install --upgrade pip
-          python install.py -v --uv --cpp --extras=test
+        run: python install.py -v --uv --cpp --extras=test
 
       - name: 🧪 Run tests
         run: |
-          pytest -v
+          pytest -v --color=yes
 
   build-cuda:
-    needs: [pre-commit, mypy, build, changes]
+    needs: [pre-commit, mypy, docs, build, changes]
     if: github.event.pull_request.draft == false && needs.changes.outputs.gpu == 'true'
     runs-on: ${{ matrix.os }}
     strategy:
@@ -163,10 +188,8 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: 🏗️ Build package and install through uv with CUDA support
-        run: |
-          uv pip install --upgrade pip
-          python install.py -v --uv --gpu --extras=test
+        run: python install.py -v --uv --gpu --extras=test
 
       - name: 🧪 Run tests with CUDA support
         run: |
-          pytest -v
+          pytest -v --color=yes
