@@ -112,7 +112,7 @@ if(ENABLE_CPP)
     include_directories(${PROJECT_SOURCE_DIR}/lib/fftw-3.3.10/api)
     # Add fddm library
     add_library(fddm SHARED ${FASTDDM_SOURCES})
-    target_link_libraries(fddm PUBLIC fftw3 Python::Python)
+    target_link_libraries(fddm PUBLIC fftw3 Python::Module)
     target_link_libraries(fddm PRIVATE pybind11::headers)
     # Link fftw3f library if SINGLE_PRECISION is enabled
     if(SINGLE_PRECISION)
@@ -162,7 +162,7 @@ if(ENABLE_CUDA)
     include_directories(${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
     # Add fddm_cuda library
     add_library(fddm_cuda SHARED ${FASTDDM_GPU_SOURCES} ${FASTDDM_GPU_CU_SOURCES})
-    target_link_libraries(fddm_cuda PUBLIC CUDA::cufft CUDA::nvml Python::Python)
+    target_link_libraries(fddm_cuda PUBLIC CUDA::cufft CUDA::nvml Python::Module)
     target_link_libraries(fddm_cuda PRIVATE pybind11::headers)
     # Note: CUDA architectures are set in the root CMakeLists, so there is no need to set them here.
     # Add the SINGLE_PRECISION flag if enabled
