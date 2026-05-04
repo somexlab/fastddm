@@ -97,6 +97,12 @@ jobs:
       - name: 🛠️ Build docs (fail on warnings)
         run: sphinx-build -b html -W -v --color --keep-going docs/source/ docs/build/html
 
+      - name: 📤 Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: html-docs
+          path: docs/build/html/
+
   changes:
     if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     runs-on: ubuntu-latest
