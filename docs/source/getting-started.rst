@@ -12,3 +12,4 @@ Getting started
     conda
     pypi
     colab
+    citing
