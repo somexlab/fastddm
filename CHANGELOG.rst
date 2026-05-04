@@ -5,13 +5,15 @@ Change Log
 v0.3
 ----
 
-v0.3.xx (2025-MM-DD)
+v0.3.15 (2026-05-04)
 ^^^^^^^^^^^^^^^^^^^^
 
 *Added*
 
-- Citation metadata in ``CITATION.bib`` and ``README.md``.
+- Citation metadata in ``CITATION.bib``, ``README.md``, and documentation.
 - Installation script with support for ``uv`` to simplify setting optional arguments.
+- CI jobs for quality checks, static checks, documentation build, source build and test with GPU support.
+- Support for CUDA Toolkit 13.
 
 *Changed*
 
