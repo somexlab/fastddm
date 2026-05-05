@@ -80,7 +80,7 @@ Merge release into `main`
 
 #. update changelog with the main modifications of the release you want to merge.
    Follow the convention in the ``CHANGELOG.md``.
-#. Merge the PR to ``main`` & close the corresponding milestone.
+#. Merge the PR to ``main`` and close the corresponding milestone.
 #. Create a tag via "create draft release" and name it according to the release version.
 
 Propose a minimal set of related changes
