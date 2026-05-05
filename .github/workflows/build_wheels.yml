@@ -92,6 +92,11 @@ jobs:
     name: 🚀 Publish [PyPI]
     needs: [build_wheels, build_sdist]
     runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/fastddm/
+    permissions:
+      id-token: write # IMPORTANT: mandatory for trusted publishing
     if: github.event_name == 'push' && github.ref_type == 'tag'
 
     steps:
@@ -113,16 +118,38 @@ jobs:
       - name: 🚀 Upload release to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          user: __token__
-          password: ${{ secrets.PYPI_API_TOKEN }}
           skip-existing: true
           verbose: true
+
+  upload_testpypi:
+    name: 🚀 Publish [TestPyPI]
+    needs: [build_wheels, build_sdist]
+    runs-on: ubuntu-latest
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/p/fastddm/
+    permissions:
+      id-token: write # IMPORTANT: mandatory for trusted publishing
+    if: github.event_name == 'push' && github.ref_type == 'tag'
+
+    steps:
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: ⬇️ Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: cibw-*
+          path: dist
+          merge-multiple: true
+
+      - name: 🔍 Check files
+        run: ls -lR dist
 
       - name: 🧪 Upload release to TestPyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          user: __token__
-          password: ${{ secrets.TESTPYPI_API_TOKEN }}
-          repository-url: https://test.pypi.org/legacy/
           skip-existing: true
           verbose: true
