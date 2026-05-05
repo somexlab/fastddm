@@ -1,9 +1,7 @@
-# Copyright (c) 2023-2023 University of Vienna, Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino.
-# Part of FastDDM, released under the GNU GPL-3.0 License.
-# Authors: Mike Chen and Enrico Lattuada
-# Maintainer: Enrico Lattuada
+# SPDX-FileCopyrightText: 2023-present University of Vienna
+# SPDX-License-Identifier: GPL-3.0-or-later
 
-r"""This module contains the helper function to estimate the noise factor.
+r"""Helper function to estimate the noise factor.
 
 The methods implemented here are some of the most widely used in the
 literature and are implemented for both `ÌmageStructureFunction`` and
@@ -63,13 +61,13 @@ The symbols with scalar :math:`q` indicate the azimuthal average of the
 same quantities.
 """
 
-from typing import Union, Optional, Tuple
 import warnings
-import numpy as np
+from typing import Callable, Dict, Optional, Tuple, Union
 
-from fastddm.imagestructurefunction import ImageStructureFunction
-from fastddm.azimuthalaverage import AzimuthalAverage
+import numpy as np
 from fastddm._config import DTYPE
+from fastddm.azimuthalaverage import AzimuthalAverage
+from fastddm.imagestructurefunction import ImageStructureFunction
 
 
 def _noise_zero_az_avg(obj: AzimuthalAverage) -> Tuple[np.ndarray, np.ndarray]:
@@ -130,19 +128,17 @@ def _noise_min_az_avg(obj: AzimuthalAverage) -> Tuple[np.ndarray, np.ndarray]:
 
 
 def _check_k_range_az_avg(
-        obj: AzimuthalAverage,
-        k_min: Optional[float] = None,
-        k_max: Optional[float] = None
-        ) -> Tuple[float, float]:
-    """Sanity check for k_min and k_max in _noise_*_az_avg functions
+    obj: AzimuthalAverage, k_min: Optional[float] = None, k_max: Optional[float] = None
+) -> Tuple[float, float]:
+    """Sanity check for k_min and k_max in _noise_*_az_avg functions.
 
     Parameters
     ----------
     obj : AzimuthalAverage
         AzimuthalAverage object.
-    k_min : float, optional
+    k_min : float | None, optional
         Lower bound of k range. If None, the maximum `k` is assumed. Default is None.
-    k_max : Optional[float], optional
+    k_max : float | None, optional
         Upper bound of k range. If None, the maximum `k` is assumed. Default is None.
 
     Returns
@@ -164,10 +160,8 @@ def _check_k_range_az_avg(
 
 
 def _noise_high_q_az_avg(
-        obj: AzimuthalAverage,
-        k_min: Optional[float] = None,
-        k_max: Optional[float] = None
-        ) -> Tuple[np.ndarray, np.ndarray]:
+    obj: AzimuthalAverage, k_min: Optional[float] = None, k_max: Optional[float] = None
+) -> Tuple[np.ndarray, np.ndarray]:
     """Noise factor estimate for an AzimuthalAverage object, 'high_q' mode.
 
     Noise is given by the average value of the data (calculated using all points over tau axis) in
@@ -179,9 +173,9 @@ def _noise_high_q_az_avg(
     ----------
     obj : AzimuthalAverage
         AzimuthalAverage object.
-    k_min : float, optional
+    k_min : float | None, optional
         Lower bound of k range. If None, the maximum `k` is assumed. Default is None.
-    k_max : float, optional
+    k_max : float | None, optional
         Upper bound of k range. If None, the maximum `k` is assumed. Default is None.
 
     Returns
@@ -205,10 +199,10 @@ def _noise_high_q_az_avg(
     else:
         numel = np.size(~np.isnan(obj.err[bool_mask]))
         if numel > 0:
-            uncertainty_value = np.sqrt(np.nansum(obj.err[bool_mask]**2)) / numel
+            uncertainty_value = np.sqrt(np.nansum(obj.err[bool_mask] ** 2)) / numel
         else:
             uncertainty_value = np.nan
-    
+
     noise = np.full(dim, fill_value=noise_value, dtype=DTYPE)
     uncertainty = np.full(dim, fill_value=uncertainty_value, dtype=DTYPE)
 
@@ -216,10 +210,8 @@ def _noise_high_q_az_avg(
 
 
 def _noise_power_spec_az_avg(
-        obj: AzimuthalAverage,
-        k_min: Optional[float] = None,
-        k_max: Optional[float] = None
-        ) -> Tuple[np.ndarray, np.ndarray]:
+    obj: AzimuthalAverage, k_min: Optional[float] = None, k_max: Optional[float] = None
+) -> Tuple[np.ndarray, np.ndarray]:
     """Noise factor estimate for an AzimuthalAverage object, 'power_spec' mode.
 
     Noise is given by the average value of the azimuthal average of the image power spectrum in the
@@ -231,9 +223,9 @@ def _noise_power_spec_az_avg(
     ----------
     obj : AzimuthalAverage
         AzimuthalAverage object.
-    k_min : float, optional
+    k_min : float | None, optional
         Lower bound of k range. If None, the maximum `k` is assumed. Default is None.
-    k_max : float, optional
+    k_max : float | None, optional
         Upper bound of k range. If None, the maximum `k` is assumed. Default is None.
 
     Returns
@@ -257,7 +249,7 @@ def _noise_power_spec_az_avg(
     else:
         numel = np.size(~np.isnan(obj.power_spec_err[bool_mask]))
         if numel > 0:
-            uncertainty_value = 2 * np.sqrt(np.nansum(obj.power_spec_err[bool_mask]**2)) / numel
+            uncertainty_value = 2 * np.sqrt(np.nansum(obj.power_spec_err[bool_mask] ** 2)) / numel
         else:
             uncertainty_value = np.nan
 
@@ -268,10 +260,8 @@ def _noise_power_spec_az_avg(
 
 
 def _noise_var_az_avg(
-        obj: AzimuthalAverage,
-        k_min: Optional[float] = None,
-        k_max: Optional[float] = None
-        ) -> Tuple[np.ndarray, np.ndarray]:
+    obj: AzimuthalAverage, k_min: Optional[float] = None, k_max: Optional[float] = None
+) -> Tuple[np.ndarray, np.ndarray]:
     """Noise factor estimate for an AzimuthalAverage object, 'var' mode.
 
     Noise is given by the average value of the azimuthal average of the background corrected image
@@ -283,9 +273,9 @@ def _noise_var_az_avg(
     ----------
     obj : AzimuthalAverage
         AzimuthalAverage object.
-    k_min : float, optional
+    k_min : float | None, optional
         Lower bound of k range. If None, the maximum `k` is assumed. Default is None.
-    k_max : float, optional
+    k_max : float | None, optional
         Upper bound of k range. If None, the maximum `k` is assumed. Default is None.
 
     Returns
@@ -309,10 +299,10 @@ def _noise_var_az_avg(
     else:
         numel = np.size(~np.isnan(obj.var_err[bool_mask]))
         if numel > 0:
-            uncertainty_value = 2 * np.sqrt(np.nansum(obj.var_err[bool_mask]**2)) / numel
+            uncertainty_value = 2 * np.sqrt(np.nansum(obj.var_err[bool_mask] ** 2)) / numel
         else:
             uncertainty_value = np.nan
-        
+
     noise = np.full(dim, fill_value=noise_value, dtype=DTYPE)
     uncertainty = np.full(dim, fill_value=uncertainty_value, dtype=DTYPE)
 
@@ -320,9 +310,9 @@ def _noise_var_az_avg(
 
 
 def _noise_polyfit_az_avg(
-        obj: AzimuthalAverage,
-        num_points: int = 5,
-        ) -> Tuple[np.ndarray, np.ndarray]:
+    obj: AzimuthalAverage,
+    num_points: int = 5,
+) -> Tuple[np.ndarray, np.ndarray]:
     """Noise factor estimate for an AzimuthalAverage object, 'polyfit' mode.
 
     For each k, noise is given by the 0th degree term of a quadratic polynomial fit of the first
@@ -371,7 +361,7 @@ def _noise_polyfit_az_avg(
             else:
                 w = 1 / obj.err[k_idx, :num_points]
             # compute polynomial fit with unscaled covariance matrix
-            p, pcov = np.polyfit(x, y, deg=deg, w=w, cov='unscaled')
+            p, pcov = np.polyfit(x, y, deg=deg, w=w, cov="unscaled")
             noise[k_idx] = p[-1]
             # error of coefficients is square root of diagonal
             uncertainty[k_idx] = np.sqrt(np.diag(pcov))[-1]
@@ -379,7 +369,9 @@ def _noise_polyfit_az_avg(
     return noise, uncertainty
 
 
-def _noise_zero_img_str_func(obj: ImageStructureFunction) -> Tuple[np.ndarray, np.ndarray]:
+def _noise_zero_img_str_func(
+    obj: ImageStructureFunction,
+) -> Tuple[np.ndarray, np.ndarray]:
     """Noise factor estimate for an ImageStructureFunction object, 'zero' mode.
 
     Noise is zero for all (ky, kx) vectors.
@@ -403,9 +395,8 @@ def _noise_zero_img_str_func(obj: ImageStructureFunction) -> Tuple[np.ndarray, n
 
 
 def _noise_min_img_str_func(
-        obj: ImageStructureFunction,
-        mask: Optional[np.ndarray] = None
-        ) -> Tuple[np.ndarray, np.ndarray]:
+    obj: ImageStructureFunction, mask: Optional[np.ndarray] = None
+) -> Tuple[np.ndarray, np.ndarray]:
     """Noise factor estimate for an ImageStructureFunction object, 'min' mode.
 
     Noise is given by the minimum of the ImageStructureFunction at minimum tau.
@@ -415,7 +406,7 @@ def _noise_min_img_str_func(
     ----------
     obj : ImageStructureFunction
         ImageStructureFunction object.
-    mask : np.ndarray, optional
+    mask : np.ndarray | None, optional
         If a boolean mask is given, it is used to exclude grid points from
         the azimuthal average (where False is set). The array must have the
         same y,x shape of the data. If mask is not of boolean type, it is cast to bool
@@ -451,19 +442,19 @@ def _noise_min_img_str_func(
 
 
 def _check_k_range_img_str_func(
-        obj: ImageStructureFunction,
-        k_min: Optional[float] = None,
-        k_max: Optional[float] = None
-        ) -> Tuple[float, float]:
-    """Sanity check for k_min and k_max in _noise_*_img_str_func functions
+    obj: ImageStructureFunction,
+    k_min: Optional[float] = None,
+    k_max: Optional[float] = None,
+) -> Tuple[float, float]:
+    """Sanity check for k_min and k_max in _noise_*_img_str_func functions.
 
     Parameters
     ----------
     obj : ImageStructureFunction
         ImageStructureFunction object.
-    k_min : Optional[float], optional
+    k_min : float | None, optional
         Lower bound of k range. If None, the maximum of kx and ky is assumed. Default is None.
-    k_max : Optional[float], optional
+    k_max : float | None, optional
         Upper bound of k range. If None, the maximum of kx and ky is assumed. Default is None.
 
     Returns
@@ -489,12 +480,12 @@ def _check_k_range_img_str_func(
 
 
 def _generate_bool_mask_img_str_func(
-        obj: ImageStructureFunction,
-        k_min: float,
-        k_max: float,
-        mask: Optional[np.ndarray] = None
-        ) -> np.ndarray:
-    """Generate boolean mask from k range and user given boolean mask
+    obj: ImageStructureFunction,
+    k_min: float,
+    k_max: float,
+    mask: Optional[np.ndarray] = None,
+) -> np.ndarray:
+    """Generate boolean mask from k range and user given boolean mask.
 
     Parameters
     ----------
@@ -504,8 +495,7 @@ def _generate_bool_mask_img_str_func(
         Lower bound of k range. If None, the maximum of kx and ky is assumed. Default is None.
     k_max : float
         Upper bound of k range. If None, the maximum of kx and ky is assumed. Default is None.
-    mask : Optional[np.ndarray], optional
-        mask : np.ndarray, optional
+    mask : np.ndarray | None, optional
         If a boolean mask is given, it is used to exclude grid points from
         the azimuthal average (where False is set). The array must have the
         same y,x shape of the data. If mask is not of boolean type, it is cast to bool
@@ -522,7 +512,7 @@ def _generate_bool_mask_img_str_func(
     # check mask
     if mask is None:
         mask = np.full((dim_y, dim_x), True)
-    elif mask.dtype != bool:
+    if mask.dtype != bool:
         mask = mask.astype(bool)
         warnings.warn("Given mask not of boolean type. Casting to bool.")
 
@@ -531,15 +521,15 @@ def _generate_bool_mask_img_str_func(
     k_modulus = np.sqrt(KX**2 + KY**2)
     bool_mask = (k_modulus >= k_min) & (k_modulus <= k_max) & mask
 
-    return bool_mask
+    return bool_mask  # type: ignore[no-any-return]
 
 
 def _noise_high_q_img_str_func(
-        obj: ImageStructureFunction,
-        k_min: Optional[float] = None,
-        k_max: Optional[float] = None,
-        mask: Optional[np.ndarray] = None
-        ) -> Tuple[np.ndarray, np.ndarray]:
+    obj: ImageStructureFunction,
+    k_min: Optional[float] = None,
+    k_max: Optional[float] = None,
+    mask: Optional[np.ndarray] = None,
+) -> Tuple[np.ndarray, np.ndarray]:
     """Noise factor estimate for an ImageStructureFunction object, 'high_q' mode.
 
     Noise is given by the average value of the data (calculated using all points over tau axis) in
@@ -550,11 +540,11 @@ def _noise_high_q_img_str_func(
     ----------
     obj : ImageStructureFunction
         ImageStructureFunction object.
-    k_min : float, optional
+    k_min : float | None, optional
         Lower bound of k range. If None, the maximum of kx and ky is assumed. Default is None.
-    k_max : float, optional
+    k_max : float | None, optional
         Upper bound of k range. If None, the maximum of kx and ky is assumed. Default is None.
-    mask : np.ndarray, optional
+    mask : np.ndarray | None, optional
         If a boolean mask is given, it is used to exclude grid points from
         the azimuthal average (where False is set). The array must have the
         same y,x shape of the data. If mask is not of boolean type, it is cast to bool
@@ -585,11 +575,11 @@ def _noise_high_q_img_str_func(
 
 
 def _noise_power_spec_img_str_func(
-        obj: ImageStructureFunction,
-        k_min: Optional[float] = None,
-        k_max: Optional[float] = None,
-        mask: Optional[np.ndarray] = None
-        ) -> Tuple[np.ndarray, np.ndarray]:
+    obj: ImageStructureFunction,
+    k_min: Optional[float] = None,
+    k_max: Optional[float] = None,
+    mask: Optional[np.ndarray] = None,
+) -> Tuple[np.ndarray, np.ndarray]:
     """Noise factor estimate for an ImageStructureFunction object, 'power_spec' mode.
 
     Noise is given by the average value of the image power spectrum in the range [k_min, k_max].
@@ -599,11 +589,11 @@ def _noise_power_spec_img_str_func(
     ----------
     obj : ImageStructureFunction
         ImageStructureFunction object.
-    k_min : float, optional
+    k_min : float | None, optional
         Lower bound of k range. If None, the maximum of kx and ky is assumed. Default is None.
-    k_max : float, optional
+    k_max : float | None, optional
         Upper bound of k range. If None, the maximum of kx and ky is assumed. Default is None.
-    mask : np.ndarray, optional
+    mask : np.ndarray | None, optional
         If a boolean mask is given, it is used to exclude grid points from
         the azimuthal average (where False is set). The array must have the
         same y,x shape of the data. If mask is not of boolean type, it is cast to bool
@@ -634,11 +624,11 @@ def _noise_power_spec_img_str_func(
 
 
 def _noise_var_img_str_func(
-        obj: ImageStructureFunction,
-        k_min: Optional[float] = None,
-        k_max: Optional[float] = None,
-        mask: Optional[np.ndarray] = None
-        ) -> Tuple[np.ndarray, np.ndarray]:
+    obj: ImageStructureFunction,
+    k_min: Optional[float] = None,
+    k_max: Optional[float] = None,
+    mask: Optional[np.ndarray] = None,
+) -> Tuple[np.ndarray, np.ndarray]:
     """Noise factor estimate for an ImageStructureFunction object, 'var' mode.
 
     Noise is given by the average value of the background corrected image power spectrum in the
@@ -649,11 +639,11 @@ def _noise_var_img_str_func(
     ----------
     obj : ImageStructureFunction
         ImageStructureFunction object.
-    k_min : float, optional
+    k_min : float | None, optional
         Lower bound of k range. If None, the maximum of kx and ky is assumed. Default is None.
-    k_max : float, optional
+    k_max : float | None, optional
         Upper bound of k range. If None, the maximum of kx and ky is assumed. Default is None.
-    mask : np.ndarray, optional
+    mask : np.ndarray | None, optional
         If a boolean mask is given, it is used to exclude grid points from
         the azimuthal average (where False is set). The array must have the
         same y,x shape of the data. If mask is not of boolean type, it is cast to bool
@@ -684,9 +674,8 @@ def _noise_var_img_str_func(
 
 
 def _noise_polyfit_img_str_func(
-        obj: ImageStructureFunction,
-        num_points: int = 5
-        ) -> Tuple[np.ndarray, np.ndarray]:
+    obj: ImageStructureFunction, num_points: int = 5
+) -> Tuple[np.ndarray, np.ndarray]:
     """Noise factor estimate for an ImageStructureFunction object, 'polyfit' mode.
 
     For each (ky, kx), noise is given by the 0th degree term of a quadratic polynomial fit of the
@@ -737,30 +726,28 @@ def _noise_polyfit_img_str_func(
 
 
 # create functions dictionaries
-_estimate_noise_az_avg = {
+_estimate_noise_az_avg: Dict[str, Callable[..., Tuple[np.ndarray, np.ndarray]]] = {
     "zero": _noise_zero_az_avg,
     "min": _noise_min_az_avg,
     "high_q": _noise_high_q_az_avg,
     "power_spec": _noise_power_spec_az_avg,
     "var": _noise_var_az_avg,
-    "polyfit": _noise_polyfit_az_avg, 
-    }
+    "polyfit": _noise_polyfit_az_avg,
+}
 
-_estimate_noise_img_str_func = {
+_estimate_noise_img_str_func: Dict[str, Callable[..., Tuple[np.ndarray, np.ndarray]]] = {
     "zero": _noise_zero_img_str_func,
     "min": _noise_min_img_str_func,
     "high_q": _noise_high_q_img_str_func,
     "power_spec": _noise_power_spec_img_str_func,
     "var": _noise_var_img_str_func,
     "polyfit": _noise_polyfit_img_str_func,
-    }
+}
 
 
 def estimate_camera_noise(
-        obj: Union[ImageStructureFunction, AzimuthalAverage],
-        mode: str = "zero",
-        **kwargs
-        ) -> Tuple[np.ndarray, np.ndarray]:
+    obj: Union[ImageStructureFunction, AzimuthalAverage], mode: str = "zero", **kwargs
+) -> Tuple[np.ndarray, np.ndarray]:
     """
     Estimate of noise factor in ImageStructureFunction or AzimuthalAverage.
 
@@ -836,6 +823,6 @@ def estimate_camera_noise(
 
         camera_noise = _estimate_noise_az_avg[mode](obj=obj, **kwargs)
     else:
-        raise TypeError(f'Input type {type(obj)} not supported.')
+        raise TypeError(f"Input type {type(obj)} not supported.")
 
     return camera_noise

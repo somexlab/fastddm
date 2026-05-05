@@ -1,5 +1,5 @@
-.. Copyright (c) 2023-2023 University of Vienna, Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino.
-.. Part of FastDDM, released under the GNU GPL-3.0 License.
+.. SPDX-FileCopyrightText: 2023-present University of Vienna
+.. SPDX-License-Identifier: GPL-3.0-or-later
 
 Installing in Google Colab
 ==========================
@@ -56,32 +56,23 @@ Change directory to the source code one
 
     %cd fastddm
 
-If you want to install the library with C++ support, run the following command in a cell
-
-.. code-block:: bash
-
-    %env ENABLE_CPP=ON
-
-If you want to install the library with GPU (CUDA) support, run the following command in a cell
-
-.. code-block:: bash
-
-    %env ENABLE_CUDA=ON
-
-(This also enables the C++ support.)
-
-.. warning::
-
-    Due to the small amount of available RAM memory, we also warmly recommend to enable the single
-    precision calculation option::
-
-      %env SINGLE_PRECISION=ON
-
 Finally, install **FastDDM**
 
 .. code-block:: bash
 
     !python3 -m pip install .
+
+.. note::
+
+    To enable the installation options, refer to the :ref:`build` documentation.
+    For example, to enable the CUDA core, run::
+
+        !python3 -m pip install . --config-settings=cmake.define.ENABLE_CUDA=ON
+
+.. warning::
+
+    Due to the amount of available RAM memory, we also warmly recommend to enable the single
+    precision math option.
 
 .. tip::
 

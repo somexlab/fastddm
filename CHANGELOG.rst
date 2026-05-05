@@ -5,6 +5,26 @@ Change Log
 v0.3
 ----
 
+v0.3.15 (2026-05-04)
+^^^^^^^^^^^^^^^^^^^^
+
+*Added*
+
+- Citation metadata in ``CITATION.bib``, ``README.md``, and documentation.
+- Installation script with support for ``uv`` to simplify setting optional arguments.
+- CI jobs for quality checks, static checks, documentation build, source build and test with GPU support.
+- Support for CUDA Toolkit 13.
+
+*Changed*
+
+- Migrated build system from ``setup.py``/``setup.cfg`` to [PEP 517/518] ``pyproject.toml`` standard.
+- ``pybind11`` is now a build dependency and is no longer included as a static copy in the external lib directory.
+- Maximum supported Python version is now 3.14.
+
+*Removed*
+
+- Removed statically saved ``pybind11`` from the external lib directory.
+
 v0.3.14 (2025-06-26)
 ^^^^^^^^^^^^^^^^^^^^
 

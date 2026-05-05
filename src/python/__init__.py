@@ -1,7 +1,5 @@
-# Copyright (c) 2023-2023 University of Vienna, Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino.
-# Part of FastDDM, released under the GNU GPL-3.0 License.
-# Authors: Enrico Lattuada and Fabian Krautgasser
-# Maintainers: Enrico Lattuada and Fabian Krautgasser
+# SPDX-FileCopyrightText: 2023-present University of Vienna
+# SPDX-License-Identifier: GPL-3.0-or-later
 
 """fastddm is the top-level Python package.
 
@@ -19,7 +17,13 @@ except PackageNotFoundError:
     # package is not installed
     pass
 
-from ._config import *
+from ._config import (
+    CUDA_VERSION,
+    DTYPE,
+    IS_CPP_ENABLED,
+    IS_CUDA_ENABLED,
+    IS_SINGLE_PRECISION,
+)
 
 if IS_CUDA_ENABLED:
     import sys
@@ -31,12 +35,36 @@ if IS_CUDA_ENABLED:
         # Get the CUDA Toolkit version
         cuda_version = CUDA_VERSION.split(".")
         cuda_v_major, cuda_v_minor = cuda_version[:2]
-        os.add_dll_directory(
-            os.path.join(os.environ[f"CUDA_PATH_V{cuda_v_major}_{cuda_v_minor}"], "bin")
-        )
+        cuda_bin_path = os.path.join(os.environ[f"CUDA_PATH_V{cuda_v_major}_{cuda_v_minor}"], "bin")
+        os.add_dll_directory(cuda_bin_path)
 
+        # From CUDA Toolkit 13.0 onwards, the DLLs are in the 'bin/x64' subfolder
+        cuda_bin_x64_path = os.path.join(cuda_bin_path, "x64")
+        if os.path.exists(cuda_bin_x64_path):
+            os.add_dll_directory(cuda_bin_x64_path)
+
+from . import lags, mask, noise_est, weights, window
 from ._ddm import ddm
-from .azimuthalaverage import azimuthal_average, azimuthal_average_array
 from ._io import load
-from .utils import tiff2numpy, images2numpy, read_images
-from . import lags, mask, weights, window, noise_est
+from .azimuthalaverage import azimuthal_average, azimuthal_average_array
+from .utils import images2numpy, read_images, tiff2numpy
+
+__all__ = [
+    "ddm",
+    "lags",
+    "mask",
+    "noise_est",
+    "weights",
+    "window",
+    "load",
+    "azimuthal_average",
+    "azimuthal_average_array",
+    "images2numpy",
+    "read_images",
+    "tiff2numpy",
+    "IS_CPP_ENABLED",
+    "IS_CUDA_ENABLED",
+    "IS_SINGLE_PRECISION",
+    "CUDA_VERSION",
+    "DTYPE",
+]

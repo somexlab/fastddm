@@ -8,3 +8,4 @@ matplotlib
 sphinx
 furo
 tornado
+myst-parser

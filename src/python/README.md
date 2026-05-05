@@ -6,7 +6,7 @@ We assume we have the 2 arrays for $\Delta t$ and $D(q;\Delta t)$ (for a fixed v
 ```python
 from fastddm.fit import simple_structure_function, fit
 
-data = ... # the output of the azimuthal average
+data = ...  # the output of the azimuthal average
 dt = np.logspace(-1, 2)  # here the considered lag times; dt.shape == data.shape
 
 # the simple_structure_function has default values A=1.0, B=0.0, tau=1.0
@@ -45,12 +45,14 @@ import lmfit as lm
 import numpy as np
 from fastddm.fit import fit
 
+
 def structure_function(dt: np.ndarray, A: float, B: float, tau: float, delta: float) -> np.ndarray:
 
     def stretched_exp(dt, tau, delta):
-        return np.exp(-(dt/tau)**delta)
+        return np.exp(-((dt / tau) ** delta))
 
-    return A*(1-stretched_exp(dt, tau, delta)) + B
+    return A * (1 - stretched_exp(dt, tau, delta)) + B
+
 
 # initialize model object
 sf_model = lm.Model(structure_function)

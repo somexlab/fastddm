@@ -1,8 +1,5 @@
-// Copyright (c) 2023-2023 University of Vienna, Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino.
-// Part of FastDDM, released under the GNU GPL-3.0 License.
-
-// Author: Enrico Lattuada
-// Maintainer: Enrico Lattuada
+// SPDX-FileCopyrightText: 2023-present University of Vienna
+// SPDX-License-Identifier: GPL-3.0-or-later
 
 /*! \file helper_ddm_cuda.cu
     \brief Definition of helper functions for Differential Dynamic Microscopy on the GPU
@@ -26,29 +23,6 @@ const unsigned long long BLOCK_ROWS = 8; // leave this unchanged!
 /*!
     Convert array from T to double on device and prepare for fft2
 */
-template <typename T>
-__global__ void copy_convert_kernel(T *d_in,
-                                    double *d_out,
-                                    unsigned long long width,
-                                    unsigned long long height,
-                                    unsigned long long length,
-                                    unsigned long long ipitch,
-                                    unsigned long long idist,
-                                    unsigned long long opitch,
-                                    unsigned long long odist)
-{
-    for (unsigned long long t = blockIdx.x; t < length; t += gridDim.x)
-    {
-        for (unsigned long long y = blockIdx.y; y < height; y += gridDim.y)
-        {
-            for (unsigned long long x = threadIdx.x; x < width; x += blockDim.x)
-            {
-                d_out[t * odist + y * opitch + x] = (double)d_in[t * idist + y * ipitch + x];
-            }
-        }
-    }
-}
-
 template __global__ void copy_convert_kernel<uint8_t>(uint8_t *d_in, double *d_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long ipitch, unsigned long long idist, unsigned long long opitch, unsigned long long odist);
 template __global__ void copy_convert_kernel<int16_t>(int16_t *d_in, double *d_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long ipitch, unsigned long long idist, unsigned long long opitch, unsigned long long odist);
 template __global__ void copy_convert_kernel<uint16_t>(uint16_t *d_in, double *d_out, unsigned long long width, unsigned long long height, unsigned long long length, unsigned long long ipitch, unsigned long long idist, unsigned long long opitch, unsigned long long odist);

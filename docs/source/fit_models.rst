@@ -1,5 +1,5 @@
-.. Copyright (c) 2023-2023 University of Vienna, Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino.
-.. Part of FastDDM, released under the GNU GPL-3.0 License.
+.. SPDX-FileCopyrightText: 2023-present University of Vienna
+.. SPDX-License-Identifier: GPL-3.0-or-later
 
 fit_models
 ==========

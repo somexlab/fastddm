@@ -1,8 +1,5 @@
-// Copyright (c) 2023-2023 University of Vienna, Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino.
-// Part of FastDDM, released under the GNU GPL-3.0 License.
-
-// Author: Enrico Lattuada
-// Maintainer: Enrico Lattuada
+// SPDX-FileCopyrightText: 2023-present University of Vienna
+// SPDX-License-Identifier: GPL-3.0-or-later
 
 // inclusion guard
 #ifndef __HELPER_DDM_CUDA_CUH__
@@ -46,7 +43,19 @@ __global__ void copy_convert_kernel(T *d_in,
                                     unsigned long long ipitch,
                                     unsigned long long idist,
                                     unsigned long long opitch,
-                                    unsigned long long odist);
+                                    unsigned long long odist)
+{
+    for (unsigned long long t = blockIdx.x; t < length; t += gridDim.x)
+    {
+        for (unsigned long long y = blockIdx.y; y < height; y += gridDim.y)
+        {
+            for (unsigned long long x = threadIdx.x; x < width; x += blockDim.x)
+            {
+                d_out[t * odist + y * opitch + x] = (double)d_in[t * idist + y * ipitch + x];
+            }
+        }
+    }
+}
 
 /*! \brief Apply window function to image sequence
     \param d_in     Image sequence array

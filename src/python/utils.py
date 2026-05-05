@@ -1,19 +1,18 @@
-# Copyright (c) 2023-2023 University of Vienna, Enrico Lattuada, Fabian Krautgasser, and Roberto Cerbino.
-# Part of FastDDM, released under the GNU GPL-3.0 License.
-# Author: Fabian Krautgasser
-# Maintainer: Fabian Krautgasser
+# SPDX-FileCopyrightText: 2023-present University of Vienna
+# SPDX-License-Identifier: GPL-3.0-or-later
 
 """Collection of helper functions."""
 
+import warnings
+from enum import Enum
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Sequence, Union
-from enum import Enum
-import warnings
 
 import numpy as np
 import skimage.io as io
 import tifffile
 from nd2reader import ND2Reader
+from tifffile import TiffPage
 
 # custom types & constants
 Metadata = Dict[str, Any]
@@ -43,13 +42,13 @@ def tiff2numpy(
     ----------
     src : str
         The path to the TIFF file.
-    seq : Sequence[int], optional
+    seq : Sequence[int] | None, optional
         A sequence, e.g. ``range(5, 10)``, to describe a specific range within
         a multipage TIFF, by default None.
-    color_seq : Sequence[int], optional
+    color_seq : Sequence[int] | None, optional
         A sequence, e.g. ``range(2)``, to describe a specific color sequence to be selected, by
         default None.
-    input_order : str, optional
+    input_order : str | None, optional
         The order of input dimensions. Currently only supports up to 4 dimensions, ``"CTYX"``,
         by default None.
 
@@ -60,10 +59,8 @@ def tiff2numpy(
         Coordinate convention is (T,Y,X) (or (C,T,Y,X)).
     """
     if not src.endswith(".tif"):  # read anything but tif files with io.imread
-        warnings.warn(
-            "Non-tiff file, returning array opened with default settings only."
-        )
-        return io.imread(src)
+        warnings.warn("Non-tiff file, returning array opened with default settings only.")
+        return io.imread(src)  # type: ignore[no-any-return]
 
     if input_order is not None:  # read whole array first
         # read whole array first
@@ -83,7 +80,7 @@ def tiff2numpy(
             )
 
         # enum to match the actual number of dimensions
-        Order = Enum(
+        Order = Enum(  # type: ignore[misc]
             "axes",
             [dim for dim in list(OUTPUT_ORDER) if dim in input_order],
             start=0,
@@ -118,16 +115,14 @@ def tiff2numpy(
     return data
 
 
-def images2numpy(
-    fnames: Sequence[str], color_seq: Optional[Sequence[int]] = None
-) -> np.ndarray:
+def images2numpy(fnames: Sequence[str], color_seq: Optional[Sequence[int]] = None) -> np.ndarray:
     """Read a sequence of image files and return it as a numpy array.
 
     Parameters
     ----------
     fnames : Sequence[str]
         A sequence of file names.
-    color_seq : Sequence[int], optional
+    color_seq : Sequence[int] | None, optional
         A sequence, e.g. `range(2)`, to describe a specific color sequence to be selected, by
         default None.
 
@@ -191,7 +186,6 @@ def _read_nd2(src: str, seq: Optional[Sequence[int]] = None) -> np.ndarray:
     numpy.ndarray
         The image sequence as numpy array.
     """
-
     mov = ND2Reader(src)
     length, dim_y, dim_x = mov.shape  # what about color channels?
     length = len(seq) if seq is not None else length
@@ -222,12 +216,12 @@ def read_images(
     ----------
     src : Union[str, List[str]]
         File path to a single image file or a list of file paths.
-    seq : Optional[Sequence[int]], optional
+    seq : Sequence[int] | None, optional
         A subset of a multi-image file, can be set e.g. via a ``range`` object, by default None.
-    color_seq : Sequence[int], optional
+    color_seq : Sequence[int] | None, optional
         A sequence, e.g. ``range(2)``, to describe a specific color sequence to be selected, by
         default None.
-    input_order : str, optional
+    input_order : str | None, optional
         The order of input dimensions. Currently only supports up to 4 dimensions ``"CTYX"``,
         only used for TIFF files, be default None.
 
@@ -249,16 +243,14 @@ def read_images(
             return _read_nd2(src, seq=seq)
 
         else:
-            return tiff2numpy(
-                src, seq=seq, color_seq=color_seq, input_order=input_order
-            )
+            return tiff2numpy(src, seq=seq, color_seq=color_seq, input_order=input_order)
 
     else:
         raise RuntimeError(f"Failed to open {src}.")
 
 
 def _read_tiff_metadata(src: str) -> Metadata:
-    """Reads the raw metadata of the first page of a tiff file and returns it as a dictionary.
+    """Read the raw metadata of the first page of a tiff file and return it as a dictionary.
 
     Parameters
     ----------
@@ -272,14 +264,18 @@ def _read_tiff_metadata(src: str) -> Metadata:
     """
     metadata = {}
     with tifffile.TiffFile(src) as tif:
-        for tag in tif.pages[0].tags:
+        if len(tif.pages) == 0:
+            raise RuntimeError(f"Given tiff file '{src}' does not contain any pages.")
+        page_or_frame = tif.pages[0]
+        page = page_or_frame if isinstance(page_or_frame, TiffPage) else page_or_frame.aspage()
+        for tag in page.tags:
             metadata[tag.name] = tag.value
 
     return metadata
 
 
 def read_metadata(src: str) -> Metadata:
-    """Reads an images metadata and returns it as a dictionary.
+    """Read an images metadata and return it as a dictionary.
 
     Currently only supports .nd2 files and raw metadata for tiff files.
 
@@ -324,7 +320,9 @@ def read_metadata(src: str) -> Metadata:
 
 
 def chunkify(seq: np.ndarray, chunksize: int, overlap: int = 0) -> List[np.ndarray]:
-    """Takes a sequence ``seq`` and chunks it into smaller portions of size ``chunksize``, with a
+    """Chunkify a sequence into smaller portions.
+
+    Takes a sequence ``seq`` and chunks it into smaller portions of size ``chunksize``, with a
     given ``overlap`` with the previous chunk.
 
     The sequence could be e.g. image indices, or an image sequence itself. However, be aware that
@@ -332,7 +330,6 @@ def chunkify(seq: np.ndarray, chunksize: int, overlap: int = 0) -> List[np.ndarr
     could be very high! (It is recommended to use image sequence indices, see example below.)
 
     The last chunk may not be of the right size. The chunking will happen along the *first* axis.
-
 
     Parameters
     ----------

@@ -1,7 +1,18 @@
+# IDE and editor files
 .vs
+**/.DS_Store
+
+# Build and distribution directories and files
 build
 dist
 *.egg*
+install.log
+
+# Python cache files
+**/__pycache__
+
+# Jupyter Notebook files
 examples/.ipynb_checkpoints
+
+# Large test files
 tests/test-imgs/nikon/test.nd2
-tests/__pycache__

@@ -1,44 +1,201 @@
 name: Build and test
 
 on:
-  # trigger on all commits to main
-  #push:
-  #    branches:
-  #        - main
+  # trigger on all commits to main and develop
+  # NOTE: pushes to main should be protected by branch protection rules
+  push:
+    branches:
+      - main
+      - develop
 
-  # trigger on pull requests to main
+  # trigger on pull requests to main and develop
   pull_request:
     branches:
       - main
+      - develop
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
 
   # trigger on request
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  UV_SYSTEM_PYTHON: 1
+
 jobs:
-  build:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ["3.9", "3.12"]
+  pre-commit:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: 📦 Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.9"
+
+      - name: 📦 Install pre-commit
+        run: uv pip install pre-commit
+
+      - name: 🔍 Run pre-commit checks on all files
+        run: pre-commit run --all-files --verbose --color=always --show-diff-on-failure
+
+  mypy:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.14"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 📦 Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: 🐍 Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip setuptools wheel pytest pytest-regtest
+      - name: 📥 Install package with dev dependencies
+        run: python install.py -v --uv --extras=dev
 
-      - name: Build package and install through pip
-        env:
-          ENABLE_CPP: ON
+      - name: 🔍 Run mypy
         run: |
-          pip install --verbose .
+          mypy src/python/
 
-      - name: Run tests
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 📦 Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 📦 Install pandoc
+        run: sudo apt-get update && sudo apt-get install -y pandoc
+
+      - name: 📥 Install package
+        run: python install.py -v --uv --extras=doc
+
+      - name: 📚 Install docs requirements
+        run: uv pip install -r docs/requirements.txt
+
+      - name: 🛠️ Build docs (fail on warnings)
+        run: sphinx-build -b html -W -v --color --keep-going docs/source/ docs/build/html
+
+      - name: 📤 Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: html-docs
+          path: docs/build/html/
+
+  changes:
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    outputs:
+      gpu: ${{ steps.filter.outputs.gpu }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v4.0.1
+        id: filter
+        with:
+          filters: |
+            gpu:
+              - "src/cuda/**"
+              - "src/python/**"
+              - "**/CMakeLists.txt"
+              - "tests/**"
+              - "install.py"
+              - "pyproject.toml"
+
+  build:
+    needs: [pre-commit, mypy, docs]
+    if: github.event.pull_request.draft == false
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-15-intel, macos-latest]
+        python-version: ["3.9", "3.14"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 📦 Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: 🐍 Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: 🏗️ Build package and install through uv
+        run: python install.py -v --uv --cpp --extras=test
+
+      - name: 🧪 Run tests
         run: |
-          pytest -v
+          pytest -v --color=yes
+
+  build-cuda:
+    needs: [pre-commit, mypy, docs, build, changes]
+    if: github.event.pull_request.draft == false && needs.changes.outputs.gpu == 'true'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubu24_T4, win11_x64_T4]
+        python-version: ["3.14"]
+        cuda-version: ["12.8.0"]
+        include:
+          - os: ubu24_T4
+            cuda-method: network
+            cuda-sub-packages: '["nvcc", "cudart", "nvml-dev"]'
+            cuda-non-cuda-sub-packages: '["libcufft", "libcufft-dev"]'
+          - os: win11_x64_T4
+            cuda-method: local
+            cuda-sub-packages: "[]"
+            cuda-non-cuda-sub-packages: "[]"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 🧑‍💻 Set up CUDA ${{ matrix.cuda-version }}
+        id: cuda-toolkit
+        uses: Jimver/cuda-toolkit@v0.2.34
+        with:
+          cuda: ${{ matrix.cuda-version }}
+          method: ${{ matrix.cuda-method }}
+          sub-packages: ${{ matrix.cuda-sub-packages }}
+          non-cuda-sub-packages: ${{ matrix.cuda-non-cuda-sub-packages }}
+
+      - name: ✅ Verify CUDA installation
+        run: |
+          nvcc -V
+          nvidia-smi
+
+      - name: 📦 Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: 🐍 Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: 🏗️ Build package and install through uv with CUDA support
+        run: python install.py -v --uv --gpu --extras=test
+
+      - name: 🧪 Run tests with CUDA support
+        run: |
+          pytest -v --color=yes
